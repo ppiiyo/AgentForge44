@@ -14,6 +14,9 @@ import {
   PREBUILT_TEMPLATES, FlowNode, FlowConnection, 
   Workflow as WorkflowType, StepLog, PipelineExecutionResult, NodeType 
 } from './types';
+import { RouterNodeSettings } from '../packages/ui/src/RouterNodeSettings';
+import { ToolNodeSettings } from '../packages/ui/src/ToolNodeSettings';
+import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
 
 // Multi-language localization dictionaries
 const translations = {
@@ -1003,8 +1006,9 @@ export default function App() {
       'gemini': 2,
       'tool': 3,
       'router': 4,
-      'reviewer': 5,
-      'output': 6
+      'rag': 5,
+      'reviewer': 6,
+      'output': 7
     };
 
     const counts: Record<NodeType, number> = {
@@ -1013,6 +1017,7 @@ export default function App() {
       'gemini': 0,
       'tool': 0,
       'router': 0,
+      'rag': 0,
       'reviewer': 0,
       'output': 0
     };
@@ -1140,6 +1145,21 @@ export default function App() {
         title = "Final Output Display";
         description = "Aggregated result viewer.";
         initialFields = { format: 'markdown', value: '' };
+        break;
+      case 'router':
+        title = "Execution Router";
+        description = "Evaluate and branch traffic flows.";
+        initialFields = { conditions: [], defaultTargetNodeId: '' };
+        break;
+      case 'tool':
+        title = "External Tool API";
+        description = "HTTP request connection controller.";
+        initialFields = { url: 'https://api.github.com/zen', method: 'GET', headers: '{}', body: '' };
+        break;
+      case 'rag':
+        title = "RAG Search Retriever";
+        description = "Query your vector-indexed library database.";
+        initialFields = { searchQuery: '{{topic}}', limit: 3, ragResults: [] };
         break;
     }
 
@@ -1513,6 +1533,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 { type: 'reviewer', label: 'Critique Review', desc: 'Feedback loops system rules', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
                 { type: 'router', label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10' },
                 { type: 'tool', label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
+                { type: 'rag', label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
                 { type: 'output', label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10' }
               ].filter(tb => {
                 if (!toolboxSearch) return true;
@@ -1532,6 +1553,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     {tb.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
                     {tb.type === 'router' && <GitBranch size={11} className="text-sky-400" />}
                     {tb.type === 'tool' && <Globe size={11} className="text-rose-400" />}
+                    {tb.type === 'rag' && <BookOpen size={11} className="text-teal-400" />}
                     {tb.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
                     {tb.label}
                   </span>
@@ -1781,6 +1803,73 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                               <option value="2">2 Correction Turns</option>
                               <option value="3">3 Correction Turns</option>
                             </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Router Node Settings Form */}
+                      {node.type === 'router' && (
+                        <RouterNodeSettings 
+                          node={node}
+                          nodes={nodes}
+                          onUpdateField={handleUpdateNodeField}
+                          currentLang={currentLang}
+                        />
+                      )}
+
+                      {/* Tool Node Settings Form */}
+                      {node.type === 'tool' && (
+                        <ToolNodeSettings
+                          node={node}
+                          nodes={nodes}
+                          onUpdateField={handleUpdateNodeField}
+                          currentLang={currentLang}
+                        />
+                      )}
+
+                      {/* RAG Node Settings Form */}
+                      {node.type === 'rag' && (
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              {currentLang === 'ru' ? 'Поисковый запрос RAG' : currentLang === 'zh' ? '语义检索关键词模板' : 'Search Query Template'}
+                            </label>
+                            <input
+                              type="text"
+                              value={node.fields.searchQuery || ''}
+                              onChange={(e) => handleUpdateNodeField(node.id, 'searchQuery', e.target.value)}
+                              placeholder="e.g. {{topic}} outline, safety guidelines"
+                              className="w-full bg-slate-950 border border-slate-900 focus:border-teal-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none font-mono"
+                            />
+                            <p className="text-[9px] text-slate-505 leading-tight">
+                              {currentLang === 'ru' ? 'Используйте {{variable}} для подстановки параметров.' : currentLang === 'zh' ? '支持使用双花括号渲染变量模板。' : 'Use double braces {{variable}} for parameter injections.'}
+                            </p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              {currentLang === 'ru' ? 'Лимит документов' : currentLang === 'zh' ? '精确召回结果数量' : 'Retrieval Limit (1-5)'}
+                            </label>
+                            <select
+                              value={node.fields.limit || 3}
+                              onChange={(e) => handleUpdateNodeField(node.id, 'limit', parseInt(e.target.value))}
+                              className="w-full bg-slate-950 border border-slate-900 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none"
+                            >
+                              <option value="1">1 Document Chunk</option>
+                              <option value="2">2 Document Chunks</option>
+                              <option value="3">3 Document Chunks</option>
+                              <option value="4">4 Document Chunks</option>
+                              <option value="5">5 Document Chunks</option>
+                            </select>
+                          </div>
+
+                          {/* Dynamic Instant Visualizer preview mapping */}
+                          <div className="border-t border-slate-900 pt-3">
+                            <RAGVisualizer 
+                              searchQuery={node.fields.searchQuery || ''}
+                              results={node.fields.ragResults || []}
+                              currentLang={currentLang}
+                            />
                           </div>
                         </div>
                       )}
@@ -2111,9 +2200,17 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                   borderStyle = 'border-sky-500 shadow-2xl shadow-sky-500/10 scale-102 ring-1 ring-sky-500/30';
                 }
                 if (nodeStatus === 'running') {
-                  borderStyle = 'border-amber-400 shadow-xl shadow-amber-500/20 scale-102 ring-2 ring-amber-400 shadow-amber-500/10 animate-pulse';
+                  if (node.type === 'rag') {
+                    borderStyle = 'border-teal-400 shadow-xl shadow-teal-500/30 scale-102 ring-2 ring-teal-400 animate-[pulse_1.5s_infinite]';
+                  } else {
+                    borderStyle = 'border-amber-400 shadow-xl shadow-amber-500/20 scale-102 ring-2 ring-amber-400 shadow-amber-500/10 animate-pulse';
+                  }
                 } else if (nodeStatus === 'completed') {
-                  borderStyle = 'border-emerald-500 shadow-xl shadow-emerald-500/10 ring-1 ring-emerald-500/40';
+                  if (node.type === 'rag') {
+                    borderStyle = 'border-teal-550 shadow-xl shadow-teal-500/10 ring-1 ring-teal-550/40';
+                  } else {
+                    borderStyle = 'border-emerald-500 shadow-xl shadow-emerald-500/10 ring-1 ring-emerald-500/40';
+                  }
                 } else if (nodeStatus === 'failed') {
                   borderStyle = 'border-rose-500 shadow-xl shadow-rose-500/20 ring-2 ring-rose-500/60';
                 }
@@ -2138,6 +2235,9 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                           {node.type === 'gemini' && <Sparkles size={11} className="text-teal-400 animate-pulse" />}
                           {node.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
                           {node.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
+                          {node.type === 'router' && <GitBranch size={11} className="text-sky-405 animate-pulse" />}
+                          {node.type === 'tool' && <Globe size={11} className="text-rose-405" />}
+                          {node.type === 'rag' && <BookOpen size={11} className="text-teal-405" />}
                         </span>
                         <span className="font-bold text-[11px] text-slate-100 tracking-wide truncate flex-1">
                           {node.title}
@@ -2203,6 +2303,28 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                           <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase bg-indigo-950/20 px-2 py-0.5 rounded">
                             {node.fields.format || 'markdown'} View
                           </span>
+                        )}
+                        {node.type === 'router' && (
+                          <span className="text-[9px] font-mono text-sky-400 font-bold uppercase bg-sky-950/20 px-2 py-0.5 rounded border border-sky-900/10 block w-fit">
+                            🔀 {node.fields.conditions?.length || 0} Routes Checked
+                          </span>
+                        )}
+                        {node.type === 'tool' && (
+                          <span className="text-[9px] font-mono text-rose-400 font-bold uppercase bg-rose-955 px-2 py-0.5 rounded border border-rose-900/10 block w-full truncate">
+                            🌐 {node.fields.method || 'GET'} : {node.fields.url ? node.fields.url.replace(/^https?:\/\//i, '').slice(0, 18) + '...' : 'None'}
+                          </span>
+                        )}
+                        {node.type === 'rag' && (
+                          <div className="space-y-1">
+                            <span className="text-[9.5px] font-mono text-teal-400 font-bold uppercase bg-teal-950/20 px-2 py-0.5 rounded border border-teal-900/15 block w-fit">
+                              📚 Limit: {node.fields.limit || 3} Files
+                            </span>
+                            {nodeStatus === 'completed' && (
+                              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-teal-350 bg-teal-950/40 border border-teal-900/35 px-2 py-0.5 rounded mt-1 shadow-sm animate-bounce">
+                                Grounded: {node.fields.ragResults?.length || 3} Docs
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -2430,6 +2552,41 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                                   <pre className="text-[10.5px] font-mono bg-slate-900 border border-slate-850 text-slate-200 p-2.5 rounded-lg max-h-52 overflow-y-auto whitespace-pre-wrap leading-relaxed">
                                     {log.output}
                                   </pre>
+                                </div>
+                              )}
+
+                              {/* RAG Vector Search Inspector details */}
+                              {(log as any).ragQuery !== undefined && (
+                                <div className="space-y-2 bg-teal-950/20 border border-teal-900/30 p-3.5 rounded-xl mt-2 space-y-2 font-mono">
+                                  <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-teal-950/70">
+                                    <span className="text-teal-400 font-extrabold uppercase flex items-center gap-1">
+                                      <BookOpen size={12} className="animate-pulse" />
+                                      {currentLang === 'ru' ? 'Инспектор поиска RAG' : currentLang === 'zh' ? 'RAG 深度矢量搜索检索器' : 'RAG Vector Search Inspector'}
+                                    </span>
+                                    <span className="text-slate-500 text-[9px]">{(log as any).ragLatency} ms</span>
+                                  </div>
+                                  <div className="text-[10px] space-y-1">
+                                    <span className="text-slate-505 block uppercase font-bold text-[8.5px]">Vector DB Query Query</span>
+                                    <div className="bg-slate-950 px-2 py-1.5 rounded border border-slate-900 text-teal-300 font-bold truncate">
+                                      {(log as any).ragQuery}
+                                    </div>
+                                  </div>
+                                  <div className="text-[10px] space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-slate-500 block uppercase font-bold text-[8.5px]">Top Relevant Chunks ({(log as any).ragChunksCount} found)</span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                      {((log as any).ragTopChunks || []).map((chunk: any, ci: number) => (
+                                        <div key={ci} className="bg-slate-900/50 p-2 rounded border border-slate-850 space-y-1">
+                                          <div className="flex items-center justify-between text-[8px] text-slate-500 border-b border-slate-850/45 pb-0.5 mb-1.5 font-bold">
+                                            <span className="text-teal-400/80 font-black">Rank #{ci + 1} Match</span>
+                                            <span>Source: {chunk.source || 'Wiki'}</span>
+                                          </div>
+                                          <p className="text-[10px] text-slate-305 leading-relaxed max-h-16 overflow-y-auto whitespace-pre-wrap">{chunk.text}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               )}
 

@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag';
 
 export interface BaseNode {
   id: string;
@@ -76,7 +76,16 @@ export interface ToolNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode;
+export interface RAGNode extends BaseNode {
+  type: 'rag';
+  fields: {
+    searchQuery: string;
+    limit: number;
+    ragResults?: Array<{ id: string; source: string; text: string; score?: number }>;
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode;
 
 export interface FlowConnection {
   id: string;
@@ -103,6 +112,10 @@ export interface StepLog {
   duration?: number; // ms
   groundingSources?: Array<{ title: string; uri: string }>;
   iterationCount?: number;
+  ragQuery?: string;
+  ragChunksCount?: number;
+  ragLatency?: number;
+  ragTopChunks?: Array<{ id: string; source: string; text: string }>;
 }
 
 export interface PipelineExecutionResult {

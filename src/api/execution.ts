@@ -1,6 +1,7 @@
 import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../types.js';
 import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
+import { searchIndexedLibrary } from './advancedPhase4.js';
 
 function getValueByDotPath(obj: any, pathStr: string): any {
   if (!obj || !pathStr) return undefined;
@@ -377,6 +378,56 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             input: `URL: ${url}\nBody: ${body || 'None'}`,
             output: responseText,
             duration: Date.now() - stepStart
+          };
+        } else if (node.type === 'rag') {
+          const limit = Number(node.fields.limit) || 3;
+          let searchQueryRaw = node.fields.searchQuery || "";
+          let searchQuery = searchQueryRaw;
+
+          // Hydrate key placeholders of template from active variables map
+          Object.entries(context.variables).forEach(([key, val]) => {
+            const pattern1 = new RegExp(`\\{${key}\\}`, 'g');
+            searchQuery = searchQuery.replace(pattern1, String(val));
+            const pattern2 = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+            searchQuery = searchQuery.replace(pattern2, String(val));
+          });
+
+          // Fallback if search placeholder still exists or is empty, use last output
+          if (!searchQuery.trim() || searchQuery === searchQueryRaw) {
+            const lastOutput = typeof context.state['last_output'] === 'string'
+              ? context.state['last_output']
+              : JSON.stringify(context.state['last_output'] || "");
+            if (lastOutput) {
+              searchQuery = lastOutput.substring(0, 100);
+            }
+          }
+
+          const searchStart = Date.now();
+          const searchRes = searchIndexedLibrary(searchQuery, limit);
+          const chunks = searchRes.chunks || [];
+          const latency = Date.now() - searchStart;
+
+          // Aggregate matching texts
+          const aggregatedContextText = chunks.map(c => `[Source: ${c.source}]\n${c.text}`).join('\n\n');
+
+          // Save output to context & variables
+          context.state['last_output'] = aggregatedContextText;
+          context.variables['rag_output'] = aggregatedContextText;
+          
+          // Store result directly into node's execution results so UI can render it
+          node.fields.ragResults = chunks;
+
+          context.stepLogs[currentLogIndex] = {
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: `Vector DB Query: "${searchQuery}"`,
+            output: `Found ${chunks.length} chunks (Search Latency: ${latency}ms).\n\n${aggregatedContextText || "No context references found in indexed documents."}`,
+            duration: Date.now() - stepStart,
+            ragQuery: searchQuery,
+            ragChunksCount: chunks.length,
+            ragLatency: latency,
+            ragTopChunks: chunks.slice(0, 3)
           };
         }
 
