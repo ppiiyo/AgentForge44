@@ -3,14 +3,22 @@ FROM node:18-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Copy dependency mappings
+# Install build tools required for node-gyp and native C++ compilers
+RUN apk add --no-cache python3 make g++ gcc libc-dev
+
+# Copy package dependency manifests
 COPY package*.json ./
+
+# Explicitly configure npm to utilize Python 3 for node-gyp compilation
+RUN npm config set python /usr/bin/python3
+
+# Install workspace dependencies (including devDependencies needed for compiling)
 RUN npm ci
 
-# Copy full-stack workspaces code bases
+# Copy full-source codebase
 COPY . .
 
-# Compile optimized static bundle and bundle Express backend to dist/server.cjs
+# Compile application frontend (Vite) and backend (Express server bundled with esbuild)
 RUN npm run build
 
 # --- Stage 2: Production Container ---
@@ -19,11 +27,17 @@ FROM node:18-alpine AS runner
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 
-# Copy built bundles and static dist output from build container
+# Install runtime utilities and minimal python setup for native production builds if triggered
+RUN apk add --no-cache python3 make g++ gcc libc-dev
+
+# Copy compiled bundles and assets from builder container
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package*.json ./
 
-# Install only production-level node modules to minimize space footprint
+# Configure npm to use python3 also in production runner stage
+RUN npm config set python /usr/bin/python3
+
+# Install only production-level node modules
 RUN npm ci --only=production
 
 # Open internal routing interfaces
