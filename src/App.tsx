@@ -7,7 +7,7 @@ import {
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
   CopyPlus, FileJson, X, Globe, History, Undo, Redo,
-  Compass, FlaskConical
+  Compass, FlaskConical, BookOpen, GitBranch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -450,10 +450,129 @@ export default function App() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+
+  // Phase 4 – Interactive Automated Performance Evaluation Suite
+  const [evalTestCases, setEvalTestCases] = useState<any[]>([
+    { id: 't1', name: 'Rust Compiler Syntax', query: 'Write an optimized binary search in Rust.', expected: 'Should output safe loop logic containing low/high indexes and standard fn signature.' },
+    { id: 't2', name: 'Memory Safety Proof', query: 'Explain buffer overflows mitigation in Rust.', expected: 'Must mention ownership, borrow-checker checks, and array offset boundary guardrails.' },
+    { id: 't3', name: 'Product Landing Page Heading', query: 'Write a catchy headline for visual node builder.', expected: 'Creative energetic slogans like "Forge Node Connections" or similar.' }
+  ]);
+  const [evalReport, setEvalReport] = useState<any | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+
+  // Phase 4 - Semantic Document Retrieval Store (RAG)
+  const [ragText, setRagText] = useState<string>("");
+  const [ragSource, setRagSource] = useState<string>("Product Wiki Resource");
+  const [isRAGIndexing, setIsRAGIndexing] = useState<boolean>(false);
+  const [ragIndexStatus, setRagIndexStatus] = useState<string>("");
+  const [ragSearchQuery, setRagSearchQuery] = useState<string>("");
+  const [ragSearchResults, setRagSearchResults] = useState<any[]>([]);
+
+  // Phase 4 - Automated Evaluation runner trigger
+  const handleRunEvaluationSuite = async () => {
+    if (isEvaluating) return;
+    setIsEvaluating(true);
+    setEvalReport(null);
+    try {
+      const response = await fetch("/api/evals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nodes,
+          connections,
+          testCases: evalTestCases
+        })
+      });
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to compile evaluations");
+      }
+      setEvalReport(data);
+    } catch (err: any) {
+      alert(`Evaluation Error: ${err.message || String(err)}`);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  // Phase 4 - Semantic Knowledge indexing trigger
+  const handleIndexDocument = async () => {
+    if (!ragText.trim() || isRAGIndexing) return;
+    setIsRAGIndexing(true);
+    setRagIndexStatus("Analyzing semantic format blocks...");
+    try {
+      const response = await fetch("/api/rag/index", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: ragText,
+          source: ragSource
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setRagIndexStatus(`Generated ${data.chunkCount} searchable semantic text index nodes! ✅`);
+        setRagText("");
+      } else {
+        setRagIndexStatus("Failed to index content block.");
+      }
+    } catch (err: any) {
+      setRagIndexStatus(`Error: ${err.message}`);
+    } finally {
+      setIsRAGIndexing(false);
+    }
+  };
+
+  // Phase 4 - Keyword Semantic lookup trigger
+  const handleRAGSearch = async (term: string) => {
+    setRagSearchQuery(term);
+    if (!term.trim()) {
+      setRagSearchResults([]);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/rag/search?q=${encodeURIComponent(term)}`);
+      const data = await response.json();
+      setRagSearchResults(data.chunks || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Phase 4 - Multi-Agent Pattern Template Loader
+  const handleLoadMultiAgentPattern = async (type: 'supervisor' | 'debate') => {
+    recordAction();
+    try {
+      const response = await fetch(`/api/patterns/${type}`);
+      const data = await response.json();
+      if (!response.ok || data.error) throw new Error(data.error || "Could not fetch pattern");
+      
+      setNodes(data.nodes);
+      setConnections(data.connections);
+      
+      const patternName = type === 'supervisor' ? "Supervisor Routing Topology" : "Arbiter Debate Topology";
+      setActiveWorkflow({
+        id: `pattern-${type}`,
+        name: patternName,
+        desc: "Advanced multi-agent framework layout loaded.",
+        logo: "🧠",
+        stars: "5.0 (Phase 4)",
+        category: "Multi-Agent System",
+        complexity: "advanced",
+        nodes: data.nodes,
+        connections: data.connections
+      });
+      
+      setCopiedText(`Loaded ${patternName}! 🚀`);
+      setTimeout(() => setCopiedText(null), 2000);
+    } catch (err: any) {
+      alert(`Pattern Load Error: ${err.message}`);
+    }
+  };
 
   // Virality Simulator State
   const [simDocQual, setSimDocQual] = useState<number>(85);
@@ -1093,6 +1212,29 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               </span>
             </button>
           ))}
+
+          <span className="text-slate-700 text-xs px-1">|</span>
+
+          {/* Phase 4 Multi-Agent Patterns */}
+          <button
+            id="btn_load_pattern_supervisor"
+            onClick={() => handleLoadMultiAgentPattern('supervisor')}
+            className="text-[11px] px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/20 font-bold transition-all flex items-center gap-1 cursor-pointer"
+            title="Load Multi-Agent Supervisor / Router Pattern"
+          >
+            <GitBranch size={11} />
+            <span>Supervisor Patterns</span>
+          </button>
+          
+          <button
+            id="btn_load_pattern_debate"
+            onClick={() => handleLoadMultiAgentPattern('debate')}
+            className="text-[11px] px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-505/30 hover:bg-teal-500/20 font-bold transition-all flex items-center gap-1 cursor-pointer"
+            title="Load Multi-Agent Consensus / Debate Pattern"
+          >
+            <Sparkles size={11} />
+            <span>Debate/Referee</span>
+          </button>
         </div>
 
         {/* Operational buttons */}
@@ -1910,9 +2052,11 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
           {/* Section tab headers */}
           <div className="flex border-b border-slate-850 bg-slate-900/95" id="tab_headers">
             {[
-              { id: 'logs', label: `⚡ ${translations[currentLang].undo === "Undo" ? "Run Studio" : currentLang === "ru" ? "Запуск" : "运行控制"}`, icon: RefreshCw },
-              { id: 'code', label: `💻 ${translations[currentLang].codeExport}`, icon: Code },
-              { id: 'virality', label: `🔥 ${translations[currentLang].viralitySimulator}`, icon: TrendingUp }
+              { id: 'logs', label: `⚡ Run`, icon: RefreshCw },
+              { id: 'evals', label: `🎯 Benchmark`, icon: ChevronRight },
+              { id: 'rag', label: `📚 Library`, icon: BookOpen },
+              { id: 'code', label: `💻 Code`, icon: Code },
+              { id: 'virality', label: `🔥 Virality`, icon: TrendingUp }
             ].map(tab => (
               <button
                 id={`tab-btn-${tab.id}`}
@@ -2090,6 +2234,292 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                       </div>
                     </div>
                   )}
+                </motion.div>
+              )}
+
+              {/* Tab 1.5: Interactive Automated Evaluation Suite */}
+              {activeTab === 'evals' && (
+                <motion.div 
+                  key="evals-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="bg-slate-900/40 p-4 border border-slate-850 rounded-2xl space-y-1.5">
+                    <h4 className="text-xs font-black text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <ChevronRight size={14} className="text-sky-400" /> Performance Evaluator
+                    </h4>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Run automated <strong>LLM-as-a-Judge</strong> benchmarks to calculate compilation correctness, semantic accuracy, and latency across multiple custom scenario test lines.
+                    </p>
+                  </div>
+
+                  {/* Benchmark Suite Control */}
+                  <button
+                    id="btn_run_evals"
+                    onClick={handleRunEvaluationSuite}
+                    disabled={isEvaluating}
+                    className="w-full bg-gradient-to-r from-sky-505 to-indigo-605 text-slate-950 font-black py-3 px-4 rounded-xl text-xs hover:from-sky-400 hover:to-indigo-400 cursor-pointer shadow-lg shadow-sky-500/10 flex items-center justify-center gap-2 transition-all transition-duration-300 disabled:opacity-55 disabled:cursor-not-allowed"
+                  >
+                    {isEvaluating ? (
+                      <>
+                        <RefreshCcw size={14} className="animate-spin" />
+                        <span>Evaluating Pipeline Cases...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play size={14} fill="currentColor" />
+                        <span>Run LLM-as-a-Judge Evaluation Suite</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Evaluation Report Results Block */}
+                  {evalReport && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-3"
+                      id="eval_report_block"
+                    >
+                      <div className="grid grid-cols-2 gap-2 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                        <div className="text-center border-r border-slate-850">
+                          <span className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider block">Average Grade</span>
+                          <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono">
+                            {evalReport.avgScore}/10
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-[9.5px] font-extrabold text-slate-500 uppercase tracking-wider block">Avg Latency</span>
+                          <span className="text-3xl font-black text-sky-400 font-mono">
+                            {evalReport.avgLatencyMs} ms
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Result items timeline */}
+                      <div className="space-y-2.5">
+                        {evalReport.items.map((it: any, index: number) => (
+                          <div key={it.id} className="bg-slate-950/60 border border-slate-850 rounded-xl p-3.5 space-y-2">
+                            <div className="flex items-center justify-between border-b border-slate-850/60 pb-1.5">
+                              <span className="text-xs font-bold text-slate-200">
+                                Case {index + 1}: {it.name}
+                              </span>
+                              <span className={`text-xs font-mono font-black px-2 py-0.5 rounded ${
+                                it.score >= 8 
+                                  ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/30' 
+                                  : it.score >= 5 
+                                  ? 'bg-amber-955/40 text-amber-400 border border-amber-900/20' 
+                                  : 'bg-rose-950/40 text-rose-450 border border-rose-900/30'
+                              }`}>
+                                Grade: {it.score}/10
+                              </span>
+                            </div>
+
+                            <div className="text-[10.5px] space-y-1">
+                              <div>
+                                <span className="text-slate-500 font-extrabold text-[9px] uppercase">Input Scenario</span>
+                                <p className="text-slate-300 bg-slate-900/50 p-1.5 rounded">{it.query}</p>
+                              </div>
+                              <div className="pt-1">
+                                <span className="text-slate-500 font-extrabold text-[9px] uppercase">Expected standard label</span>
+                                <p className="text-slate-400 font-medium">{it.expected}</p>
+                              </div>
+                              <div className="pt-1">
+                                <span className="text-slate-500 font-extrabold text-[9px] uppercase">Actual trace output</span>
+                                <pre className="text-xs font-mono text-slate-200 bg-slate-900/70 p-2 rounded max-h-24 overflow-y-auto whitespace-pre-wrap">{it.actual}</pre>
+                              </div>
+                              <div className="pt-2 border-t border-slate-900/60 bg-sky-950/10 p-2 rounded-lg mt-1.5">
+                                <span className="text-sky-400 font-black text-[9.5px] uppercase tracking-wider block">Judge Rationale verdict:</span>
+                                <p className="text-slate-300 leading-relaxed italic mt-0.5 text-[10.5px]">"{it.rationale}"</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Configurable test lines list */}
+                  <div className="space-y-2 pt-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">TestSuite QA Assertions</span>
+                    
+                    <div className="space-y-2">
+                      {evalTestCases.map((tc, idx) => (
+                        <div key={tc.id} className="bg-slate-950/40 border border-slate-850 p-3 rounded-xl space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <input 
+                              type="text" 
+                              value={tc.name}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEvalTestCases(prev => prev.map(c => c.id === tc.id ? { ...c, name: val } : c));
+                              }}
+                              className="bg-transparent border-none text-xs font-extrabold text-slate-200 p-0 focus:ring-0 w-3/4 outline-none"
+                            />
+                            <button
+                              onClick={() => setEvalTestCases(prev => prev.filter(c => c.id !== tc.id))}
+                              className="text-slate-600 hover:text-rose-450 p-1 rounded hover:bg-slate-900 cursor-pointer"
+                              title="Delete Test Case"
+                            >
+                              <Trash size={12} />
+                            </button>
+                          </div>
+                          
+                          <div className="space-y-1 text-xs">
+                            <input
+                              type="text"
+                              value={tc.query}
+                              placeholder="Test Query"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEvalTestCases(prev => prev.map(c => c.id === tc.id ? { ...c, query: val } : c));
+                              }}
+                              className="w-full bg-slate-950 border border-slate-850/60 rounded-lg p-1.5 text-[11px] text-slate-300 outline-none focus:border-sky-500/30"
+                            />
+                            <input
+                              type="text"
+                              value={tc.expected}
+                              placeholder="Expected Evaluation Label Keywords"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEvalTestCases(prev => prev.map(c => c.id === tc.id ? { ...c, expected: val } : c));
+                              }}
+                              className="w-full bg-slate-950 border border-slate-850/60 rounded-lg p-1.5 text-[11px] text-slate-400 outline-none focus:border-sky-500/30"
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          const nId = `test-${Date.now()}`;
+                          setEvalTestCases(prev => [
+                            ...prev,
+                            { id: nId, name: `Custom Check #${prev.length + 1}`, query: 'User query scenario prompt', expected: 'Outcome golden keywords' }
+                          ]);
+                        }}
+                        className="w-full py-2 bg-slate-950 border border-dashed border-slate-800 hover:border-slate-700 text-[10.5px] font-bold text-slate-400 hover:text-slate-200 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all"
+                      >
+                        <Plus size={11} /> Add New Suite Test Line
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Tab 1.6: Semantic Knowledge Retrieval Store (RAG) */}
+              {activeTab === 'rag' && (
+                <motion.div 
+                  key="rag-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="bg-slate-900/40 p-4 border border-slate-850 rounded-2xl space-y-1.5">
+                    <h4 className="text-xs font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <BookOpen size={14} className="text-teal-400" /> RAG Knowledge Indexer
+                    </h4>
+                    <p className="text-[11px] text-slate-400 leading-normal font-medium">
+                      Chunk, overlapping slice, and index reference context and manuals to provide accurate grounding injections.
+                    </p>
+                  </div>
+
+                  {/* Manual Paste Section */}
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[9.5px] font-black text-slate-500 uppercase block mb-1">Context source name</label>
+                        <input 
+                          type="text" 
+                          value={ragSource}
+                          onChange={(e) => setRagSource(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs text-slate-200 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9.5px] font-black text-slate-500 uppercase block mb-1">Index block type</label>
+                        <select className="w-full bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs text-slate-400 font-semibold focus:outline-none">
+                          <option>Semantics Text Chunk</option>
+                          <option>API Endpoints Spec</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[9.5px] font-black text-slate-500 uppercase block mb-1">Reference source text payload</label>
+                      <textarea
+                        rows={4}
+                        value={ragText}
+                        onChange={(e) => setRagText(e.target.value)}
+                        placeholder="Paste raw documentation text, API guides, or knowledge base articles..."
+                        className="w-full bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-teal-500/40 placeholder:text-slate-600 leading-relaxed"
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleIndexDocument}
+                      disabled={isRAGIndexing || !ragText.trim()}
+                      className="w-full bg-teal-550 hover:bg-teal-400 text-slate-950 font-black py-2 px-3 rounded-lg text-xs cursor-pointer flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isRAGIndexing ? (
+                        <>
+                          <RefreshCcw size={13} className="animate-spin" />
+                          <span>Chunking text streams...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={13} />
+                          <span>Index Document into retrieval cache</span>
+                        </>
+                      )}
+                    </button>
+
+                    {ragIndexStatus && (
+                      <p className="text-[10px] font-mono font-bold text-center text-teal-400 leading-normal bg-teal-950/20 py-1.5 px-3 rounded border border-teal-900/30">
+                        {ragIndexStatus}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Interactive Query Sandbox */}
+                  <div className="space-y-2.5 pt-2 border-t border-slate-850">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">Semantic Search Retrieval debug</span>
+                    
+                    <div className="space-y-2">
+                      <input 
+                        type="text"
+                        placeholder="Type keywords to query indexed chunks (e.g., rust, safety)..."
+                        value={ragSearchQuery}
+                        onChange={(e) => handleRAGSearch(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-slate-200 outline-none focus:border-teal-500/35"
+                      />
+
+                      {ragSearchResults.length > 0 ? (
+                        <div className="space-y-2 max-h-56 overflow-y-auto">
+                          {ragSearchResults.map((chunk, ci) => (
+                            <div key={chunk.id} className="bg-slate-950/70 border border-teal-900/20 p-3 rounded-xl space-y-1.5">
+                              <div className="flex items-center justify-between text-[9px] border-b border-slate-850/60 pb-1">
+                                <span className="font-extrabold text-teal-400">Match Rank #{ci+1}</span>
+                                <span className="text-slate-500 font-mono italic">{chunk.source}</span>
+                              </div>
+                              <p className="text-[11px] font-mono text-slate-300 leading-relaxed whitespace-pre-wrap bg-slate-900/30 p-2 rounded">
+                                {chunk.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        ragSearchQuery.trim() && (
+                          <div className="text-center py-4 text-slate-500 text-[11px] italic">
+                            No matching blocks located. Indexes are isolated to this process pipeline state.
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
                 </motion.div>
               )}
 

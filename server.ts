@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
 import { executeTool } from './src/api/tools.js';
+import { runEvaluationSuite, getPatternTemplate, indexLibraryDocument, searchIndexedLibrary } from './src/api/advancedPhase4.js';
 
 dotenv.config();
 
@@ -37,6 +38,77 @@ function isRateLimited(key: string): boolean {
 const ALLOWED_API_KEYS = new Set([
   process.env.AGENTFORGE_API_KEY || "forge_production_admin_token"
 ]);
+
+/**
+ * Phase 4 Endpoint: Loader of Pre-Packaged Multi-Agent Architectures
+ */
+app.get('/api/patterns/:type', (req: express.Request, res: express.Response) => {
+  try {
+    const { type } = req.params;
+    if (type !== 'supervisor' && type !== 'debate') {
+      res.status(405).json({ error: "Unsupported architecture pattern type requested." });
+      return;
+    }
+    const nodesAndConns = getPatternTemplate(type);
+    res.json(nodesAndConns);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Phase 4 Endpoint: Interactive LLM-as-a-Judge Evaluation Suite Runner
+ */
+app.post('/api/evals', async (req: express.Request, res: express.Response) => {
+  try {
+    const { nodes, connections, testCases } = req.body;
+    if (!nodes || !connections || !testCases || !Array.isArray(testCases)) {
+      res.status(400).json({ error: "Missing required inputs evaluation parameters." });
+      return;
+    }
+
+    const reportResult = await runEvaluationSuite(nodes, connections, testCases);
+    res.json(reportResult);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Internal evaluation server error." });
+  }
+});
+
+/**
+ * Phase 4 Endpoint: Index knowledge documents for RAG context retention
+ */
+app.post('/api/rag/index', (req: express.Request, res: express.Response) => {
+  try {
+    const { text, source } = req.body;
+    if (!text) {
+      res.status(400).json({ error: "Text payload empty, cannot build index." });
+      return;
+    }
+
+    const indexRes = indexLibraryDocument(text, source || "UI Document Upload");
+    res.json(indexRes);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Phase 4 Endpoint: Query search results Jaccard approximate vector matrix matching
+ */
+app.get('/api/rag/search', (req: express.Request, res: express.Response) => {
+  try {
+    const query = req.query.q as string;
+    if (!query) {
+      res.status(400).json({ error: "No search term query parameter provided." });
+      return;
+    }
+
+    const results = searchIndexedLibrary(query);
+    res.json(results);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * 1. Base API execution endpoint (Supports standard active canvas)
