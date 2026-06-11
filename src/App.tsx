@@ -7,7 +7,7 @@ import {
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
   CopyPlus, FileJson, X, Globe, History, Undo, Redo,
-  Compass, FlaskConical, BookOpen, GitBranch
+  Compass, FlaskConical, BookOpen, GitBranch, FolderPlus, Network, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
