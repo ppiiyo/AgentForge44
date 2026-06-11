@@ -6,6 +6,20 @@ function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | 
   return conn ? conn.targetId : null;
 }
 
+function getValueByDotPath(obj: any, pathStr: string): any {
+  if (!obj || !pathStr) return undefined;
+  const keys = pathStr.split('.');
+  let current = obj;
+  for (const k of keys) {
+    if (current && typeof current === 'object' && k in current) {
+      current = current[k];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+}
+
 interface RetryResult {
   response: any;
   resolvedModel: string;
@@ -311,6 +325,133 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
         });
       }
 
+      let customNextNodeId: string | null = null;
+      let hasCustomNext = false;
+
+      if (node.type === 'router') {
+        const inputPayload = typeof activeValue === 'string'
+          ? activeValue
+          : JSON.stringify(activeValue || "");
+
+        const conditions = node.fields.conditions || [];
+        const defaultTargetId = node.fields.defaultTargetNodeId || "";
+
+        let selectedTargetId: string | null = null;
+
+        for (const cond of conditions) {
+          if (cond.type === 'contains') {
+            if (inputPayload.toLowerCase().includes(cond.value.toLowerCase())) {
+              selectedTargetId = cond.targetNodeId;
+              break;
+            }
+          } else if (cond.type === 'regex') {
+            try {
+              const regex = new RegExp(cond.value, 'i');
+              if (regex.test(inputPayload)) {
+                selectedTargetId = cond.targetNodeId;
+                break;
+              }
+            } catch {}
+          } else if (cond.type === 'json_key') {
+            try {
+              const parsedJson = JSON.parse(inputPayload);
+              const valOfKey = getValueByDotPath(parsedJson, cond.value);
+              if (valOfKey !== undefined && valOfKey !== null && valOfKey !== false) {
+                selectedTargetId = cond.targetNodeId;
+                break;
+              }
+            } catch {}
+          }
+        }
+
+        const finalNextNodeId = selectedTargetId || defaultTargetId;
+        hasCustomNext = true;
+        customNextNodeId = finalNextNodeId || null;
+
+        logs.push({
+          nodeId: node.id,
+          nodeTitle: node.title,
+          status: 'completed',
+          input: inputPayload,
+          output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
+          duration: Date.now() - stepStart
+        });
+      } else if (node.type === 'tool') {
+        const urlRaw = node.fields.url || "";
+        const method = node.fields.method || "GET";
+        const headersRaw = node.fields.headers || "{}";
+        const bodyRaw = node.fields.body || "";
+
+        let url = urlRaw;
+        let body = bodyRaw;
+        let headersStr = headersRaw;
+
+        // Substitute helpers
+        const substitute = (text: string) => {
+          let out = text;
+          if (typeof activeValue === 'object' && activeValue !== null) {
+            Object.entries(activeValue).forEach(([k, v]) => {
+              const regex = new RegExp(`\\{${k}\\}`, 'g');
+              out = out.replace(regex, String(v));
+              const regexDouble = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+              out = out.replace(regexDouble, String(v));
+            });
+          } else if (typeof activeValue === 'string') {
+            const regex = new RegExp(`\\{lastOutput\\}`, 'g');
+            out = out.replace(regex, activeValue);
+            const regexDouble = new RegExp(`\\{\\{lastOutput\\}\\}`, 'g');
+            out = out.replace(regexDouble, activeValue);
+          }
+          return out;
+        };
+
+        url = substitute(url);
+        body = substitute(body);
+        headersStr = substitute(headersStr);
+
+        let headers: Record<string, string> = { "Content-Type": "application/json" };
+        try {
+          if (headersStr.trim().startsWith("{")) {
+            headers = { ...headers, ...JSON.parse(headersStr) };
+          }
+        } catch {}
+
+        const fetchOptions: any = {
+          method,
+          headers
+        };
+        if (method !== 'GET' && body) {
+          fetchOptions.body = body;
+        }
+
+        let responseText = "";
+        let responseStatus = 250;
+        try {
+          const fetchRes = await fetch(url, fetchOptions);
+          responseStatus = fetchRes.status;
+          responseText = await fetchRes.text();
+        } catch (err: any) {
+          throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
+        }
+
+        activeValue = responseText;
+
+        logs.push({
+          nodeId: node.id,
+          nodeTitle: `${node.title} (${method} ${responseStatus})`,
+          status: 'completed',
+          input: `URL: ${url}\nBody: ${body || 'None'}`,
+          output: responseText,
+          duration: Date.now() - stepStart
+        });
+      }
+
+      if (hasCustomNext) {
+        currentNodeId = customNextNodeId;
+      } else {
+        currentNodeId = getNextNodeId(currentNodeId, connections);
+      }
+
     } catch (err: any) {
       logs.push({
         nodeId: node.id,
@@ -322,9 +463,6 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
       });
       throw err;
     }
-
-    // Advance to next link in connections
-    currentNodeId = getNextNodeId(currentNodeId, connections);
   }
 
   const finalResultNode = nodes.find(n => n.type === 'output');

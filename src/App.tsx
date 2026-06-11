@@ -858,14 +858,18 @@ export default function App() {
       'input': 0,
       'prompt': 1,
       'gemini': 2,
-      'reviewer': 3,
-      'output': 4
+      'tool': 3,
+      'router': 4,
+      'reviewer': 5,
+      'output': 6
     };
 
     const counts: Record<NodeType, number> = {
       'input': 0,
       'prompt': 0,
       'gemini': 0,
+      'tool': 0,
+      'router': 0,
       'reviewer': 0,
       'output': 0
     };

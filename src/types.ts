@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool';
 
 export interface BaseNode {
   id: string;
@@ -50,7 +50,33 @@ export interface OutputNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode;
+export interface RouterCondition {
+  id: string;
+  type: 'regex' | 'json_key' | 'contains';
+  value: string; // The regex, substring, or JSON dot-separated key path
+  targetNodeId: string;
+  label: string;
+}
+
+export interface RouterNode extends BaseNode {
+  type: 'router';
+  fields: {
+    conditions: RouterCondition[];
+    defaultTargetNodeId: string;
+  };
+}
+
+export interface ToolNode extends BaseNode {
+  type: 'tool';
+  fields: {
+    url: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    headers: string; // Dynamic JSON string mapping
+    body: string; // Template string or raw JSON body
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode;
 
 export interface FlowConnection {
   id: string;

@@ -2,6 +2,20 @@ import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../t
 import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
 
+function getValueByDotPath(obj: any, pathStr: string): any {
+  if (!obj || !pathStr) return undefined;
+  const keys = pathStr.split('.');
+  let current = obj;
+  for (const k of keys) {
+    if (current && typeof current === 'object' && k in current) {
+      current = current[k];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+}
+
 export interface WorkflowContext {
   state: Record<string, any>;
   variables: Record<string, string>;
@@ -44,6 +58,11 @@ export class StatefulExecutionEngine {
   private getNextNodeId(currentNode: FlowNode, context: WorkflowContext): string | null {
     const targets = this.getTargetConnections(currentNode.id);
     if (targets.length === 0) return null;
+
+    // If router node, return evaluated condition route ID
+    if (currentNode.type === 'router') {
+      return context.state[`${currentNode.id}_next_id`] || null;
+    }
 
     // Critique reviewer branching: 
     // If reviewer failed, target can either loop back or branch to final error handlers
@@ -239,6 +258,124 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             status: 'completed',
             input: "Graph Termination",
             output: finalPayload,
+            duration: Date.now() - stepStart
+          };
+        } else if (node.type === 'router') {
+          const inputPayload = typeof context.state['last_output'] === 'string'
+            ? context.state['last_output']
+            : JSON.stringify(context.state['last_output'] || "");
+
+          const conditions = node.fields.conditions || [];
+          const defaultTargetId = node.fields.defaultTargetNodeId || "";
+
+          let selectedTargetId: string | null = null;
+
+          for (const cond of conditions) {
+            if (cond.type === 'contains') {
+              if (inputPayload.toLowerCase().includes(cond.value.toLowerCase())) {
+                selectedTargetId = cond.targetNodeId;
+                break;
+              }
+            } else if (cond.type === 'regex') {
+              try {
+                const regex = new RegExp(cond.value, 'i');
+                if (regex.test(inputPayload)) {
+                  selectedTargetId = cond.targetNodeId;
+                  break;
+                }
+              } catch {}
+            } else if (cond.type === 'json_key') {
+              try {
+                const parsedJson = JSON.parse(inputPayload);
+                const valOfKey = getValueByDotPath(parsedJson, cond.value);
+                if (valOfKey !== undefined && valOfKey !== null && valOfKey !== false) {
+                  selectedTargetId = cond.targetNodeId;
+                  break;
+                }
+              } catch {}
+            }
+          }
+
+          const finalNextNodeId = selectedTargetId || defaultTargetId;
+          context.state[`${node.id}_next_id`] = finalNextNodeId;
+
+          context.stepLogs[currentLogIndex] = {
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: inputPayload,
+            output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
+            duration: Date.now() - stepStart
+          };
+
+        } else if (node.type === 'tool') {
+          const urlRaw = node.fields.url || "";
+          const method = node.fields.method || "GET";
+          const headersRaw = node.fields.headers || "{}";
+          const bodyRaw = node.fields.body || "";
+
+          let url = urlRaw;
+          let body = bodyRaw;
+          let headersStr = headersRaw;
+
+          const substitute = (text: string) => {
+            let out = text;
+            Object.entries(context.variables).forEach(([k, v]) => {
+              const regex = new RegExp(`\\{${k}\\}`, 'g');
+              out = out.replace(regex, String(v));
+              const regexDouble = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+              out = out.replace(regexDouble, String(v));
+            });
+            
+            const lastOutput = typeof context.state['last_output'] === 'string'
+              ? context.state['last_output']
+              : JSON.stringify(context.state['last_output'] || "");
+
+            const r1 = new RegExp(`\\{lastOutput\\}`, 'g');
+            out = out.replace(r1, lastOutput);
+            const r2 = new RegExp(`\\{\\{lastOutput\\}\\}`, 'g');
+            out = out.replace(r2, lastOutput);
+            return out;
+          };
+
+          url = substitute(url);
+          body = substitute(body);
+          headersStr = substitute(headersStr);
+
+          let headers: Record<string, string> = { "Content-Type": "application/json" };
+          try {
+            if (headersStr.trim().startsWith("{")) {
+              headers = { ...headers, ...JSON.parse(headersStr) };
+            }
+          } catch {}
+
+          const fetchOptions: any = {
+            method,
+            headers
+          };
+          if (method !== 'GET' && body) {
+            fetchOptions.body = body;
+          }
+
+          let responseText = "";
+          let responseStatus = 250;
+          try {
+            const fetchRes = await fetch(url, fetchOptions);
+            responseStatus = fetchRes.status;
+            responseText = await fetchRes.text();
+          } catch (err: any) {
+            throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
+          }
+
+          context.state['last_output'] = responseText;
+          context.variables['tool_output'] = responseText;
+
+          context.stepLogs[currentLogIndex] = {
+            nodeId: node.id,
+            nodeTitle: `${node.title} (${method} ${responseStatus})`,
+            status: 'completed',
+            input: `URL: ${url}\nBody: ${body || 'None'}`,
+            output: responseText,
             duration: Date.now() - stepStart
           };
         }

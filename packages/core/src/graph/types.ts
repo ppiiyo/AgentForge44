@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool';
 
 export interface NodeSpec {
   id: string;
