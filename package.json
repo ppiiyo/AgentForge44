@@ -12,6 +12,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
+    "test": "vitest run src/tests/execution.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

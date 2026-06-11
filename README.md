@@ -1,6 +1,6 @@
 # AgentForge — Visual Orchestration Platform for LLM Multi-Agent Workflows
 
-AgentForge is an open-source visual development environment and runtime engine designed to design, trace, and execute multi-agent pipelines and stateful LLM graphs.
+AgentForge is a visual development environment and runtime engine designed to design, trace, and execute multi-agent pipelines and stateful LLM graphs.
 
 ---
 
@@ -25,32 +25,72 @@ AgentForge is an open-source visual development environment and runtime engine d
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start & Deployment Mode
 
-### 1. Requirements
-Ensure you have native tools and [pnpm](https://pnpm.io/) v8+ installed:
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
+### 1. Requirements & Prerequisites
+To run locally, ensure you have:
+- **Node.js** >= 20.0.0 (or matching runtime) and **npm** / **pnpm**
+- Or **Docker** & **Docker Compose** installed for containerized, zero-install execution.
 
-### 2. Setup & Execution
+### 2. Environment Variables Configuration
+Configure your keys in local environment setups or file containers. Before launching, copy the template:
 ```bash
-# Clone the repository
-git clone https://github.com/ppiiyo/AgentForge44.git
-cd AgentForge44
+# Copy template file
+cp .env.example .env
+```
+Open `.env` and fill in your keys:
+- `GEMINI_API_KEY`: Required for visual streaming agents and canvas workflows.
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OLLAMA_HOST`, `TAVILY_API_KEY`: Optional secondary connectors.
 
-# Create environment variables file
-cat <<EOT >> .env
-GEMINI_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL=sqlite://dev.db
-EOT
+---
 
-# Install monorepo dependencies
-pnpm install
+## 🐳 Docker Deployment (Recommended)
 
-# Start the full-stack development workspace
-pnpm run dev
+Run the entire application locally or in production inside a lightweight, highly secure, and optimized multi-stage container.
+
+### Step 1: Fire up via Docker Compose
+Run the following single command to pull the base layers, compile the frontend static assets, bundle the server, and expose the microservice:
+```bash
+docker-compose up --build
+```
+
+### Step 2: Access the Application
+Once the container finishes booting, open your browser:
+*   🖥️ **Web Console & Visual Workspace**: [http://localhost:3000](http://localhost:3000)
+
+### How Containerization Works (Multi-Stage Build):
+1.  **Stage 1: Builder (`node:20-alpine`)**: Installs full configuration manifests and dependencies (including `devDependencies` like Vite, TypeScript, and esbuild), compiles static frontend bundles (`Vite`), and bundles the backend Express TS server into standard `dist/server.cjs` using `esbuild`.
+2.  **Stage 2: Runner (`node:20-alpine`)**: Restricts superuser permissions, establishes a lightweight sandboxed Node runtime, installs only production-level modules (`--omit=dev`), maps volume configurations, sets the default user to standard unprivileged `node` user, and runs the compiled bundle.
+
+---
+
+## 🛠️ Bare-Metal Setup (Development Mode)
+
+If you wish to run the development server with live changes:
+
+```bash
+# 1. Install all dependencies
+npm install
+
+# 2. Run background compilers & live local development server
+npm run dev
+
+# 3. Open dev preview in your workspace browser
+# Dev Server is mapped directly onto http://localhost:3000
+```
+
+---
+
+## 🧪 Testing and Verification
+
+Verify the integrity of active workspaces, backend endpoints, and types:
+
+```bash
+# Run ESLint & TypeScript definitions checks
+npm run lint
+
+# Compile production-ready builds locally
+npm run build
 ```
 
 ---
@@ -74,36 +114,7 @@ graph TD
 
 ---
 
-## 🗺️ Roadmap & Project Timeline
-
-### 🟢 Phase 0: Foundations & Monorepo Configuration (Active)
-- **Monorepo Setup:** Transition to `Turborepo` with isolated modules for core engine, providers, database schemas, and CLI operations.
-- **Strict Verification Rules:** Pre-compile ESLint checks, strict compiler checks, and modular tests on PR cycles.
-- **Explicit Licenses:** Fully declared MIT open-source permissions.
-
-### 🟡 Phase 1: Modular Multi-Agent Capabilities
-- **Multi-Provider SDK Hooks:** Seamless routing to Anthropic, OpenAI, Ollie, and Cohere.
-- **Stateful Cyclic Execution Engine:** Direct execution graphs containing conditions, loops, and parallel paths.
-- **Function Calling Framework:** Dynamic execution of system utilities like Google Search (Tavily), Web Scrapers, and sandboxed code execution environments.
-- **Vector-Based Short and Long-Term Memory:** Embedding-backed SQLite persistence for session states and historical memory.
-
-### 🔴 Phase 2: Production Scale & Security
-- **Headless API Routing:** Execute workflows via stateless REST endpoints: `POST /api/runs`.
-- **Workspaces & Multi-Tenancy:** Secure authentication setups allowing collaborative workspaces.
-- **Configuration CLI:** Run headless nodes via a command-line executor: `agentforge run --config ./graph.json`.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions to the visual orchestrator codebases:
-1. Fork the workspace.
-2. Form your module patch branch (`git checkout -b feature/ProviderUpgrade`).
-3. Commit safely and run linter validation checks locally: `pnpm run lint`.
-4. Open a clean pull request against the `main` upstream branch.
-
----
-
 ## 📜 License
 
 Licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
