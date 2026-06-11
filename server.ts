@@ -1,12 +1,20 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
 import { executeTool } from './src/api/tools.js';
 import { runEvaluationSuite, getPatternTemplate, indexLibraryDocument, searchIndexedLibrary } from './src/api/advancedPhase4.js';
+import { CodeGenerator } from './src/api/codeGenerator.js';
 
 dotenv.config();
+
+const PROJECTS_DIR = path.join(process.cwd(), 'projects');
+if (!fs.existsSync(PROJECTS_DIR)) {
+  fs.mkdirSync(PROJECTS_DIR, { recursive: true });
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -38,6 +46,98 @@ function isRateLimited(key: string): boolean {
 const ALLOWED_API_KEYS = new Set([
   process.env.AGENTFORGE_API_KEY || "forge_production_admin_token"
 ]);
+
+/**
+ * Projects Persistence: Save, List, and Load active Flow Graph Workspace
+ */
+app.get('/api/projects', async (req: express.Request, res: express.Response) => {
+  try {
+    const files = await fsPromises.readdir(PROJECTS_DIR);
+    const projectsList = [];
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const filePath = path.join(PROJECTS_DIR, file);
+          const raw = await fsPromises.readFile(filePath, 'utf-8');
+          const content = JSON.parse(raw);
+          const stats = await fsPromises.stat(filePath);
+          projectsList.push({
+            id: file.replace('.json', ''),
+            name: content.name || file.replace('.json', ''),
+            createdAt: stats.birthtime,
+            updatedAt: stats.mtime,
+            nodes: content.nodes || [],
+            connections: content.connections || []
+          });
+        } catch {}
+      }
+    }
+    res.json(projectsList);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/projects', async (req: express.Request, res: express.Response) => {
+  try {
+    const { name, nodes, connections } = req.body;
+    if (!name || typeof name !== 'string') {
+      res.status(400).json({ error: "Valid project name is required" });
+      return;
+    }
+    const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_project";
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    const payload = {
+      name: safeName,
+      nodes: nodes || [],
+      connections: connections || [],
+      savedAt: new Date().toISOString()
+    };
+    await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+    res.json({ success: true, name: safeName, message: "Project saved successfully!" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/projects/:name', async (req: express.Request, res: express.Response) => {
+  try {
+    const { name } = req.params;
+    const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    if (fs.existsSync(filePath)) {
+      await fsPromises.unlink(filePath);
+      res.json({ success: true, message: `Project ${safeName} has been deleted.` });
+    } else {
+      res.status(404).json({ error: "Project not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Projects Code Generator: Exports any visual node graph to executable script
+ */
+app.post('/api/projects/export', (req: express.Request, res: express.Response) => {
+  try {
+    const { nodes, connections, language } = req.body;
+    if (!nodes || !connections) {
+      res.status(400).json({ error: "Missing required workflow nodes and connections." });
+      return;
+    }
+    const targetLang = language === 'python' ? 'python' : 'typescript';
+    let codeStr = "";
+    if (targetLang === 'python') {
+      codeStr = CodeGenerator.generatePython(nodes, connections);
+    } else {
+      codeStr = CodeGenerator.generateTypeScript(nodes, connections);
+    }
+    res.json({ success: true, language: targetLang, code: codeStr });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * Phase 4 Endpoint: Loader of Pre-Packaged Multi-Agent Architectures

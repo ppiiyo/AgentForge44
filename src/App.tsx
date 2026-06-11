@@ -73,7 +73,13 @@ const translations = {
     logsDesc: "Ready to process variables! Configure inputs, write prompt rules, and click Run Pipe Flows to stream results natively.",
     durationLabel: "Total Duration",
     copiedKey: "Copied!",
-    historyHeader: "Saved Flow Snapshots"
+    historyHeader: "Saved Flow Snapshots",
+    serverPersistence: "Server-Side Projects",
+    serverPersistenceDesc: "Save the current active graph flow as a JSON workspace onto the server's filesystem.",
+    projectNameHolder: "Project name...",
+    saveProjectBtn: "Save Project",
+    savedListTitle: "Server Saved Projects",
+    noSavedProjects: "No project files stored on the server yet."
   },
   ru: {
     title: "Арена AgentForge44",
@@ -131,7 +137,13 @@ const translations = {
     logsDesc: "Готов к обработке переменных! Настройте входы, напишите инструкции и запустите выполнение потока.",
     durationLabel: "Общее время",
     copiedKey: "Скопировано!",
-    historyHeader: "Сохраненные снимки"
+    historyHeader: "Сохраненные снимки",
+    serverPersistence: "Сохранение на сервере",
+    serverPersistenceDesc: "Сохраните текущую активную схему в виде JSON-файла в папку проектов на сервере.",
+    projectNameHolder: "Название проекта...",
+    saveProjectBtn: "Сохранить проект",
+    savedListTitle: "Список проектов на бэкенде",
+    noSavedProjects: "На сервере пока нет сохраненных проектов."
   },
   zh: {
     title: "AgentForge44 控制台",
@@ -189,7 +201,13 @@ const translations = {
     logsDesc: "已就绪！调整输入源和判定阈值，并点击'运行工作流'实时观测数据吞吐。",
     durationLabel: "执行总耗时",
     copiedKey: "已复制到剪贴板!",
-    historyHeader: "存档历史管理"
+    historyHeader: "存档历史管理",
+    serverPersistence: "服务器级项目归档",
+    serverPersistenceDesc: "将当前活跃的工作流拓扑保存到服务器后端的文件存储系统中（JSON）。",
+    projectNameHolder: "输入项目文件名...",
+    saveProjectBtn: "归档并保存项目",
+    savedListTitle: "后端已归档项目目录",
+    noSavedProjects: "服务器端尚未建立任何工作流归档文件。"
   }
 };
 
@@ -243,6 +261,25 @@ export default function App() {
   const [nodeExecutionStatuses, setNodeExecutionStatuses] = useState<Record<string, 'idle' | 'running' | 'completed' | 'failed'>>({});
   const [isDryRunningNode, setIsDryRunningNode] = useState<string | null>(null);
   const [dryRunOutput, setDryRunOutput] = useState<Record<string, string>>({});
+
+  // Server-Side Project & Compiled Code State Management
+  interface SavedServerProject {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    nodes: FlowNode[];
+    connections: FlowConnection[];
+  }
+  const [serverProjects, setServerProjects] = useState<SavedServerProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState<boolean>(false);
+  const [savingProject, setSavingProject] = useState<boolean>(false);
+  const [projectNameInput, setProjectNameInput] = useState<string>("");
+  const [currentSavedProjectName, setCurrentSavedProjectName] = useState<string | null>(null);
+  const [codeDisplayType, setCodeDisplayType] = useState<'client' | 'compiled'>('compiled');
+  const [serverGeneratedCode, setServerGeneratedCode] = useState<string>("");
+  const [loadingServerGeneratedCode, setLoadingServerGeneratedCode] = useState<boolean>(false);
+
 
   // Helper to record actions before mutating properties
   const recordAction = (customNodes = nodes, customConnections = connections) => {
@@ -573,6 +610,112 @@ export default function App() {
       alert(`Pattern Load Error: ${err.message}`);
     }
   };
+
+  // --- SERVER-SIDE RESILIENT PROJECTS ENGINE ---
+  const fetchServerProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const res = await fetch('/api/projects');
+      if (res.ok) {
+        const list = await res.json();
+        setServerProjects(list);
+      }
+    } catch (err) {
+      console.error("Failed to load backend projects:", err);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  const handleSaveProjectToServer = async (name: string) => {
+    if (!name.trim()) return;
+    setSavingProject(true);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, nodes, connections })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentSavedProjectName(data.name);
+        fetchServerProjects();
+        setCopiedText("Project saved to server list in /projects! 💾");
+        setTimeout(() => setCopiedText(null), 3500);
+      }
+    } catch (err) {
+      console.error("Project save failure:", err);
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  const handleDeleteProjectFromServer = async (name: string) => {
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(name)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        if (currentSavedProjectName === name) {
+          setCurrentSavedProjectName(null);
+        }
+        fetchServerProjects();
+      }
+    } catch (err) {
+      console.error("Project deletion error:", err);
+    }
+  };
+
+  const handleLoadProjectFromServer = (proj: any) => {
+    recordAction();
+    setNodes(proj.nodes);
+    setConnections(proj.connections);
+    setCurrentSavedProjectName(proj.name);
+    
+    setActiveWorkflow({
+      id: `server-proj-${proj.name}`,
+      name: proj.name,
+      desc: `Loaded from server-side projects directory storage.`,
+      logo: "📂",
+      stars: "Local Saved",
+      category: "User Workspaces",
+      complexity: "custom",
+      nodes: proj.nodes,
+      connections: proj.connections
+    });
+  };
+
+  // --- COMPILER WORKER TRIGGER ---
+  const compileActiveWorkflow = async (lang: 'typescript' | 'python') => {
+    setLoadingServerGeneratedCode(true);
+    try {
+      const res = await fetch('/api/projects/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes, connections, language: lang })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setServerGeneratedCode(data.code);
+      }
+    } catch (err) {
+      console.error("Compilation endpoint error:", err);
+    } finally {
+      setLoadingServerGeneratedCode(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServerProjects();
+  }, []);
+
+  // Proactive reactive compiler to keep server generated code perfectly in sync with the live canvas topology
+  useEffect(() => {
+    if (activeTab === 'code' && codeDisplayType === 'compiled') {
+      const targetLang = codeTab === 'python' ? 'python' : 'typescript';
+      compileActiveWorkflow(targetLang);
+    }
+  }, [activeTab, codeTab, codeDisplayType, nodes, connections]);
 
   // Virality Simulator State
   const [simDocQual, setSimDocQual] = useState<number>(85);
@@ -1153,7 +1296,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
   };
 
   const handleCopyCode = () => {
-    const code = generateCopieableCode();
+    const code = codeDisplayType === 'compiled' ? serverGeneratedCode : generateCopieableCode();
     navigator.clipboard.writeText(code);
     setCopiedText("Copied to clipboard!");
     setTimeout(() => setCopiedText(null), 2500);
@@ -1368,6 +1511,8 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 { type: 'prompt', label: 'Prompt Template', desc: 'Formula parameters', color: 'hover:border-purple-500/40 hover:bg-purple-950/10' },
                 { type: 'gemini', label: 'Gemini LLM', desc: 'Trigger twin core reasoning models', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
                 { type: 'reviewer', label: 'Critique Review', desc: 'Feedback loops system rules', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
+                { type: 'router', label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10' },
+                { type: 'tool', label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
                 { type: 'output', label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10' }
               ].filter(tb => {
                 if (!toolboxSearch) return true;
@@ -1385,6 +1530,8 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     {tb.type === 'prompt' && <Terminal size={11} className="text-purple-400" />}
                     {tb.type === 'gemini' && <Sparkles size={11} className="text-teal-400" />}
                     {tb.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
+                    {tb.type === 'router' && <GitBranch size={11} className="text-sky-400" />}
+                    {tb.type === 'tool' && <Globe size={11} className="text-rose-400" />}
                     {tb.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
                     {tb.label}
                   </span>
@@ -1756,6 +1903,101 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                   </div>
                 ))
               )}
+            </div>
+          </div>
+
+          {/* Server-Side Persistence Folder Storage */}
+          <div className="p-4 border-t border-slate-850 bg-slate-900/80">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+              <FolderPlus size={14} className="text-emerald-400" /> {translations[currentLang].serverPersistence}
+            </h3>
+            <p className="text-[10px] text-slate-500 mb-3 leading-normal">
+              {translations[currentLang].serverPersistenceDesc}
+            </p>
+
+            <div className="space-y-2.5">
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  placeholder={translations[currentLang].projectNameHolder}
+                  value={projectNameInput}
+                  onChange={(e) => setProjectNameInput(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-805 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500/50"
+                  id="project-name-txt"
+                />
+                <button
+                  id="save-project-dir-btn"
+                  onClick={() => {
+                    if (projectNameInput.trim()) {
+                      handleSaveProjectToServer(projectNameInput);
+                    }
+                  }}
+                  disabled={savingProject}
+                  className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold px-3 py-1.5 text-xs rounded-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center min-w-[70px]"
+                >
+                  {savingProject ? "..." : translations[currentLang].saveProjectBtn}
+                </button>
+              </div>
+
+              {/* Server Saved Projects Directory List */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  {translations[currentLang].savedListTitle}
+                </span>
+
+                {loadingProjects ? (
+                  <p className="text-[10px] text-slate-500 italic py-1 text-center">Loading server assets...</p>
+                ) : serverProjects.length === 0 ? (
+                  <p className="text-[10px] text-slate-500 italic py-1 text-center">
+                    {translations[currentLang].noSavedProjects}
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1" id="server_saved_projects_list">
+                    {serverProjects.map(proj => {
+                      const isCurrentlyActive = currentSavedProjectName === proj.name;
+                      return (
+                        <div
+                          id={`server-proj-item-${proj.name}`}
+                          key={proj.name}
+                          className={`p-2 rounded-xl border text-[11px] flex items-center justify-between gap-2 group transition-all ${
+                            isCurrentlyActive
+                              ? 'bg-emerald-500/5 border-emerald-500/30 text-emerald-350 font-bold'
+                              : 'bg-slate-950 border-slate-850 hover:border-slate-700 text-slate-300'
+                          }`}
+                        >
+                          <div
+                            onClick={() => {
+                              handleLoadProjectFromServer(proj);
+                              setProjectNameInput(proj.name);
+                            }}
+                            className="flex-1 truncate cursor-pointer leading-tight min-w-0"
+                            title="Click to load project data into canvas"
+                          >
+                            <span className="block truncate">{proj.name}</span>
+                            <span className="text-[8.5px] text-slate-500 font-mono block mt-0.5">
+                              Nodes: {proj.nodes?.length || 0} | Conns: {proj.connections?.length || 0}
+                            </span>
+                          </div>
+
+                          <button
+                            id={`delete-server-proj-${proj.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Are you sure you want to delete project: ${proj.name}?`)) {
+                                handleDeleteProjectFromServer(proj.name);
+                              }
+                            }}
+                            className="text-slate-600 hover:text-rose-400 p-1 rounded cursor-pointer shrink-0 transition-colors"
+                            title="Deletes JSON project file on server storage"
+                          >
+                            <Trash size={11} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </aside>
@@ -2536,9 +2778,39 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                   exit={{ opacity: 0 }}
                   className="space-y-4"
                 >
-                  <p className="text-xs text-slate-500 leading-normal">
-                    Instantly export your visual workspace logic into structural full-stack SDK implementations for your app.
-                  </p>
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-slate-400 leading-normal">
+                      Export your active visual workspace logic into a production-ready, compiled executable script or client sandbox snippet.
+                    </p>
+
+                    {/* Mode Selector Toggle: Simple Sandbox vs Compiled Workflow */}
+                    <div className="flex border border-slate-850 bg-slate-950/60 rounded-xl p-1 mt-1" id="code_mode_selector">
+                      <button
+                        onClick={() => setCodeDisplayType('compiled')}
+                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          codeDisplayType === 'compiled'
+                            ? 'bg-slate-900 border border-slate-800 text-sky-450 shadow'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                        id="code_pipeline_toggle"
+                      >
+                        <Network size={12} className={codeDisplayType === 'compiled' ? "text-sky-450" : ""} />
+                        <span>{currentLang === 'ru' ? "Схема сборки (Полный поток)" : "Full Workflow (Compiled)"}</span>
+                      </button>
+                      <button
+                        onClick={() => setCodeDisplayType('client')}
+                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          codeDisplayType === 'client'
+                            ? 'bg-slate-900 border border-slate-800 text-emerald-400 shadow'
+                            : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                        id="code_sandbox_toggle"
+                      >
+                        <Zap size={12} className={codeDisplayType === 'client' ? "text-emerald-400" : ""} />
+                        <span>{currentLang === 'ru' ? "Простой шаблон (Песочница)" : "Simple Block (Sandbox)"}</span>
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Languages Selector */}
                   <div className="flex border border-slate-800 rounded-xl overflow-hidden p-0.5" id="code_lang_selector">
@@ -2550,7 +2822,9 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                       <button
                         id={`btn-lang-${lang.id}`}
                         key={lang.id}
-                        onClick={() => setCodeTab(lang.id as any)}
+                        onClick={() => {
+                          setCodeTab(lang.id as any);
+                        }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded-lg cursor-pointer transition-all ${
                           codeTab === lang.id 
                             ? 'bg-sky-500/15 text-sky-400' 
@@ -2564,35 +2838,67 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
 
                   {/* Code Card Block */}
                   <div className="relative">
-                    <pre className="text-[10.5px] font-mono text-slate-300 bg-slate-950 p-4 rounded-xl max-h-[460px] overflow-y-auto whitespace-pre border border-slate-850 leading-relaxed focus:outline-none select-text">
-                      {generateCopieableCode()}
-                    </pre>
+                    {loadingServerGeneratedCode && codeDisplayType === 'compiled' ? (
+                      <div className="flex flex-col items-center justify-center py-20 bg-slate-950 border border-slate-850 rounded-xl text-slate-500 font-mono text-xs gap-3">
+                        <RefreshCw size={24} className="animate-spin text-emerald-400" />
+                        <span>Compiling active workflow topology into direct code...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <pre className="text-[10.5px] font-mono text-slate-300 bg-slate-950 p-4 rounded-xl max-h-[460px] overflow-y-auto whitespace-pre border border-slate-850 leading-relaxed focus:outline-none select-text">
+                          {codeDisplayType === 'compiled' 
+                            ? (codeTab === 'curl' 
+                                ? `# cURL Trigger to invoke the current execution pipeline remotely via the server API\ncurl -X POST http://localhost:3000/api/pipeline/run \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "name": "${activeWorkflow.name || "Custom Flow"}",\n    "nodes": ${JSON.stringify(nodes.map(n => ({ id: n.id, type: n.type, fields: n.fields })), null, 4).replace(/\n/g, '\n    ')},\n    "connections": ${JSON.stringify(connections, null, 4).replace(/\n/g, '\n    ')}\n  }'`
+                                : serverGeneratedCode || `// Compiled code for ${codeTab} is not loaded. Try changing modes or click 'Save' to trigger compiler.`)
+                            : (codeTab === 'curl' 
+                                ? `# Simple webhook trigger for executing the workflow\ncurl -X POST http://localhost:3000/api/pipeline/run`
+                                : generateCopieableCode())
+                          }
+                        </pre>
 
-                    <button
-                      id="copy-code-btn"
-                      onClick={handleCopyCode}
-                      className="absolute top-3 right-3 shrink bg-slate-900 border border-slate-750 text-slate-300 hover:text-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all shadow hover:border-slate-600 flex items-center gap-1"
-                    >
-                      {copiedText === "Copied to clipboard!" ? (
-                        <>
-                          <Check size={12} className="text-emerald-400" />
-                          <span>Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={12} />
-                          <span>Copy Client Code</span>
-                        </>
-                      )}
-                    </button>
+                        <button
+                          id="copy-code-btn"
+                          onClick={handleCopyCode}
+                          className="absolute top-3 right-3 shrink bg-slate-900 border border-slate-750 text-slate-300 hover:text-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all shadow hover:border-slate-600 flex items-center gap-1"
+                        >
+                          {copiedText === "Copied to clipboard!" ? (
+                            <>
+                              <Check size={12} className="text-emerald-400" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} />
+                              <span>Copy Exporter Script</span>
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <div className="bg-slate-950/40 p-3.5 border border-slate-850 rounded-xl space-y-1 text-xs">
                     <span className="font-bold text-slate-300 block">Integration Instructions:</span>
                     <ol className="list-decimal list-inside text-slate-500 space-y-1 leading-normal pl-1 text-[11px]">
-                      <li>Install SDK: <code className="text-teal-400 font-mono">npm install @google/genai</code> or <code className="text-teal-400 font-mono">pip install google-genai</code>.</li>
-                      <li>Configure your server API key: <code className="text-slate-305 font-mono">export GEMINI_API_KEY="AI-KEY"</code>.</li>
-                      <li>Copy client code blocks above into your source modules to run directly!</li>
+                      {codeTab === 'typescript' && (
+                        <>
+                          <li>Install SDK & Server tools: <code className="text-teal-400 font-mono">npm install @google/genai express dotenv</code>.</li>
+                          <li>Run code with support for Node's stripped types directly: <code className="text-teal-400 font-mono">npx tsx script.ts</code>.</li>
+                        </>
+                      )}
+                      {codeTab === 'python' && (
+                        <>
+                          <li>Install SDK dependencies: <code className="text-teal-400 font-mono">pip install google-genai requests pydantic</code>.</li>
+                          <li>Run python runner script directly: <code className="text-teal-400 font-mono">python script.py</code>.</li>
+                        </>
+                      )}
+                      {codeTab === 'curl' && (
+                        <>
+                          <li>Ensure the server is running on <code className="text-slate-400 font-mono">http://localhost:3000</code>.</li>
+                          <li>Execute cURL in your terminal to see raw step execution pathways logs.</li>
+                        </>
+                      )}
+                      <li>Ensure your environment has initialized: <code className="text-emerald-450 font-mono">export GEMINI_API_KEY="AI-KEY"</code>.</li>
                     </ol>
                   </div>
                 </motion.div>
