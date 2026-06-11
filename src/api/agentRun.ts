@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from "../types.js";
 
 function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | null {

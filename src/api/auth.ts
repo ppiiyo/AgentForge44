@@ -20,7 +20,7 @@ export class SecretsShield {
    */
   encrypt(text: string): string {
     const iv = crypto.randomBytes(12); // standard 96-bit IV
-    const cipher = crypto.createCipheriv(this.algorithm, this.masterKey, iv) as crypto.CipherGCM;
+    const cipher = crypto.createCipheriv(this.algorithm, this.masterKey, iv) as any;
     
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -46,7 +46,7 @@ export class SecretsShield {
     const [ivHex, tagHex, contentHex] = parts;
     const iv = Buffer.from(ivHex, 'hex');
     const tag = Buffer.from(tagHex, 'hex');
-    const decipher = crypto.createDecipheriv(this.algorithm, this.masterKey, iv) as crypto.DecipherGCM;
+    const decipher = crypto.createDecipheriv(this.algorithm, this.masterKey, iv) as any;
     
     decipher.setAuthTag(tag);
     
