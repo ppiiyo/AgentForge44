@@ -1,8 +1,9 @@
 {
-  "name": "agentforge44",
+  "name": "agentforge",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "description": "Visual, low-code orchestrator and development environment for multi-agent LLM systems",
   "license": "MIT",
   "scripts": {
     "dev": "tsx server.ts",

@@ -1,129 +1,109 @@
-# 🚀 AgentForge44 — Production-Grade Visual LLM Workflow Orchestrator
+# AgentForge — Visual Orchestration Platform for LLM Multi-Agent Workflows
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Powered_by-Gemini_Core-00F?style=for-the-badge&logo=google-gemini&logoColor=white" alt="Gemini Powered" />
-  <img src="https://img.shields.io/badge/Node.js-v18%2B-green?style=for-the-badge&logo=node.js" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Vite-React%20%2B%20TS-646CFF?style=for-the-badge&logo=vite" alt="Vite + React" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License" />
-  <img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=github-actions" alt="CI Status" />
-</p>
+AgentForge is an open-source visual development environment and runtime engine designed to design, trace, and execute multi-agent pipelines and stateful LLM graphs.
 
 ---
 
-## 📖 Overview
+## 🖼️ User Interface Preview
 
-**AgentForge44** is an enterprise-grade visual, low-code rapid development environment designed to architect, experiment, trace, and deploy production-ready multi-agent systems and LLM workflows in seconds. With an style-forward reactive node interface (inspired by Flowise and LangFlow) and a super-optimized TS/Express runtime backend, AgentForge44 provides ultimate safety, sub-graph testing sandboxes, and lightning-fast developer experience.
-
----
-
-## 🖼️ Application Preview
-
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────┐
-│  AgentForge44 Console                           [Play] [Save] [Share]  │
+│  AgentForge Console                                 [Run] [Save] [Share]│
 ├────────────────────────────────────────────────────────────────────────┤
 │  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
-│  │  Input Node   ├───────►│  Prompt Node  ├───────►│  Gemini-LLM   │   │
-│  │  Variables    │        │  Parameters   │        │  Temperature  │   │
+│  │  Input Node   ├───────►│  Prompt Node  ├───────►│  Gemini Node  │   │
+│  │  Variables    │        │  Templates    │        │  Reasoning    │   │
 │  └───────────────┘        └───────────────┘        └───────┬───────┘   │
 │                                                            │           │
 │                                                            ▼           │
 │  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
-│  │ Output Node   │◄───────┤  Agent Trace  │◄───────┤ Critique-Node │   │
-│  │ Compilation   │ (Retry)│  Isolated     │        │ Verification  │   │
+│  │ Output Node   │◄───────┤  Trace Audit  │◄───────┤ Critic Node   │   │
+│  │ Payload Out   │ (Retry)│  Execution    │        │ self-correct  │   │
 │  └───────────────┘        └───────────────┘        └───────────────┘   │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🗺️ Architecture Workflow
+## ⚡ Quick Start
+
+### 1. Requirements
+Ensure you have native tools and [pnpm](https://pnpm.io/) v8+ installed:
+- Node.js >= 18.0.0
+- pnpm >= 8.0.0
+
+### 2. Setup & Execution
+```bash
+# Clone the repository
+git clone https://github.com/ppiiyo/AgentForge44.git
+cd AgentForge44
+
+# Create environment variables file
+cat <<EOT >> .env
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+DATABASE_URL=sqlite://dev.db
+EOT
+
+# Install monorepo dependencies
+pnpm install
+
+# Start the full-stack development workspace
+pnpm run dev
+```
+
+---
+
+## ☄️ Architecture
 
 ```mermaid
 graph TD
     A[Inputs Node: Dynamic Variables] --> B[Prompt Node: Context Compilation]
-    B --> C[Gemini LLM Node: Core Reasoning]
+    B --> C[LLM Node: Multi-Provider Generation]
     C --> D{Critique Node: Self-Correction Loop}
     D -- Retry (If Validation Fails) --> B
-    D -- Approved --> E[Output Node: Compile Payload]
+    D -- Approved --> E[Output Node: Final Payload]
     
-    subgraph Execution Sandbox (Sub-Graph isolated dry-run)
-        F[Select Node ID] --> G[Extract Path Dependency Tree]
-        G --> H[Synthesize Mock Context]
-        H --> I[Execute Isolated Sandbox Node Trace]
+    subgraph Core Execution Engine (packages/core)
+        Executor[Graph Executor] --> Match[Node Handler Router]
+        Match --> ShortTerm[Short-Term Memory Manager]
+        Match --> VectorIndex[Vector Embeddings Retriever]
     end
 ```
 
 ---
 
-## ⚡ Quick Start (3 Commands)
+## 🗺️ Roadmap & Project Timeline
 
-Get your environment running with zero fluff:
+### 🟢 Phase 0: Foundations & Monorepo Configuration (Active)
+- **Monorepo Setup:** Transition to `Turborepo` with isolated modules for core engine, providers, database schemas, and CLI operations.
+- **Strict Verification Rules:** Pre-compile ESLint checks, strict compiler checks, and modular tests on PR cycles.
+- **Explicit Licenses:** Fully declared MIT open-source permissions.
 
-```bash
-# 1. Install Workspace Monorepo Dependencies
-npm install
+### 🟡 Phase 1: Modular Multi-Agent Capabilities
+- **Multi-Provider SDK Hooks:** Seamless routing to Anthropic, OpenAI, Ollie, and Cohere.
+- **Stateful Cyclic Execution Engine:** Direct execution graphs containing conditions, loops, and parallel paths.
+- **Function Calling Framework:** Dynamic execution of system utilities like Google Search (Tavily), Web Scrapers, and sandboxed code execution environments.
+- **Vector-Based Short and Long-Term Memory:** Embedding-backed SQLite persistence for session states and historical memory.
 
-# 2. Provision Environment Secrets
-echo "GEMINI_API_KEY=your_gemini_api_key_here" > .env
-
-# 3. Boot Dev Server (Frontend + Express API Proxy)
-npm run dev
-```
-Open **`http://localhost:3000`** and start building your graph.
-
----
-
-## 💎 Competitive Advantages
-
-| Feature | **AgentForge44** 🚀 | **LangFlow / Flowise** | **Naive LLM Playgrounds** |
-| :--- | :--- | :--- | :--- |
-| **Engine Footprint** | Ultralight Node/TS ESM-CJS bundle. Binds in < 2s. | High-latency Python environments / bulky Docker layers. | Static Client SPA only; exposed browser API keys. |
-| **Isolated Dry-Run** | **Supported.** Interactive virtual trace with sandbox variables. | Requires entire graph execution; no route splitting. | None. Static mock evaluations only. |
-| **Visual State Tracing** | Motion-reactive sequence execution tracking. | Basic progress logs. | No node tracing mechanics. |
-| **Deployment Security** | High safety proxy layer; zero runtime leaks to DOM. | Complex multifront configs. | Client CORS vulnerable. |
-
----
-
-## 📅 Roadmap (The Architect's blueprint)
-
-### 🟢 Phase 0: Foundations & Monorepo (Completed)
-- **CI/CD Pipeline:** Complete typecheck and bundler sanitization on PR and push steps.
-- **MIT License:** Solidified license files and package definitions.
-- **Unified Workspace Structure:** Clean Separation of Concerns.
-
-### 🟡 Phase 1: Core Orchestration Agent Engine
-- **Multi-provider SDK:** Integration with Anthropic, OpenAI, Ollama through Unified `LLMProvider` signature.
-- **Function Calling & Standard Tools:** Extensible JSON Schema mapping for `web_search` (Tavily), secure sandboxed `code_interpreter`, and `file_system_operations`.
-- **Sliding-Window DB memory:** Memory boundaries leveraging short-term memory sliding windows and persistent vector storage structures.
-
-### 🔴 Phase 2: Production Reliability
-- **Multi-tenant workspaces & RBAC:** Auth structures separating user actions (`Viewer`, `Editor`, `Owner`).
-- **Headless Execution Router:** Execution endpoints at `POST /api/runs` secured with route rate limits.
-- **Configurable CLI:** Run visual models in production with: `agentforge run ./graph.json --input "..."`.
-
-### 🟣 Phase 3: Sophisticated Multi-Agent Topologies
-- **Dynamic Supervisor Patterns:** Layered graph executions and agent-to-agent negotiations using state queues.
-- **Human-in-the-loop Gateways:** Breakpoint interrupts with React actions for safe tool execution approvals.
-
----
-
-## 🔒 Security Architecture
-
-AgentForge44 acts as an air-gapped system between client frontends and LLM models:
-* **Token Zero-Leakage:** All API keys remain isolated within backend memory environments.
-* **Server Intermediaries:** Browser-client calls represent pure node configuration payloads; execution coordinates strictly load from Express endpoints.
+### 🔴 Phase 2: Production Scale & Security
+- **Headless API Routing:** Execute workflows via stateless REST endpoints: `POST /api/runs`.
+- **Workspaces & Multi-Tenancy:** Secure authentication setups allowing collaborative workspaces.
+- **Configuration CLI:** Run headless nodes via a command-line executor: `agentforge run --config ./graph.json`.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome additions to AgentForge44:
-1. Fork the repo.
-2. Build your feature branch (`git checkout -b feature/NewLLMSupport`).
-3. Commit safely and check type safety via `npm run lint`.
-4. Open a Pull Request!
+We welcome contributions to the visual orchestrator codebases:
+1. Fork the workspace.
+2. Form your module patch branch (`git checkout -b feature/ProviderUpgrade`).
+3. Commit safely and run linter validation checks locally: `pnpm run lint`.
+4. Open a clean pull request against the `main` upstream branch.
 
 ---
 
-*Crafted for production-grade Multi-Agent environments. Build secure, build fast.*
+## 📜 License
+
+Licensed under the MIT License. See [LICENSE](./LICENSE) for details.
