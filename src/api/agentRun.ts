@@ -53,7 +53,7 @@ async function generateWithRetry(
       // If it is a hard quota error and we can fall back, do so immediately without wasting delay time!
       if (isQuotaExceeded && (currentModel === 'gemini-3.5-flash' || currentModel === 'gemini-3.1-pro-preview')) {
         const fallbackModel = 'gemini-3.1-flash-lite';
-        console.warn(`[AgentForge] Hard quota limit reached for ${currentModel}. Falling back immediately to ${fallbackModel}...`);
+        console.warn(`[AgentForge44] Hard quota limit reached for ${currentModel}. Falling back immediately to ${fallbackModel}...`);
         currentModel = fallbackModel;
         attemptsLeft = 3; // Give the fallback model full run attempts
         currentDelay = delayMs;
@@ -62,14 +62,14 @@ async function generateWithRetry(
 
       attemptsLeft--;
       if (isTransient && attemptsLeft > 0) {
-        console.warn(`[AgentForge] Gemini API status is transient (${errMsg}). Retrying in ${currentDelay}ms... attempts left: ${attemptsLeft}`);
+        console.warn(`[AgentForge44] Gemini API status is transient (${errMsg}). Retrying in ${currentDelay}ms... attempts left: ${attemptsLeft}`);
         await new Promise(resolve => setTimeout(resolve, currentDelay));
         currentDelay *= 2;
       } else {
         // Switch model as final effort fallback if attempts are exhausted
         if (currentModel === 'gemini-3.5-flash' || currentModel === 'gemini-3.1-pro-preview') {
           const fallbackModel = 'gemini-3.1-flash-lite';
-          console.warn(`[AgentForge] Fallback activated: switching load from ${currentModel} to ${fallbackModel} due to errors...`);
+          console.warn(`[AgentForge44] Fallback activated: switching load from ${currentModel} to ${fallbackModel} due to errors...`);
           currentModel = fallbackModel;
           attemptsLeft = 2; // Give fallback some retry attempts
           currentDelay = delayMs;

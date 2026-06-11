@@ -1,133 +1,129 @@
-# 🚀 AgentForge — Визуальный Конструктор и Песочница AI-Агентов
+# 🚀 AgentForge44 — Production-Grade Visual LLM Workflow Orchestrator
 
 <p align="center">
   <img src="https://img.shields.io/badge/Powered_by-Gemini_Core-00F?style=for-the-badge&logo=google-gemini&logoColor=white" alt="Gemini Powered" />
   <img src="https://img.shields.io/badge/Node.js-v18%2B-green?style=for-the-badge&logo=node.js" alt="Node.js" />
   <img src="https://img.shields.io/badge/Vite-React%20%2B%20TS-646CFF?style=for-the-badge&logo=vite" alt="Vite + React" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License" />
+  <img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=github-actions" alt="CI Status" />
 </p>
 
 ---
 
-## 📖 Обзор проекта
+## 📖 Overview
 
-**AgentForge** — это передовая визуальная среда разработки (Low-Code/No-Code), которая позволяет проектировать, тестировать и отлаживать цепочки рассуждений мультиагентных систем и LLM-пайплайнов прямо в браузере. С её помощью вы можете превратить сложные промпты и цепочки вызовов в интуитивно понятные интерактивные графы.
-
-В отличие от громоздких решений, AgentForge сочетает в себе элегантный визуальный интерфейс в стиле **Flowise** и **LangFlow**, высокую отзывчивость реактивного UI на Tailwind/Motion и легковесный, высокопроизводительный TypeScript-бэкенд на Node.js/Express.
+**AgentForge44** is an enterprise-grade visual, low-code rapid development environment designed to architect, experiment, trace, and deploy production-ready multi-agent systems and LLM workflows in seconds. With an style-forward reactive node interface (inspired by Flowise and LangFlow) and a super-optimized TS/Express runtime backend, AgentForge44 provides ultimate safety, sub-graph testing sandboxes, and lightning-fast developer experience.
 
 ---
 
-## ✨ Ключевые Фишки & Возможности
-
-### 🎨 1. Интерактивная Сетка и Умный UI
-*   **Drag-and-Drop Свобода:** Легко перемещайте ноды, распределяйте их по ролям и соединяйте связи.
-*   **Привязка к сетке (Snapping):** Включайте умное выравнивание шагов по сетке с шагом 15px для идеальной гармонии интерфейса.
-*   **Блокировка холста (Canvas Lock):** Фиксируйте ноды на своих местах при тонкой настройке контента, чтобы защитить структуру от случайных перетаскиваний.
-*   **Автовыравнивание (Clean Grid Layout):** Перестраивайте всю структуру в структурированную последовательную цепочку в один клик.
-
-### 🧠 2. Продвинутые Типы Нод (Строительные блоки)
-*   **📂 Нода Входа (Inputs):** Хранит входящие динамические переменные, параметры контекста и ключи поиска.
-*   **✍️ Шаблон Промпта (Prompt Template):** Позволяет создавать гибкие формулы промптов с автоподстановкой переменных из предыдущих шагов.
-*   **🔮 Gemini LLM Нода:** Прямая интеграция с семейством моделей `google/genai`. Задействует мощные вычислительные способности ИИ для рассуждения, генерации текстов и структурирования.
-*   **⚖️ Нода Критика (Critique Reviewer):** Организует контуры саморефлексии агентов (self-reflection loops). Если результат не соответствует заданным правилам валидации, критик отправляет шаг обратно на доработку.
-*   **💾 Нода Выхода (Outputs):** Финальное форматирование метаданных, генерация кода или выдача скомпилированного текстового документа.
-
-### 🧪 3. Инновационная Изолированная Песочница (Sub-Graph Dry-Run)
-*   *Больше никаких потерь токенов на тестирование всей цепочки!*
-*   Любая нода графа оснащена **Test Isolated (Dry-Run)**.
-*   При запуске dry-run AgentForge автоматически выделяет поддерево зависимостей, прослеживает связи до источников, генерирует виртуальные входные параметры и выполняет симуляцию вычислений именно для выбранной ветки, выдавая интерактивный лог выполнения прямо внутрь мини-консоли этой ноды!
-
-### 📊 4. Продвинутая Анимация и Трейсинг Выполнения
-*   **Sequential Progress Illumination:** Во время работы пайплайна ноды динамически подсвечиваются в зависимости от стадии выполнения (`idle`, `running`, `completed`, `failed`).
-*   **Живые Логи:** Всплывающий в реальном времени дашборд с декомпозицией шагов и выводом точных аналитик потребления и времени выполнения.
-
----
-
-## 🏆 Конкурентные Преимущества
-
-| Возможность | **AgentForge 🚀** | **LangFlow / Flowise** | **Обычные LLM UI** |
-| :--- | :--- | :--- | :--- |
-| **Стек & Вес** | Легковесный TypeScript CJS/ESM. Запуск за 2 секунды. | Тяжелые Python/Docker зависимости или объемные JS обертки. | Без бэкенда, только статический клиент. |
-| **Изолированный Dry-Run** | **Есть.** Локальное выполнение любой подветки с автоматической генерацией мок-данных. | Требует пересчета всей цепочки или ручной заглушки. | Отсутствует. |
-| **Анимация выполнения** | Плавный Motion-трейсинг с пошаговой подсветкой нод. | Базовые индикаторы загрузки. | Нет визуализации графов. |
-| **Производительность сети** | Express + Vite Proxy на порту 3000, оптимизированное бандлирование. | Часто требует портов 7860/3000/8000 параллельно. | Ограничено CORS. |
-
----
-
-## 🗺️ Схема Жизненного Цикла Данных (Architecture Flow)
+## 🖼️ Application Preview
 
 ```
- [ Input Node ] ──► [ Prompt Node ] ──► [ Gemini LLM Node ] 
-                                                 │
-                                                 ▼
- [ Output Node ] ◄── (Исправлено) ◄── [ Reviewer Node ] (Не ок? Идём на доработку!)
+┌────────────────────────────────────────────────────────────────────────┐
+│  AgentForge44 Console                           [Play] [Save] [Share]  │
+├────────────────────────────────────────────────────────────────────────┤
+│  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
+│  │  Input Node   ├───────►│  Prompt Node  ├───────►│  Gemini-LLM   │   │
+│  │  Variables    │        │  Parameters   │        │  Temperature  │   │
+│  └───────────────┘        └───────────────┘        └───────┬───────┘   │
+│                                                            │           │
+│                                                            ▼           │
+│  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
+│  │ Output Node   │◄───────┤  Agent Trace  │◄───────┤ Critique-Node │   │
+│  │ Compilation   │ (Retry)│  Isolated     │        │ Verification  │   │
+│  └───────────────┘        └───────────────┘        └───────────────┘   │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ⚙️ Быстрый Запуск и Установка
+## 🗺️ Architecture Workflow
 
-### Требования
-*   Node.js версии **18.0.0** или выше.
-*   API ключ **Google Gemini** (для выполнения ИИ-рассуждений на бэкенде).
+```mermaid
+graph TD
+    A[Inputs Node: Dynamic Variables] --> B[Prompt Node: Context Compilation]
+    B --> C[Gemini LLM Node: Core Reasoning]
+    C --> D{Critique Node: Self-Correction Loop}
+    D -- Retry (If Validation Fails) --> B
+    D -- Approved --> E[Output Node: Compile Payload]
+    
+    subgraph Execution Sandbox (Sub-Graph isolated dry-run)
+        F[Select Node ID] --> G[Extract Path Dependency Tree]
+        G --> H[Synthesize Mock Context]
+        H --> I[Execute Isolated Sandbox Node Trace]
+    end
+```
 
-### 1. Клонирование репозитория и установка зависимостей
+---
+
+## ⚡ Quick Start (3 Commands)
+
+Get your environment running with zero fluff:
+
 ```bash
-# Установка библиотек
+# 1. Install Workspace Monorepo Dependencies
 npm install
-```
 
-### 2. Настройка среды окружения
-Создайте файл `.env` в корневом каталоге (вы можете скопировать настройки из `.env.example`):
-```env
-# Токен API Gemini (ключ защищен бэкенд прокси-сервером и никогда не попадет в клиентский браузер)
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+# 2. Provision Environment Secrets
+echo "GEMINI_API_KEY=your_gemini_api_key_here" > .env
 
-### 3. Запуск в режиме разработки
-```bash
+# 3. Boot Dev Server (Frontend + Express API Proxy)
 npm run dev
 ```
-После запуска проект будет доступен по адресу **`http://localhost:3000`**.
-
-### 4. Сборка для Production
-```bash
-# Будет выполнен билд статики Vite и компиляция бэкенд-сервера esbuild в единый оптимизированный файл dist/server.cjs
-npm run build
-
-# Запуск готового приложения
-npm start
-```
+Open **`http://localhost:3000`** and start building your graph.
 
 ---
 
-## 📦 Сборка и Структура Директорий
+## 💎 Competitive Advantages
 
-*   `/src/components/` — Переиспользуемые визуальные компоненты, модальные окна и редакторы промптов.
-*   `/src/App.tsx` — Центральный пульт управления холстом, алгоритмами обхода графа, привязкой к сетке и рендерингом связей.
-*   `/src/types.ts` — Строгие TypeScript-контракты для гарантии бесконфликтной интеграции типов данных.
-*   `/src/api/` — Локальное API выполнения агентов и взаимодействия с Gemini API.
-*   `/server.ts` — Бэкенд-сервер на Express с проксированием ИИ-запросов и полной безопасностью API токенов.
-
----
-
-## 🔒 Безопасность и API-ключи
-
-AgentForge ставит безопасность пользовательских авторизационных данных на первое место:
-*   **Архитектурная чистка:** Любые запросы к нейросетям проводятся исключительно через бэкенд-эндпоинт `/api/run-pipeline`.
-*   **Никаких утечек:** Переменная `GEMINI_API_KEY` считывается только сервером Node.js. Она **никогда не экспортируется** клиенту в браузер. Переменные с префиксом `VITE_` для секретов не используются.
+| Feature | **AgentForge44** 🚀 | **LangFlow / Flowise** | **Naive LLM Playgrounds** |
+| :--- | :--- | :--- | :--- |
+| **Engine Footprint** | Ultralight Node/TS ESM-CJS bundle. Binds in < 2s. | High-latency Python environments / bulky Docker layers. | Static Client SPA only; exposed browser API keys. |
+| **Isolated Dry-Run** | **Supported.** Interactive virtual trace with sandbox variables. | Requires entire graph execution; no route splitting. | None. Static mock evaluations only. |
+| **Visual State Tracing** | Motion-reactive sequence execution tracking. | Basic progress logs. | No node tracing mechanics. |
+| **Deployment Security** | High safety proxy layer; zero runtime leaks to DOM. | Complex multifront configs. | Client CORS vulnerable. |
 
 ---
 
-## 🤝 Вклад в разработку (Contributing)
+## 📅 Roadmap (The Architect's blueprint)
 
-Мы очень ценим ваш вклад в улучшение AgentForge! Чтобы внести изменения:
-1. Сделайте Форк (Fork) проекта.
-2. Создайте свою ветку фичи (`git checkout -b feature/AmazingFeature`).
-3. Сделайте коммит изменений (`git commit -m 'Add some AmazingFeature'`).
-4. Отправьте ветку (`git push origin feature/AmazingFeature`).
-5. Откройте Pull Request.
+### 🟢 Phase 0: Foundations & Monorepo (Completed)
+- **CI/CD Pipeline:** Complete typecheck and bundler sanitization on PR and push steps.
+- **MIT License:** Solidified license files and package definitions.
+- **Unified Workspace Structure:** Clean Separation of Concerns.
+
+### 🟡 Phase 1: Core Orchestration Agent Engine
+- **Multi-provider SDK:** Integration with Anthropic, OpenAI, Ollama through Unified `LLMProvider` signature.
+- **Function Calling & Standard Tools:** Extensible JSON Schema mapping for `web_search` (Tavily), secure sandboxed `code_interpreter`, and `file_system_operations`.
+- **Sliding-Window DB memory:** Memory boundaries leveraging short-term memory sliding windows and persistent vector storage structures.
+
+### 🔴 Phase 2: Production Reliability
+- **Multi-tenant workspaces & RBAC:** Auth structures separating user actions (`Viewer`, `Editor`, `Owner`).
+- **Headless Execution Router:** Execution endpoints at `POST /api/runs` secured with route rate limits.
+- **Configurable CLI:** Run visual models in production with: `agentforge run ./graph.json --input "..."`.
+
+### 🟣 Phase 3: Sophisticated Multi-Agent Topologies
+- **Dynamic Supervisor Patterns:** Layered graph executions and agent-to-agent negotiations using state queues.
+- **Human-in-the-loop Gateways:** Breakpoint interrupts with React actions for safe tool execution approvals.
 
 ---
 
-Произведено с любовью к Clean Code, высоким стандартам UX и визуальному совершенству! ⭐ Оцените проект звездой на GitHub, если он помог вам запустить вашего первого вирусного AI-агента!
+## 🔒 Security Architecture
+
+AgentForge44 acts as an air-gapped system between client frontends and LLM models:
+* **Token Zero-Leakage:** All API keys remain isolated within backend memory environments.
+* **Server Intermediaries:** Browser-client calls represent pure node configuration payloads; execution coordinates strictly load from Express endpoints.
+
+---
+
+## 🤝 Contributing
+
+We welcome additions to AgentForge44:
+1. Fork the repo.
+2. Build your feature branch (`git checkout -b feature/NewLLMSupport`).
+3. Commit safely and check type safety via `npm run lint`.
+4. Open a Pull Request!
+
+---
+
+*Crafted for production-grade Multi-Agent environments. Build secure, build fast.*

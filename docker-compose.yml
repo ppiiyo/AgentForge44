@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  agentforge44-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentforge44-runtime
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY:-forge_production_admin_token}
+    volumes:
+      - agentforge44-data:/usr/src/app/data
+    restart: unless-stopped
+
+volumes:
+  agentforge44-data:
+    driver: local

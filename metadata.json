@@ -1,5 +1,5 @@
 {
-  "name": "AgentForge",
+  "name": "AgentForge44",
   "description": "Visual AI Agent builder, prompt engineering playground, and code generator for building viral developer tools.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

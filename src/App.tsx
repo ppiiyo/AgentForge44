@@ -18,7 +18,7 @@ import {
 // Multi-language localization dictionaries
 const translations = {
   en: {
-    title: "AgentForge Console",
+    title: "AgentForge44 Console",
     subtitle: "Visual AI Agent Workflow Builder & Code Engine",
     loadTemplate: "Templates",
     autoAlign: "Clean Grid Layout",
@@ -76,7 +76,7 @@ const translations = {
     historyHeader: "Saved Flow Snapshots"
   },
   ru: {
-    title: "Арена AgentForge",
+    title: "Арена AgentForge44",
     subtitle: "Визуальный конструктор ИИ-агентов и генератор кода",
     loadTemplate: "Шаблоны",
     autoAlign: "Выровнять сетку",
@@ -134,7 +134,7 @@ const translations = {
     historyHeader: "Сохраненные снимки"
   },
   zh: {
-    title: "AgentForge 控制台",
+    title: "AgentForge44 控制台",
     subtitle: "AI 智能体可视化工作流编辑器与代码引擎",
     loadTemplate: "工作流模板",
     autoAlign: "干净的网格布局",
@@ -936,7 +936,7 @@ export default function App() {
     if (codeTab === 'typescript') {
       return `/**
  * @license Apache-2.0
- * Compiled from AgentForge Visual Flow Canvas
+ * Compiled from AgentForge44 Visual Flow Canvas
  */
 import { GoogleGenAI } from "@google/genai";
 
@@ -981,7 +981,7 @@ runAgent().catch(console.error);`;
 
     if (codeTab === 'python') {
       return `"""
-Refined code from AgentForge Visual agent flows
+Refined code from AgentForge44 Visual agent flows
 """
 import os
 from google import genai
@@ -1061,7 +1061,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-extrabold text-xl tracking-wide bg-gradient-to-r from-sky-400 via-teal-200 to-indigo-400 bg-clip-text text-transparent">
-                AgentForge
+                AgentForge44
               </span>
               <span className="text-[10px] font-semibold bg-sky-950 text-sky-400 border border-sky-800 px-2 py-0.5 rounded-full">
                 V2.6 BETA
@@ -1147,7 +1147,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               setIsImportExportModalOpen(true);
               setJsonStringInput(JSON.stringify({
                 name: activeWorkflow.name || "Custom Workflow",
-                description: activeWorkflow.description || "Interactive AgentForge setup",
+                description: activeWorkflow.description || "Interactive AgentForge44 setup",
                 nodes: nodes,
                 connections: connections
               }, null, 2));
@@ -2262,7 +2262,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     </span>
 
                     <p className="text-[11px] text-slate-500 px-2 leading-relaxed leading-normal pt-1.5 border-t border-slate-850/60 text-left">
-                      💡 <strong>Virality Tip:</strong> Flow-builders and node canvases like <strong>AgentForge</strong> have high fork-to-star ratios because developers Fork them to write customized workflow components for SaaS solutions!
+                      💡 <strong>Virality Tip:</strong> Flow-builders and node canvases like <strong>AgentForge44</strong> have high fork-to-star ratios because developers Fork them to write customized workflow components for SaaS solutions!
                     </p>
                   </div>
                 </motion.div>
@@ -2284,7 +2284,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
           <span className="text-slate-500">Backend: Node Express Server</span>
         </div>
         <div className="flex items-center space-x-1 font-mono text-[10px]">
-          <span>© AgentForge AI</span>
+          <span>© AgentForge44 AI</span>
         </div>
       </footer>
 
