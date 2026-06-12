@@ -7,7 +7,7 @@ import {
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
   CopyPlus, FileJson, X, Globe, History, Undo, Redo,
-  Compass, FlaskConical, BookOpen, GitBranch, FolderPlus, Network, Zap
+  Compass, FlaskConical, BookOpen, GitBranch, FolderPlus, Network, Zap, ShoppingBag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -19,6 +19,7 @@ import { ToolNodeSettings } from '../packages/ui/src/ToolNodeSettings';
 import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
 import { MetricsDashboard } from '../packages/ui/src/MetricsDashboard';
 import { VersionHistory } from '../packages/ui/src/VersionHistory';
+import { Marketplace } from '../packages/ui/src/Marketplace';
 import { useCollaboration, RemoteCursor } from '../packages/ui/src/hooks/useCollaboration';
 
 // Multi-language localization dictionaries
@@ -532,7 +533,7 @@ export default function App() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -728,6 +729,25 @@ export default function App() {
       nodes: proj.nodes,
       connections: proj.connections
     });
+  };
+
+  const handleInstallTemplateFromMarketplace = (name: string, templateNodes: FlowNode[], templateConnections: FlowConnection[]) => {
+    recordAction();
+    
+    // Check name conflicts with other projects
+    let finalName = name;
+    const hasConflict = serverProjects.some(p => p.name.toLowerCase() === finalName.toLowerCase());
+    if (projectNameInput.toLowerCase() === finalName.toLowerCase() || hasConflict) {
+      finalName = `${name} (copy)`;
+    }
+    
+    setNodes(templateNodes);
+    setConnections(templateConnections);
+    setProjectNameInput(finalName);
+    setCurrentSavedProjectName(null); // Installed from marketplace, user needs to save manually or keep in-memory
+    
+    setCopiedText(`Installed marketplace template: "${finalName}" 🛒`);
+    setTimeout(() => setCopiedText(null), 4000);
   };
 
   // --- COMPILER WORKER TRIGGER ---
@@ -2590,6 +2610,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
           <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">
             {[
               { id: 'logs', label: `⚡ Run`, icon: RefreshCw },
+              { id: 'market', label: `🛒 Store`, icon: ShoppingBag },
               { id: 'metrics', label: `📊 Stats`, icon: TrendingUp },
               { id: 'versions', label: `⏳ Backups`, icon: History },
               { id: 'evals', label: `🎯 Benchmark`, icon: ChevronRight },
@@ -3368,6 +3389,23 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                       }
                     }} 
                     currentLang={currentLang as any} 
+                  />
+                </motion.div>
+              )}
+
+              {/* Tab: Marketplace for ready-made agent and tool templates */}
+              {activeTab === 'market' && (
+                <motion.div 
+                  key="market-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <Marketplace 
+                    currentLang={currentLang as any} 
+                    activeGraphSnapshot={{ name: projectNameInput || "Default Project", nodes, connections }} 
+                    onInstallTemplate={handleInstallTemplateFromMarketplace} 
                   />
                 </motion.div>
               )}

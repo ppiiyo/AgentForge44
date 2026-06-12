@@ -81,3 +81,27 @@ export const longTermEmbeddings = sqliteTable('long_term_embeddings', {
   timestamp: integer('timestamp').notNull()
 });
 
+// Step 6 - Marketplace Items table
+export const marketplaceItems = sqliteTable('marketplace_items', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description'),
+  authorId: text('author_id').notNull(),
+  category: text('category').notNull(), // agent / tool / template / rag-pipeline
+  graphSnapshot: text('graph_snapshot').notNull(), // JSON representation of the graph
+  tags: text('tags'), // comma-separated strings or JSON array
+  thumbnailUrl: text('thumbnail_url'),
+  downloadsCount: integer('downloads_count').notNull(),
+  rating: real('rating').notNull(),
+  createdAt: text('created_at').notNull()
+});
+
+// Step 6 - Marketplace Reviews table
+export const marketplaceReviews = sqliteTable('marketplace_reviews', {
+  id: text('id').primaryKey(),
+  itemId: text('item_id').notNull(),
+  userId: text('user_id').notNull(),
+  rating: integer('rating').notNull(), // 1 to 5 stars
+  comment: text('comment').notNull()
+});
+

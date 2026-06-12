@@ -10,6 +10,7 @@ import { runEvaluationSuite, getPatternTemplate, indexLibraryDocument, searchInd
 import { CodeGenerator } from './src/api/codeGenerator.js';
 import { MetricsCollector, VersionManager } from './src/api/metricsAndVersions.js';
 import { CollaborationServer, activeRooms, getPresenceHistory } from './src/api/collaboration.js';
+import { MarketplaceManager } from './src/api/marketplace.js';
 
 
 dotenv.config();
@@ -352,6 +353,85 @@ app.get('/api/graphs/:id/presence', (req: express.Request, res: express.Response
     const online = activeRooms[id] ? Object.values(activeRooms[id]) : [];
     const history = getPresenceHistory(id);
     res.json({ online, history });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Step 6 - Marketplace endpoints
+ */
+app.get('/api/marketplace', (req: express.Request, res: express.Response) => {
+  try {
+    const category = req.query.category as string;
+    const tag = req.query.tag as string;
+    const search = req.query.search as string;
+    const sortBy = req.query.sortBy as string;
+    const items = MarketplaceManager.getItems(category, tag, search, sortBy);
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/marketplace/featured', (req: express.Request, res: express.Response) => {
+  try {
+    const items = MarketplaceManager.getFeatured();
+    res.json(items);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/marketplace/:id', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const item = MarketplaceManager.getItemById(id);
+    if (!item) {
+      res.status(404).json({ error: "Marketplace item not found" });
+      return;
+    }
+    const reviews = MarketplaceManager.getReviews(id);
+    res.json({ item, reviews });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/marketplace', (req: express.Request, res: express.Response) => {
+  try {
+    const { title, description, category, graphSnapshot, tags, authorId } = req.body;
+    if (!title || !category || !graphSnapshot) {
+      res.status(400).json({ error: "Title, category, and graphSnapshot are required properties." });
+      return;
+    }
+    const item = MarketplaceManager.publishItem(title, description, category, graphSnapshot, tags || [], authorId);
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/marketplace/:id/download', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const updatedItem = MarketplaceManager.incrementDownload(id);
+    res.json({ success: true, graphSnapshot: updatedItem.graphSnapshot, downloadsCount: updatedItem.downloadsCount });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/marketplace/:id/reviews', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const { userId, rating, comment } = req.body;
+    if (rating === undefined || rating < 1 || rating > 5 || !comment) {
+      res.status(400).json({ error: "Rating (1-5) and a written comment are required." });
+      return;
+    }
+    const review = MarketplaceManager.addReview(id, userId, rating, comment);
+    res.json(review);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
