@@ -101,8 +101,13 @@ export class OpenAIProvider extends LLMProvider {
   getName() { return `OpenAI (${this.model})`; }
 
   async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    if (!this.apiKey) {
-      throw new Error("OpenAI API key is missing. Please set OPENAI_API_KEY.");
+    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_openai" || this.apiKey === "your_openai_api_key_here";
+    if (isSandbox) {
+      const sandboxText = `[Simulated OpenAI Output - Sandbox Active]\nSuccessfully processed prompt in simulated OpenAI mode: "${prompt.substring(0, 100)}..."`;
+      return {
+        text: sandboxText,
+        raw: { simulated: true }
+      };
     }
 
     const messages: any[] = [];
@@ -174,8 +179,13 @@ export class AnthropicProvider extends LLMProvider {
   getName() { return `Anthropic (${this.model})`; }
 
   async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    if (!this.apiKey) {
-      throw new Error("Anthropic API key is missing. Please set ANTHROPIC_API_KEY.");
+    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_anthropic" || this.apiKey === "your_anthropic_api_key_here";
+    if (isSandbox) {
+      const sandboxText = `[Simulated Anthropic Output - Sandbox Active]\nProcessed prompt in mock Anthropic Claude mode: "${prompt.substring(0, 100)}..."`;
+      return {
+        text: sandboxText,
+        raw: { simulated: true }
+      };
     }
 
     const payload: any = {
