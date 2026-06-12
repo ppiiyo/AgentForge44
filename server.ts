@@ -9,6 +9,7 @@ import { executeTool } from './src/api/tools.js';
 import { runEvaluationSuite, getPatternTemplate, indexLibraryDocument, searchIndexedLibrary } from './src/api/advancedPhase4.js';
 import { CodeGenerator } from './src/api/codeGenerator.js';
 import { MetricsCollector, VersionManager } from './src/api/metricsAndVersions.js';
+import { CollaborationServer, activeRooms, getPresenceHistory } from './src/api/collaboration.js';
 
 
 dotenv.config();
@@ -345,6 +346,17 @@ app.get('/api/graphs/:id/diff', (req: express.Request, res: express.Response) =>
   }
 });
 
+app.get('/api/graphs/:id/presence', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const online = activeRooms[id] ? Object.values(activeRooms[id]) : [];
+    const history = getPresenceHistory(id);
+    res.json({ online, history });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 /**
  * 2. Model Context Protocol execution connector
@@ -482,9 +494,12 @@ async function setupServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const httpServer = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Express custom server running on http://localhost:${PORT}`);
   });
+
+  // Start Socket.io Collaboration Server
+  new CollaborationServer(httpServer);
 }
 
 setupServer().catch(err => {

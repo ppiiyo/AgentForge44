@@ -19,6 +19,7 @@ import { ToolNodeSettings } from '../packages/ui/src/ToolNodeSettings';
 import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
 import { MetricsDashboard } from '../packages/ui/src/MetricsDashboard';
 import { VersionHistory } from '../packages/ui/src/VersionHistory';
+import { useCollaboration, RemoteCursor } from '../packages/ui/src/hooks/useCollaboration';
 
 // Multi-language localization dictionaries
 const translations = {
@@ -282,6 +283,45 @@ export default function App() {
   const [projectNameInput, setProjectNameInput] = useState<string>("");
   const [currentSavedProjectName, setCurrentSavedProjectName] = useState<string | null>(null);
   const [codeDisplayType, setCodeDisplayType] = useState<'client' | 'compiled'>('compiled');
+
+  const lastEmitTime = useRef(0);
+
+  const {
+    userId,
+    userName,
+    userColor,
+    connected,
+    onlineUsers,
+    cursors,
+    locks,
+    notifications,
+    updateUserName,
+    broadcastNodeMoved,
+    broadcastNodeCreated,
+    broadcastNodeDeleted,
+    broadcastEdgeCreated,
+    broadcastEdgeDeleted,
+    broadcastNodeSettingsUpdated,
+    broadcastNodeLock,
+    broadcastCursorMoved
+  } = useCollaboration(
+    projectNameInput || "default-workspace",
+    nodes,
+    connections,
+    setNodes,
+    setConnections
+  );
+
+  useEffect(() => {
+    if (selectedNodeId) {
+      broadcastNodeLock(selectedNodeId, true);
+    }
+    return () => {
+      if (selectedNodeId) {
+        broadcastNodeLock(selectedNodeId, false);
+      }
+    };
+  }, [selectedNodeId]);
   const [serverGeneratedCode, setServerGeneratedCode] = useState<string>("");
   const [loadingServerGeneratedCode, setLoadingServerGeneratedCode] = useState<boolean>(false);
 
@@ -775,6 +815,9 @@ export default function App() {
       const dx = (e.clientX - dragStartPos.current.x) / canvasZoom;
       const dy = (e.clientY - dragStartPos.current.y) / canvasZoom;
       
+      let finalX = 0;
+      let finalY = 0;
+      
       setNodes(prev => prev.map(n => {
         if (n.id === draggedNodeId) {
           // Snap grid or boundary clamps
@@ -788,13 +831,32 @@ export default function App() {
 
           newX = Math.max(10, Math.min(1000, newX));
           newY = Math.max(10, Math.min(700, newY));
+          
+          finalX = newX;
+          finalY = newY;
           return { ...n, x: newX, y: newY };
         }
         return n;
       }));
+
+      const now = Date.now();
+      if (now - lastEmitTime.current > 40) {
+        broadcastNodeMoved(draggedNodeId, finalX, finalY);
+        lastEmitTime.current = now;
+      }
     };
 
     const handleGlobalMouseUp = () => {
+      if (draggedNodeId) {
+        // Enforce final accurate sync broadcast on drop
+        setNodes(prev => {
+          const matching = prev.find(n => n.id === draggedNodeId);
+          if (matching) {
+            broadcastNodeMoved(draggedNodeId, matching.x, matching.y);
+          }
+          return prev;
+        });
+      }
       setDraggedNodeId(null);
     };
 
@@ -944,14 +1006,17 @@ export default function App() {
       }
       return n;
     }));
+    broadcastNodeSettingsUpdated(nodeId, { [fieldKey]: value });
   };
 
   const handleUpdateVariable = (nodeId: string, index: number, fieldKey: string, value: any) => {
     recordAction();
+    let updatedVars: any[] = [];
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId && n.type === 'input') {
         const nextVars = [...(n.fields.variables || [])];
         nextVars[index] = { ...nextVars[index], [fieldKey]: value };
+        updatedVars = nextVars;
         return {
           ...n,
           fields: {
@@ -962,14 +1027,17 @@ export default function App() {
       }
       return n;
     }));
+    broadcastNodeSettingsUpdated(nodeId, { variables: updatedVars });
   };
 
   const handleAddVariable = (nodeId: string) => {
     recordAction();
+    let updatedVars: any[] = [];
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId && n.type === 'input') {
         const nextVars = [...(n.fields.variables || [])];
         nextVars.push({ key: `key_${Date.now().toString().slice(-4)}`, value: 'New Value', label: 'Custom Label' });
+        updatedVars = nextVars;
         return {
           ...n,
           fields: {
@@ -980,13 +1048,16 @@ export default function App() {
       }
       return n;
     }));
+    broadcastNodeSettingsUpdated(nodeId, { variables: updatedVars });
   };
 
   const handleDeleteVariable = (nodeId: string, index: number) => {
     recordAction();
+    let updatedVars: any[] = [];
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId && n.type === 'input') {
         const nextVars = (n.fields.variables || []).filter((_: any, idx: number) => idx !== index);
+        updatedVars = nextVars;
         return {
           ...n,
           fields: {
@@ -997,6 +1068,7 @@ export default function App() {
       }
       return n;
     }));
+    broadcastNodeSettingsUpdated(nodeId, { variables: updatedVars });
   };
 
   // Auto-Align & Arrange Utility (Graph Layout Clean-up)
@@ -1177,6 +1249,7 @@ export default function App() {
 
     setNodes(prev => [...prev, newNode]);
     setSelectedNodeId(id);
+    broadcastNodeCreated(newNode);
   };
 
   const handleDeleteNode = (id: string) => {
@@ -1184,6 +1257,7 @@ export default function App() {
     setNodes(prev => prev.filter(n => n.id !== id));
     setConnections(prev => prev.filter(c => c.sourceId !== id && c.targetId !== id));
     if (selectedNodeId === id) setSelectedNodeId(null);
+    broadcastNodeDeleted(id);
   };
 
   const handleConnectNodes = (sourceId: string, targetId: string) => {
@@ -1200,6 +1274,7 @@ export default function App() {
     };
 
     setConnections(prev => [...prev, newConnection]);
+    broadcastEdgeCreated(newConnection);
   };
 
   // Automated Code Exporter
@@ -1337,6 +1412,14 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
     return { text: "Niche Target (Stagnant metrics risk 💤)", color: "text-slate-400" };
   };
 
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left + canvasRef.current.scrollLeft) / canvasZoom;
+    const y = (e.clientY - rect.top + canvasRef.current.scrollTop) / canvasZoom;
+    broadcastCursorMoved(x, y);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-x-hidden" id="app_root">
       
@@ -1450,6 +1533,43 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 {lang.toUpperCase()}
               </button>
             ))}
+          </div>
+
+          {/* Live Co-op Sync HUD */}
+          <div className="flex items-center space-x-2 border border-slate-850 bg-slate-950/40 px-3 py-1.5 rounded-xl">
+            <span className="relative flex h-2 w-2">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${connected ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
+            </span>
+            
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => updateUserName(e.target.value)}
+              className="w-16 bg-transparent border-0 font-bold text-[10px] text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500/20 px-1 py-0.5 rounded uppercase tracking-wider text-center"
+              title="Click to rename yourself is co-op workspace"
+              placeholder="Guest"
+            />
+
+            {onlineUsers.length > 0 && (
+              <div className="flex -space-x-1.5 overflow-hidden items-center ml-1">
+                {onlineUsers.map(usr => {
+                  const uId = usr.id || usr.userId || 'unknown';
+                  const uName = usr.name || usr.userName || 'Guest';
+                  const uColor = usr.color || usr.userColor || '#cccccc';
+                  return (
+                    <div
+                      key={uId}
+                      className="inline-block h-5 w-5 rounded-full ring-2 ring-slate-900 flex items-center justify-center font-extrabold text-[8px] uppercase select-none text-slate-950"
+                      style={{ backgroundColor: uColor }}
+                      title={`${uName} ${uId === userId ? '(You)' : ''}`}
+                    >
+                      {uName.slice(0, 2)}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <button
@@ -1575,12 +1695,24 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               (() => {
                 const node = nodes.find(n => n.id === selectedNodeId);
                 if (!node) return <p className="text-xs text-slate-500 italic">Select a node card on the canvas to configure variables.</p>;
+                const activeLock = locks[node.id];
+                const isLockedByOther = activeLock && activeLock.userId !== userId;
                 return (
                   <motion.div 
                     initial={{ opacity: 0, y: 5 }} 
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-4"
                   >
+                    {isLockedByOther && (
+                      <div className="bg-amber-950/45 border border-amber-900/40 text-[10px] p-3 rounded-xl flex items-start gap-1.5 leading-normal text-amber-300">
+                        <Lock size={12} className="text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+                        <div>
+                          <strong>Locked by {activeLock.userName}</strong>
+                          <p className="text-slate-500 mt-0.5">They are currently editing this node's parameters.</p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                       <span className="text-xs font-extrabold text-slate-200 capitalize flex items-center gap-1.5">
                         {node.type === 'input' && <Database size={12} className="text-blue-400" />}
@@ -1610,7 +1742,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                       </div>
                     </div>
 
-                    <div className="space-y-3.5">
+                    <div className={`space-y-3.5 ${isLockedByOther ? 'pointer-events-none opacity-40' : ''}`}>
                       {/* Isolated Dry Run Sandbox Trigger */}
                       <div className="bg-slate-950/40 border border-slate-850 p-2.5 rounded-xl space-y-2">
                         <div className="flex items-center justify-between">
@@ -2094,7 +2226,12 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         </aside>
 
         {/* Center Canvas Grid & Dynamic Flow Vectors */}
-        <main className="flex-1 min-h-[500px] xl:min-h-0 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] overflow-auto relative p-8 select-none" ref={canvasRef} id="canvas_stage">
+        <main 
+          onMouseMove={handleCanvasMouseMove}
+          className="flex-1 min-h-[500px] xl:min-h-0 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] overflow-auto relative p-8 select-none" 
+          ref={canvasRef} 
+          id="canvas_stage"
+        >
           
           {/* Legend indicator */}
           <div className="absolute top-4 left-4 bg-slate-900/80 border border-slate-850 px-3 py-1.5 rounded-xl backdrop-blur text-[10.5px] text-slate-400 z-10 font-semibold flex items-center gap-2">
@@ -2334,6 +2471,36 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 );
               })}
             </AnimatePresence>
+
+            {/* Real-time collaborative user cursors */}
+            {(Object.values(cursors) as RemoteCursor[]).map(cur => (
+              <div
+                key={cur.userId}
+                className="pointer-events-none absolute z-50 transition-all duration-75 ease"
+                style={{
+                  left: cur.x,
+                  top: cur.y,
+                }}
+              >
+                {/* Visual mouse cursor arrow */}
+                <svg
+                  className="w-4 h-4 shadow-sm"
+                  viewBox="0 0 24 24"
+                  fill={cur.userColor}
+                  stroke="white"
+                  strokeWidth={1.5}
+                >
+                  <path d="M4.5 3V17.5L8.5 13.5L13.5 18.5L15.5 16.5L10.5 11.5L15.5 11.5L4.5 3Z" />
+                </svg>
+                {/* User Name Tag */}
+                <div
+                  className="px-1.5 py-0.5 rounded text-[9px] font-bold text-white shadow-md select-none whitespace-nowrap mt-1 flex items-center gap-1 bg-opacity-95"
+                  style={{ backgroundColor: cur.userColor }}
+                >
+                  <span>{cur.userName}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
           </div>
