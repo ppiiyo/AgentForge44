@@ -10,7 +10,7 @@ if (!fs.existsSync(DATA_DIR)) {
 const METRICS_FILE = path.join(DATA_DIR, 'metrics_executions.json');
 const VERSIONS_FILE = path.join(DATA_DIR, 'graph_versions.json');
 
-// Interface mirror from packages/db/src/schema.ts
+// Interface mirror from src/types.ts
 export interface MetricsExecutionLog {
   id: string;
   graphId: string;

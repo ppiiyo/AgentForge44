@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { FlowNode, FlowConnection } from '../../../../src/types';
+import { FlowNode, FlowConnection } from '../types';
 
 export interface RemoteCursor {
   userId: string;

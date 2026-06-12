@@ -15,7 +15,7 @@ import {
   GitBranch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { FlowNode, FlowConnection } from '../../../src/types';
+import { FlowNode, FlowConnection } from '../types';
 
 interface MarketplaceItem {
   id: string;

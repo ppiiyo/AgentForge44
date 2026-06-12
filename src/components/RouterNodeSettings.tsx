@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouterCondition, FlowNode } from '../../../src/types';
+import { RouterCondition, FlowNode } from '../types';
 import { Plus, Trash, GitBranch, AlertCircle } from 'lucide-react';
 
 interface RouterNodeSettingsProps {

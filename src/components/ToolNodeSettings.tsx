@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlowNode } from '../../../src/types';
+import { FlowNode } from '../types';
 import { Globe, Settings, Terminal, Play, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 
 interface ToolNodeSettingsProps {

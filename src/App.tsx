@@ -14,14 +14,14 @@ import {
   PREBUILT_TEMPLATES, FlowNode, FlowConnection, 
   Workflow as WorkflowType, StepLog, PipelineExecutionResult, NodeType 
 } from './types';
-import { RouterNodeSettings } from '../packages/ui/src/RouterNodeSettings';
-import { ToolNodeSettings } from '../packages/ui/src/ToolNodeSettings';
-import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
-import { MetricsDashboard } from '../packages/ui/src/MetricsDashboard';
-import { VersionHistory } from '../packages/ui/src/VersionHistory';
-import { Marketplace } from '../packages/ui/src/Marketplace';
-import { CloudDeployer } from '../packages/ui/src/CloudDeployer';
-import { useCollaboration, RemoteCursor } from '../packages/ui/src/hooks/useCollaboration';
+import { RouterNodeSettings } from './components/RouterNodeSettings';
+import { ToolNodeSettings } from './components/ToolNodeSettings';
+import { RAGVisualizer } from './components/RAGVisualizer';
+import { MetricsDashboard } from './components/MetricsDashboard';
+import { VersionHistory } from './components/VersionHistory';
+import { Marketplace } from './components/Marketplace';
+import { CloudDeployer } from './components/CloudDeployer';
+import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
 
 // Multi-language localization dictionaries
 const translations = {
