@@ -1,10 +1,10 @@
-# AgentForge — Visual Orchestration Platform for LLM Multi-Agent Workflows
+# AgentForge44
 
-AgentForge is a visual development environment and runtime engine designed to design, trace, and execute multi-agent pipelines and stateful LLM graphs.
+Визуальный Low-Code конструктор для проектирования, оркестрации и выполнения мультиагентных AI-систем на базе современных LLM.
 
 ---
 
-## 🖼️ User Interface Preview
+## 🖼️ Интерактивный веб-интерфейс консоли
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -25,96 +25,83 @@ AgentForge is a visual development environment and runtime engine designed to de
 
 ---
 
-## ⚡ Quick Start & Deployment Mode
+## ✨ Возможности платформы
 
-### 1. Requirements & Prerequisites
-To run locally, ensure you have:
-- **Node.js** >= 20.0.0 (or matching runtime) and **npm** / **pnpm**
-- Or **Docker** & **Docker Compose** installed for containerized, zero-install execution.
-
-### 2. Environment Variables Configuration
-Configure your keys in local environment setups or file containers. Before launching, copy the template:
-```bash
-# Copy template file
-cp .env.example .env
-```
-Open `.env` and fill in your keys:
-- `GEMINI_API_KEY`: Required for visual streaming agents and canvas workflows.
-- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OLLAMA_HOST`, `TAVILY_API_KEY`: Optional secondary connectors.
+- 🎨 **Интуитивный Drag-and-Drop интерфейс** — проектируйте сложные сценарии работы агентов визуально с мгновенным моделированием связей.
+- 🤖 **Поддержка ведущих ИИ-провайдеров** — из коробки доступны расширенные интеграции с Google Gemini, OpenAI, Anthropic, а также локальный Ollama.
+- 🔄 **Интегрированная база знаний RAG** — индексация, семантический поиск по текстовым файлам и автоматическая доставка релевантного контекста.
+- 🎯 **Условная маршрутизация и вызов внешних инструментов** — использование Router и Tool нод для выполнения сетевых запросов и управления логикой.
+- 👥 **Совместная работа в реальном времени (Real-time Collaboration)** — синхронное редактирование проекта с индикацией положения курсоров коллег.
+- 📊 **Мониторинг ресурсов и затрат** — наглядные графики потребления токенов (Prompt/Response) и автоматический подсчёт финансового расхода.
+- 🕰 **История версий (Git-like Backups)** — создание чекпоинтов, просмотр визуального диффа изменений и мгновенный откат к стабильным версиям.
+- 🚀 **One-Click Cloud Hover Deploy** — публикация ваших потоков как готовых к продакшену веб-серверов REST API на Vercel, Railway или Fly.io.
 
 ---
 
-## 🐳 Docker Deployment (Recommended)
+## ⚡ Быстрый старт
 
-Run the entire application locally or in production inside a lightweight, highly secure, and optimized multi-stage container.
+### 🐳 Запуск через Docker (Рекомендуемый способ)
 
-### Step 1: Fire up via Docker Compose
-Run the following single command to pull the base layers, compile the frontend static assets, bundle the server, and expose the microservice:
-```bash
-docker-compose up --build
-```
+Для развертывания решения в полностью изолированном окружении:
 
-### Step 2: Access the Application
-Once the container finishes booting, open your browser:
-*   🖥️ **Web Console & Visual Workspace**: [http://localhost:3000](http://localhost:3000)
+1. Соберите и запустите контейнеры:
+   ```bash
+   docker-compose up --build
+   ```
+2. Откройте интерфейс в браузере: **[http://localhost:3000](http://localhost:3000)**
 
-### How Containerization Works (Multi-Stage Build):
-1.  **Stage 1: Builder (`node:20-alpine`)**: Installs full configuration manifests and dependencies (including `devDependencies` like Vite, TypeScript, and esbuild), compiles static frontend bundles (`Vite`), and bundles the backend Express TS server into standard `dist/server.cjs` using `esbuild`.
-2.  **Stage 2: Runner (`node:20-alpine`)**: Restricts superuser permissions, establishes a lightweight sandboxed Node runtime, installs only production-level modules (`--omit=dev`), maps volume configurations, sets the default user to standard unprivileged `node` user, and runs the compiled bundle.
+### 🖥️ Локальная разработка (Bare-metal)
 
----
+Для запуска в режиме разработчика с поддержкой горячей перезагрузки изменений:
 
-## 🛠️ Bare-Metal Setup (Development Mode)
-
-If you wish to run the development server with live changes:
-
-```bash
-# 1. Install all dependencies
-npm install
-
-# 2. Run background compilers & live local development server
-npm run dev
-
-# 3. Open dev preview in your workspace browser
-# Dev Server is mapped directly onto http://localhost:3000
-```
+1. Установите все зависимости npm:
+   ```bash
+   npm install
+   ```
+2. Подготовьте конфигурационный файл `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Запустите сервер разработки:
+   ```bash
+   npm run dev
+   ```
+4. Откройте локальный порт: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 🧪 Testing and Verification
+## 📁 Структура директорий проекта
 
-Verify the integrity of active workspaces, backend endpoints, and types:
+```text
+AgentForge44/
+├── packages/           # Дополнительные разделяемые модули
+│   └── ui/             # Визуальные реактивные панели и компоненты
+├── src/                # Веб-консоль React/Vite
+│   ├── api/            # Логика клиента (интеграции, контекст, стримы)
+│   ├── tests/          # Модульные и интеграционные автотесты Vitest
+│   ├── App.tsx         # Главная панель веб-приложения
+│   └── main.tsx        # Точка монтирования React
+├── server.ts           # Full-stack backend Express-сервер
+├── Dockerfile          # Скрипт сборки контейнеров
+├── docker-compose.yml  # Файл мультиконтейнерного оркестрирования
+├── tsconfig.json       # Конфигурация компилятора TypeScript
+└── vite.config.ts      # Конфигурация сборщика Vite
+```
+
+---
+
+## 🧪 Тестирование и верификация
+
+Запустите автоматизированные тесты для проверки целостности логики выполнения узлов:
 
 ```bash
-# Run ESLint & TypeScript definitions checks
+# Запуск тестов через Vitest
+npm test
+
+# Статический анализ кода на ошибки сборки
 npm run lint
-
-# Compile production-ready builds locally
-npm run build
 ```
 
----
+## 📜 Лицензия
 
-## ☄️ Architecture
-
-```mermaid
-graph TD
-    A[Inputs Node: Dynamic Variables] --> B[Prompt Node: Context Compilation]
-    B --> C[LLM Node: Multi-Provider Generation]
-    C --> D{Critique Node: Self-Correction Loop}
-    D -- Retry (If Validation Fails) --> B
-    D -- Approved --> E[Output Node: Final Payload]
-    
-    subgraph Core Execution Engine (packages/core)
-        Executor[Graph Executor] --> Match[Node Handler Router]
-        Match --> ShortTerm[Short-Term Memory Manager]
-        Match --> VectorIndex[Vector Embeddings Retriever]
-    end
-```
-
----
-
-## 📜 License
-
-Licensed under the MIT License. See [LICENSE](./LICENSE) for details.
-
+Распространяется по лицензии MIT. Подробнее см. в [LICENSE](./LICENSE).

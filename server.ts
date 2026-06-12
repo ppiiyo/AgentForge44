@@ -21,7 +21,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
 
-const app = express();
+export const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
@@ -51,6 +51,13 @@ function isRateLimited(key: string): boolean {
 const ALLOWED_API_KEYS = new Set([
   process.env.AGENTFORGE_API_KEY || "forge_production_admin_token"
 ]);
+
+/**
+ * Health check endpoint
+ */
+app.get('/api/health', (req: express.Request, res: express.Response) => {
+  res.json({ status: 'ok' });
+});
 
 /**
  * Projects Persistence: Save, List, and Load active Flow Graph Workspace
