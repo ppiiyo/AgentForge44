@@ -17,6 +17,8 @@ import {
 import { RouterNodeSettings } from '../packages/ui/src/RouterNodeSettings';
 import { ToolNodeSettings } from '../packages/ui/src/ToolNodeSettings';
 import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
+import { MetricsDashboard } from '../packages/ui/src/MetricsDashboard';
+import { VersionHistory } from '../packages/ui/src/VersionHistory';
 
 // Multi-language localization dictionaries
 const translations = {
@@ -490,7 +492,7 @@ export default function App() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -2418,25 +2420,26 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         <section className="w-full xl:w-[480px] border-t xl:border-t-0 xl:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden" id="right_sidebar">
           
           {/* Section tab headers */}
-          <div className="flex border-b border-slate-850 bg-slate-900/95" id="tab_headers">
+          <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">
             {[
               { id: 'logs', label: `⚡ Run`, icon: RefreshCw },
+              { id: 'metrics', label: `📊 Stats`, icon: TrendingUp },
+              { id: 'versions', label: `⏳ Backups`, icon: History },
               { id: 'evals', label: `🎯 Benchmark`, icon: ChevronRight },
               { id: 'rag', label: `📚 Library`, icon: BookOpen },
-              { id: 'code', label: `💻 Code`, icon: Code },
-              { id: 'virality', label: `🔥 Virality`, icon: TrendingUp }
+              { id: 'code', label: `💻 Code`, icon: Code }
             ].map(tab => (
               <button
                 id={`tab-btn-${tab.id}`}
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 font-bold text-[11px] uppercase tracking-wider py-3.5 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                className={`flex-1 font-bold text-[10px] uppercase tracking-wider py-3 px-2 flex items-center justify-center gap-1 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === tab.id 
-                    ? 'border-sky-500 text-sky-450 bg-slate-950/20' 
+                    ? 'border-sky-500 text-sky-450 bg-slate-950/25 font-black' 
                     : 'border-transparent text-slate-500 hover:text-slate-300'
                 }`}
               >
-                <tab.icon size={12} className={activeTab === tab.id ? 'animate-pulse' : ''} />
+                <tab.icon size={11} className={activeTab === tab.id ? 'animate-pulse' : ''} />
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -3162,6 +3165,43 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                       💡 <strong>Virality Tip:</strong> Flow-builders and node canvases like <strong>AgentForge44</strong> have high fork-to-star ratios because developers Fork them to write customized workflow components for SaaS solutions!
                     </p>
                   </div>
+                </motion.div>
+              )}
+
+              {/* Tab: Observability Telemetry Metrics dashboard */}
+              {activeTab === 'metrics' && (
+                <motion.div 
+                  key="metrics-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <MetricsDashboard currentLang={currentLang as any} activeGraphId="canvas-workspace" />
+                </motion.div>
+              )}
+
+              {/* Tab: Canvas checkpoint git-versions rollback history */}
+              {activeTab === 'versions' && (
+                <motion.div 
+                  key="versions-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <VersionHistory 
+                    graphId="canvas-workspace" 
+                    activeSnapshot={{ name: projectNameInput, nodes, connections }} 
+                    onRollbackSuccess={(snapshot) => {
+                      if (snapshot) {
+                        setNodes(snapshot.nodes || []);
+                        setConnections(snapshot.connections || []);
+                        if (snapshot.name) setProjectNameInput(snapshot.name);
+                      }
+                    }} 
+                    currentLang={currentLang as any} 
+                  />
                 </motion.div>
               )}
 

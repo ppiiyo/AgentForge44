@@ -8,6 +8,8 @@ import { StatefulExecutionEngine } from './src/api/execution.js';
 import { executeTool } from './src/api/tools.js';
 import { runEvaluationSuite, getPatternTemplate, indexLibraryDocument, searchIndexedLibrary } from './src/api/advancedPhase4.js';
 import { CodeGenerator } from './src/api/codeGenerator.js';
+import { MetricsCollector, VersionManager } from './src/api/metricsAndVersions.js';
+
 
 dotenv.config();
 
@@ -214,19 +216,135 @@ app.get('/api/rag/search', (req: express.Request, res: express.Response) => {
  * 1. Base API execution endpoint (Supports standard active canvas)
  */
 app.post('/api/run-pipeline', async (req: express.Request, res: express.Response) => {
+  const startTime = Date.now();
+  const { nodes, connections, graphId, graphName } = req.body;
   try {
-    const { nodes, connections } = req.body;
     if (!nodes || !connections) {
       res.status(400).json({ error: "Missing nodes or connections context." });
       return;
     }
     const result = await executePipeline(nodes, connections);
+    
+    // Log successfully finished metrics workflow in telemetry store
+    await MetricsCollector.logExecution(
+      graphId || 'canvas-workspace',
+      graphName || 'Workspace Canvas',
+      'success',
+      startTime,
+      result.logs || []
+    );
+
     res.json(result);
   } catch (err: any) {
     console.error("Pipeline run failure:", err);
+    
+    // Log failed metrics workflow in telemetry store
+    await MetricsCollector.logExecution(
+      graphId || 'canvas-workspace',
+      graphName || 'Workspace Canvas',
+      'failed',
+      startTime,
+      [],
+      err.message || String(err)
+    );
+
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
+
+/**
+ * Step 3 - Metrics and Analytics Dashboard Endpoints
+ */
+app.get('/api/metrics/summary', (req: express.Request, res: express.Response) => {
+  try {
+    const periodQuery = req.query.period as string;
+    let periodDays = 7;
+    if (periodQuery === '24h') periodDays = 1;
+    else if (periodQuery === '30d') periodDays = 30;
+    
+    const summary = MetricsCollector.getSummary(periodDays);
+    res.json(summary);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/metrics/executions', (req: express.Request, res: express.Response) => {
+  try {
+    const graphId = req.query.graph_id as string;
+    if (!graphId) {
+      res.status(400).json({ error: "Missing graph_id query parameter." });
+      return;
+    }
+    const list = MetricsCollector.getExecutionsByGraph(graphId);
+    res.json(list);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/metrics/cost-breakdown', (req: express.Request, res: express.Response) => {
+  try {
+    const breakdown = MetricsCollector.getCostBreakdown();
+    res.json(breakdown);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Step 4 - Git-like Graph Version Control Endpoints
+ */
+app.post('/api/graphs/:id/versions', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const { message, author, snapshot } = req.body;
+    if (!snapshot) {
+      res.status(400).json({ error: "Missing required workflow snapshot state to commit." });
+      return;
+    }
+    const newVer = VersionManager.commit(id, message, author, snapshot);
+    res.json(newVer);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/graphs/:id/versions', (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const versions = VersionManager.getVersions(id);
+    res.json(versions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/graphs/:id/rollback/:versionId', (req: express.Request, res: express.Response) => {
+  try {
+    const { id, versionId } = req.params;
+    const restored = VersionManager.rollback(id, versionId);
+    res.json({ success: true, restored });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/graphs/:id/diff', (req: express.Request, res: express.Response) => {
+  try {
+    const v1 = req.query.v1 as string;
+    const v2 = req.query.v2 as string;
+    if (!v1 || !v2) {
+      res.status(400).json({ error: "Query parameters v1 and v2 are required for diff operation." });
+      return;
+    }
+    const difference = VersionManager.computeDiff(v1, v2);
+    res.json(difference);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 /**
  * 2. Model Context Protocol execution connector
