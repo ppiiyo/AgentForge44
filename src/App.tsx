@@ -20,6 +20,7 @@ import { RAGVisualizer } from '../packages/ui/src/RAGVisualizer';
 import { MetricsDashboard } from '../packages/ui/src/MetricsDashboard';
 import { VersionHistory } from '../packages/ui/src/VersionHistory';
 import { Marketplace } from '../packages/ui/src/Marketplace';
+import { CloudDeployer } from '../packages/ui/src/CloudDeployer';
 import { useCollaboration, RemoteCursor } from '../packages/ui/src/hooks/useCollaboration';
 
 // Multi-language localization dictionaries
@@ -533,7 +534,7 @@ export default function App() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -2611,6 +2612,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
             {[
               { id: 'logs', label: `⚡ Run`, icon: RefreshCw },
               { id: 'market', label: `🛒 Store`, icon: ShoppingBag },
+              { id: 'deploy', label: `🚀 Cloud`, icon: Globe },
               { id: 'metrics', label: `📊 Stats`, icon: TrendingUp },
               { id: 'versions', label: `⏳ Backups`, icon: History },
               { id: 'evals', label: `🎯 Benchmark`, icon: ChevronRight },
@@ -3406,6 +3408,24 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     currentLang={currentLang as any} 
                     activeGraphSnapshot={{ name: projectNameInput || "Default Project", nodes, connections }} 
                     onInstallTemplate={handleInstallTemplateFromMarketplace} 
+                  />
+                </motion.div>
+              )}
+
+              {/* Tab: One-click cloud deployment console */}
+              {activeTab === 'deploy' && (
+                <motion.div 
+                  key="deploy-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <CloudDeployer 
+                    graphId="canvas-workspace" 
+                    graphName={projectNameInput || "Untitled Flow"} 
+                    currentLang={currentLang as any} 
+                    activeSnapshot={{ name: projectNameInput, nodes, connections }} 
                   />
                 </motion.div>
               )}

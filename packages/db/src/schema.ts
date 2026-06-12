@@ -105,3 +105,16 @@ export const marketplaceReviews = sqliteTable('marketplace_reviews', {
   comment: text('comment').notNull()
 });
 
+// Step 7 - Deployments table
+export const deployments = sqliteTable('deployments', {
+  id: text('id').primaryKey(),
+  graphId: text('graph_id').notNull(),
+  graphName: text('graph_name').notNull(),
+  provider: text('provider').notNull(), // vercel / railway / fly
+  status: text('status').notNull(), // provisioning / active / failed / undeployed
+  url: text('url'),
+  createdAt: text('created_at').notNull(),
+  configJson: text('config_json'),
+  logs: text('logs')
+});
+

@@ -11,6 +11,7 @@ import { CodeGenerator } from './src/api/codeGenerator.js';
 import { MetricsCollector, VersionManager } from './src/api/metricsAndVersions.js';
 import { CollaborationServer, activeRooms, getPresenceHistory } from './src/api/collaboration.js';
 import { MarketplaceManager } from './src/api/marketplace.js';
+import { DeploymentManager } from './src/api/deployment.js';
 
 
 dotenv.config();
@@ -432,6 +433,68 @@ app.post('/api/marketplace/:id/reviews', (req: express.Request, res: express.Res
     }
     const review = MarketplaceManager.addReview(id, userId, rating, comment);
     res.json(review);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Step 7 - One-Click Cloud Deployments
+ */
+app.post('/api/deploy', async (req: express.Request, res: express.Response) => {
+  try {
+    const { graphId, graphName, provider, config } = req.body;
+    if (!graphId || !graphName || !provider || !config) {
+      res.status(400).json({ error: "Parameters graphId, graphName, provider, and config are required." });
+      return;
+    }
+    const deployment = await DeploymentManager.startDeployment(graphId, graphName, provider, config);
+    res.json(deployment);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/deploy/list', (req: express.Request, res: express.Response) => {
+  try {
+    const graphId = req.query.graphId as string;
+    const deployments = DeploymentManager.getDeployments(graphId);
+    res.json(deployments);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/deploy/:id/status', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const dep = DeploymentManager.getDeploymentById(id);
+    if (!dep) {
+      res.status(404).json({ error: "Deployment not found" });
+      return;
+    }
+    const status = await DeploymentManager.getStatus(id);
+    res.json({ id, status });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/deploy/:id/logs', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const logs = await DeploymentManager.getLogs(id);
+    res.json(logs);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/deploy/:id', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const success = await DeploymentManager.stopDeployment(id);
+    res.json({ success });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
