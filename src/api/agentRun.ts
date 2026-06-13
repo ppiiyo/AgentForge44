@@ -259,7 +259,7 @@ export async function executePipeline(
       } else if (node.type === 'gemini') {
         const promptText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue);
         const model = node.fields.model || 'gemini-3.5-flash';
-        const temp = Number(node.fields.temperature) ?? 0.7;
+        const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
         const systemInstruction = node.fields.systemInstruction || "";
         const useSearchGrounding = !!node.fields.useSearchGrounding;
 

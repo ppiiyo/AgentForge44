@@ -720,5 +720,61 @@
     "downloadsCount": 1,
     "rating": 5,
     "createdAt": "2026-06-13T20:23:01.093Z"
+  },
+  {
+    "id": "mkt-1781383136009-okakn",
+    "title": "DevOps Multi-Agent Scanner",
+    "description": "Automatically analyzes dockerfiles and typescript compilation rules to secure containers.",
+    "authorId": "dev_analyst_agent",
+    "category": "template",
+    "graphSnapshot": {
+      "name": "DevOps Multi-Agent Scanner",
+      "nodes": [
+        {
+          "id": "devops-inp",
+          "type": "input",
+          "title": "Scope",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "connections": []
+    },
+    "tags": [
+      "devops",
+      "docker",
+      "scanner"
+    ],
+    "downloadsCount": 1,
+    "rating": 5,
+    "createdAt": "2026-06-13T20:38:56.009Z"
+  },
+  {
+    "id": "mkt-1781383566994-yvla6",
+    "title": "DevOps Multi-Agent Scanner",
+    "description": "Automatically analyzes dockerfiles and typescript compilation rules to secure containers.",
+    "authorId": "dev_analyst_agent",
+    "category": "template",
+    "graphSnapshot": {
+      "name": "DevOps Multi-Agent Scanner",
+      "nodes": [
+        {
+          "id": "devops-inp",
+          "type": "input",
+          "title": "Scope",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "connections": []
+    },
+    "tags": [
+      "devops",
+      "docker",
+      "scanner"
+    ],
+    "downloadsCount": 1,
+    "rating": 5,
+    "createdAt": "2026-06-13T20:46:06.994Z"
   }
 ]

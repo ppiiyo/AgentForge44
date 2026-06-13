@@ -183,7 +183,7 @@ export class StatefulExecutionEngine {
             : JSON.stringify(context.state['last_output'] || "");
 
           const systemInstruction = node.fields.systemInstruction || "";
-          const temperature = Number(node.fields.temperature) ?? 0.7;
+          const temperature = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
 
           // If search grounding tools are specified, inject schema mapping
           const extTools: any[] = [];

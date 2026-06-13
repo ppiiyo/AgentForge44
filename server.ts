@@ -3,6 +3,9 @@ import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
 import { executeTool } from './src/api/tools.js';
@@ -12,7 +15,8 @@ import { MetricsCollector, VersionManager } from './src/api/metricsAndVersions.j
 import { CollaborationServer, activeRooms, getPresenceHistory } from './src/api/collaboration.js';
 import { MarketplaceManager } from './src/api/marketplace.js';
 import { DeploymentManager } from './src/api/deployment.js';
-
+import { logger } from './src/utils/logger.js';
+import { setupSwagger } from './src/api/swagger.js';
 
 dotenv.config();
 
@@ -22,9 +26,34 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 }
 
 export const app = express();
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 
+// Security setup
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', apiRateLimiter);
+
 app.use(express.json());
+
+// Setup OpenAPI Documentation
+setupSwagger(app);
+
 
 // In-Memory Rate Limiting implementation to keep execution independent of thick external dependencies
 const rateLimits: Record<string, { count: number; resetAt: number }> = {};
@@ -53,7 +82,22 @@ const ALLOWED_API_KEYS = new Set([
 ]);
 
 /**
- * Health check endpoint
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Retrieve server health status
+ *     description: Health check endpoint for verifying server status and connections.
+ *     responses:
+ *       200:
+ *         description: Server is online and healthy.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
  */
 app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({ status: 'ok' });
@@ -348,7 +392,7 @@ app.post('/api/run-pipeline', async (req: express.Request, res: express.Response
 
     res.json(result);
   } catch (err: any) {
-    console.error("Pipeline run failure:", err);
+    logger.error("Pipeline run failure:", { error: err.message || err });
     
     // Log failed metrics workflow in telemetry store
     await MetricsCollector.logExecution(
@@ -747,7 +791,7 @@ async function setupServer() {
   }
 
   const httpServer = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Express custom server running on http://localhost:${PORT}`);
+    logger.info(`Express custom server running on http://localhost:${PORT}`);
   });
 
   // Start Socket.io Collaboration Server
@@ -756,6 +800,6 @@ async function setupServer() {
 
 if (process.env.NODE_ENV !== "test") {
   setupServer().catch(err => {
-    console.error("Failed to start server:", err);
+    logger.error("Failed to start server:", { error: err.message || err });
   });
 }
