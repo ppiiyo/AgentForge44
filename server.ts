@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
@@ -32,6 +33,16 @@ app.use(cors({
   origin: true,
   credentials: true
 }));
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
+  next();
+});
 
 const apiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -792,7 +803,7 @@ async function setupServer() {
   new CollaborationServer(httpServer);
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   setupServer().catch(err => {
     logger.error("Failed to start server:", { error: err.message || err });
   });

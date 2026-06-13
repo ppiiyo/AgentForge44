@@ -291,11 +291,12 @@ def execute_workflow(initial_inputs=None):
 
       else if (node.type === 'prompt') {
         const tpl = node.fields?.template || "";
+        const safeId = node.id.replace(/-/g, '_');
         code += `    # Format template string prompts\n`;
-        code += `    prompt_${node.id} = substitute(${JSON.stringify(tpl)})\n`;
-        code += `    state["${node.id}"] = prompt_${node.id}\n`;
-        code += `    last_output = prompt_${node.id}\n`;
-        code += `    print(f"Prompt formatted length: {len(prompt_${node.id})}")\n\n`;
+        code += `    prompt_${safeId} = substitute(${JSON.stringify(tpl)})\n`;
+        code += `    state["${node.id}"] = prompt_${safeId}\n`;
+        code += `    last_output = prompt_${safeId}\n`;
+        code += `    print(f"Prompt formatted length: {len(prompt_${safeId})}")\n\n`;
       }
 
       else if (node.type === 'gemini') {

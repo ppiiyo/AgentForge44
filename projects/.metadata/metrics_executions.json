@@ -1,0 +1,138 @@
+[
+  {
+    "id": "exec_1781382143665_fc72d",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-13T20:21:27.603Z",
+    "finishedAt": "2026-06-13T20:22:23.665Z",
+    "status": "success",
+    "totalTokens": 3053,
+    "totalCostUsd": 0.015575,
+    "totalLatencyMs": 56062,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_pdf4kw2cm",
+        "executionId": "exec_1781382143665_fc72d",
+        "nodeId": "node-input",
+        "nodeType": "node",
+        "tokensUsed": 100,
+        "costUsd": 0.000512,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"language\",\n    \"value\": \"TypeScript & React\",\n    \"label\": \"Target Language\"\n  },\n  {\n    \"key\": \"task\",\n    \"value\": \"Write a performance-optimized useDebounce Hook supporting immed",
+        "outputPreview": "{\n  \"language\": \"TypeScript & React\",\n  \"task\": \"Write a performance-optimized useDebounce Hook supporting immediate execution option.\"\n}"
+      },
+      {
+        "id": "node_exec_q3beauq01",
+        "executionId": "exec_1781382143665_fc72d",
+        "nodeId": "node-prompt",
+        "nodeType": "node",
+        "tokensUsed": 151,
+        "costUsd": 0.001022,
+        "latencyMs": 0,
+        "inputPreview": "Task: Write an outstanding implementation of a {task} in {language}.\n\nRequirements:\n- Must include clean TypeScript types.\n- Provide exhaustive comments explaining choices.\n- Return ONLY valid product",
+        "outputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript & React.\n\nRequirements:\n- Must include clean TypeScri"
+      },
+      {
+        "id": "node_exec_d67c7x4h9",
+        "executionId": "exec_1781382143665_fc72d",
+        "nodeId": "node-gemini",
+        "nodeType": "node",
+        "tokensUsed": 1384,
+        "costUsd": 0.000396,
+        "latencyMs": 21624,
+        "inputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript & React.\n\nRequirements:\n- Must include clean TypeScri",
+        "outputPreview": "```typescript\nimport { useCallback, useEffect, useRef } from 'react';\n\n/**\n * Configuration options for the useDebounce hook.\n */\nexport interface UseDebounceOptions {\n  /**\n   * The delay in millisec"
+      },
+      {
+        "id": "node_exec_mbc9rffcy",
+        "executionId": "exec_1781382143665_fc72d",
+        "nodeId": "node-reviewer",
+        "nodeType": "node",
+        "tokensUsed": 49,
+        "costUsd": 0.000007,
+        "latencyMs": 34436,
+        "inputPreview": "Criteria: Check if code contains comprehensive typescript declarations, is free of external libraries, and handles reactive parameter cleanup.",
+        "outputPreview": "Passed audit successfully after 2 iterations!\n\nPASS"
+      },
+      {
+        "id": "node_exec_1d8ujiwdi",
+        "executionId": "exec_1781382143665_fc72d",
+        "nodeId": "node-output",
+        "nodeType": "node",
+        "tokensUsed": 1369,
+        "costUsd": 0.013638,
+        "latencyMs": 0,
+        "inputPreview": "Pipeline Stream Completed",
+        "outputPreview": "import { useCallback, useEffect, useRef } from 'react';\n\n/**\n * Configuration options for the useDebounce hook.\n */\nexport interface UseDebounceOptions {\n  /**\n   * The delay in milliseconds before th"
+      }
+    ]
+  },
+  {
+    "id": "exec_1781385022718_k46o0",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-13T21:09:47.117Z",
+    "finishedAt": "2026-06-13T21:10:22.718Z",
+    "status": "success",
+    "totalTokens": 4119,
+    "totalCostUsd": 0.020754,
+    "totalLatencyMs": 35601,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_xtj5x97tf",
+        "executionId": "exec_1781385022718_k46o0",
+        "nodeId": "node-input",
+        "nodeType": "node",
+        "tokensUsed": 100,
+        "costUsd": 0.000512,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"language\",\n    \"value\": \"TypeScript & React\",\n    \"label\": \"Target Language\"\n  },\n  {\n    \"key\": \"task\",\n    \"value\": \"Write a performance-optimized useDebounce Hook supporting immed",
+        "outputPreview": "{\n  \"language\": \"TypeScript & React\",\n  \"task\": \"Write a performance-optimized useDebounce Hook supporting immediate execution option.\"\n}"
+      },
+      {
+        "id": "node_exec_yknmuvsj9",
+        "executionId": "exec_1781385022718_k46o0",
+        "nodeId": "node-prompt",
+        "nodeType": "node",
+        "tokensUsed": 151,
+        "costUsd": 0.001022,
+        "latencyMs": 0,
+        "inputPreview": "Task: Write an outstanding implementation of a {task} in {language}.\n\nRequirements:\n- Must include clean TypeScript types.\n- Provide exhaustive comments explaining choices.\n- Return ONLY valid product",
+        "outputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript & React.\n\nRequirements:\n- Must include clean TypeScri"
+      },
+      {
+        "id": "node_exec_5xvuvmt3r",
+        "executionId": "exec_1781385022718_k46o0",
+        "nodeId": "node-gemini",
+        "nodeType": "node",
+        "tokensUsed": 1949,
+        "costUsd": 0.000565,
+        "latencyMs": 27707,
+        "inputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript & React.\n\nRequirements:\n- Must include clean TypeScri",
+        "outputPreview": "```typescript\nimport { useEffect, useMemo, useRef, useLayoutEffect } from 'react';\n\n/**\n * Configuration options for the debounced function.\n */\nexport interface UseDebounceOptions {\n  /**\n   * If tru"
+      },
+      {
+        "id": "node_exec_38noog8cn",
+        "executionId": "exec_1781385022718_k46o0",
+        "nodeId": "node-reviewer",
+        "nodeType": "node",
+        "tokensUsed": 49,
+        "costUsd": 0.000007,
+        "latencyMs": 7890,
+        "inputPreview": "Criteria: Check if code contains comprehensive typescript declarations, is free of external libraries, and handles reactive parameter cleanup.",
+        "outputPreview": "Passed audit successfully after 1 iterations!\n\nPASS"
+      },
+      {
+        "id": "node_exec_qtkfp7sla",
+        "executionId": "exec_1781385022718_k46o0",
+        "nodeId": "node-output",
+        "nodeType": "node",
+        "tokensUsed": 1870,
+        "costUsd": 0.018648,
+        "latencyMs": 0,
+        "inputPreview": "Pipeline Stream Completed",
+        "outputPreview": "```typescript\nimport { useEffect, useMemo, useRef, useLayoutEffect } from 'react';\n\n/**\n * Configuration options for the debounced function.\n */\nexport interface UseDebounceOptions {\n  /**\n   * If tru"
+      }
+    ]
+  }
+]
