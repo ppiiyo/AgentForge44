@@ -1,0 +1,15 @@
+{
+  "id": "Dynamic Integration flow",
+  "name": "Dynamic Integration flow",
+  "nodes": [
+    {
+      "id": "start-node",
+      "type": "input",
+      "title": "Start",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "connections": [],
+  "savedAt": "2026-06-13T20:12:20.367Z"
+}

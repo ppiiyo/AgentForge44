@@ -112,6 +112,108 @@ app.post('/api/projects', async (req: express.Request, res: express.Response) =>
   }
 });
 
+/**
+ * Alias endpoints for Graphs matching automated Integration Tests Specification
+ */
+app.post('/api/graphs', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id, name, nodes, connections } = req.body;
+    const projName = id || name || "untitled_graph";
+    const safeName = projName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_graph";
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    const payload = {
+      id: safeName,
+      name: safeName,
+      nodes: nodes || [],
+      connections: connections || [],
+      savedAt: new Date().toISOString()
+    };
+    await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+    res.status(201).json({ success: true, id: safeName, name: safeName, nodes, connections });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/graphs/:id', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    if (fs.existsSync(filePath)) {
+      const raw = await fsPromises.readFile(filePath, 'utf-8');
+      const content = JSON.parse(raw);
+      res.json({
+        id: safeName,
+        name: content.name || safeName,
+        nodes: content.nodes || [],
+        connections: content.connections || []
+      });
+    } else {
+      res.status(404).json({ error: "Graph not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/graphs/:id', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const { name, nodes, connections } = req.body;
+    const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    if (fs.existsSync(filePath)) {
+      const payload = {
+        id: safeName,
+        name: name || safeName,
+        nodes: nodes || [],
+        connections: connections || [],
+        savedAt: new Date().toISOString()
+      };
+      await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+      res.json({ success: true, id: safeName, name: name || safeName, nodes, connections });
+    } else {
+      res.status(404).json({ error: "Graph not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/graphs/:id', async (req: express.Request, res: express.Response) => {
+  try {
+    const { id } = req.params;
+    const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    if (fs.existsSync(filePath)) {
+      await fsPromises.unlink(filePath);
+      res.json({ success: true, message: `Graph ${safeName} has been deleted.` });
+    } else {
+      res.status(404).json({ error: "Graph not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Alias POST /api/execute referencing testing specs
+ */
+app.post('/api/execute', async (req: express.Request, res: express.Response) => {
+  const { nodes, connections } = req.body;
+  if (!nodes || !connections) {
+    res.status(400).json({ error: "Missing nodes or connections context." });
+    return;
+  }
+  try {
+    const result = await executePipeline(nodes, connections);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Execution error" });
+  }
+});
+
 app.delete('/api/projects/:name', async (req: express.Request, res: express.Response) => {
   try {
     const { name } = req.params;
@@ -652,6 +754,8 @@ async function setupServer() {
   new CollaborationServer(httpServer);
 }
 
-setupServer().catch(err => {
-  console.error("Failed to start server:", err);
-});
+if (process.env.NODE_ENV !== "test") {
+  setupServer().catch(err => {
+    console.error("Failed to start server:", err);
+  });
+}

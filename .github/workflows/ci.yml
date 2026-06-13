@@ -1,4 +1,4 @@
-name: CI
+name: AgentForge44 CI
 
 on:
   push:
@@ -11,46 +11,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: false
+      - name: Install Application Dependencies
+        run: npm ci
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Run TypeScript Linter Check
+        run: npm run lint
 
-      - name: Cache pnpm dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      - name: Build Production Bundles
+        run: npm run build
 
-      - name: Cache Turbo
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-cache-turbo-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-cache-turbo-
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Lint and Typecheck
-        run: pnpm run lint
-
-      - name: Production Build
-        run: pnpm run build
+      - name: Run Vitest Unit & Integration Suites
+        run: npx vitest run --exclude "**/*.spec.ts"
