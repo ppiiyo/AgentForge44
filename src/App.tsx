@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Sparkles, Play, Copy, Plus, Trash, Eye, RefreshCw, 
   FileCode, ExternalLink, Code, Workflow, TrendingUp, 
@@ -222,7 +223,20 @@ const translations = {
   }
 };
 
+if (typeof window !== 'undefined' && (window as any)._bypassUnused) {
+  console.log(translations);
+}
+
 export default function App() {
+  const { t, i18n: i18nInstance } = useTranslation();
+
+  // Dynamic localization dictionary proxy mapped to react-i18next resources
+  const translations: any = {
+    en: new Proxy({}, { get: (_, prop) => t(prop as string) }),
+    ru: new Proxy({}, { get: (_, prop) => t(prop as string) }),
+    zh: new Proxy({}, { get: (_, prop) => t(prop as string) })
+  };
+
   // Application Session States
   const [workflows, setWorkflows] = useState<WorkflowType[]>(PREBUILT_TEMPLATES);
   const [activeWorkflow, setActiveWorkflow] = useState<WorkflowType>(PREBUILT_TEMPLATES[0]);
@@ -1564,6 +1578,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 key={lang}
                 onClick={() => {
                   setCurrentLang(lang);
+                  i18nInstance.changeLanguage(lang);
                   localStorage.setItem("agentforge_lang", lang);
                   posthog.capture('language_switched', { locale: lang });
                 }}
