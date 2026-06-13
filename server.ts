@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import cors from 'cors';
-import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
@@ -28,13 +27,6 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 export const app = express();
 app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
-
-// Security setup
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: false
-}));
 
 app.use(cors({
   origin: true,
