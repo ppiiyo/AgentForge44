@@ -30,4 +30,4 @@ jobs:
         run: npm run build
 
       - name: Run Vitest Unit & Integration Suites
-        run: npx vitest run --exclude "**/*.spec.ts"
+        run: npm run test
