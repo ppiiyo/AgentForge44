@@ -22,6 +22,9 @@ import { VersionHistory } from './components/VersionHistory';
 import { Marketplace } from './components/Marketplace';
 import { CloudDeployer } from './components/CloudDeployer';
 import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
+import * as Sentry from '@sentry/react';
+import posthog from 'posthog-js';
+
 
 // Multi-language localization dictionaries
 const translations = {
@@ -927,6 +930,12 @@ export default function App() {
     setErrorText(null);
     setActiveTab('logs');
 
+    // Telemetry trace start
+    posthog.capture('pipeline_run_started', {
+      node_count: nodes.length,
+      connection_count: connections.length
+    });
+
     try {
       const response = await fetch('/api/run-pipeline', {
         method: 'POST',
@@ -942,17 +951,29 @@ export default function App() {
       const data = await response.json();
       
       if (!response.ok || data.error) {
-        throw new Error(data.error || "Failed to execute visual agent pipeline.");
+        const errorMsg = data.error || "Failed to execute visual agent pipeline.";
+        const errObj = new Error(errorMsg);
+        Sentry.captureException(errObj);
+        throw errObj;
       }
 
       setFinalResult(data.finalResult || "");
       setTotalDuration(data.totalDuration || 0);
       
+      posthog.capture('pipeline_run_success', {
+        duration: data.totalDuration || 0,
+        node_count: nodes.length
+      });
+
       // Play high-fidelity sequential execution tracer
       await animateNodeProgress(data.logs || []);
     } catch (err: any) {
       console.error(err);
       setErrorText(err.message || String(err));
+      posthog.capture('pipeline_run_failed', {
+        error: err.message || String(err)
+      });
+      Sentry.captureException(err);
     } finally {
       setIsRunning(false);
     }
@@ -1544,6 +1565,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 onClick={() => {
                   setCurrentLang(lang);
                   localStorage.setItem("agentforge_lang", lang);
+                  posthog.capture('language_switched', { locale: lang });
                 }}
                 className={`px-2 py-1 rounded-lg text-[9px] font-extrabold cursor-pointer transition-all border ${
                   currentLang === lang 

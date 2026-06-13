@@ -6,6 +6,7 @@ import { promises as fsPromises } from 'fs';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import * as Sentry from '@sentry/node';
 import { executePipeline } from './src/api/agentRun.js';
 import { StatefulExecutionEngine } from './src/api/execution.js';
 import { executeTool } from './src/api/tools.js';
@@ -19,6 +20,14 @@ import { logger } from './src/utils/logger.js';
 import { setupSwagger } from './src/api/swagger.js';
 
 dotenv.config();
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+  });
+}
+
 
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
 if (!fs.existsSync(PROJECTS_DIR)) {
@@ -776,6 +785,22 @@ app.post('/api/runs', async (req: express.Request, res: express.Response) => {
       success: true,
       error: err.message || "Headless Run Interruption"
     });
+  }
+});
+
+// Sentry Error Capture Middleware
+app.use((err: any, req: express.Request, res: express.Response, next: any) => {
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err);
+  }
+  logger.error("Unhandled Server Exception captured:", { error: err.message || err });
+  if (!res.headersSent) {
+    res.status(500).json({
+      success: false,
+      error: err.message || "Internal Server Error Connection Interrupt"
+    });
+  } else {
+    next(err);
   }
 });
 
