@@ -1150,8 +1150,9 @@ export default function App() {
       'tool': 3,
       'router': 4,
       'rag': 5,
-      'reviewer': 6,
-      'output': 7
+      'multimodal': 6,
+      'reviewer': 7,
+      'output': 8
     };
 
     const counts: Record<NodeType, number> = {
@@ -1161,6 +1162,7 @@ export default function App() {
       'tool': 0,
       'router': 0,
       'rag': 0,
+      'multimodal': 0,
       'reviewer': 0,
       'output': 0
     };
@@ -1303,6 +1305,11 @@ export default function App() {
         title = "RAG Search Retriever";
         description = "Query your vector-indexed library database.";
         initialFields = { searchQuery: '{{topic}}', limit: 3, ragResults: [] };
+        break;
+      case 'multimodal':
+        title = "Multimodal Document Hub";
+        description = "Ingest, parse and analyze PDF, spreadsheets, audio or image sheets.";
+        initialFields = { mediaType: 'image', mediaData: '', analysisPrompt: 'Transcribe, extract or analyze the table variables of this attachment.', useGeminiLive: false, outputVariables: 'extractedText=text' };
         break;
     }
 
@@ -1727,6 +1734,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 { type: 'router', label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10' },
                 { type: 'tool', label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
                 { type: 'rag', label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
+                { type: 'multimodal', label: 'Multimodal (PDF/Audio/Excel)', desc: 'Process documents pipeline', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
                 { type: 'output', label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10' }
               ].filter(tb => {
                 if (!toolboxSearch) return true;
@@ -1747,6 +1755,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     {tb.type === 'router' && <GitBranch size={11} className="text-sky-400" />}
                     {tb.type === 'tool' && <Globe size={11} className="text-rose-400" />}
                     {tb.type === 'rag' && <BookOpen size={11} className="text-teal-400" />}
+                    {tb.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
                     {tb.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
                     {tb.label}
                   </span>
@@ -2075,6 +2084,133 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                               results={node.fields.ragResults || []}
                               currentLang={currentLang}
                             />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Multimodal Node Settings Form */}
+                      {node.type === 'multimodal' && (
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              {currentLang === 'ru' ? 'Тип медиа-документа' : currentLang === 'zh' ? '多模态媒体文档类型' : 'Media Document Type'}
+                            </label>
+                            <select
+                              value={node.fields.mediaType || 'image'}
+                              onChange={(e) => handleUpdateNodeField(node.id, 'mediaType', e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-900 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none"
+                            >
+                              <option value="image">🖼️ Image (Vision OCR)</option>
+                              <option value="audio">🎵 Audio (PCM / Speech Transcription)</option>
+                              <option value="pdf">📄 PDF Document (OCR Comprehension)</option>
+                              <option value="excel">📊 Excel / CSV Spreadsheet Converter</option>
+                            </select>
+                          </div>
+
+                          {/* Multi-modality Ingest Drag & Drop Box */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              {currentLang === 'ru' ? 'Загрузка файла / Ingest Attachment' : currentLang === 'zh' ? '导入或拖拽多模态附件' : 'Ingest & Attach Document'}
+                            </label>
+                            <div 
+                              className="border border-dashed border-slate-800 rounded-xl p-4 bg-slate-950/45 hover:border-amber-500/40 hover:bg-slate-950/70 transition-all text-center space-y-2 cursor-pointer relative"
+                              onDragOver={(e) => { e.preventDefault(); }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const file = e.dataTransfer.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    handleUpdateNodeField(node.id, 'mediaData', reader.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              onClick={() => {
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = node.fields.mediaType === 'image' ? 'image/*' : node.fields.mediaType === 'audio' ? 'audio/*' : node.fields.mediaType === 'pdf' ? 'application/pdf' : '.csv,.xlsx,.xls';
+                                input.onchange = (e) => {
+                                  const file = (e.target as HTMLInputElement).files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                      handleUpdateNodeField(node.id, 'mediaData', reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                };
+                                input.click();
+                              }}
+                            >
+                              <Upload size={18} className="mx-auto text-amber-500 animate-bounce" />
+                              <div className="text-[10.5px] text-slate-300 font-medium">
+                                {currentLang === 'ru' ? 'Перетащите файл сюда или нажмите для выбора' : currentLang === 'zh' ? '拖拽文件入此，或轻点此处选择文件上传' : 'Drag file here or click to upload'}
+                              </div>
+                              <span className="text-[9px] text-slate-505 block">
+                                {node.fields.mediaType === 'image' ? 'PNG, JPEG, WebP ' : node.fields.mediaType === 'audio' ? 'Wave, MP3, Raw PCM ' : node.fields.mediaType === 'pdf' ? 'PDF Text & Scans ' : 'CSV & Spreadsheets '} 
+                                max 15MB
+                              </span>
+                            </div>
+                            {node.fields.mediaData && (
+                              <div className="flex items-center justify-between text-[9px] bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-slate-400">
+                                <span className="truncate max-w-[140px]">Attached: Data URIs payload</span>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleUpdateNodeField(node.id, 'mediaData', ''); }}
+                                  className="text-[9px] hover:text-rose-500 text-slate-500"
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                              {currentLang === 'ru' ? 'Заявление / Инструкция ИИ' : currentLang === 'zh' ? '大模型视觉与多模态分析指令' : 'Multimodal Analysis Prompt'}
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={node.fields.analysisPrompt || ''}
+                              onChange={(e) => handleUpdateNodeField(node.id, 'analysisPrompt', e.target.value)}
+                              placeholder="Describe extraction formula or template questions..."
+                              className="w-full bg-slate-950 border border-slate-900 focus:border-amber-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none font-sans"
+                            />
+                          </div>
+
+                          {node.fields.mediaType === 'audio' && (
+                            <div className="flex items-center justify-between bg-slate-950/30 border border-slate-900 p-2.5 rounded-xl">
+                              <div className="space-y-0.5">
+                                <span className="text-[10.5px] font-bold text-slate-300 block">
+                                  {currentLang === 'ru' ? 'Gemini Live Audio API' : currentLang === 'zh' ? '使用 Gemini 实时语音传输 (PCM)' : 'Gemini Live Transception'}
+                                </span>
+                                <span className="text-[9px] text-slate-500 block">
+                                  Low-latency bidirectional WebSocket PCM audio streaming.
+                                </span>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={!!node.fields.useGeminiLive}
+                                onChange={(e) => handleUpdateNodeField(node.id, 'useGeminiLive', e.target.checked)}
+                                className="accent-amber-500 rounded cursor-pointer"
+                              />
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                              <span>{currentLang === 'ru' ? 'Преобразование в Переменные' : currentLang === 'zh' ? '导出结构化管线变量' : 'Map Output to Pipeline Variables'}</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={node.fields.outputVariables || ''}
+                              onChange={(e) => handleUpdateNodeField(node.id, 'outputVariables', e.target.value)}
+                              placeholder="e.g. revenue=calculations.grossSum, text_out=text"
+                              className="w-full bg-slate-950 border border-slate-900 focus:border-amber-500/40 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-250 focus:outline-none font-mono"
+                            />
+                            <p className="text-[9px] text-slate-505 leading-tight">
+                              Extract parameters from JSON schema results to variables for downstream nodes.
+                            </p>
                           </div>
                         </div>
                       )}
@@ -2451,6 +2587,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                           {node.type === 'router' && <GitBranch size={11} className="text-sky-405 animate-pulse" />}
                           {node.type === 'tool' && <Globe size={11} className="text-rose-405" />}
                           {node.type === 'rag' && <BookOpen size={11} className="text-teal-405" />}
+                          {node.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
                         </span>
                         <span className="font-bold text-[11px] text-slate-100 tracking-wide truncate flex-1">
                           {node.title}
@@ -2535,6 +2672,27 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                             {nodeStatus === 'completed' && (
                               <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-teal-350 bg-teal-950/40 border border-teal-900/35 px-2 py-0.5 rounded mt-1 shadow-sm animate-bounce">
                                 Grounded: {node.fields.ragResults?.length || 3} Docs
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {node.type === 'multimodal' && (
+                          <div className="space-y-1">
+                            <span className="text-[9.5px] font-mono text-amber-400 font-bold uppercase bg-amber-950/20 px-2 py-0.5 rounded border border-amber-900/15 block w-fit">
+                              📼 Modality: {node.fields.mediaType || 'image'}
+                            </span>
+                            {node.fields.useGeminiLive && (
+                              <span className="inline-flex items-center gap-0.5 text-[8.5px] font-extrabold text-amber-500 animate-pulse bg-amber-950/20 px-1 py-0.2 rounded border border-amber-900/30">
+                                🔗 Live Streams Connected
+                              </span>
+                            )}
+                            {node.fields.mediaData ? (
+                              <span className="text-[8.5px] text-emerald-400 font-semibold block mt-1">
+                                📄 Attachment Loaded ✓
+                              </span>
+                            ) : (
+                              <span className="text-[8.5px] text-slate-500 font-semibold block mt-1">
+                                ⚠️ No Attachment Ingested
                               </span>
                             )}
                           </div>
@@ -2851,6 +3009,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                                         target="_blank" 
                                         rel="noreferrer" 
                                         className="text-[10px] text-sky-405 flex items-center gap-1 hover:underline truncate"
+                                        id={`grounding-link-${gi}`}
                                       >
                                         <ExternalLink size={10} /> {g.title}
                                       </a>
@@ -2858,6 +3017,53 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                                   </div>
                                 </div>
                               )}
+
+                              {/* Sandboxed VM Sandbox Telemetry visualizations */}
+                              {(() => {
+                                try {
+                                  if (log.output && log.output.trim().startsWith('{')) {
+                                    const parsed = JSON.parse(log.output);
+                                    if (parsed.telemetry) {
+                                      const tel = parsed.telemetry;
+                                      return (
+                                        <div className="bg-slate-900 border border-amber-900/40 p-3.5 rounded-xl mt-2.5 space-y-2 font-mono">
+                                          <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-amber-950/60">
+                                            <span className="text-amber-400 font-extrabold uppercase flex items-center gap-1">
+                                              <AlertCircle size={12} className="animate-pulse text-amber-500" />
+                                              Isolated VM Sandbox Telemetry
+                                            </span>
+                                            <span className="text-slate-500 text-[9px]">ID: {parsed.sandboxId || 'sandbox-x7'}</span>
+                                          </div>
+                                          
+                                          <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-300">
+                                            <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
+                                              <span className="text-slate-500 font-bold block text-[8px] uppercase">Virtual CPU Load</span>
+                                              <span className="text-amber-400 font-bold text-[11px]">{tel.cpuLoad || '0.15%'}</span>
+                                            </div>
+                                            <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
+                                              <span className="text-slate-500 font-bold block text-[8px] uppercase">Virtual RAM footprint</span>
+                                              <span className="text-amber-400 font-bold text-[11px]">{tel.memoryUsed || '14.2 MB'}</span>
+                                            </div>
+                                          </div>
+
+                                          <div className="text-[10px] bg-slate-950/70 p-2 rounded border border-slate-900 space-y-1">
+                                            <span className="text-slate-500 font-bold block text-[8px] uppercase">Environment Isolation Shield</span>
+                                            <p className="text-[9.5px] leading-relaxed text-slate-300">{tel.isolationLevel}</p>
+                                          </div>
+
+                                          <div className="flex items-center justify-between text-[9px] pt-1 text-slate-500">
+                                            <span className="flex items-center gap-1 text-emerald-400 font-extrabold">
+                                              <Check size={11} /> Secrets Shield Active
+                                            </span>
+                                            <span>Limit: {tel.executionTimeoutMs}ms</span>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                  }
+                                } catch (_) {}
+                                return null;
+                              })()}
                             </div>
                           </div>
                         ))}

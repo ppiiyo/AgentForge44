@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'multimodal';
 
 export interface BaseNode {
   id: string;
@@ -85,7 +85,18 @@ export interface RAGNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode;
+export interface MultimodalNode extends BaseNode {
+  type: 'multimodal';
+  fields: {
+    mediaType: 'image' | 'audio' | 'pdf' | 'excel';
+    mediaData: string; // Base64 encoded document or audio/image binary sequence or reference URL
+    analysisPrompt: string; // Dynamic instructions for formatting/Ocr/live synthesis
+    useGeminiLive: boolean; // Flag to leverage high-speed Live API translation/synthesis
+    outputVariables: string; // Variable mapping for extracted structure JSON nodes
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | MultimodalNode;
 
 export interface FlowConnection {
   id: string;
