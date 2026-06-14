@@ -1168,5 +1168,89 @@
     "downloadsCount": 1,
     "rating": 4.5,
     "createdAt": "2026-06-13T21:48:33.106Z"
+  },
+  {
+    "id": "mkt-1781427506916-rncxo",
+    "title": "DevOps Multi-Agent Scanner",
+    "description": "Automatically analyzes dockerfiles and typescript compilation rules to secure containers.",
+    "authorId": "dev_analyst_agent",
+    "category": "template",
+    "graphSnapshot": {
+      "name": "DevOps Multi-Agent Scanner",
+      "nodes": [
+        {
+          "id": "devops-inp",
+          "type": "input",
+          "title": "Scope",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "connections": []
+    },
+    "tags": [
+      "devops",
+      "docker",
+      "scanner"
+    ],
+    "downloadsCount": 1,
+    "rating": 4.5,
+    "createdAt": "2026-06-14T08:58:26.916Z"
+  },
+  {
+    "id": "mkt-1781428221219-xi1ol",
+    "title": "DevOps Multi-Agent Scanner",
+    "description": "Automatically analyzes dockerfiles and typescript compilation rules to secure containers.",
+    "authorId": "dev_analyst_agent",
+    "category": "template",
+    "graphSnapshot": {
+      "name": "DevOps Multi-Agent Scanner",
+      "nodes": [
+        {
+          "id": "devops-inp",
+          "type": "input",
+          "title": "Scope",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "connections": []
+    },
+    "tags": [
+      "devops",
+      "docker",
+      "scanner"
+    ],
+    "downloadsCount": 1,
+    "rating": 4.5,
+    "createdAt": "2026-06-14T09:10:21.219Z"
+  },
+  {
+    "id": "mkt-1781428292854-ayu6j",
+    "title": "DevOps Multi-Agent Scanner",
+    "description": "Automatically analyzes dockerfiles and typescript compilation rules to secure containers.",
+    "authorId": "dev_analyst_agent",
+    "category": "template",
+    "graphSnapshot": {
+      "name": "DevOps Multi-Agent Scanner",
+      "nodes": [
+        {
+          "id": "devops-inp",
+          "type": "input",
+          "title": "Scope",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "connections": []
+    },
+    "tags": [
+      "devops",
+      "docker",
+      "scanner"
+    ],
+    "downloadsCount": 1,
+    "rating": 4.5,
+    "createdAt": "2026-06-14T09:11:32.854Z"
   }
 ]

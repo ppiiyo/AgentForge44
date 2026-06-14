@@ -138,6 +138,9 @@ async function generateWithRetry(
           continue;
         } else {
           // If we are already on the fallback model and hit quota, activate simulation mode
+          if (process.env.STRICT_LLM_ERRORS === 'true') {
+            throw err;
+          }
           return generateSimulatedResponse(currentModel, contents);
         }
       }
@@ -432,10 +435,16 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
             }
           } else if (cond.type === 'regex') {
             try {
-              const regex = new RegExp(cond.value, 'i');
-              if (regex.test(inputPayload)) {
-                selectedTargetId = cond.targetNodeId;
-                break;
+              const pattern = cond.value || "";
+              const isSafe = !(/(\([^\)]*[\+\*][^\)]*\))[\+\*]/.test(pattern)) && !(/(\([^\)]*\{\d+,?\d*\}\))\{\d+,?\d*\}/.test(pattern));
+              if (isSafe) {
+                const regex = new RegExp(pattern, 'i');
+                if (regex.test(inputPayload)) {
+                  selectedTargetId = cond.targetNodeId;
+                  break;
+                }
+              } else {
+                console.warn("[AgentForge44 Security] Rejected potentially unsafe ReDoS regex pattern:", pattern);
               }
             } catch {}
           } else if (cond.type === 'json_key') {

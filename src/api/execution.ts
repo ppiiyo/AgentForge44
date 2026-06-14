@@ -279,10 +279,16 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
               }
             } else if (cond.type === 'regex') {
               try {
-                const regex = new RegExp(cond.value, 'i');
-                if (regex.test(inputPayload)) {
-                  selectedTargetId = cond.targetNodeId;
-                  break;
+                const pattern = cond.value || "";
+                const isSafe = !(/(\([^\)]*[\+\*][^\)]*\))[\+\*]/.test(pattern)) && !(/(\([^\)]*\{\d+,?\d*\}\))\{\d+,?\d*\}/.test(pattern));
+                if (isSafe) {
+                  const regex = new RegExp(pattern, 'i');
+                  if (regex.test(inputPayload)) {
+                    selectedTargetId = cond.targetNodeId;
+                    break;
+                  }
+                } else {
+                  console.warn("[AgentForge44 Security] Rejected potentially unsafe ReDoS regex pattern:", pattern);
                 }
               } catch {}
             } else if (cond.type === 'json_key') {

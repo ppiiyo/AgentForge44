@@ -73,6 +73,9 @@ export class GeminiProvider extends LLMProvider {
     } catch (err: any) {
       const errMsg = String(err.message || err);
       if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429") || err.status === 429) {
+        if (process.env.STRICT_LLM_ERRORS === 'true') {
+          throw err;
+        }
         console.warn(`[AgentForge44] Quota limit reached in providers Gemini model run. Activating simulated fallback mock response...`);
         const simText = `[Simulated response due to API quota limits (429)]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
         return {
