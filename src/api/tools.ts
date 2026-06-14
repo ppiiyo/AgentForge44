@@ -176,7 +176,7 @@ export async function executeCodeInterpreter(code: string, language?: 'javascrip
           sandboxId,
           language: "javascript",
           success: false,
-          error: `Sandbox compilation or execution error: ${err.message}`,
+          error: `Code execution runtime error: ${err.message}`,
           telemetry: {
             isolationLevel: "V8 Isolated Virtual Machine",
             durationMs: Date.now() - startTime,
