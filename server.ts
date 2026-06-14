@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import cors from 'cors';
-import helmet from 'helmet';
+import { setupSecurity } from './src/middleware/security.js';
+import schedulerAndWebhooksRouter from './src/api/schedulerAndWebhooks.js';
+import copilotRouter from './src/api/copilot.js';
 import rateLimit from 'express-rate-limit';
 import * as Sentry from '@sentry/node';
 import { executePipeline } from './src/api/agentRun.js';
@@ -17,6 +19,8 @@ import { CollaborationServer, activeRooms, getPresenceHistory } from './src/api/
 import { MarketplaceManager } from './src/api/marketplace.js';
 import { DeploymentManager } from './src/api/deployment.js';
 import { logger } from './src/utils/logger.js';
+import { triggerWebhook } from './src/webhooks/index.js';
+import { recordDebugSession } from './src/utils/debugSessions.js';
 import { setupSwagger } from './src/api/swagger.js';
 
 dotenv.config();
@@ -43,10 +47,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
+setupSecurity(app);
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
@@ -67,6 +68,10 @@ app.use(express.json());
 
 // Setup OpenAPI Documentation
 setupSwagger(app);
+
+// Mount Schedule and Webhook routes
+app.use('/api', schedulerAndWebhooksRouter);
+app.use('/api', copilotRouter);
 
 
 // In-Memory Rate Limiting implementation to keep execution independent of thick external dependencies
@@ -388,35 +393,74 @@ app.get('/api/rag/search', (req: express.Request, res: express.Response) => {
 app.post('/api/run-pipeline', async (req: express.Request, res: express.Response) => {
   const startTime = Date.now();
   const { nodes, connections, graphId, graphName } = req.body;
+  
+  const gId = graphId || 'canvas-workspace';
+  const gName = graphName || 'Workspace Canvas';
+
   try {
     if (!nodes || !connections) {
       res.status(400).json({ error: "Missing nodes or connections context." });
       return;
     }
+
+    // Trigger starting webhook
+    await triggerWebhook('graph.started', {
+      graphId: gId,
+      graphName: gName,
+      timestamp: new Date()
+    });
+
     const result = await executePipeline(nodes, connections);
     
     // Log successfully finished metrics workflow in telemetry store
     await MetricsCollector.logExecution(
-      graphId || 'canvas-workspace',
-      graphName || 'Workspace Canvas',
+      gId,
+      gName,
       'success',
       startTime,
       result.logs || []
     );
 
-    res.json(result);
+    // Record debugging replay session snapshots
+    const dbgSession = recordDebugSession(
+      gId,
+      gName,
+      result.logs || [],
+      result.finalResult || ""
+    );
+
+    // Trigger success webhook
+    await triggerWebhook('graph.completed', {
+      graphId: gId,
+      graphName: gName,
+      result,
+      timestamp: new Date()
+    });
+
+    res.json({
+      ...result,
+      debugSessionId: dbgSession.id
+    });
   } catch (err: any) {
     logger.error("Pipeline run failure:", { error: err.message || err });
     
     // Log failed metrics workflow in telemetry store
     await MetricsCollector.logExecution(
-      graphId || 'canvas-workspace',
-      graphName || 'Workspace Canvas',
+      gId,
+      gName,
       'failed',
       startTime,
       [],
       err.message || String(err)
     );
+
+    // Trigger failure webhook
+    await triggerWebhook('graph.failed', {
+      graphId: gId,
+      graphName: gName,
+      error: err.message || String(err),
+      timestamp: new Date()
+    });
 
     res.status(500).json({ error: err.message || "Internal server error" });
   }

@@ -22,6 +22,9 @@ import { MetricsDashboard } from './components/MetricsDashboard';
 import { VersionHistory } from './components/VersionHistory';
 import { Marketplace } from './components/Marketplace';
 import { CloudDeployer } from './components/CloudDeployer';
+import { CopilotPanel } from './components/CopilotPanel';
+import { SyncHubPanel } from './components/SyncHubPanel';
+import { TimeTravelDebugger } from './components/TimeTravelDebugger';
 import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
 import * as Sentry from '@sentry/react';
 import posthog from 'posthog-js';
@@ -286,6 +289,7 @@ export default function App() {
   const [nodeExecutionStatuses, setNodeExecutionStatuses] = useState<Record<string, 'idle' | 'running' | 'completed' | 'failed'>>({});
   const [isDryRunningNode, setIsDryRunningNode] = useState<string | null>(null);
   const [dryRunOutput, setDryRunOutput] = useState<Record<string, string>>({});
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
 
   // Server-Side Project & Compiled Code State Management
   interface SavedServerProject {
@@ -551,7 +555,7 @@ export default function App() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy' | 'copilot' | 'sync' | 'debug'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -765,6 +769,15 @@ export default function App() {
     setCurrentSavedProjectName(null); // Installed from marketplace, user needs to save manually or keep in-memory
     
     setCopiedText(`Installed marketplace template: "${finalName}" 🛒`);
+    setTimeout(() => setCopiedText(null), 4000);
+  };
+
+  const handleApplyCopilotGraph = (newNodes: FlowNode[], newConnections: FlowConnection[]) => {
+    recordAction();
+    setNodes(newNodes);
+    setConnections(newConnections);
+    
+    setCopiedText(currentLang === 'ru' ? 'Схема обновлена ИИ-копилотом! 🤖' : currentLang === 'zh' ? '已应用 AI 推荐的流程图布局！🤖' : 'AI Copilot Layout applied! 🤖');
     setTimeout(() => setCopiedText(null), 4000);
   };
 
@@ -2390,10 +2403,13 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
             <AnimatePresence>
               {nodes.map(node => {
                 const isSelected = selectedNodeId === node.id;
+                const isHighlighted = highlightedNodeId === node.id;
                 const nodeStatus = nodeExecutionStatuses[node.id] || 'idle';
                 
                 let borderStyle = 'border-slate-800 hover:border-slate-700';
-                if (isSelected) {
+                if (isHighlighted) {
+                  borderStyle = 'border-amber-500 shadow-2xl shadow-amber-500/40 scale-102 ring-2 ring-amber-500 animate-[pulse_2s_infinite]';
+                } else if (isSelected) {
                   borderStyle = 'border-sky-500 shadow-2xl shadow-sky-500/10 scale-102 ring-1 ring-sky-500/30';
                 }
                 if (nodeStatus === 'running') {
@@ -2647,14 +2663,17 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
           {/* Section tab headers */}
           <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">
             {[
-              { id: 'logs', label: `⚡ Run`, icon: RefreshCw },
-              { id: 'market', label: `🛒 Store`, icon: ShoppingBag },
-              { id: 'deploy', label: `🚀 Cloud`, icon: Globe },
-              { id: 'metrics', label: `📊 Stats`, icon: TrendingUp },
-              { id: 'versions', label: `⏳ Backups`, icon: History },
-              { id: 'evals', label: `🎯 Benchmark`, icon: ChevronRight },
-              { id: 'rag', label: `📚 Library`, icon: BookOpen },
-              { id: 'code', label: `💻 Code`, icon: Code }
+              { id: 'logs', label: currentLang === 'ru' ? '⚡ Запуск' : currentLang === 'zh' ? '⚡ 运行' : '⚡ Run', icon: RefreshCw },
+              { id: 'copilot', label: currentLang === 'ru' ? '🤖 Копилот' : currentLang === 'zh' ? '🤖 智能助手' : '🤖 Copilot', icon: Sparkles },
+              { id: 'sync', label: currentLang === 'ru' ? '🔄 Синхро' : currentLang === 'zh' ? '🔄 同步中心' : '🔄 Sync Hub', icon: Network },
+              { id: 'debug', label: currentLang === 'ru' ? '🐞 Дебаг' : currentLang === 'zh' ? '🐞 调试器' : '⏳ Debugger', icon: Terminal },
+              { id: 'market', label: currentLang === 'ru' ? '🛒 Магазин' : currentLang === 'zh' ? '🛒 商店' : '🛒 Store', icon: ShoppingBag },
+              { id: 'deploy', label: currentLang === 'ru' ? '🚀 Сервер' : currentLang === 'zh' ? '🚀 云部署' : '🚀 Cloud', icon: Globe },
+              { id: 'metrics', label: currentLang === 'ru' ? '📊 Статы' : currentLang === 'zh' ? '📊 指标' : '📊 Stats', icon: TrendingUp },
+              { id: 'versions', label: currentLang === 'ru' ? '⏳ Бэкапы' : currentLang === 'zh' ? '⏳ 备份历史' : '⏳ Backups', icon: History },
+              { id: 'evals', label: currentLang === 'ru' ? '🎯 Тесты' : currentLang === 'zh' ? '🎯 基准测试' : '🎯 Benchmark', icon: ChevronRight },
+              { id: 'rag', label: currentLang === 'ru' ? '📚 Библиотека' : currentLang === 'zh' ? '📚 知识库' : '📚 Library', icon: BookOpen },
+              { id: 'code', label: currentLang === 'ru' ? '💻 Код' : currentLang === 'zh' ? '💻 源码' : '💻 Code', icon: Code }
             ].map(tab => (
               <button
                 id={`tab-btn-${tab.id}`}
@@ -3463,6 +3482,58 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     graphName={projectNameInput || "Untitled Flow"} 
                     currentLang={currentLang as any} 
                     activeSnapshot={{ name: projectNameInput, nodes, connections }} 
+                  />
+                </motion.div>
+              )}
+
+              {/* Tab: AI Copilot and Graph Architect */}
+              {activeTab === 'copilot' && (
+                <motion.div 
+                  key="copilot-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <CopilotPanel 
+                    currentLang={currentLang as any}
+                    nodes={nodes}
+                    connections={connections}
+                    onApplyGraph={handleApplyCopilotGraph}
+                  />
+                </motion.div>
+              )}
+
+              {/* Tab: Automation Scheduler and Webhooks hub */}
+              {activeTab === 'sync' && (
+                <motion.div 
+                  key="sync-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <SyncHubPanel 
+                    currentLang={currentLang as any}
+                    nodes={nodes}
+                    connections={connections}
+                  />
+                </motion.div>
+              )}
+
+              {/* Tab: Time-Travel Visual debugger */}
+              {activeTab === 'debug' && (
+                <motion.div 
+                  key="debug-tab"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <TimeTravelDebugger 
+                    currentLang={currentLang as any}
+                    onHighlightNode={setHighlightedNodeId}
+                    onSetDryRunOutput={setDryRunOutput}
                   />
                 </motion.div>
               )}
