@@ -15,8 +15,8 @@
     "test": "vitest run --exclude \"**/*.spec.ts\"",
     "test:e2e": "playwright test",
     "test:coverage": "vitest run --coverage --exclude \"**/*.spec.ts\"",
-    "lint": "eslint src --ext .ts,.tsx && tsc --noEmit",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint": "eslint src && tsc --noEmit",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\""
   },
   "dependencies": {

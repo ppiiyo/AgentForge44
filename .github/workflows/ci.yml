@@ -21,7 +21,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run TypeScript Linter Check
         run: npm run lint
