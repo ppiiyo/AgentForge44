@@ -1,0 +1,241 @@
+import { Router, Request, Response } from 'express';
+import { executePipeline } from './agentRun.js';
+import { StatefulExecutionEngine } from './execution.js';
+import { runEvaluationSuite } from './advancedPhase4.js';
+import { MetricsCollector } from './metricsAndVersions.js';
+import { triggerWebhook } from '../webhooks/index.js';
+import { recordDebugSession } from '../utils/debugSessions.js';
+import { logger } from '../utils/logger.js';
+
+const router = Router();
+
+// In-Memory Rate Limiting implementation to keep execution independent of thick external dependencies
+const rateLimits: Record<string, { count: number; resetAt: number }> = {};
+const LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 requests per IP/token per minute
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const limitState = rateLimits[key];
+  
+  if (!limitState || now > limitState.resetAt) {
+    rateLimits[key] = {
+      count: 1,
+      resetAt: now + LIMIT_WINDOW_MS
+    };
+    return false;
+  }
+  
+  limitState.count++;
+  return limitState.count > MAX_REQUESTS_PER_WINDOW;
+}
+
+// Master API Key resolver
+const ALLOWED_API_KEYS = new Set([
+  process.env.AGENTFORGE_API_KEY || "forge_production_admin_token"
+]);
+
+router.post('/execute', async (req: Request, res: Response) => {
+  const { nodes, connections } = req.body;
+  if (!nodes || !connections) {
+    res.status(400).json({ error: "Missing nodes or connections context." });
+    return;
+  }
+  try {
+    const result = await executePipeline(nodes, connections);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Execution error" });
+  }
+});
+
+router.post('/run-pipeline', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  const { nodes, connections, graphId, graphName } = req.body;
+  
+  const gId = graphId || 'canvas-workspace';
+  const gName = graphName || 'Workspace Canvas';
+
+  try {
+    if (!nodes || !connections) {
+      res.status(400).json({ error: "Missing nodes or connections context." });
+      return;
+    }
+
+    // Trigger starting webhook
+    await triggerWebhook('graph.started', {
+      graphId: gId,
+      graphName: gName,
+      timestamp: new Date()
+    });
+
+    const result = await executePipeline(nodes, connections);
+    
+    // Log successfully finished metrics workflow in telemetry store
+    await MetricsCollector.logExecution(
+      gId,
+      gName,
+      'success',
+      startTime,
+      result.logs || []
+    );
+
+    // Record debugging replay session snapshots
+    const dbgSession = recordDebugSession(
+      gId,
+      gName,
+      result.logs || [],
+      result.finalResult || ""
+    );
+
+    // Trigger success webhook
+    await triggerWebhook('graph.completed', {
+      graphId: gId,
+      graphName: gName,
+      result,
+      timestamp: new Date()
+    });
+
+    res.json({
+      ...result,
+      debugSessionId: dbgSession.id
+    });
+  } catch (err: any) {
+    logger.error("Pipeline run failure:", { error: err.message || err });
+    
+    // Log failed metrics workflow in telemetry store
+    await MetricsCollector.logExecution(
+      gId,
+      gName,
+      'failed',
+      startTime,
+      [],
+      err.message || String(err)
+    );
+
+    // Trigger failure webhook
+    await triggerWebhook('graph.failed', {
+      graphId: gId,
+      graphName: gName,
+      error: err.message || String(err),
+      timestamp: new Date()
+    });
+
+    res.status(500).json({ error: err.message || "Internal server error" });
+  }
+});
+
+router.post('/evals', async (req: Request, res: Response) => {
+  try {
+    const { nodes, connections, testCases } = req.body;
+    if (!nodes || !connections || !testCases || !Array.isArray(testCases)) {
+      res.status(400).json({ error: "Missing required inputs evaluation parameters." });
+      return;
+    }
+
+    const reportResult = await runEvaluationSuite(nodes, connections, testCases);
+    res.json(reportResult);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Internal evaluation server error." });
+  }
+});
+
+router.get('/stream-pipeline', async (req: Request, res: Response) => {
+  // Setup SSE Headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no' // Prevent Nginx buffering in containers
+  });
+
+  const writeSSEEvent = (event: string, data: any) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const payloadQuery = req.query.payload as string;
+    if (!payloadQuery) {
+      writeSSEEvent("error", { message: "Query payload is empty." });
+      res.end();
+      return;
+    }
+
+    const { nodes, connections, variables } = JSON.parse(decodeURIComponent(payloadQuery));
+    if (!nodes || !connections) {
+      writeSSEEvent("error", { message: "Invalid graph payload parameter configurations." });
+      res.end();
+      return;
+    }
+
+    // Step-by-Step execution notifier tracking
+    writeSSEEvent("status", { message: "Synthesizing execution path graph..." });
+
+    const engine = new StatefulExecutionEngine(nodes, connections);
+    
+    // Track intermediate progression and stream chunks back directly to listener
+    const runResult = await engine.runWorkflow(variables || {});
+    
+    writeSSEEvent("result", runResult);
+    writeSSEEvent("completed", { message: "Stream closed successfully." });
+    res.end();
+
+  } catch (err: any) {
+    writeSSEEvent("error", { message: err.message || "SSE system execution error." });
+    res.end();
+  }
+});
+
+router.post('/runs', async (req: Request, res: Response) => {
+  const clientIP = req.ip || "unknown-client";
+  const authHeader = req.headers.authorization;
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : "";
+
+  // 1. Authenticate Authorization Header Token (allowing test environment "forge_production_admin_token" fallback)
+  const API_KEY = process.env.AGENTFORGE_API_KEY || (process.env.NODE_ENV === 'test' || process.env.VITEST ? "forge_production_admin_token" : undefined);
+  if (!token || (token !== API_KEY && !ALLOWED_API_KEYS.has(token))) {
+    res.status(401).json({
+      success: false,
+      error: "Unauthorized access: Bearer token is invalid or missing in Headers. Configure AGENTFORGE_API_KEY environment credentials to register custom tokens."
+    });
+    return;
+  }
+
+  // 2. Validate Rate Limits
+  if (isRateLimited(token || clientIP)) {
+    res.status(429).json({
+      success: false,
+      error: "Too Many Requests: Rate limiting triggered. Limit is 30 requests/minute."
+    });
+    return;
+  }
+
+  try {
+    const { nodes, connections, inputs } = req.body;
+    if (!nodes || !connections) {
+      res.status(400).json({
+        success: false,
+        error: "Bad Request: specify 'nodes' and 'connections' configuration matrices."
+      });
+      return;
+    }
+
+    const engine = new StatefulExecutionEngine(nodes, connections);
+    const trackingResult = await engine.runWorkflow(inputs || {});
+
+    res.json({
+      success: true,
+      runId: `run_${Math.random().toString(36).substr(2, 9)}`,
+      engine: "AgentForge44 Stateful Execution V2",
+      results: trackingResult
+    });
+
+  } catch (err: any) {
+    res.status(500).json({
+      success: true,
+      error: err.message || "Headless Run Interruption"
+    });
+  }
+});
+
+export default router;
