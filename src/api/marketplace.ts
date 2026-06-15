@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { FlowNode, FlowConnection } from '../types.js';
+import { db } from '../db/index.js';
+import { marketplaceItems } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
 if (!fs.existsSync(DATA_DIR)) {
@@ -505,14 +508,52 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
 ];
 
 export class MarketplaceManager {
-  static getItems(category?: string, tag?: string, search?: string, sortBy?: string): MarketplaceItem[] {
-    let items = readJsonFile<MarketplaceItem[]>(MARKETPLACE_FILE, []);
-    
-    // Seed first if empty
-    if (items.length === 0) {
-      writeJsonFile(MARKETPLACE_FILE, SEED_TEMPLATES);
-      items = SEED_TEMPLATES;
+  private static seedIfEmpty(): void {
+    const count = db.select().from(marketplaceItems).all().length;
+    if (count === 0) {
+      for (const t of SEED_TEMPLATES) {
+        db.insert(marketplaceItems).values({
+          id: t.id,
+          name: t.title,
+          description: t.description,
+          type: t.category,
+          data: JSON.stringify({
+            ...t.graphSnapshot,
+            tags: t.tags // include tags in snapshot storage for simple extraction
+          }),
+          author: t.authorId,
+          downloads: t.downloadsCount,
+          rating: t.rating,
+          reviews: '[]',
+          createdAt: t.createdAt
+        }).run();
+      }
     }
+  }
+
+  static getItems(category?: string, tag?: string, search?: string, sortBy?: string): MarketplaceItem[] {
+    this.seedIfEmpty();
+    const rows = db.select().from(marketplaceItems).all();
+    
+    let items: MarketplaceItem[] = rows.map(row => {
+      const parsedData = JSON.parse(row.data);
+      return {
+        id: row.id,
+        title: row.name,
+        description: row.description || '',
+        authorId: row.author,
+        category: row.type as any,
+        graphSnapshot: {
+          name: row.name,
+          nodes: parsedData.nodes || [],
+          connections: parsedData.connections || []
+        },
+        tags: parsedData.tags || [],
+        downloadsCount: row.downloads,
+        rating: row.rating,
+        createdAt: row.createdAt
+      };
+    });
 
     if (category && category !== 'all') {
       items = items.filter(item => item.category === category);
@@ -536,7 +577,6 @@ export class MarketplaceManager {
     } else if (sortBy === 'rating') {
       items.sort((a, b) => b.rating - a.rating);
     } else {
-      // popular
       items.sort((a, b) => b.downloadsCount - a.downloadsCount);
     }
 
@@ -544,8 +584,28 @@ export class MarketplaceManager {
   }
 
   static getItemById(id: string): MarketplaceItem | null {
-    const items = this.getItems();
-    return items.find(item => item.id === id) || null;
+    this.seedIfEmpty();
+    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, id)).all();
+    if (rows.length === 0) return null;
+    
+    const row = rows[0];
+    const parsedData = JSON.parse(row.data);
+    return {
+      id: row.id,
+      title: row.name,
+      description: row.description || '',
+      authorId: row.author,
+      category: row.type as any,
+      graphSnapshot: {
+        name: row.name,
+        nodes: parsedData.nodes || [],
+        connections: parsedData.connections || []
+      },
+      tags: parsedData.tags || [],
+      downloadsCount: row.downloads,
+      rating: row.rating,
+      createdAt: row.createdAt
+    };
   }
 
   static publishItem(
@@ -556,12 +616,13 @@ export class MarketplaceManager {
     tags: string[],
     authorId: string = "user_developer"
   ): MarketplaceItem {
-    const items = this.getItems();
+    this.seedIfEmpty();
     
-    // Validation: Graf must be valid
     if (!graphSnapshot || !Array.isArray(graphSnapshot.nodes)) {
       throw new Error("Invalid graph snapshot payload. A valid nodes array is required.");
     }
+
+    const cleanTags = tags.map(t => t.trim().toLowerCase()).filter(Boolean);
 
     const newItem: MarketplaceItem = {
       id: `mkt-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -574,59 +635,93 @@ export class MarketplaceManager {
         nodes: graphSnapshot.nodes,
         connections: graphSnapshot.connections || []
       },
-      tags: tags.map(t => t.trim().toLowerCase()).filter(Boolean),
+      tags: cleanTags,
       downloadsCount: 0,
       rating: 5.0,
       createdAt: new Date().toISOString()
     };
 
-    items.push(newItem);
-    writeJsonFile(MARKETPLACE_FILE, items);
+    db.insert(marketplaceItems).values({
+      id: newItem.id,
+      name: newItem.title,
+      description: newItem.description,
+      type: newItem.category,
+      data: JSON.stringify({
+        nodes: newItem.graphSnapshot.nodes,
+        connections: newItem.graphSnapshot.connections,
+        tags: newItem.tags
+      }),
+      author: newItem.authorId,
+      downloads: newItem.downloadsCount,
+      rating: newItem.rating,
+      reviews: '[]',
+      createdAt: newItem.createdAt
+    }).run();
+
     return newItem;
   }
 
   static incrementDownload(id: string): MarketplaceItem {
-    const items = this.getItems();
-    const itemIdx = items.findIndex(item => item.id === id);
-    if (itemIdx === -1) {
+    const item = this.getItemById(id);
+    if (!item) {
       throw new Error("Marketplace item not found.");
     }
     
-    items[itemIdx].downloadsCount++;
-    writeJsonFile(MARKETPLACE_FILE, items);
-    return items[itemIdx];
+    const nextDownloads = item.downloadsCount + 1;
+    
+    db.update(marketplaceItems)
+      .set({ downloads: nextDownloads })
+      .where(eq(marketplaceItems.id, id))
+      .run();
+      
+    item.downloadsCount = nextDownloads;
+    return item;
   }
 
   static getReviews(itemId: string): MarketplaceReview[] {
-    const allReviews = readJsonFile<MarketplaceReview[]>(REVIEWS_FILE, []);
-    return allReviews.filter(r => r.itemId === itemId);
+    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, itemId)).all();
+    if (rows.length === 0) return [];
+    
+    try {
+      return JSON.parse(rows[0].reviews) as MarketplaceReview[];
+    } catch {
+      return [];
+    }
   }
 
   static addReview(itemId: string, userId: string, rating: number, comment: string): MarketplaceReview {
-    const allReviews = readJsonFile<MarketplaceReview[]>(REVIEWS_FILE, []);
+    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, itemId)).all();
+    if (rows.length === 0) {
+      throw new Error("Marketplace item not found.");
+    }
+    
+    const row = rows[0];
+    let reviewsList: MarketplaceReview[] = [];
+    try {
+      reviewsList = JSON.parse(row.reviews) as MarketplaceReview[];
+    } catch {
+      reviewsList = [];
+    }
     
     const newReview: MarketplaceReview = {
       id: `rev-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       itemId,
-      userId: userId || "Anonymous Expert",
+      userId: userId || "Anonymous Expert2026",
       rating: Math.max(1, Math.min(5, rating)),
       comment,
       createdAt: new Date().toISOString()
     };
 
-    allReviews.push(newReview);
-    writeJsonFile(REVIEWS_FILE, allReviews);
+    reviewsList.push(newReview);
+    const avgRating = reviewsList.reduce((sum, r) => sum + r.rating, 0) / reviewsList.length;
 
-    // Recompute average rating for marketplace item
-    const itemReviews = allReviews.filter(r => r.itemId === itemId);
-    const avgRating = itemReviews.reduce((sum, r) => sum + r.rating, 0) / itemReviews.length;
-
-    const items = this.getItems();
-    const itemIdx = items.findIndex(item => item.id === itemId);
-    if (itemIdx !== -1) {
-      items[itemIdx].rating = Number(avgRating.toFixed(1));
-      writeJsonFile(MARKETPLACE_FILE, items);
-    }
+    db.update(marketplaceItems)
+      .set({
+        reviews: JSON.stringify(reviewsList),
+        rating: Number(avgRating.toFixed(1))
+      })
+      .where(eq(marketplaceItems.id, itemId))
+      .run();
 
     return newReview;
   }

@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { indexLibraryDocument, searchIndexedLibrary } from './advancedPhase4.js';
+import { Router, Request, Response, NextFunction } from 'express';
+import { ragService } from '../services/rag.service.js';
 
 const router = Router();
 
-router.post('/rag/index', (req: Request, res: Response) => {
+router.post('/rag/index', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { text, source } = req.body;
     if (!text) {
@@ -11,26 +11,73 @@ router.post('/rag/index', (req: Request, res: Response) => {
       return;
     }
 
-    const indexRes = indexLibraryDocument(text, source || "UI Document Upload");
-    res.json(indexRes);
+    const ids = await ragService.addDocument(text, { source: source || "UI Document Upload" });
+    res.json({ success: true, chunkCount: ids.length, ids });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-router.get('/rag/search', (req: Request, res: Response) => {
+router.post('/rag/add', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { text, metadata } = req.body;
+    if (!text) {
+      res.status(400).json({ error: "Text payload empty, cannot build index." });
+      return;
+    }
+
+    const ids = await ragService.addDocument(text, metadata || {});
+    res.json({ success: true, chunksCount: ids.length, ids });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+router.get('/rag/search', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const query = req.query.q as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
     if (!query) {
       res.status(400).json({ error: "No search term query parameter provided." });
       return;
     }
 
-    const results = searchIndexedLibrary(query);
-    res.json(results);
+    const results = await ragService.search(query, limit);
+    // Maintain backward compatibility structure
+    const formattedChunks = results.map(r => ({
+      id: r.document.id,
+      source: r.document.metadata.source || "Unknown Source",
+      text: r.document.text
+    }));
+    res.json({ chunks: formattedChunks, results });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    next(err);
+  }
+});
+
+router.post('/rag/search', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { query, topK = 5 } = req.body;
+    if (!query) {
+      res.status(400).json({ error: "Query is required" });
+      return;
+    }
+
+    const results = await ragService.search(query, topK);
+    res.json({ results, count: results.length });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+router.get('/rag/stats', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const stats = await ragService.getStats();
+    res.json(stats);
+  } catch (err: any) {
+    next(err);
   }
 });
 
 export default router;
+

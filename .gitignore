@@ -13,3 +13,8 @@ agentforge.db
 agentforge.db-journal
 *.sqlite
 *.db
+
+# Local storage and caches
+.models/
+.rag-store/
+drizzle/

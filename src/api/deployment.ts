@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { db } from '../db/index.js';
+import { deployments } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
 if (!fs.existsSync(DATA_DIR)) {
@@ -36,21 +39,69 @@ export interface CloudProvider {
 
 function readDeployments(): Deployment[] {
   try {
-    if (fs.existsSync(DEPLOYMENTS_FILE)) {
-      const raw = fs.readFileSync(DEPLOYMENTS_FILE, 'utf-8');
-      return JSON.parse(raw) as Deployment[];
-    }
+    const rows = db.select().from(deployments).all();
+    return rows.map(r => ({
+      id: r.id,
+      graphId: r.graphId,
+      graphName: r.graphName,
+      provider: r.platform as any,
+      status: r.status as any,
+      url: r.url || '',
+      createdAt: r.createdAt,
+      config: JSON.parse(r.config),
+      logs: JSON.parse(r.logs || '[]')
+    }));
   } catch (err) {
-    console.error('Failed to read deployments file:', err);
+    console.error('Failed to read deployments from database:', err);
+    return [];
   }
-  return [];
 }
 
 function writeDeployments(all: Deployment[]): void {
   try {
-    fs.writeFileSync(DEPLOYMENTS_FILE, JSON.stringify(all, null, 2), 'utf-8');
+    const activeIds = new Set(all.map(d => d.id));
+    const currentDbItems = db.select().from(deployments).all();
+    
+    // Remove deleted ones
+    for (const item of currentDbItems) {
+      if (!activeIds.has(item.id)) {
+        db.delete(deployments).where(eq(deployments.id, item.id)).run();
+      }
+    }
+
+    // Insert or update remaining
+    for (const d of all) {
+      const existing = db.select().from(deployments).where(eq(deployments.id, d.id)).all();
+      if (existing.length > 0) {
+        db.update(deployments)
+          .set({
+            graphId: d.graphId,
+            graphName: d.graphName,
+            platform: d.provider,
+            status: d.status,
+            url: d.url,
+            logs: JSON.stringify(d.logs || []),
+            config: JSON.stringify(d.config || {}),
+            createdAt: d.createdAt
+          })
+          .where(eq(deployments.id, d.id))
+          .run();
+      } else {
+        db.insert(deployments).values({
+          id: d.id,
+          graphId: d.graphId,
+          graphName: d.graphName,
+          platform: d.provider,
+          status: d.status,
+          url: d.url,
+          logs: JSON.stringify(d.logs || []),
+          config: JSON.stringify(d.config || {}),
+          createdAt: d.createdAt
+        }).run();
+      }
+    }
   } catch (err) {
-    console.error('Failed to write deployments file:', err);
+    console.error('Failed to write deployments to database:', err);
   }
 }
 
