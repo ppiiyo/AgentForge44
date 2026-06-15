@@ -104,120 +104,190 @@ export class StatefulExecutionEngine {
       throw new Error("Invalid Graph Specification: workflows must specify an 'input' entry node.");
     }
 
-    const context: WorkflowContext = {
-      state: {},
-      variables: { ...initialVariables },
-      stepLogs: [],
-      currentNodeId: startNodes[0].id,
-      iterationsCount: {}
+    const stepLogs: StepLog[] = [];
+
+    // Detect back-edges (loop-backs) using DFS starting from inputs to allow standard parallel scheduling
+    const backEdges = new Set<string>(); // "sourceId->targetId"
+    const visitedDFS = new Set<string>();
+    const pathDFS = new Set<string>();
+    
+    const findBackEdges = (nodeId: string) => {
+      visitedDFS.add(nodeId);
+      pathDFS.add(nodeId);
+      
+      const outgoing = this.connections.filter(c => c.sourceId === nodeId);
+      for (const conn of outgoing) {
+        if (pathDFS.has(conn.targetId)) {
+          backEdges.add(`${conn.sourceId}->${conn.targetId}`);
+        } else if (!visitedDFS.has(conn.targetId)) {
+          findBackEdges(conn.targetId);
+        }
+      }
+      pathDFS.delete(nodeId);
+    };
+    
+    startNodes.forEach(node => findBackEdges(node.id));
+
+    // Dynamic state values
+    const nodeOutputs: Record<string, any> = {};
+    const globalVariables: Record<string, string> = { ...initialVariables };
+    const completedNodes = new Set<string>();
+    const activatedNodes = new Set<string>(startNodes.map(n => n.id));
+    const executedCount: Record<string, number> = {};
+    const iterationsCount: Record<string, number> = {};
+
+    // For backward-compatibility logic, track a single activeValue
+    let activeValue: any = {};
+
+    // Traversal Reachability Helper to reset downstream nodes upon looping back
+    const getReachableNodes = (startId: string, visited = new Set<string>()): Set<string> => {
+      visited.add(startId);
+      const outgoing = this.connections.filter(c => c.sourceId === startId);
+      for (const conn of outgoing) {
+        if (!visited.has(conn.targetId)) {
+          getReachableNodes(conn.targetId, visited);
+        }
+      }
+      return visited;
     };
 
-    const visitedCount: Record<string, number> = {};
+    let safetyCeiling = 500; // global safety ticker limits
+    while (activatedNodes.size > 0 && safetyCeiling-- > 0) {
+      // 1. Find all active nodes that are ready to run (all non-backedge predecessors completed)
+      const eligibleNodes: FlowNode[] = [];
+      for (const nodeId of activatedNodes) {
+        const node = this.nodes.find(n => n.id === nodeId);
+        if (!node) continue;
 
-    while (context.currentNodeId) {
-      const node = this.nodes.find(n => n.id === context.currentNodeId);
-      if (!node) break;
+        // Parents/Predecessors check excluding back-edges
+        const predecessors = this.connections
+          .filter(c => c.targetId === nodeId && !backEdges.has(`${c.sourceId}->${c.targetId}`))
+          .map(c => c.sourceId);
 
-      // Anti-hanging guard: Prevent infinite un-reviewed cyclic loops
-      const visits = visitedCount[node.id] || 0;
-      if (visits > 20) {
-        console.warn(`[Execution Engine] Circular execution cap triggered on ${node.id}. Interrupting trace pipeline.`);
+        const allPredecessorsCompleted = predecessors.every(pId => completedNodes.has(pId));
+        if (allPredecessorsCompleted) {
+          eligibleNodes.push(node);
+        }
+      }
+
+      if (eligibleNodes.length === 0) {
         break;
       }
-      visitedCount[node.id] = visits + 1;
 
-      const stepStart = Date.now();
-      context.stepLogs.push({
-        nodeId: node.id,
-        nodeTitle: node.title,
-        status: 'running'
-      });
+      // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
+      const promises = eligibleNodes.map(async (node) => {
+        // Fast path track execution frequency
+        executedCount[node.id] = (executedCount[node.id] || 0) + 1;
+        if (executedCount[node.id] > 15) {
+          throw new Error(`Execution limit exceeded: Node "${node.title}" executed more than 15 times. Circular loop circuit breaker triggered.`);
+        }
 
-      const currentLogIndex = context.stepLogs.length - 1;
+        const stepStart = Date.now();
 
-      try {
-        if (node.type === 'input') {
-          // Read variables mapping from UI configuration
-          const fieldsVars = node.fields.variables || [];
-          fieldsVars.forEach((v: any) => {
-            if (v.key) {
-              context.variables[v.key] = v.value;
+        // Collect input arguments from parents
+        const incoming = this.connections.filter(c => c.targetId === node.id);
+        let localValue: any = activeValue;
+        if (incoming.length === 1) {
+          localValue = nodeOutputs[incoming[0].sourceId];
+        } else if (incoming.length > 1) {
+          let mergedVars: Record<string, any> = {};
+          let combinedString = "";
+          incoming.forEach(c => {
+            const val = nodeOutputs[c.sourceId];
+            if (typeof val === 'object' && val !== null) {
+              mergedVars = { ...mergedVars, ...val };
+            } else if (typeof val === 'string') {
+              combinedString = val;
             }
           });
-          context.state['last_output'] = context.variables;
-
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: JSON.stringify(fieldsVars, null, 2),
-            output: JSON.stringify(context.variables, null, 2),
-            duration: Date.now() - stepStart
-          };
-
-        } else if (node.type === 'prompt') {
-          const template = node.fields.template || "";
-          let compiledPrompt = template;
-
-          // Hydrate key placeholders from active variables map
-          Object.entries(context.variables).forEach(([key, val]) => {
-            const pattern = new RegExp(`\\{${key}\\}`, 'g');
-            compiledPrompt = compiledPrompt.replace(pattern, String(val));
-          });
-
-          context.state['last_output'] = compiledPrompt;
-          context.variables['prompt_output'] = compiledPrompt;
-
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: template,
-            output: compiledPrompt,
-            duration: Date.now() - stepStart
-          };
-
-        } else if (node.type === 'gemini') {
-          const promptInput = typeof context.state['last_output'] === 'string'
-            ? context.state['last_output']
-            : JSON.stringify(context.state['last_output'] || "");
-
-          const systemInstruction = node.fields.systemInstruction || "";
-          const temperature = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
-
-          // If search grounding tools are specified, inject schema mapping
-          const extTools: any[] = [];
-          if (node.fields.useSearchGrounding) {
-            extTools.push({ googleSearch: {} });
+          if (Object.keys(mergedVars).length > 0) {
+            if (combinedString) {
+              mergedVars['lastOutput'] = combinedString;
+            }
+            localValue = mergedVars;
+          } else {
+            localValue = combinedString;
           }
+        }
 
-          const llmDetails = await this.provider.generate(promptInput, {
-            temperature,
-            systemInstruction,
-            tools: extTools
-          });
+        try {
+          if (node.type === 'input') {
+            const variablesMap: Record<string, string> = {};
+            const variables = node.fields.variables || [];
+            variables.forEach((v: { key: string; value: string }) => {
+              if (v.key) {
+                variablesMap[v.key] = v.value;
+                globalVariables[v.key] = v.value;
+              }
+            });
+            nodeOutputs[node.id] = variablesMap;
+            activeValue = variablesMap;
 
-          context.state['last_output'] = llmDetails.text;
-          context.variables['ai_output'] = llmDetails.text;
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: node.title,
+              status: 'completed',
+              input: JSON.stringify(variables, null, 2),
+              output: JSON.stringify(variablesMap, null, 2),
+              duration: Date.now() - stepStart
+            });
 
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: `${node.title} (${this.provider.getName()})`,
-            status: 'completed',
-            input: promptInput,
-            output: llmDetails.text,
-            duration: Date.now() - stepStart
-          };
+          } else if (node.type === 'prompt') {
+            const template = node.fields.template || "";
+            let renderedPrompt = template;
 
-        } else if (node.type === 'reviewer') {
-          // Self-critique node analyzing output from previous step
-          const previousOutput = typeof context.state['last_output'] === 'string'
-            ? context.state['last_output']
-            : JSON.stringify(context.state['last_output'] || "");
+            // Replace tags {placeholder} from local values & global variables
+            const sourceObj = typeof localValue === 'object' && localValue !== null ? { ...globalVariables, ...localValue } : globalVariables;
+            Object.entries(sourceObj).forEach(([k, v]) => {
+              const regex = new RegExp(`\\{${k}\\}`, 'g');
+              renderedPrompt = renderedPrompt.replace(regex, String(v));
+            });
 
-          const criteria = node.fields.criteria || "";
-          
-          const criticPrompt = `Validate the generated payload against these requirements:
+            nodeOutputs[node.id] = renderedPrompt;
+            activeValue = renderedPrompt;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: node.title,
+              status: 'completed',
+              input: template,
+              output: renderedPrompt,
+              duration: Date.now() - stepStart
+            });
+
+          } else if (node.type === 'gemini') {
+            const promptText = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
+            const systemInstruction = node.fields.systemInstruction || "";
+            const temperature = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
+
+            const extTools: any[] = [];
+            if (node.fields.useSearchGrounding) {
+              extTools.push({ googleSearch: {} });
+            }
+
+            const llmDetails = await this.provider.generate(promptText, {
+              temperature,
+              systemInstruction,
+              tools: extTools
+            });
+
+            nodeOutputs[node.id] = llmDetails.text;
+            activeValue = llmDetails.text;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: `${node.title} (${this.provider.getName()})`,
+              status: 'completed',
+              input: promptText,
+              output: llmDetails.text,
+              duration: Date.now() - stepStart
+            });
+
+          } else if (node.type === 'reviewer') {
+            const criteria = node.fields.criteria || "";
+            const previousOutput = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
+
+            const criticPrompt = `Validate the generated payload against these requirements:
 Requirements: "${criteria}"
 
 Input Payload:
@@ -228,47 +298,171 @@ ${previousOutput}
 If requirements are fully satisfied, respond exactly: PASS
 Otherwise, outline missing components and specify: FAIL [explanation details]`;
 
-          const reviewResult = await this.provider.generate(criticPrompt, {
-            temperature: 0.1,
-            systemInstruction: "You are an automated code quality control auditor."
+            const reviewResult = await this.provider.generate(criticPrompt, {
+              temperature: 0.1,
+              systemInstruction: "You are an automated code quality control auditor."
+            });
+
+            const critiqueText = reviewResult.text || "";
+            const isPassed = critiqueText.trim().startsWith("PASS");
+
+            nodeOutputs[node.id] = previousOutput; // reviewer passes input as output
+            activeValue = previousOutput;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: node.title,
+              status: 'completed',
+              input: `Review Criteria: ${criteria}`,
+              output: critiqueText,
+              duration: Date.now() - stepStart
+            });
+
+          } else if (node.type === 'tool') {
+            const urlRaw = node.fields.url || "";
+            const method = node.fields.method || "GET";
+            const headersRaw = node.fields.headers || "{}";
+            const bodyRaw = node.fields.body || "";
+
+            let url = urlRaw;
+            let body = bodyRaw;
+            let headersStr = headersRaw;
+
+            const substitute = (text: string) => {
+              let out = text;
+              const sourceObj = { ...globalVariables, lastOutput: typeof localValue === 'string' ? localValue : JSON.stringify(localValue) };
+              Object.entries(sourceObj).forEach(([k, v]) => {
+                const r1 = new RegExp(`\\{${k}\\}`, 'g');
+                out = out.replace(r1, String(v));
+                const r2 = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+                out = out.replace(r2, String(v));
+              });
+              return out;
+            };
+
+            url = substitute(url);
+            body = substitute(body);
+            headersStr = substitute(headersStr);
+
+            let headers: Record<string, string> = { "Content-Type": "application/json" };
+            try {
+              if (headersStr.trim().startsWith("{")) {
+                headers = { ...headers, ...JSON.parse(headersStr) };
+              }
+            } catch {}
+
+            const fetchOptions: any = { method, headers };
+            if (method !== 'GET' && body) {
+              fetchOptions.body = body;
+            }
+
+            let responseText = "";
+            let responseStatus = 250;
+            try {
+              const fetchRes = await fetch(url, fetchOptions);
+              responseStatus = fetchRes.status;
+              responseText = await fetchRes.text();
+            } catch (err: any) {
+              throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
+            }
+
+            nodeOutputs[node.id] = responseText;
+            activeValue = responseText;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: `${node.title} (${method} ${responseStatus})`,
+              status: 'completed',
+              input: `URL: ${url}\nBody: ${body || 'None'}`,
+              output: responseText,
+              duration: Date.now() - stepStart
+            });
+
+          } else if (node.type === 'rag') {
+            const limit = Number(node.fields.limit) || 3;
+            let searchQueryRaw = node.fields.searchQuery || "";
+            let searchQuery = searchQueryRaw;
+
+            Object.entries(globalVariables).forEach(([key, val]) => {
+              const pattern1 = new RegExp(`\\{${key}\\}`, 'g');
+              searchQuery = searchQuery.replace(pattern1, String(val));
+              const pattern2 = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+              searchQuery = searchQuery.replace(pattern2, String(val));
+            });
+
+            if (!searchQuery.trim() || searchQuery === searchQueryRaw) {
+              const lastOutput = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
+              if (lastOutput) {
+                searchQuery = lastOutput.substring(0, 100);
+              }
+            }
+
+            const searchStart = Date.now();
+            const searchRes = searchIndexedLibrary(searchQuery, limit);
+            const chunks = searchRes.chunks || [];
+            const latency = Date.now() - searchStart;
+
+            const aggregatedContextText = chunks.map(c => `[Source: ${c.source}]\n${c.text}`).join('\n\n');
+
+            nodeOutputs[node.id] = aggregatedContextText;
+            activeValue = aggregatedContextText;
+            node.fields.ragResults = chunks;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: node.title,
+              status: 'completed',
+              input: `Vector DB Query: "${searchQuery}"`,
+              output: `Found ${chunks.length} chunks (Search Latency: ${latency}ms).\n\n${aggregatedContextText || "No context references found in indexed documents."}`,
+              duration: Date.now() - stepStart
+            });
+
+           } else if (node.type === 'router') {
+            nodeOutputs[node.id] = localValue;
+            activeValue = localValue;
+
+          } else if (node.type === 'output') {
+            const finalStr = typeof localValue === 'string' ? localValue : JSON.stringify(localValue, null, 2);
+            nodeOutputs[node.id] = finalStr;
+            activeValue = finalStr;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: node.title,
+              status: 'completed',
+              input: 'Graph Termination',
+              output: finalStr,
+              duration: Date.now() - stepStart
+            });
+          }
+        } catch (err: any) {
+          stepLogs.push({
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'failed',
+            input: 'Execution Interrupted',
+            output: err.message || String(err),
+            duration: Date.now() - stepStart
           });
+          throw err;
+        }
+      });
 
-          const critiqueText = reviewResult.text || "";
-          const isPassed = critiqueText.trim().startsWith("PASS");
+      // Resolve current level execution
+      await Promise.all(promises);
 
-          context.state[`${node.id}_passed`] = isPassed;
-          context.state[`${node.id}_critique`] = critiqueText;
-          context.variables['review_critique'] = critiqueText;
+      // 3. Complete currently processed nodes & calculate successor activations
+      for (const completedNode of eligibleNodes) {
+        completedNodes.add(completedNode.id);
+        activatedNodes.delete(completedNode.id);
 
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: `Review Criteria: ${criteria}`,
-            output: critiqueText,
-            duration: Date.now() - stepStart
-          };
+        if (completedNode.type === 'router') {
+          const inputPayload = typeof nodeOutputs[completedNode.id] === 'string'
+            ? nodeOutputs[completedNode.id]
+            : JSON.stringify(nodeOutputs[completedNode.id] || "");
 
-        } else if (node.type === 'output') {
-          const finalPayload = String(context.state['last_output'] || "");
-          context.state['pipeline_final_result'] = finalPayload;
-
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: "Graph Termination",
-            output: finalPayload,
-            duration: Date.now() - stepStart
-          };
-        } else if (node.type === 'router') {
-          const inputPayload = typeof context.state['last_output'] === 'string'
-            ? context.state['last_output']
-            : JSON.stringify(context.state['last_output'] || "");
-
-          const conditions = node.fields.conditions || [];
-          const defaultTargetId = node.fields.defaultTargetNodeId || "";
-
+          const conditions = completedNode.fields.conditions || [];
+          const defaultTargetId = completedNode.fields.defaultTargetNodeId || "";
           let selectedTargetId: string | null = null;
 
           for (const cond of conditions) {
@@ -287,8 +481,6 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
                     selectedTargetId = cond.targetNodeId;
                     break;
                   }
-                } else {
-                  console.warn("[AgentForge44 Security] Rejected potentially unsafe ReDoS regex pattern:", pattern);
                 }
               } catch {}
             } else if (cond.type === 'json_key') {
@@ -304,158 +496,70 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
           }
 
           const finalNextNodeId = selectedTargetId || defaultTargetId;
-          context.state[`${node.id}_next_id`] = finalNextNodeId;
+          if (finalNextNodeId) {
+            activatedNodes.add(finalNextNodeId);
+          }
 
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
+          stepLogs.push({
+            nodeId: completedNode.id,
+            nodeTitle: completedNode.title,
             status: 'completed',
             input: inputPayload,
             output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
-            duration: Date.now() - stepStart
-          };
-
-        } else if (node.type === 'tool') {
-          const urlRaw = node.fields.url || "";
-          const method = node.fields.method || "GET";
-          const headersRaw = node.fields.headers || "{}";
-          const bodyRaw = node.fields.body || "";
-
-          let url = urlRaw;
-          let body = bodyRaw;
-          let headersStr = headersRaw;
-
-          const substitute = (text: string) => {
-            let out = text;
-            Object.entries(context.variables).forEach(([k, v]) => {
-              const regex = new RegExp(`\\{${k}\\}`, 'g');
-              out = out.replace(regex, String(v));
-              const regexDouble = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
-              out = out.replace(regexDouble, String(v));
-            });
-            
-            const lastOutput = typeof context.state['last_output'] === 'string'
-              ? context.state['last_output']
-              : JSON.stringify(context.state['last_output'] || "");
-
-            const r1 = new RegExp(`\\{lastOutput\\}`, 'g');
-            out = out.replace(r1, lastOutput);
-            const r2 = new RegExp(`\\{\\{lastOutput\\}\\}`, 'g');
-            out = out.replace(r2, lastOutput);
-            return out;
-          };
-
-          url = substitute(url);
-          body = substitute(body);
-          headersStr = substitute(headersStr);
-
-          let headers: Record<string, string> = { "Content-Type": "application/json" };
-          try {
-            if (headersStr.trim().startsWith("{")) {
-              headers = { ...headers, ...JSON.parse(headersStr) };
-            }
-          } catch {}
-
-          const fetchOptions: any = {
-            method,
-            headers
-          };
-          if (method !== 'GET' && body) {
-            fetchOptions.body = body;
-          }
-
-          let responseText = "";
-          let responseStatus = 250;
-          try {
-            const fetchRes = await fetch(url, fetchOptions);
-            responseStatus = fetchRes.status;
-            responseText = await fetchRes.text();
-          } catch (err: any) {
-            throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
-          }
-
-          context.state['last_output'] = responseText;
-          context.variables['tool_output'] = responseText;
-
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: `${node.title} (${method} ${responseStatus})`,
-            status: 'completed',
-            input: `URL: ${url}\nBody: ${body || 'None'}`,
-            output: responseText,
-            duration: Date.now() - stepStart
-          };
-        } else if (node.type === 'rag') {
-          const limit = Number(node.fields.limit) || 3;
-          let searchQueryRaw = node.fields.searchQuery || "";
-          let searchQuery = searchQueryRaw;
-
-          // Hydrate key placeholders of template from active variables map
-          Object.entries(context.variables).forEach(([key, val]) => {
-            const pattern1 = new RegExp(`\\{${key}\\}`, 'g');
-            searchQuery = searchQuery.replace(pattern1, String(val));
-            const pattern2 = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-            searchQuery = searchQuery.replace(pattern2, String(val));
+            duration: 0
           });
 
-          // Fallback if search placeholder still exists or is empty, use last output
-          if (!searchQuery.trim() || searchQuery === searchQueryRaw) {
-            const lastOutput = typeof context.state['last_output'] === 'string'
-              ? context.state['last_output']
-              : JSON.stringify(context.state['last_output'] || "");
-            if (lastOutput) {
-              searchQuery = lastOutput.substring(0, 100);
+        } else if (completedNode.type === 'reviewer') {
+          const incomingPredecessors = this.connections
+            .filter(c => c.targetId === completedNode.id)
+            .map(c => c.sourceId);
+
+          const logsForThisNode = stepLogs.filter(l => l.nodeId === completedNode.id);
+          const latestLog = logsForThisNode[logsForThisNode.length - 1];
+          const isPassed = latestLog && latestLog.output && latestLog.output.includes("PASS");
+
+          if (!isPassed && incomingPredecessors.length > 0) {
+            const loopHeadId = incomingPredecessors[0];
+            const currentCount = iterationsCount[completedNode.id] || 0;
+            const maxCycles = Number(completedNode.fields.maxIterations) || 2;
+
+            if (currentCount < maxCycles) {
+              iterationsCount[completedNode.id] = currentCount + 1;
+              console.warn(`[Execution Engine] Reviewer failed, loop-back #${currentCount + 1} to node: ${loopHeadId}`);
+
+              // Reset completion status of loop head and descendants
+              const loopContainedNodes = getReachableNodes(loopHeadId);
+              for (const reachableId of loopContainedNodes) {
+                completedNodes.delete(reachableId);
+                activatedNodes.delete(reachableId);
+              }
+              activatedNodes.add(loopHeadId);
+              continue;
             }
           }
 
-          const searchStart = Date.now();
-          const searchRes = searchIndexedLibrary(searchQuery, limit);
-          const chunks = searchRes.chunks || [];
-          const latency = Date.now() - searchStart;
+          // Passed or exceeded cycles limit - normal target activation
+          const targets = this.connections.filter(c => c.sourceId === completedNode.id);
+          targets.forEach(t => activatedNodes.add(t.targetId));
 
-          // Aggregate matching texts
-          const aggregatedContextText = chunks.map(c => `[Source: ${c.source}]\n${c.text}`).join('\n\n');
-
-          // Save output to context & variables
-          context.state['last_output'] = aggregatedContextText;
-          context.variables['rag_output'] = aggregatedContextText;
-          
-          // Store result directly into node's execution results so UI can render it
-          node.fields.ragResults = chunks;
-
-          context.stepLogs[currentLogIndex] = {
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: `Vector DB Query: "${searchQuery}"`,
-            output: `Found ${chunks.length} chunks (Search Latency: ${latency}ms).\n\n${aggregatedContextText || "No context references found in indexed documents."}`,
-            duration: Date.now() - stepStart,
-            ragQuery: searchQuery,
-            ragChunksCount: chunks.length,
-            ragLatency: latency,
-            ragTopChunks: chunks.slice(0, 3)
-          };
+        } else {
+          const targets = this.connections.filter(c => c.sourceId === completedNode.id);
+          targets.forEach(t => activatedNodes.add(t.targetId));
         }
-
-      } catch (err: any) {
-        context.stepLogs[currentLogIndex] = {
-          nodeId: node.id,
-          nodeTitle: node.title,
-          status: 'failed',
-          input: "Execution Error",
-          output: err.message || String(err),
-          duration: Date.now() - stepStart
-        };
-        throw err;
       }
+    }
 
-      // Compute and step to the subsequent node
-      context.currentNodeId = this.getNextNodeId(node, context);
+    const outputNodes = this.nodes.filter(n => n.type === 'output');
+    let finalResultText = "";
+    if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
+      finalResultText = String(nodeOutputs[outputNodes[0].id]);
+    } else {
+      finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
     }
 
     return {
-      logs: context.stepLogs,
-      finalResult: String(context.state['pipeline_final_result'] || context.state['last_output'] || "Execution finished with empty return payload."),
+      logs: stepLogs,
+      finalResult: finalResultText,
       totalDuration: Date.now() - startTime
     };
   }

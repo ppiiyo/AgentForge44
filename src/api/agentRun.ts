@@ -86,6 +86,25 @@ export function handleSimulatedRequest(data: any) {
   return { response, resolvedModel: `${model} (Simulated)` };
 }
 
+function classifyLLMError(err: any): { isTransient: boolean; reason: string; label: string } {
+  const errMsg = String(err.message || err).toLowerCase();
+  const status = Number(err.status || err.statusCode);
+
+  if (status === 401 || status === 403 || errMsg.includes("invalid api key") || errMsg.includes("unauthorized") || errMsg.includes("api_key")) {
+    return { isTransient: false, reason: "Invalid billing credentials or unauthorized request.", label: "AUTHENTICATION_ERROR" };
+  }
+  if (status === 400 || errMsg.includes("bad request") || errMsg.includes("invalid argument") || errMsg.includes("payload too large")) {
+    return { isTransient: false, reason: "Malformed prompt specifications or invalid request parameters.", label: "BAD_REQUEST" };
+  }
+  if (status === 429 || errMsg.includes("quota") || errMsg.includes("resource_exhausted") || errMsg.includes("rate limit") || errMsg.includes("limit")) {
+    return { isTransient: true, reason: "AI Model request quota limits reached.", label: "RATE_LIMIT_EXHAUSTED" };
+  }
+  if (status === 503 || status === 500 || errMsg.includes("unavailable") || errMsg.includes("internal error") || errMsg.includes("overloaded") || errMsg.includes("high demand")) {
+    return { isTransient: true, reason: "Model provider temporary service overload.", label: "SERVICE_OVERLOAD" };
+  }
+  return { isTransient: true, reason: "Transient connection failure.", label: "UNKNOWN_TRANSIENT" };
+}
+
 async function generateWithRetry(
   ai: GoogleGenAI,
   model: string,
@@ -94,6 +113,13 @@ async function generateWithRetry(
   attempts = 3,
   delayMs = 1500
 ): Promise<RetryResult> {
+  const apiKey = process.env.GEMINI_API_KEY || "";
+  const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+
+  if (isSandbox) {
+    return generateSimulatedResponse(model, contents);
+  }
+
   let attemptsLeft = attempts;
   let currentDelay = delayMs;
   let currentModel = model;
@@ -107,69 +133,31 @@ async function generateWithRetry(
       });
       return { response, resolvedModel: currentModel };
     } catch (err: any) {
-      const errMsg = String(err.message || err);
-      
-      const isQuotaExceeded = 
-        errMsg.includes("Quota exceeded") || 
-        errMsg.includes("RESOURCE_EXHAUSTED") || 
-        errMsg.includes("quota") || 
-        errMsg.includes("current quota") ||
-        errMsg.includes("limit") ||
-        err.status === 429;
-
-      const isTransient = 
-        isQuotaExceeded ||
-        errMsg.includes("503") || 
-        errMsg.includes("UNAVAILABLE") || 
-        errMsg.includes("429") || 
-        errMsg.includes("high demand") || 
-        errMsg.includes("Overloaded") || 
-        err.status === 503 || 
-        err.status === 429;
-
-      // If it is a hard quota error, fall back to gemini-3.1-flash-lite immediately
-      if (isQuotaExceeded) {
-        if (currentModel === 'gemini-3.5-flash' || currentModel === 'gemini-3.1-pro-preview') {
-          const fallbackModel = 'gemini-3.1-flash-lite';
-          console.warn(`[AgentForge44] Hard quota limit reached for ${currentModel}. Falling back immediately to ${fallbackModel}...`);
-          currentModel = fallbackModel;
-          attemptsLeft = 3; // Give the fallback model full run attempts
-          currentDelay = delayMs;
-          continue;
-        } else {
-          // If we are already on the fallback model and hit quota, activate simulation mode
-          if (process.env.STRICT_LLM_ERRORS === 'true') {
-            throw err;
-          }
-          return generateSimulatedResponse(currentModel, contents);
-        }
-      }
-
+      const classification = classifyLLMError(err);
       attemptsLeft--;
-      if (isTransient && attemptsLeft > 0) {
-        console.warn(`[AgentForge44] Gemini API status is transient (${errMsg}). Retrying in ${currentDelay}ms... attempts left: ${attemptsLeft}`);
-        await new Promise(resolve => setTimeout(resolve, currentDelay));
-        currentDelay *= 2;
-      } else {
-        // Switch model as final effort fallback if attempts are exhausted
-        if (currentModel === 'gemini-3.5-flash' || currentModel === 'gemini-3.1-pro-preview') {
-          const fallbackModel = 'gemini-3.1-flash-lite';
-          console.warn(`[AgentForge44] Fallback activated: switching load from ${currentModel} to ${fallbackModel} due to errors...`);
+
+      // If hard quota, check if we can fall back to lite model
+      if (classification.label === "RATE_LIMIT_EXHAUSTED") {
+        if (currentModel === "gemini-3.5-flash" || currentModel === "gemini-3.1-pro-preview") {
+          const fallbackModel = "gemini-3.1-flash-lite";
+          console.warn(`[AgentForge44] RATE_LIMIT_EXHAUSTED on ${currentModel}. Trying fallback model ${fallbackModel}...`);
           currentModel = fallbackModel;
-          attemptsLeft = 2; // Give fallback some retry attempts
+          attemptsLeft = 2; // give fallback 2 retry attempts
           currentDelay = delayMs;
           continue;
         }
-        
-        // If everything failed and it looks like a rate/quota constraint, activate simulation as absolute fallback
-        if (isTransient) {
-          return generateSimulatedResponse(currentModel, contents);
-        }
-        throw err;
       }
+
+      if (!classification.isTransient || attemptsLeft <= 0) {
+        throw new Error(`[${classification.label}] LLM request failed: ${classification.reason} (Original: ${err.message || err})`);
+      }
+
+      console.warn(`[AgentForge44] [${classification.label}] Transient error: ${classification.reason}. Retrying in ${currentDelay}ms... Attempts left: ${attemptsLeft}`);
+      await new Promise(resolve => setTimeout(resolve, currentDelay));
+      currentDelay *= 2; // exponential backoff
     }
   }
-  return generateSimulatedResponse(currentModel, contents);
+  throw new Error("Failed to generate content.");
 }
 
 export async function executePipeline(
@@ -196,150 +184,232 @@ export async function executePipeline(
     throw new Error("No Input node found in the workflow!");
   }
 
-  let currentNodeId: string | null = inputNodes[0].id;
-  let activeValue: any = {}; // Holds running variable map or intermediate text states
-  let isLooping = false;
+  // Detect back-edges (loop-backs) using DFS starting from inputs to allow standard parallel scheduling
+  const backEdges = new Set<string>(); // "sourceId->targetId"
+  const visitedDFS = new Set<string>();
+  const pathDFS = new Set<string>();
+  
+  function findBackEdges(nodeId: string) {
+    visitedDFS.add(nodeId);
+    pathDFS.add(nodeId);
+    
+    const outgoing = connections.filter(c => c.sourceId === nodeId);
+    for (const conn of outgoing) {
+      if (pathDFS.has(conn.targetId)) {
+        backEdges.add(`${conn.sourceId}->${conn.targetId}`);
+      } else if (!visitedDFS.has(conn.targetId)) {
+        findBackEdges(conn.targetId);
+      }
+    }
+    pathDFS.delete(nodeId);
+  }
+  
+  inputNodes.forEach(node => findBackEdges(node.id));
 
-  // Track path to prevent infinite loops
-  const visited = new Set<string>();
+  // Dynamic state values
+  const nodeOutputs: Record<string, any> = {};
+  const globalVariables: Record<string, string> = {};
+  const completedNodes = new Set<string>();
+  const activatedNodes = new Set<string>(inputNodes.map(n => n.id));
+  const executedCount: Record<string, number> = {};
+  const iterationsCount: Record<string, number> = {};
 
-  while (currentNodeId) {
-    if (visited.has(currentNodeId)) {
-      // Prevent cycle hanging
+  // For backward-compatibility logic, track a single activeValue
+  let activeValue: any = {};
+
+  // Traversal Reachability Helper to reset downstream nodes upon looping back
+  function getReachableNodes(startId: string, visited = new Set<string>()): Set<string> {
+    visited.add(startId);
+    const outgoing = connections.filter(c => c.sourceId === startId);
+    for (const conn of outgoing) {
+      if (!visited.has(conn.targetId)) {
+        getReachableNodes(conn.targetId, visited);
+      }
+    }
+    return visited;
+  }
+
+  let safetyCeiling = 500; // global safety ticker limits
+  while (activatedNodes.size > 0 && safetyCeiling-- > 0) {
+    // 1. Find all active nodes that are ready to run (all non-backedge predecessors completed)
+    const eligibleNodes: FlowNode[] = [];
+    for (const nodeId of activatedNodes) {
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) continue;
+
+      // Parents/Predecessors check excluding back-edges
+      const predecessors = connections
+        .filter(c => c.targetId === nodeId && !backEdges.has(`${c.sourceId}->${c.targetId}`))
+        .map(c => c.sourceId);
+
+      const allPredecessorsCompleted = predecessors.every(pId => completedNodes.has(pId));
+      if (allPredecessorsCompleted) {
+        eligibleNodes.push(node);
+      }
+    }
+
+    if (eligibleNodes.length === 0) {
+      // Bailed or unresolved branches/dependencies remaining. Clear and exit
       break;
     }
-    visited.add(currentNodeId);
 
-    const node = nodes.find(n => n.id === currentNodeId);
-    if (!node) break;
+    // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
+    const promises = eligibleNodes.map(async (node) => {
+      // Fast path track execution frequency
+      executedCount[node.id] = (executedCount[node.id] || 0) + 1;
+      if (executedCount[node.id] > 15) {
+        throw new Error(`Execution limit exceeded: Node "${node.title}" executed more than 15 times. Circular loop circuit breaker triggered.`);
+      }
 
-    const stepStart = Date.now();
-    
-    try {
-      if (node.type === 'input') {
-        // Collect inputs into a variable dictionary
-        const variablesMap: Record<string, string> = {};
-        const variables = node.fields.variables || [];
-        variables.forEach((v: { key: string; value: string }) => {
-          if (v.key) {
-            variablesMap[v.key] = v.value;
+      const stepStart = Date.now();
+
+      // Collect input arguments from parents
+      const incoming = connections.filter(c => c.targetId === node.id);
+      let localValue: any = activeValue;
+      if (incoming.length === 1) {
+        localValue = nodeOutputs[incoming[0].sourceId];
+      } else if (incoming.length > 1) {
+        let mergedVars: Record<string, any> = {};
+        let combinedString = "";
+        incoming.forEach(c => {
+          const val = nodeOutputs[c.sourceId];
+          if (typeof val === 'object' && val !== null) {
+            mergedVars = { ...mergedVars, ...val };
+          } else if (typeof val === 'string') {
+            combinedString = val;
           }
         });
-        activeValue = variablesMap;
+        if (Object.keys(mergedVars).length > 0) {
+          if (combinedString) {
+            mergedVars['lastOutput'] = combinedString;
+          }
+          localValue = mergedVars;
+        } else {
+          localValue = combinedString;
+        }
+      }
 
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: node.title,
-          status: 'completed',
-          input: JSON.stringify(variables, null, 2),
-          output: JSON.stringify(variablesMap, null, 2),
-          duration: Date.now() - stepStart
-        });
-
-      } else if (node.type === 'prompt') {
-        const template = node.fields.template || "";
-        let renderedPrompt = template;
-
-        // Replace all {placeholder} values with values from activeValue variable map
-        if (typeof activeValue === 'object' && activeValue !== null) {
-          Object.entries(activeValue).forEach(([key, val]) => {
-            const regex = new RegExp(`\\{${key}\\}`, 'g');
-            renderedPrompt = renderedPrompt.replace(regex, String(val));
+      try {
+        if (node.type === 'input') {
+          const variablesMap: Record<string, string> = {};
+          const variables = node.fields.variables || [];
+          variables.forEach((v: { key: string; value?: string; val?: string }) => {
+            if (v.key) {
+              const value = v.value !== undefined ? v.value : (v.val !== undefined ? v.val : "");
+              variablesMap[v.key] = value;
+              globalVariables[v.key] = value;
+            }
           });
-        }
+          nodeOutputs[node.id] = variablesMap;
+          activeValue = variablesMap;
 
-        activeValue = renderedPrompt;
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: JSON.stringify(variables, null, 2),
+            output: JSON.stringify(variablesMap, null, 2),
+            duration: Date.now() - stepStart
+          });
 
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: node.title,
-          status: 'completed',
-          input: template,
-          output: renderedPrompt,
-          duration: Date.now() - stepStart
-        });
+        } else if (node.type === 'prompt') {
+          const template = node.fields.template || "";
+          let renderedPrompt = template;
 
-      } else if (node.type === 'gemini') {
-        const promptText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue);
-        const model = node.fields.model || 'gemini-3.5-flash';
-        const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
-        const systemInstruction = node.fields.systemInstruction || "";
-        const useSearchGrounding = !!node.fields.useSearchGrounding;
+          // Replace tags {placeholder} from local values & global variables
+          const sourceObj = typeof localValue === 'object' && localValue !== null ? { ...globalVariables, ...localValue } : globalVariables;
+          Object.entries(sourceObj).forEach(([k, v]) => {
+            const regex = new RegExp(`\\{${k}\\}`, 'g');
+            renderedPrompt = renderedPrompt.replace(regex, String(v));
+          });
 
-        const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+          nodeOutputs[node.id] = renderedPrompt;
+          activeValue = renderedPrompt;
 
-        let responseText = "";
-        let resolvedModelName = model;
-        const groundingSources: Array<{ title: string; uri: string }> = [];
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: template,
+            output: renderedPrompt,
+            duration: Date.now() - stepStart
+          });
 
-        if (isSandbox) {
-          const { response, resolvedModel: simModel } = generateSimulatedResponse(model, promptText);
-          responseText = response.text || "";
-          resolvedModelName = simModel;
-        } else {
-          // Configure call tools based on search grounding flag
-          const config: any = {
-            temperature: temp,
-            systemInstruction: systemInstruction || undefined,
-          };
+        } else if (node.type === 'gemini') {
+          const promptText = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
+          const model = node.fields.model || 'gemini-3.5-flash';
+          const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
+          const systemInstruction = node.fields.systemInstruction || "";
+          const useSearchGrounding = !!node.fields.useSearchGrounding;
 
-          if (useSearchGrounding) {
-            config.tools = [{ googleSearch: {} }];
+          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+          let responseText = "";
+          let resolvedModelName = model;
+          const groundingSources: Array<{ title: string; uri: string }> = [];
+
+          if (isSandbox) {
+            const { response, resolvedModel: simModel } = generateSimulatedResponse(model, promptText);
+            responseText = response.text || "";
+            resolvedModelName = simModel;
+          } else {
+            const config: any = {
+              temperature: temp,
+              systemInstruction: systemInstruction || undefined,
+            };
+            if (useSearchGrounding) {
+              config.tools = [{ googleSearch: {} }];
+            }
+
+            const { response, resolvedModel } = await generateWithRetry(ai, model, promptText, config);
+            responseText = response.text || "";
+            resolvedModelName = resolvedModel;
+
+            const metadata = response.candidates?.[0]?.groundingMetadata;
+            if (metadata?.groundingChunks) {
+              metadata.groundingChunks.forEach((chunk: any) => {
+                if (chunk.web?.title && chunk.web?.uri) {
+                  groundingSources.push({
+                    title: chunk.web.title,
+                    uri: chunk.web.uri
+                  });
+                }
+              });
+            }
           }
 
-          const { response, resolvedModel } = await generateWithRetry(ai, model, promptText, config);
+          nodeOutputs[node.id] = responseText;
+          activeValue = responseText;
 
-          responseText = response.text || "";
-          resolvedModelName = resolvedModel;
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: `${node.title} (${resolvedModelName})`,
+            status: 'completed',
+            input: promptText,
+            output: responseText,
+            groundingSources: groundingSources.length > 0 ? groundingSources : undefined,
+            duration: Date.now() - stepStart
+          });
 
-          // Parse search grounding links if present
-          const metadata = response.candidates?.[0]?.groundingMetadata;
-          if (metadata?.groundingChunks) {
-            metadata.groundingChunks.forEach(chunk => {
-              if (chunk.web?.title && chunk.web?.uri) {
-                groundingSources.push({
-                  title: chunk.web.title,
-                  uri: chunk.web.uri
-                });
-              }
-            });
-          }
-        }
+        } else if (node.type === 'reviewer') {
+          const criteria = node.fields.criteria || "";
+          const maxIterations = Math.max(1, Number(node.fields.maxIterations) || 1);
+          const reviewTargetText = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
 
-        activeValue = responseText;
+          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+          let runText = reviewTargetText;
+          let iteration = 0;
+          let critiqueResponse = "";
+          let passed = false;
 
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: `${node.title} (${resolvedModelName})`,
-          status: 'completed',
-          input: promptText,
-          output: responseText,
-          groundingSources: groundingSources.length > 0 ? groundingSources : undefined,
-          duration: Date.now() - stepStart
-        });
-
-      } else if (node.type === 'reviewer') {
-        const criteria = node.fields.criteria || "";
-        const maxIterations = Math.max(1, Number(node.fields.maxIterations) || 1);
-        const codeText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue);
-
-        const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
-
-        let runText = codeText;
-        let iteration = 0;
-        let critiqueResponse = "";
-        let passed = false;
-
-        if (isSandbox) {
-          iteration = 1;
-          passed = true;
-          critiqueResponse = "PASS: Output matches criteria perfectly under simulated audit environment.";
-        } else {
-          while (iteration < maxIterations && !passed) {
-            iteration++;
-            
-            // Let AI critique the output code or layout against criteria
-            const reviewerPrompt = `Analyze the following content generated by our coding unit against these strict quality requirements:
+          if (isSandbox) {
+            iteration = 1;
+            passed = true;
+            critiqueResponse = "PASS: Output meets all criteria perfectly under simulated audit environment.";
+          } else {
+            // Keep running sequential self-heal review loops on the node level
+            while (iteration < maxIterations && !passed) {
+              iteration++;
+              const reviewerPrompt = `Analyze the following content generated by our coding unit against these strict quality requirements:
 Requirements: "${criteria}"
 
 Content to analyze:
@@ -350,81 +420,258 @@ ${runText}
 If it perfectly matches, output exactly "PASS".
 If it fails any criteria, explain details & write exactly "FAIL [explanation]", then outline the precise suggestions for correct output.`;
 
-            const { response, resolvedModel: critiqueModel } = await generateWithRetry(
-              ai,
-              'gemini-3.5-flash',
-              reviewerPrompt,
-              {
-                temperature: 0.1,
-                systemInstruction: "You are an automated strict unit testing system and layout auditor."
-              }
-            );
+              const { response } = await generateWithRetry(
+                ai,
+                'gemini-3.5-flash',
+                reviewerPrompt,
+                {
+                  temperature: 0.1,
+                  systemInstruction: "You are an automated strict unit testing system and layout auditor."
+                }
+              );
 
-            critiqueResponse = response.text || "";
-            
-            if (critiqueResponse.trim().startsWith("PASS")) {
-              passed = true;
-              break;
-            } else {
-              // It failed! Hook back into a prompt to refine the output
-              const correctionPrompt = `A code/text critique was returned:
+              critiqueResponse = response.text || "";
+              if (critiqueResponse.trim().startsWith("PASS")) {
+                passed = true;
+                break;
+              } else {
+                const correctionPrompt = `A code/text critique was returned:
 Critic critique: ${critiqueResponse}
 
 Please regenerate the output from scratch, integrating all criticisms. Maintain high standards. No introductions, only the final polished code.`;
 
-              const { response: correctionRes, resolvedModel: correctionModel } = await generateWithRetry(
-                ai,
-                'gemini-3.5-flash',
-                `${codeText}\n\n${correctionPrompt}`,
-                {
-                  temperature: 0.2,
-                  systemInstruction: "You are a self-healing master developer unit."
-                }
-              );
-
-              runText = correctionRes.text || "";
+                const { response: correctionRes } = await generateWithRetry(
+                  ai,
+                  'gemini-3.5-flash',
+                  `${reviewTargetText}\n\n${correctionPrompt}`,
+                  {
+                    temperature: 0.2,
+                    systemInstruction: "You are a self-healing master developer unit."
+                  }
+                );
+                runText = correctionRes.text || "";
+              }
             }
           }
+
+          nodeOutputs[node.id] = runText;
+          activeValue = runText;
+          iterationsCount[node.id] = (iterationsCount[node.id] || 0) + iteration;
+
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: `Criteria: ${criteria}`,
+            output: passed 
+              ? `Passed audit successfully after ${iteration} iterations!\n\n${critiqueResponse}` 
+              : `Audit completed maximum cycles (${iteration}). Output refined iteratively with critique:\n\n${critiqueResponse}`,
+            iterationCount: iteration,
+            duration: Date.now() - stepStart
+          });
+
+        } else if (node.type === 'tool') {
+          const urlRaw = node.fields.url || "";
+          const method = node.fields.method || "GET";
+          const headersRaw = node.fields.headers || "{}";
+          const bodyRaw = node.fields.body || "";
+
+          let url = urlRaw;
+          let body = bodyRaw;
+          let headersStr = headersRaw;
+
+          const substitute = (text: string) => {
+            let out = text;
+            const sourceObj = { ...globalVariables, lastOutput: typeof localValue === 'string' ? localValue : JSON.stringify(localValue) };
+            Object.entries(sourceObj).forEach(([k, v]) => {
+              const r1 = new RegExp(`\\{${k}\\}`, 'g');
+              out = out.replace(r1, String(v));
+              const r2 = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+              out = out.replace(r2, String(v));
+            });
+            return out;
+          };
+
+          url = substitute(url);
+          body = substitute(body);
+          headersStr = substitute(headersStr);
+
+          let headers: Record<string, string> = { "Content-Type": "application/json" };
+          try {
+            if (headersStr.trim().startsWith("{")) {
+              headers = { ...headers, ...JSON.parse(headersStr) };
+            }
+          } catch {}
+
+          const fetchOptions: any = { method, headers };
+          if (method !== 'GET' && body) {
+            fetchOptions.body = body;
+          }
+
+          let responseText = "";
+          let responseStatus = 250;
+          try {
+            const fetchRes = await fetch(url, fetchOptions);
+            responseStatus = fetchRes.status;
+            responseText = await fetchRes.text();
+          } catch (err: any) {
+            throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
+          }
+
+          nodeOutputs[node.id] = responseText;
+          activeValue = responseText;
+
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: `${node.title} (${method} ${responseStatus})`,
+            status: 'completed',
+            input: `URL: ${url}\nBody: ${body || 'None'}`,
+            output: responseText,
+            duration: Date.now() - stepStart
+          });
+
+        } else if (node.type === 'multimodal') {
+          const mediaType = node.fields.mediaType || 'image';
+          const mediaDataRaw = node.fields.mediaData || "";
+          const analysisPrompt = node.fields.analysisPrompt || "Process and summarize this document.";
+          const useGeminiLive = !!node.fields.useGeminiLive;
+          const outputVariables = node.fields.outputVariables || "";
+
+          let base64Data = mediaDataRaw;
+          if (base64Data.includes(";base64,")) {
+            base64Data = base64Data.split(";base64,").pop() || "";
+          }
+
+          let mimeType = "image/png";
+          if (mediaType === 'audio') mimeType = "audio/mp3";
+          else if (mediaType === 'pdf') mimeType = "application/pdf";
+          else if (mediaType === 'excel') mimeType = "text/csv";
+
+          let responseText = "";
+          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+
+          if (isSandbox || !base64Data) {
+            // Simulated multimodal mocks
+            if (useGeminiLive) {
+              responseText = `[Gemini Live API Voice Session Connected]\n` +
+                `- Established persistent WebSocket bridge to gemini-3.1-flash-live-preview\n` +
+                `- Modality configured: [Modality.AUDIO] for real-time speech conversion\n` +
+                `- Input audio source mapped at 16kHz PCM little-endian\n` +
+                `- Client stream started: transmitting voice frames...\n` +
+                `- [Model Turn Response]: "Привет! Я прослушал вашу аудиозапись. На ней обсуждаются итоги квартала и новые финансовые цели. Как я могу еще помочь?"`;
+            } else {
+              if (mediaType === 'excel') {
+                responseText = JSON.stringify({
+                  status: "success",
+                  documentClass: "Excel Document Ledger",
+                  totalRowsProcessed: 124,
+                  parsedColumns: ["ID", "Employee", "Department", "Revenue", "Margin_Percentage"],
+                  calculations: { grossSum: 154200.00, averageMargin: "18.4%" },
+                  extractedValues: { topPerformer: "Sales Division A", forecastConfidence: "98.2%" }
+                }, null, 2);
+              } else if (mediaType === 'pdf') {
+                responseText = `[Document Processing Engine (WASM-OCR & Gemini Vision)]\n` +
+                  `Source File: invoice_ledger_scanned.pdf\n` +
+                  `Status: Successfully processed and indexed\n\n` +
+                  `--- EXTRACTED INVOICE DETAILS ---\n` +
+                  `Invoice Reference ID: INV-2026-9501\n` +
+                  `Vendor: Global Logistics Inc.\n` +
+                  `Issue Date: 2026-06-12\n` +
+                  `Total Amount Due: $1,420.50 USD\n` +
+                  `Line Items:\n` +
+                  `1. API Gateway Routing Host - $420.00\n` +
+                  `2. Cloud Compute Sandbox Cluster - $1,000.50`;
+              } else if (mediaType === 'audio') {
+                responseText = `[Audio Transcriber Stream Module]\n` +
+                  `Decoded PCM data frequency: 24kHz\n` +
+                  `Detected speaker count: 2\n\n` +
+                  `Transcript Speech Output:\n` +
+                  `"Алло, здравствуйте! Я хотел бы узнать, в безопасности ли мои скрипты при запуске на вашем сервере? Да, конечно, наши среды полностью изолированы в Docker и WASM контейнерах."`;
+              } else {
+                responseText = `[Vision Analyst Model - OCR Result]\n` +
+                  `Source Image: user_provided_diagram.png\n` +
+                  `Diagram Category: Node-Based AI Agent Flow Architecture\n\n` +
+                  `Detected Elements:\n` +
+                  `- Prompt Node connected to Gemini LLM\n` +
+                  `- Reviewer looping back to prompt with max iterations = 3\n` +
+                  `Analysis Notes: The flowchart shows a fully responsive self-healing code generation workflow.`;
+              }
+            }
+          } else {
+            try {
+              const activeModel = useGeminiLive ? "gemini-3.1-flash-live-preview" : "gemini-3.5-flash";
+              const mediaPart = { inlineData: { mimeType, data: base64Data } };
+              const textPart = { text: analysisPrompt };
+
+              const response = await ai.models.generateContent({
+                model: activeModel,
+                contents: { parts: [mediaPart, textPart] }
+              });
+              responseText = response.text || "Processed successfully with no output.";
+            } catch (e: any) {
+              throw new Error(`Multimodal Document process failed: ${e.message}`);
+            }
+          }
+
+          nodeOutputs[node.id] = responseText;
+          activeValue = responseText;
+
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: `${node.title} (${mediaType.toUpperCase()} ${useGeminiLive ? 'Live' : 'Vision'})`,
+            status: 'completed',
+            input: `Prompt: ${analysisPrompt}\nMedia source type: ${mediaType}`,
+            output: responseText,
+            duration: Date.now() - stepStart
+          });
+
+        } else if (node.type === 'router') {
+          nodeOutputs[node.id] = localValue;
+          activeValue = localValue;
+
+        } else if (node.type === 'output') {
+          const finalStr = typeof localValue === 'string' ? localValue : JSON.stringify(localValue, null, 2);
+          nodeOutputs[node.id] = finalStr;
+          activeValue = finalStr;
+
+          logs.push({
+            nodeId: node.id,
+            nodeTitle: node.title,
+            status: 'completed',
+            input: 'Pipeline Stream Completed',
+            output: finalStr,
+            duration: Date.now() - stepStart
+          });
         }
-
-        activeValue = runText;
-        
+      } catch (err: any) {
         logs.push({
           nodeId: node.id,
           nodeTitle: node.title,
-          status: 'completed',
-          input: `Criteria: ${criteria}`,
-          output: passed 
-            ? `Passed audit successfully after ${iteration} iterations!\n\n${critiqueResponse}` 
-            : `Audit completed maximum cycles (${iteration}). Output refined iteratively with critique:\n\n${critiqueResponse}`,
-          iterationCount: iteration,
+          status: 'failed',
+          input: 'Execution Interrupted',
+          output: err.message || String(err),
           duration: Date.now() - stepStart
         });
-
-      } else if (node.type === 'output') {
-        const finalStr = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
-        
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: node.title,
-          status: 'completed',
-          input: 'Pipeline Stream Completed',
-          output: finalStr,
-          duration: Date.now() - stepStart
-        });
+        throw err;
       }
+    });
 
-      let customNextNodeId: string | null = null;
-      let hasCustomNext = false;
+    // Resolve current level execution
+    await Promise.all(promises);
 
-      if (node.type === 'router') {
-        const inputPayload = typeof activeValue === 'string'
-          ? activeValue
-          : JSON.stringify(activeValue || "");
+    // 3. Complete currently processed nodes & calculate successor activations
+    for (const completedNode of eligibleNodes) {
+      completedNodes.add(completedNode.id);
+      activatedNodes.delete(completedNode.id);
 
-        const conditions = node.fields.conditions || [];
-        const defaultTargetId = node.fields.defaultTargetNodeId || "";
+      // Determine next node activations
+      if (completedNode.type === 'router') {
+        const inputPayload = typeof nodeOutputs[completedNode.id] === 'string'
+          ? nodeOutputs[completedNode.id]
+          : JSON.stringify(nodeOutputs[completedNode.id] || "");
 
+        const conditions = completedNode.fields.conditions || [];
+        const defaultTargetId = completedNode.fields.defaultTargetNodeId || "";
         let selectedTargetId: string | null = null;
 
         for (const cond of conditions) {
@@ -443,8 +690,6 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
                   selectedTargetId = cond.targetNodeId;
                   break;
                 }
-              } else {
-                console.warn("[AgentForge44 Security] Rejected potentially unsafe ReDoS regex pattern:", pattern);
               }
             } catch {}
           } else if (cond.type === 'json_key') {
@@ -460,239 +705,63 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
         }
 
         const finalNextNodeId = selectedTargetId || defaultTargetId;
-        hasCustomNext = true;
-        customNextNodeId = finalNextNodeId || null;
+        if (finalNextNodeId) {
+          activatedNodes.add(finalNextNodeId);
+        }
 
         logs.push({
-          nodeId: node.id,
-          nodeTitle: node.title,
+          nodeId: completedNode.id,
+          nodeTitle: completedNode.title,
           status: 'completed',
           input: inputPayload,
           output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
-          duration: Date.now() - stepStart
+          duration: 0
         });
-      } else if (node.type === 'tool') {
-        const urlRaw = node.fields.url || "";
-        const method = node.fields.method || "GET";
-        const headersRaw = node.fields.headers || "{}";
-        const bodyRaw = node.fields.body || "";
 
-        let url = urlRaw;
-        let body = bodyRaw;
-        let headersStr = headersRaw;
+      } else if (completedNode.type === 'reviewer') {
+        // Find if custom loop target in graph is defined
+        const incomingPredecessors = connections
+          .filter(c => c.targetId === completedNode.id)
+          .map(c => c.sourceId);
 
-        // Substitute helpers
-        const substitute = (text: string) => {
-          let out = text;
-          if (typeof activeValue === 'object' && activeValue !== null) {
-            Object.entries(activeValue).forEach(([k, v]) => {
-              const regex = new RegExp(`\\{${k}\\}`, 'g');
-              out = out.replace(regex, String(v));
-              const regexDouble = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
-              out = out.replace(regexDouble, String(v));
-            });
-          } else if (typeof activeValue === 'string') {
-            const regex = new RegExp(`\\{lastOutput\\}`, 'g');
-            out = out.replace(regex, activeValue);
-            const regexDouble = new RegExp(`\\{\\{lastOutput\\}\\}`, 'g');
-            out = out.replace(regexDouble, activeValue);
+        const logsForThisNode = logs.filter(l => l.nodeId === completedNode.id);
+        const latestLog = logsForThisNode[logsForThisNode.length - 1];
+        const isPassed = latestLog && latestLog.output && latestLog.output.includes("Passed audit");
+
+        if (!isPassed && incomingPredecessors.length > 0) {
+          // If reviewer failed, re-inject upstream input/prompt node to loop-back
+          const loopHeadId = incomingPredecessors[0];
+          console.warn(`[AgentForge44 Executor] Critique loop-back re-injects to loop head node: ${loopHeadId}`);
+
+          // Reset completion states of loop head and all its downstream descendants to allow re-evaluation
+          const loopContainedNodes = getReachableNodes(loopHeadId);
+          for (const reachableId of loopContainedNodes) {
+            completedNodes.delete(reachableId);
+            activatedNodes.delete(reachableId);
           }
-          return out;
-        };
-
-        url = substitute(url);
-        body = substitute(body);
-        headersStr = substitute(headersStr);
-
-        let headers: Record<string, string> = { "Content-Type": "application/json" };
-        try {
-          if (headersStr.trim().startsWith("{")) {
-            headers = { ...headers, ...JSON.parse(headersStr) };
-          }
-        } catch {}
-
-        const fetchOptions: any = {
-          method,
-          headers
-        };
-        if (method !== 'GET' && body) {
-          fetchOptions.body = body;
-        }
-
-        let responseText = "";
-        let responseStatus = 250;
-        try {
-          const fetchRes = await fetch(url, fetchOptions);
-          responseStatus = fetchRes.status;
-          responseText = await fetchRes.text();
-        } catch (err: any) {
-          throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
-        }
-
-        activeValue = responseText;
-
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: `${node.title} (${method} ${responseStatus})`,
-          status: 'completed',
-          input: `URL: ${url}\nBody: ${body || 'None'}`,
-          output: responseText,
-          duration: Date.now() - stepStart
-        });
-      } else if (node.type === 'multimodal') {
-        const mediaType = node.fields.mediaType || 'image';
-        const mediaDataRaw = node.fields.mediaData || "";
-        const analysisPrompt = node.fields.analysisPrompt || "Process and summarize this document.";
-        const useGeminiLive = !!node.fields.useGeminiLive;
-        const outputVariables = node.fields.outputVariables || "";
-
-        let base64Data = mediaDataRaw;
-        if (base64Data.includes(";base64,")) {
-          base64Data = base64Data.split(";base64,").pop() || "";
-        }
-
-        let mimeType = "image/png";
-        if (mediaType === 'audio') mimeType = "audio/mp3";
-        else if (mediaType === 'pdf') mimeType = "application/pdf";
-        else if (mediaType === 'excel') mimeType = "text/csv";
-
-        let responseText = "";
-        const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
-
-        if (isSandbox || !base64Data) {
-          if (useGeminiLive) {
-            responseText = `[Gemini Live API Voice Session Connected]\n` +
-              `- Established persistent WebSocket bridge to gemini-3.1-flash-live-preview\n` +
-              `- Modality configured: [Modality.AUDIO] for real-time speech conversion\n` +
-              `- Input audio source mapped at 16kHz PCM little-endian\n` +
-              `- Client stream started: transmitting voice frames...\n` +
-              `- [Model Turn Response]: "Привет! Я прослушал вашу аудиозапись. На ней обсуждаются итоги квартала и новые финансовые цели. Как я могу еще помочь?"`;
-          } else {
-            if (mediaType === 'excel') {
-              responseText = JSON.stringify({
-                status: "success",
-                documentClass: "Excel Document Ledger",
-                totalRowsProcessed: 124,
-                parsedColumns: ["ID", "Employee", "Department", "Revenue", "Margin_Percentage"],
-                calculations: {
-                  grossSum: 154200.00,
-                  averageMargin: "18.4%"
-                },
-                extractedValues: {
-                  topPerformer: "Sales Division A",
-                  forecastConfidence: "98.2%"
-                }
-              }, null, 2);
-            } else if (mediaType === 'pdf') {
-              responseText = `[Document Processing Engine (WASM-OCR & Gemini Vision)]\n` +
-                `Source File: invoice_ledger_scanned.pdf\n` +
-                `Status: Successfully processed and indexed\n\n` +
-                `--- EXTRACTED INVOICE DETAILS ---\n` +
-                `Invoice Reference ID: INV-2026-9501\n` +
-                `Vendor: Global Logistics Inc.\n` +
-                `Issue Date: 2026-06-12\n` +
-                `Total Amount Due: $1,420.50 USD\n` +
-                `Line Items:\n` +
-                `1. API Gateway Routing Host - $420.00\n` +
-                `2. Cloud Compute Sandbox Cluster - $1,000.50`;
-            } else if (mediaType === 'audio') {
-              responseText = `[Audio Transcriber Stream Module]\n` +
-                `Decoded PCM data frequency: 24kHz\n` +
-                `Detected speaker count: 2\n\n` +
-                `Transcript Speech Output:\n` +
-                `"Алло, здравствуйте! Я хотел бы узнать, в безопасности ли мои скрипты при запуске на вашем сервере? Да, конечно, наши среды полностью изолированы в Docker и WASM контейнерах."`;
-            } else {
-              responseText = `[Vision Analyst Model - OCR Result]\n` +
-                `Source Image: user_provided_diagram.png\n` +
-                `Diagram Category: Node-Based AI Agent Flow Architecture\n\n` +
-                `Detected Elements:\n` +
-                `- Prompt Node connected to Gemini LLM\n` +
-                `- Reviewer looping back to prompt with max iterations = 3\n` +
-                `Analysis Notes: The flowchart shows a fully responsive self-healing code generation workflow.`;
-            }
-          }
+          activatedNodes.add(loopHeadId);
         } else {
-          try {
-            const activeModel = useGeminiLive ? "gemini-3.1-flash-live-preview" : "gemini-3.5-flash";
-
-            const mediaPart = {
-              inlineData: {
-                mimeType,
-                data: base64Data
-              }
-            };
-            const textPart = {
-              text: analysisPrompt
-            };
-
-            const response = await ai.models.generateContent({
-              model: activeModel,
-              contents: { parts: [mediaPart, textPart] }
-            });
-            responseText = response.text || "Processed successfully with no output.";
-          } catch (e: any) {
-            throw new Error(`Multimodal Document process failed: ${e.message}`);
-          }
+          // Normal sequential successor activation
+          const targets = connections.filter(c => c.sourceId === completedNode.id);
+          targets.forEach(t => activatedNodes.add(t.targetId));
         }
 
-        if (outputVariables.trim()) {
-          try {
-            const lines = outputVariables.split(',');
-            if (typeof activeValue !== 'object' || activeValue === null) {
-              activeValue = {};
-            }
-            lines.forEach(l => {
-              const parts = l.split('=');
-              if (parts.length === 2) {
-                const key = parts[0].trim();
-                const pathStr = parts[1].trim();
-                activeValue[key] = pathStr === 'text' ? responseText : getValueByDotPath(JSON.parse(responseText), pathStr) || responseText;
-              }
-            });
-          } catch {
-            const firstVar = outputVariables.split('=')[0]?.trim();
-            if (firstVar) {
-              if (typeof activeValue !== 'object' || activeValue === null) {
-                activeValue = {};
-              }
-              activeValue[firstVar] = responseText;
-            }
-          }
-        } else {
-          activeValue = responseText;
-        }
-
-        logs.push({
-          nodeId: node.id,
-          nodeTitle: `${node.title} (${mediaType.toUpperCase()} ${useGeminiLive ? 'Live' : 'Vision'})`,
-          status: 'completed',
-          input: `Prompt: ${analysisPrompt}\nMedia source type: ${mediaType}`,
-          output: responseText,
-          duration: Date.now() - stepStart
-        });
-      }
-
-      if (hasCustomNext) {
-        currentNodeId = customNextNodeId;
       } else {
-        currentNodeId = getNextNodeId(currentNodeId, connections);
+        // Default standard activations
+        const targets = connections.filter(c => c.sourceId === completedNode.id);
+        targets.forEach(t => activatedNodes.add(t.targetId));
       }
-
-    } catch (err: any) {
-      logs.push({
-        nodeId: node.id,
-        nodeTitle: node.title,
-        status: 'failed',
-        input: 'Execution Interrupted',
-        output: err.message || String(err),
-        duration: Date.now() - stepStart
-      });
-      throw err;
     }
   }
 
-  const finalResultNode = nodes.find(n => n.type === 'output');
-  const finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
+  // Fallback find and format final resulting outputs
+  const outputNodes = nodes.filter(n => n.type === 'output');
+  let finalResultText = "";
+  if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
+    finalResultText = String(nodeOutputs[outputNodes[0].id]);
+  } else {
+    finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
+  }
 
   return {
     logs: logs,
