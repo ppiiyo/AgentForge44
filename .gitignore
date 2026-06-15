@@ -7,3 +7,9 @@ coverage/
 logs/
 .env*
 !.env.example
+
+# SQLite database files
+agentforge.db
+agentforge.db-journal
+*.sqlite
+*.db
