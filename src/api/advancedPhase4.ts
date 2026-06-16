@@ -319,71 +319,41 @@ export function getPatternTemplate(patternType: 'supervisor' | 'debate'): { node
   }
 }
 
+import { ragService } from '../services/rag.service.js';
+
 /**
  * 3. Document Loader and Simple Index Store for Semantic RAG
  */
-interface ChunkItem {
+export interface ChunkItem {
   id: string;
   source: string;
   text: string;
 }
 
-const memoryDocumentsDb: ChunkItem[] = [];
-
-export function indexLibraryDocument(rawText: string, sourceName: string): { success: boolean; chunkCount: number } {
-  // Extract chunks
+export async function indexLibraryDocument(rawText: string, sourceName: string): Promise<{ success: boolean; chunkCount: number }> {
   const cleanedText = rawText.trim();
   if (!cleanedText) return { success: false, chunkCount: 0 };
 
-  const chunkSize = 400;
-  const chunks: string[] = [];
-  let index = 0;
-
-  while (index < cleanedText.length) {
-    const end = Math.min(index + chunkSize, cleanedText.length);
-    chunks.push(cleanedText.substring(index, end));
-    index += chunkSize - 50; // 50 character overlap
+  try {
+    const ids = await ragService.addDocument(cleanedText, { source: sourceName || "Direct Paste Input" });
+    return { success: true, chunkCount: ids.length };
+  } catch (err: any) {
+    logger.error('[RAG-Api] Failed to index document', err);
+    return { success: false, chunkCount: 0 };
   }
-
-  chunks.forEach((chunk, idx) => {
-    memoryDocumentsDb.push({
-      id: `chunk_${Date.now()}_${idx}`,
-      source: sourceName || "Direct Paste Input",
-      text: chunk
-    });
-  });
-
-  return { success: true, chunkCount: chunks.length };
 }
 
-export function searchIndexedLibrary(query: string, limit = 3): { chunks: ChunkItem[] } {
-  const qClean = query.toLowerCase();
-  
-  // Simple cosine Jaccard approximation for browser sandbox efficiency
-  const matched = memoryDocumentsDb
-    .map(doc => {
-      const docClean = doc.text.toLowerCase();
-      // Calculate token intersections
-      const docWords = new Set(docClean.split(/\s+/));
-      const qWords = qClean.split(/\s+/);
-      
-      let intersections = 0;
-      qWords.forEach(w => {
-        if (docWords.has(w)) intersections++;
-      });
-      
-      const score = intersections / Math.max(1, qWords.length);
-      return { doc, score };
-    })
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map(item => item.doc);
-
-  // If no intersection was found, return basic first 2 items
-  if (matched.length === 0 && memoryDocumentsDb.length > 0) {
-    return { chunks: memoryDocumentsDb.slice(0, limit) };
+export async function searchIndexedLibrary(query: string, limit = 3): Promise<{ chunks: ChunkItem[] }> {
+  try {
+    const results = await ragService.search(query, limit);
+    const chunks: ChunkItem[] = results.map(r => ({
+      id: r.document.id,
+      source: String(r.document.metadata.source || "Unknown Source"),
+      text: r.document.text
+    }));
+    return { chunks };
+  } catch (err: any) {
+    logger.error('[RAG-Api] Failed search', err);
+    return { chunks: [] };
   }
-
-  return { chunks: matched };
 }

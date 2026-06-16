@@ -174,6 +174,8 @@ export class StatefulExecutionEngine {
         break;
       }
 
+      const currentActiveValue = activeValue;
+
       // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
       const promises = eligibleNodes.map(async (node) => {
         // Fast path track execution frequency
@@ -186,7 +188,7 @@ export class StatefulExecutionEngine {
 
         // Collect input arguments from parents
         const incoming = this.connections.filter(c => c.targetId === node.id);
-        let localValue: any = activeValue;
+        let localValue: any = currentActiveValue;
         if (incoming.length === 1) {
           localValue = nodeOutputs[incoming[0].sourceId];
         } else if (incoming.length > 1) {
@@ -398,7 +400,7 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             }
 
             const searchStart = Date.now();
-            const searchRes = searchIndexedLibrary(searchQuery, limit);
+            const searchRes = await searchIndexedLibrary(searchQuery, limit);
             const chunks = searchRes.chunks || [];
             const latency = Date.now() - searchStart;
 
@@ -450,6 +452,12 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
 
       // Resolve current level execution
       await Promise.all(promises);
+
+      // Update activeValue to be the output of the last completed node in this level
+      if (eligibleNodes.length > 0) {
+        const lastEligibleNode = eligibleNodes[eligibleNodes.length - 1];
+        activeValue = nodeOutputs[lastEligibleNode.id];
+      }
 
       // 3. Complete currently processed nodes & calculate successor activations
       for (const completedNode of eligibleNodes) {
