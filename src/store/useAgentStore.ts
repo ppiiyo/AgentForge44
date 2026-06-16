@@ -141,10 +141,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
             ...node.fields,
             ...fields
           }
-        };
+        } as FlowNode;
       }
       return node;
-    });
+    }) as FlowNode[];
 
     set({ nodes });
   },

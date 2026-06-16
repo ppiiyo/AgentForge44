@@ -319,6 +319,7 @@ export function getPatternTemplate(patternType: 'supervisor' | 'debate'): { node
   }
 }
 
+import { logger } from '../utils/logger.js';
 import { ragService } from '../services/rag.service.js';
 
 /**
