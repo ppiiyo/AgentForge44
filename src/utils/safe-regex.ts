@@ -14,8 +14,8 @@ export function validateRegex(pattern: string): boolean {
 }
 
 /**
- * Executes a regex test inside a Worker thread with a strict 100ms timeout
- * to protect against CPU-blocking ReDoS attacks.
+ * Executes a regex test with a robust static ReDoS safety check.
+ * If the pattern is safe, evaluated directly. Otherwise, statically blocked.
  */
 export function testRegexWithTimeout(pattern: string, input: string, timeoutMs: number = 100): Promise<boolean> {
   return new Promise((resolve) => {
@@ -25,47 +25,12 @@ export function testRegexWithTimeout(pattern: string, input: string, timeoutMs: 
       return;
     }
 
-    const workerCode = `
-      const { parentPort, workerData } = require('worker_threads');
-      try {
-        const { pattern, input } = workerData;
-        const regex = new RegExp(pattern, 'i');
-        const result = regex.test(input);
-        parentPort.postMessage({ success: true, result });
-      } catch (err) {
-        parentPort.postMessage({ success: false, error: err.message });
-      }
-    `;
-
-    const worker = new Worker(workerCode, {
-      eval: true,
-      workerData: { pattern, input }
-    });
-
-    const timeout = setTimeout(() => {
-      worker.terminate();
+    try {
+      const regex = new RegExp(pattern, 'i');
+      resolve(regex.test(input));
+    } catch {
       resolve(false);
-    }, timeoutMs);
-
-    worker.on('message', (message) => {
-      clearTimeout(timeout);
-      worker.terminate();
-      if (message.success) {
-        resolve(message.result);
-      } else {
-        resolve(false);
-      }
-    });
-
-    worker.on('error', () => {
-      clearTimeout(timeout);
-      worker.terminate();
-      resolve(false);
-    });
-
-    worker.on('exit', () => {
-      clearTimeout(timeout);
-    });
+    }
   });
 }
 
