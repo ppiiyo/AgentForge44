@@ -86,7 +86,7 @@ export function handleSimulatedRequest(data: any) {
   return { response, resolvedModel: `${model} (Simulated)` };
 }
 
-function classifyLLMError(err: any): { isTransient: boolean; reason: string; label: string } {
+export function classifyLLMError(err: any): { isTransient: boolean; reason: string; label: string } {
   const errMsg = String(err.message || err).toLowerCase();
   const status = Number(err.status || err.statusCode);
 

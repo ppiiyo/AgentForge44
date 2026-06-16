@@ -19,7 +19,7 @@ export function authMiddleware(req: express.Request, res: express.Response, next
   }
 
   // 1. Check if token is the API Master Key
-  const API_KEY = process.env.AGENTFORGE_API_KEY || (process.env.NODE_ENV === 'test' ? "forge_production_admin_token" : undefined);
+  const API_KEY = process.env.AGENTFORGE_API_KEY;
   if (API_KEY && token === API_KEY) {
     (req as any).user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
     next();

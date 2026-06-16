@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
+
+// Set secure AGENTFORGE_API_KEY for tests
+process.env.AGENTFORGE_API_KEY = 'forge_production_admin_token';
+
 import { app } from '../../server.js';
 
 describe('Server API Integration Suite', () => {

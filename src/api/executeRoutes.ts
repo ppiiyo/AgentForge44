@@ -31,9 +31,9 @@ function isRateLimited(key: string): boolean {
 }
 
 // Master API Key resolver
-const ALLOWED_API_KEYS = new Set([
-  process.env.AGENTFORGE_API_KEY || "forge_production_admin_token"
-]);
+const ALLOWED_API_KEYS = new Set(
+  process.env.AGENTFORGE_API_KEY ? [process.env.AGENTFORGE_API_KEY] : []
+);
 
 router.post('/execute', async (req: Request, res: Response) => {
   const { nodes, connections } = req.body;
@@ -191,9 +191,9 @@ router.post('/runs', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : "";
 
-  // 1. Authenticate Authorization Header Token (allowing test environment "forge_production_admin_token" fallback)
-  const API_KEY = process.env.AGENTFORGE_API_KEY || (process.env.NODE_ENV === 'test' || process.env.VITEST ? "forge_production_admin_token" : undefined);
-  if (!token || (token !== API_KEY && !ALLOWED_API_KEYS.has(token))) {
+  // 1. Authenticate Authorization Header Token (allowing test environment fallback)
+  const API_KEY = process.env.AGENTFORGE_API_KEY;
+  if (!token || (token !== API_KEY && (!API_KEY || !ALLOWED_API_KEYS.has(token)))) {
     res.status(401).json({
       success: false,
       error: "Unauthorized access: Bearer token is invalid or missing in Headers. Configure AGENTFORGE_API_KEY environment credentials to register custom tokens."
