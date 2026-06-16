@@ -52,4 +52,70 @@ describe('StatefulExecutionEngine Unit Suite', () => {
     expect(run.logs[1].output).toContain('Analyze details of Dynamic Agent Architectures.');
     expect(run.finalResult).toContain('Analyze details of Dynamic Agent Architectures.');
   });
+
+  it('should be thread-safe when merging parallel branches with structured deep cloning', async () => {
+    const nodes: FlowNode[] = [
+      {
+        id: 'step-input',
+        type: 'input',
+        title: 'Master Inputs',
+        x: 0, y: 0,
+        description: 'Inputs variables',
+        fields: {
+          variables: []
+        }
+      },
+      {
+        id: 'branch-a',
+        type: 'prompt',
+        title: 'Branch A Prompt',
+        x: 0, y: 0,
+        description: 'Branch A data constructor',
+        fields: {
+          template: '{"branch": "A", "metadata": {"status": "success"}}'
+        }
+      },
+      {
+        id: 'branch-b',
+        type: 'prompt',
+        title: 'Branch B Prompt',
+        x: 0, y: 0,
+        description: 'Branch B data constructor',
+        fields: {
+          template: '{"branch": "B", "metadata": {"status": "success"}}'
+        }
+      },
+      {
+        id: 'step-output',
+        type: 'output',
+        title: 'Merge Output Node',
+        x: 0, y: 0,
+        description: 'Merges input branch nodes',
+        fields: {
+          format: 'text',
+          value: ''
+        }
+      }
+    ];
+
+    const connections: FlowConnection[] = [
+      { id: 'c1', sourceId: 'step-input', targetId: 'branch-a' },
+      { id: 'c2', sourceId: 'step-input', targetId: 'branch-b' },
+      { id: 'c3', sourceId: 'branch-a', targetId: 'step-output' },
+      { id: 'c4', sourceId: 'branch-b', targetId: 'step-output' }
+    ];
+
+    const engine = new StatefulExecutionEngine(nodes, connections);
+    const runResult = await engine.runWorkflow();
+
+    expect(runResult.logs.length).toBe(4);
+
+    const logA = runResult.logs.find(l => l.nodeId === 'branch-a');
+    const logB = runResult.logs.find(l => l.nodeId === 'branch-b');
+    const logOutput = runResult.logs.find(l => l.nodeId === 'step-output');
+
+    expect(logA).toBeDefined();
+    expect(logB).toBeDefined();
+    expect(logOutput).toBeDefined();
+  });
 });

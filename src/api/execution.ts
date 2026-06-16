@@ -2,6 +2,7 @@ import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../t
 import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
 import { searchIndexedLibrary } from './advancedPhase4.js';
+import { routeNode } from '../nodes/RouterNode.js';
 
 function getValueByDotPath(obj: any, pathStr: string): any {
   if (!obj || !pathStr) return undefined;
@@ -29,10 +30,12 @@ export class StatefulExecutionEngine {
   private nodes: FlowNode[];
   private connections: FlowConnection[];
   private provider: LLMProvider;
+  private userId?: string;
 
-  constructor(nodes: FlowNode[], connections: FlowConnection[]) {
+  constructor(nodes: FlowNode[], connections: FlowConnection[], userId?: string) {
     this.nodes = nodes;
     this.connections = connections;
+    this.userId = userId;
     
     // Default fallback provider is Gemini, using workspace-secured API keys
     const apiKey = process.env.GEMINI_API_KEY || "";
@@ -190,14 +193,16 @@ export class StatefulExecutionEngine {
         const incoming = this.connections.filter(c => c.targetId === node.id);
         let localValue: any = currentActiveValue;
         if (incoming.length === 1) {
-          localValue = nodeOutputs[incoming[0].sourceId];
+          const rawVal = nodeOutputs[incoming[0].sourceId];
+          localValue = (rawVal && typeof rawVal === 'object') ? structuredClone(rawVal) : rawVal;
         } else if (incoming.length > 1) {
           let mergedVars: Record<string, any> = {};
           let combinedString = "";
           incoming.forEach(c => {
             const val = nodeOutputs[c.sourceId];
             if (typeof val === 'object' && val !== null) {
-              mergedVars = { ...mergedVars, ...val };
+              const clonedVal = structuredClone(val);
+              mergedVars = { ...mergedVars, ...clonedVal };
             } else if (typeof val === 'string') {
               combinedString = val;
             }
@@ -270,7 +275,8 @@ export class StatefulExecutionEngine {
             const llmDetails = await this.provider.generate(promptText, {
               temperature,
               systemInstruction,
-              tools: extTools
+              tools: extTools,
+              userId: this.userId
             });
 
             nodeOutputs[node.id] = llmDetails.text;
@@ -302,7 +308,8 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
 
             const reviewResult = await this.provider.generate(criticPrompt, {
               temperature: 0.1,
-              systemInstruction: "You are an automated code quality control auditor."
+              systemInstruction: "You are an automated code quality control auditor.",
+              userId: this.userId
             });
 
             const critiqueText = reviewResult.text || "";
@@ -469,41 +476,16 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             ? nodeOutputs[completedNode.id]
             : JSON.stringify(nodeOutputs[completedNode.id] || "");
 
-          const conditions = completedNode.fields.conditions || [];
-          const defaultTargetId = completedNode.fields.defaultTargetNodeId || "";
-          let selectedTargetId: string | null = null;
-
-          for (const cond of conditions) {
-            if (cond.type === 'contains') {
-              if (inputPayload.toLowerCase().includes(cond.value.toLowerCase())) {
-                selectedTargetId = cond.targetNodeId;
-                break;
-              }
-            } else if (cond.type === 'regex') {
-              try {
-                const pattern = cond.value || "";
-                const isSafe = !(/(\([^\)]*[\+\*][^\)]*\))[\+\*]/.test(pattern)) && !(/(\([^\)]*\{\d+,?\d*\}\))\{\d+,?\d*\}/.test(pattern));
-                if (isSafe) {
-                  const regex = new RegExp(pattern, 'i');
-                  if (regex.test(inputPayload)) {
-                    selectedTargetId = cond.targetNodeId;
-                    break;
-                  }
-                }
-              } catch {}
-            } else if (cond.type === 'json_key') {
-              try {
-                const parsedJson = JSON.parse(inputPayload);
-                const valOfKey = getValueByDotPath(parsedJson, cond.value);
-                if (valOfKey !== undefined && valOfKey !== null && valOfKey !== false) {
-                  selectedTargetId = cond.targetNodeId;
-                  break;
-                }
-              } catch {}
-            }
+          let finalNextNodeId = "";
+          let matched = false;
+          try {
+            finalNextNodeId = await routeNode(completedNode, inputPayload);
+            matched = finalNextNodeId !== (completedNode.fields.defaultTargetNodeId || "");
+          } catch (err: any) {
+            console.error("[Execution Engine] Router node error:", err.message);
+            finalNextNodeId = completedNode.fields.defaultTargetNodeId || "";
           }
 
-          const finalNextNodeId = selectedTargetId || defaultTargetId;
           if (finalNextNodeId) {
             activatedNodes.add(finalNextNodeId);
           }
@@ -513,7 +495,7 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             nodeTitle: completedNode.title,
             status: 'completed',
             input: inputPayload,
-            output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
+            output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${matched ? 'Matched Condition' : 'Default Target'}`,
             duration: 0
           });
 

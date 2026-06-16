@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import cors from 'cors';
 import { setupSecurity } from './src/middleware/security.js';
+import { sanitizeRequestBody } from './src/middleware/sanitize.js';
 import schedulerAndWebhooksRouter from './src/api/schedulerAndWebhooks.js';
 import copilotRouter from './src/api/copilot.js';
 import rateLimit from 'express-rate-limit';
@@ -63,6 +64,7 @@ const apiRateLimiter = rateLimit({
 app.use('/api', apiRateLimiter);
 
 app.use(express.json());
+app.use(sanitizeRequestBody);
 
 // Setup OpenAPI Documentation
 setupSwagger(app);

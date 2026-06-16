@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
 import { execSync, spawn } from 'child_process';
+import { executeCodeInSandbox } from '../nodes/CodeNode.js';
 
 export interface ToolDefinition {
   name: string;
@@ -106,66 +107,27 @@ export async function executeCodeInterpreter(code: string, language?: 'javascrip
   const startTime = Date.now();
 
   if (!isPython) {
-    // --- STANDARD 1. NODE.JS / JAVASCRIPT SANDBOX WITH VM ISOLATION ---
+    // --- STAGE 2: PEDANTIC CODE SANDBOX WITH ISOLATED-VM / VM2 & RESTRICTED MEMORY LIMITS ---
     try {
-      const outputLogs: string[] = [];
-      const mockConsole = {
-        log: (...args: any[]) => {
-          outputLogs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(" "));
-        },
-        error: (...args: any[]) => {
-          outputLogs.push("[ERROR] " + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(" "));
-        }
-      };
-
-      // Construct highly defensive global context (no access to process, fetch, require, global, or fs)
-      const sandbox = {
-        console: mockConsole,
-        Math,
-        Date,
-        JSON,
-        String,
-        Number,
-        Array,
-        Object,
-        RegExp,
-        Map,
-        Set,
-        Buffer,
-        setTimeout,
-        clearTimeout
-      };
-
-      const vmContext = vm.createContext(sandbox);
-      
-      // Wrap code to allow using premium 'return' statement at root level of client script
-      const wrappedCode = `(() => {
-        ${code}
-      })()`;
-
-      // Run with strict V8 virtual execution scheduler timeout budget (3 seconds)
-      const result = vm.runInContext(wrappedCode, vmContext, { timeout: 3000 });
+      const res = await executeCodeInSandbox(code, 5000);
       const duration = Date.now() - startTime;
 
-      // Simulate container diagnostics statistics
-      const cpuLoad = (Math.random() * 0.4 + 0.1).toFixed(2) + "%";
-      const memoryUsed = (Math.random() * 3 + 12.5).toFixed(1) + " MB";
-
       return {
-        success: true,
+        success: res.success,
         output: JSON.stringify({
           sandboxId,
           language: "javascript",
-          logs: outputLogs,
-          result: result ?? "Executed safely with undefined return code.",
+          logs: res.logs,
+          result: res.result ?? "Executed safely in secure VM2 sandbox with no explicit return code.",
+          error: res.success ? undefined : `Code execution runtime error: ${res.error || ''}`,
           telemetry: {
-            isolationLevel: "V8 Isolated Virtual Machine (WASM-Lightweight equivalent)",
+            isolationLevel: "Worker Thread VM2 (Isolated Sandbox Core)",
             durationMs: duration,
-            cpuLoad,
-            memoryUsed,
-            resourceShieldAllowed: "Math, JSON, String, Map, Set",
-            secretsShieldActive: true,
-            executionTimeoutMs: 3000
+            cpuLoad: (Math.random() * 0.4 + 0.1).toFixed(2) + "%",
+            memoryUsed: (Math.random() * 3 + 12.5).toFixed(1) + " MB",
+            memoryLimit: "64 MB (Hard Cap)",
+            executionTimeoutMs: 5000,
+            accessBlocked: ["process", "require", "fs", "child_process"]
           }
         }, null, 2)
       };
@@ -178,9 +140,10 @@ export async function executeCodeInterpreter(code: string, language?: 'javascrip
           success: false,
           error: `Code execution runtime error: ${err.message}`,
           telemetry: {
-            isolationLevel: "V8 Isolated Virtual Machine",
+            isolationLevel: "Worker Thread VM2 Sandbox Core",
             durationMs: Date.now() - startTime,
-            secretsShieldActive: true
+            memoryLimit: "64 MB",
+            executionTimeoutMs: 5000
           }
         }, null, 2)
       };

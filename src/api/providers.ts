@@ -1,10 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
+import { checkUserBudget, recordUserUsage } from "../services/usage-tracker.js";
 
 export interface LLMCallConfig {
   temperature?: number;
   maxTokens?: number;
   systemInstruction?: string;
   tools?: any[];
+  userId?: string;
 }
 
 export interface LLMResponse {
@@ -19,7 +21,30 @@ export interface LLMResponse {
 
 export abstract class LLMProvider {
   abstract getName(): string;
-  abstract generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse>;
+  protected abstract _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse>;
+
+  async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+    const userId = config?.userId;
+    const estInputTokens = Math.ceil((prompt || "").length / 4);
+
+    if (userId) {
+      const allowed = checkUserBudget(userId, estInputTokens);
+      if (!allowed) {
+        const err = new Error("429 Budget Exceeded");
+        (err as any).status = 429;
+        throw err;
+      }
+    }
+
+    const response = await this._generate(prompt, config);
+
+    if (userId) {
+      const estOutputTokens = Math.ceil((response.text || "").length / 4);
+      recordUserUsage(userId, estInputTokens + estOutputTokens);
+    }
+
+    return response;
+  }
 }
 
 /**
@@ -37,7 +62,7 @@ export class GeminiProvider extends LLMProvider {
 
   getName() { return `Gemini (${this.model})`; }
 
-  async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+  async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
     const aiConfig: any = {
       temperature: config?.temperature ?? 0.7,
       systemInstruction: config?.systemInstruction || undefined,
@@ -103,7 +128,7 @@ export class OpenAIProvider extends LLMProvider {
 
   getName() { return `OpenAI (${this.model})`; }
 
-  async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+  async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
     const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_openai" || this.apiKey === "your_openai_api_key_here";
     if (isSandbox) {
       const sandboxText = `[Simulated OpenAI Output - Sandbox Active]\nSuccessfully processed prompt in simulated OpenAI mode: "${prompt.substring(0, 100)}..."`;
@@ -181,7 +206,7 @@ export class AnthropicProvider extends LLMProvider {
 
   getName() { return `Anthropic (${this.model})`; }
 
-  async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+  async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
     const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_anthropic" || this.apiKey === "your_anthropic_api_key_here";
     if (isSandbox) {
       const sandboxText = `[Simulated Anthropic Output - Sandbox Active]\nProcessed prompt in mock Anthropic Claude mode: "${prompt.substring(0, 100)}..."`;
@@ -242,7 +267,7 @@ export class OllamaProvider extends LLMProvider {
 
   getName() { return `Ollama (${this.model})`; }
 
-  async generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+  async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
     const systemPrompt = config?.systemInstruction ? `${config.systemInstruction}\n\n` : "";
     const fullPrompt = `${systemPrompt}${prompt}`;
 

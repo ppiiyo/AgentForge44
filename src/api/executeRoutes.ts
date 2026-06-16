@@ -6,29 +6,13 @@ import { MetricsCollector } from './metricsAndVersions.js';
 import { triggerWebhook } from '../webhooks/index.js';
 import { recordDebugSession } from '../utils/debugSessions.js';
 import { logger } from '../utils/logger.js';
+import { slidingWindowRateLimiter } from '../middleware/rateLimit.js';
+import { checkSlidingWindow } from '../services/usage-tracker.js';
 
 const router = Router();
 
-// In-Memory Rate Limiting implementation to keep execution independent of thick external dependencies
-const rateLimits: Record<string, { count: number; resetAt: number }> = {};
-const LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 requests per IP/token per minute
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const limitState = rateLimits[key];
-  
-  if (!limitState || now > limitState.resetAt) {
-    rateLimits[key] = {
-      count: 1,
-      resetAt: now + LIMIT_WINDOW_MS
-    };
-    return false;
-  }
-  
-  limitState.count++;
-  return limitState.count > MAX_REQUESTS_PER_WINDOW;
-}
+// Apply sliding window rate limiting middleware to all execution routes
+router.use(slidingWindowRateLimiter);
 
 // Master API Key resolver
 const ALLOWED_API_KEYS = new Set(
@@ -171,7 +155,8 @@ router.get('/stream-pipeline', async (req: Request, res: Response) => {
     // Step-by-Step execution notifier tracking
     writeSSEEvent("status", { message: "Synthesizing execution path graph..." });
 
-    const engine = new StatefulExecutionEngine(nodes, connections);
+    const userId = (req as any).user?.id || 'anonymous';
+    const engine = new StatefulExecutionEngine(nodes, connections, userId);
     
     // Track intermediate progression and stream chunks back directly to listener
     const runResult = await engine.runWorkflow(variables || {});
@@ -181,7 +166,11 @@ router.get('/stream-pipeline', async (req: Request, res: Response) => {
     res.end();
 
   } catch (err: any) {
-    writeSSEEvent("error", { message: err.message || "SSE system execution error." });
+    if (err.status === 429 || err.message?.includes("Budget Exceeded")) {
+      writeSSEEvent("error", { message: "429 Budget Exceeded" });
+    } else {
+      writeSSEEvent("error", { message: err.message || "SSE system execution error." });
+    }
     res.end();
   }
 });
@@ -201,8 +190,10 @@ router.post('/runs', async (req: Request, res: Response) => {
     return;
   }
 
-  // 2. Validate Rate Limits
-  if (isRateLimited(token || clientIP)) {
+  // 2. Validate Rate Limits with Sliding Window
+  const rateLimitKey = token ? `apikey-${token}` : `ip-${clientIP}`;
+  const isAllowed = checkSlidingWindow(rateLimitKey, 30, 60 * 1000);
+  if (!isAllowed) {
     res.status(429).json({
       success: false,
       error: "Too Many Requests: Rate limiting triggered. Limit is 30 requests/minute."
@@ -220,7 +211,8 @@ router.post('/runs', async (req: Request, res: Response) => {
       return;
     }
 
-    const engine = new StatefulExecutionEngine(nodes, connections);
+    const userId = (req as any).user?.id || 'anonymous';
+    const engine = new StatefulExecutionEngine(nodes, connections, userId);
     const trackingResult = await engine.runWorkflow(inputs || {});
 
     res.json({
@@ -231,10 +223,17 @@ router.post('/runs', async (req: Request, res: Response) => {
     });
 
   } catch (err: any) {
-    res.status(500).json({
-      success: true,
-      error: err.message || "Headless Run Interruption"
-    });
+    if (err.status === 429 || err.message?.includes("Budget Exceeded")) {
+      res.status(429).json({
+        success: false,
+        error: "429 Budget Exceeded"
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: err.message || "Headless Run Interruption"
+      });
+    }
   }
 });
 

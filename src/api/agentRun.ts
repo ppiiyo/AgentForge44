@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from "../types.js";
+import { routeNode } from "../nodes/RouterNode.js";
 
 function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | null {
   const conn = connections.find(c => c.sourceId === nodeId);
@@ -678,41 +679,16 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
           ? nodeOutputs[completedNode.id]
           : JSON.stringify(nodeOutputs[completedNode.id] || "");
 
-        const conditions = completedNode.fields.conditions || [];
-        const defaultTargetId = completedNode.fields.defaultTargetNodeId || "";
-        let selectedTargetId: string | null = null;
-
-        for (const cond of conditions) {
-          if (cond.type === 'contains') {
-            if (inputPayload.toLowerCase().includes(cond.value.toLowerCase())) {
-              selectedTargetId = cond.targetNodeId;
-              break;
-            }
-          } else if (cond.type === 'regex') {
-            try {
-              const pattern = cond.value || "";
-              const isSafe = !(/(\([^\)]*[\+\*][^\)]*\))[\+\*]/.test(pattern)) && !(/(\([^\)]*\{\d+,?\d*\}\))\{\d+,?\d*\}/.test(pattern));
-              if (isSafe) {
-                const regex = new RegExp(pattern, 'i');
-                if (regex.test(inputPayload)) {
-                  selectedTargetId = cond.targetNodeId;
-                  break;
-                }
-              }
-            } catch {}
-          } else if (cond.type === 'json_key') {
-            try {
-              const parsedJson = JSON.parse(inputPayload);
-              const valOfKey = getValueByDotPath(parsedJson, cond.value);
-              if (valOfKey !== undefined && valOfKey !== null && valOfKey !== false) {
-                selectedTargetId = cond.targetNodeId;
-                break;
-              }
-            } catch {}
-          }
+        let finalNextNodeId = "";
+        let matched = false;
+        try {
+          finalNextNodeId = await routeNode(completedNode, inputPayload);
+          matched = finalNextNodeId !== (completedNode.fields.defaultTargetNodeId || "");
+        } catch (err: any) {
+          console.error("[Agent Run] Router node error:", err.message);
+          finalNextNodeId = completedNode.fields.defaultTargetNodeId || "";
         }
 
-        const finalNextNodeId = selectedTargetId || defaultTargetId;
         if (finalNextNodeId) {
           activatedNodes.add(finalNextNodeId);
         }
@@ -722,7 +698,7 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
           nodeTitle: completedNode.title,
           status: 'completed',
           input: inputPayload,
-          output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${selectedTargetId ? 'Matched Condition' : 'Default Target'}`,
+          output: `Routed to node: ${finalNextNodeId || 'None'} based on condition match: ${matched ? 'Matched Condition' : 'Default Target'}`,
           duration: 0
         });
 
