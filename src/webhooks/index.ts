@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
+import { validateUrl } from '../utils/ssrf-validator.js';
 
 export interface Webhook {
   id: string;
@@ -33,6 +34,7 @@ export async function triggerWebhook(event: string, payload: any) {
       }
 
       logger.info(`Posting webhook to: ${webhook.url}`);
+      await validateUrl(webhook.url);
       const response = await axios.post(
         webhook.url,
         {

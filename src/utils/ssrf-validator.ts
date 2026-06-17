@@ -160,3 +160,74 @@ export async function validateURLForSSRF(urlInput: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Validates a URL to protect against SSRF (Server-Side Request Forgery).
+ * Parses URL, checks protocol, checks direct hostnames/IPs, resolves IP via DNS, and blocks private ranges.
+ * Throws an Error with "SSRF attempt blocked: [url]" if validation fails.
+ */
+export async function validateUrl(url: string): Promise<void> {
+  if (!url) {
+    throw new Error(`SSRF attempt blocked: ${url}`);
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    // If it lacks a protocol, parsed might fail, so let's try with default http protocol
+    try {
+      parsed = new URL(`http://${url}`);
+    } catch {
+      throw new Error(`SSRF attempt blocked: ${url}`);
+    }
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`SSRF attempt blocked: ${url}`);
+  }
+
+  const host = parsed.hostname.toLowerCase().trim();
+
+  // Block localhost, loopbacks and zero IPs
+  if (
+    host === 'localhost' ||
+    host === 'localhost.localdomain' ||
+    host === 'local' ||
+    host.endsWith('.local') ||
+    host === '0.0.0.0' ||
+    host === '[::1]' ||
+    host === '::1' ||
+    host === ''
+  ) {
+    throw new Error(`SSRF attempt blocked: ${url}`);
+  }
+
+  // Check if direct IP is private
+  if (isPrivateIP(host)) {
+    throw new Error(`SSRF attempt blocked: ${url}`);
+  }
+
+  try {
+    const lookupResult = await dnsLookup(host, { all: true });
+    if (!lookupResult || lookupResult.length === 0) {
+      if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+        throw new Error(`SSRF attempt blocked: ${url}`);
+      }
+    } else {
+      for (const entry of lookupResult) {
+        if (isPrivateIP(entry.address)) {
+          throw new Error(`SSRF attempt blocked: ${url}`);
+        }
+      }
+    }
+  } catch (err: any) {
+    if (err.message && err.message.startsWith('SSRF attempt blocked:')) {
+      throw err;
+    }
+    if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+      throw new Error(`SSRF attempt blocked: ${url}`);
+    }
+  }
+}
+

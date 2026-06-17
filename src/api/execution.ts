@@ -3,7 +3,7 @@ import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
 import { searchIndexedLibrary } from './advancedPhase4.js';
 import { routeNode } from '../nodes/RouterNode.js';
-import { validateURLForSSRF } from '../utils/ssrf-validator.js';
+import { validateURLForSSRF, validateUrl } from '../utils/ssrf-validator.js';
 import { safeJsonParse } from '../utils/safe-json.js';
 
 function getValueByDotPath(obj: any, pathStr: string): any {
@@ -378,14 +378,14 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             let responseText = "";
             let responseStatus = 250;
             try {
-              const isSafe = await validateURLForSSRF(url);
-              if (!isSafe) {
-                throw new Error("SSRF Prevention: Request to private/reserved network is blocked");
-              }
+              await validateUrl(url);
               const fetchRes = await fetch(url, fetchOptions);
               responseStatus = fetchRes.status;
               responseText = await fetchRes.text();
             } catch (err: any) {
+              if (err.message && err.message.startsWith("SSRF attempt blocked:")) {
+                throw err;
+              }
               throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
             }
 

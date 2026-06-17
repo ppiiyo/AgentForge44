@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isPrivateIP, validateURLForSSRF } from '../utils/ssrf-validator.js';
+import { isPrivateIP, validateURLForSSRF, validateUrl } from '../utils/ssrf-validator.js';
 import { safeJsonParse, hasProtoPollution, safeDeepMerge } from '../utils/safe-json.js';
 import { validateRegex, testRegexWithTimeout, deepSanitizeAndFreeze } from '../utils/safe-regex.js';
 
@@ -50,6 +50,23 @@ describe('=== Phase 1: Security Hardening Suite ===', () => {
       // If we are offline or DNS fails, this might be false, which is safe either way.
       // But we can check that it doesn't crash.
       expect(typeof dnsAllowed).toBe('boolean');
+    });
+
+    it('should validate and enforce SSRF protections with validateUrl throwing descriptive errors', async () => {
+      // 1. Redis localhost
+      await expect(validateUrl('http://127.0.0.1:6379')).rejects.toThrow('SSRF attempt blocked: http://127.0.0.1:6379');
+
+      // 2. AWS metadata
+      await expect(validateUrl('http://169.254.169.254/latest/meta-data/')).rejects.toThrow('SSRF attempt blocked: http://169.254.169.254/latest/meta-data/');
+
+      // 3. Localhost representation
+      await expect(validateUrl('http://localhost')).rejects.toThrow('SSRF attempt blocked: http://localhost');
+
+      // 4. Private network IP
+      await expect(validateUrl('http://192.168.1.1')).rejects.toThrow('SSRF attempt blocked: http://192.168.1.1');
+
+      // 5. Public API URL should be allowed (not throw)
+      await expect(validateUrl('https://api.openai.com')).resolves.not.toThrow();
     });
   });
 
