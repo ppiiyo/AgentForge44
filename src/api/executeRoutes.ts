@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { executePipeline } from './agentRun.js';
+import { validateBody, PipelineExecuteSchema } from '../utils/validation.js';
 import { StatefulExecutionEngine } from './execution.js';
 import { runEvaluationSuite } from './advancedPhase4.js';
 import { MetricsCollector } from './metricsAndVersions.js';
@@ -19,12 +20,8 @@ const ALLOWED_API_KEYS = new Set(
   process.env.AGENTFORGE_API_KEY ? [process.env.AGENTFORGE_API_KEY] : []
 );
 
-router.post('/execute', async (req: Request, res: Response) => {
+router.post('/execute', validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const { nodes, connections } = req.body;
-  if (!nodes || !connections) {
-    res.status(400).json({ error: "Missing nodes or connections context." });
-    return;
-  }
   try {
     const result = await executePipeline(nodes, connections);
     res.json(result);
@@ -33,7 +30,7 @@ router.post('/execute', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/run-pipeline', async (req: Request, res: Response) => {
+router.post('/run-pipeline', validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const startTime = Date.now();
   const { nodes, connections, graphId, graphName } = req.body;
   
@@ -41,10 +38,6 @@ router.post('/run-pipeline', async (req: Request, res: Response) => {
   const gName = graphName || 'Workspace Canvas';
 
   try {
-    if (!nodes || !connections) {
-      res.status(400).json({ error: "Missing nodes or connections context." });
-      return;
-    }
 
     // Trigger starting webhook
     await triggerWebhook('graph.started', {
@@ -175,7 +168,7 @@ router.get('/stream-pipeline', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/runs', async (req: Request, res: Response) => {
+router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const clientIP = req.ip || "unknown-client";
   const authHeader = req.headers.authorization;
   const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : "";

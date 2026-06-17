@@ -4,11 +4,12 @@ import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { VersionManager } from './metricsAndVersions.js';
 import { activeRooms, getPresenceHistory } from './collaboration.js';
+import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
 
-router.post('/graphs', async (req: Request, res: Response) => {
+router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
     const { id, name, nodes, connections } = req.body;
     const projName = id || name || "untitled_graph";
@@ -50,7 +51,7 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/graphs/:id', async (req: Request, res: Response) => {
+router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, nodes, connections } = req.body;

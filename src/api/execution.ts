@@ -156,6 +156,8 @@ export class StatefulExecutionEngine {
       return visited;
     };
 
+    let totalStepsExecuted = 0;
+
     let safetyCeiling = 500; // global safety ticker limits
     while (activatedNodes.size > 0 && safetyCeiling-- > 0) {
       // 1. Find all active nodes that are ready to run (all non-backedge predecessors completed)
@@ -183,6 +185,12 @@ export class StatefulExecutionEngine {
 
       // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
       const promises = eligibleNodes.map(async (node) => {
+        // Track global steps completed
+        totalStepsExecuted++;
+        if (totalStepsExecuted > 50) {
+          throw new Error("Max execution steps reached");
+        }
+
         // Fast path track execution frequency
         executedCount[node.id] = (executedCount[node.id] || 0) + 1;
         if (executedCount[node.id] > 15) {

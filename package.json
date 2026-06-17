@@ -58,6 +58,7 @@
     "vm2": "^3.11.5",
     "winston": "^3.19.0",
     "workbox-window": "^7.4.1",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
