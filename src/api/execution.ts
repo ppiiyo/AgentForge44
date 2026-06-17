@@ -7,6 +7,9 @@ import { searchIndexedLibrary } from './advancedPhase4.js';
 import { routeNode } from '../nodes/RouterNode.js';
 import { validateURLForSSRF, validateUrl } from '../utils/ssrf-validator.js';
 import { safeJsonParse } from '../utils/safe-json.js';
+import { generateExecutionId } from '../utils/uuid.js';
+import { logger, executionAsyncStore } from '../utils/logger.js';
+import { MetricsCollector } from './metricsAndVersions.js';
 
 function getValueByDotPath(obj: any, pathStr: string): any {
   if (!obj || !pathStr) return undefined;
@@ -28,6 +31,7 @@ export interface WorkflowContext {
   stepLogs: StepLog[];
   currentNodeId: string | null;
   iterationsCount: Record<string, number>;
+  executionId?: string;
 }
 
 export class StatefulExecutionEngine {
@@ -102,7 +106,7 @@ export class StatefulExecutionEngine {
   /**
    * Run the stateful graph execution lifecycle with total observability
    */
-  async runWorkflow(initialVariables: Record<string, string> = {}): Promise<PipelineExecutionResult> {
+  async _runWorkflowInternal(initialVariables: Record<string, string> = {}, graphId: string = 'canvas-workspace', graphName: string = 'Workspace Canvas', executionId?: string): Promise<PipelineExecutionResult> {
     const startTime = Date.now();
     
     // Locate starting steps (inputs node)
@@ -571,5 +575,52 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
       finalResult: finalResultText,
       totalDuration: Date.now() - startTime
     };
+  }
+
+  async runWorkflow(
+    initialVariables: Record<string, string> = {},
+    graphId: string = 'canvas-workspace',
+    graphName: string = 'Workspace Canvas'
+  ): Promise<PipelineExecutionResult> {
+    const startTime = Date.now();
+    const executionId = generateExecutionId();
+
+    return executionAsyncStore.run(executionId, async () => {
+      logger.info({ execution_id: executionId, message: `Workflow execution started for graph: ${graphId}` });
+      try {
+        const result = await this._runWorkflowInternal(initialVariables, graphId, graphName, executionId);
+        
+        MetricsCollector.logExecution(
+          graphId,
+          graphName,
+          'success',
+          startTime,
+          result.logs || [],
+          undefined,
+          executionId
+        );
+
+        logger.info({ execution_id: executionId, message: "Workflow execution completed successfully." });
+        
+        return {
+          ...result,
+          executionId
+        };
+      } catch (err: any) {
+        logger.error({ execution_id: executionId, message: `Workflow execution failed: ${err.message || String(err)}` });
+
+        MetricsCollector.logExecution(
+          graphId,
+          graphName,
+          'failed',
+          startTime,
+          [],
+          err.message || String(err),
+          executionId
+        );
+
+        throw err;
+      }
+    });
   }
 }

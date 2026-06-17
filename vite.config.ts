@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { executePipeline } from './src/api/agentRun';
 
 export default defineConfig(() => {
   return {
@@ -78,6 +77,7 @@ export default defineConfig(() => {
               req.on('end', async () => {
                 try {
                   const { nodes, connections } = JSON.parse(body);
+                  const { executePipeline } = await import('./src/api/agentRun.js');
                   const result = await executePipeline(nodes, connections);
                   res.writeHead(200, { 'Content-Type': 'application/json' });
                   res.end(JSON.stringify(result));

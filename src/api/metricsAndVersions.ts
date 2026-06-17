@@ -115,9 +115,10 @@ export class MetricsCollector {
     status: 'success' | 'failed',
     startTime: number,
     stepLogs: StepLog[],
-    errorMessage?: string
+    errorMessage?: string,
+    executionId?: string
   ): MetricsExecutionLog {
-    const executionId = `exec_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const finalExecutionId = executionId || `exec_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const finishedTime = Date.now();
     
     let totalTokens = 0;
@@ -138,7 +139,7 @@ export class MetricsCollector {
 
       return {
         id: `node_exec_${Math.random().toString(36).substr(2, 9)}`,
-        executionId,
+        executionId: finalExecutionId,
         nodeId: log.nodeId,
         nodeType: log.nodeId.split('-')[0] || 'unknown',
         tokensUsed: tokens,
@@ -150,7 +151,7 @@ export class MetricsCollector {
     });
 
     const newLog: MetricsExecutionLog = {
-      id: executionId,
+      id: finalExecutionId,
       graphId,
       graphName,
       startedAt: new Date(startTime).toISOString(),

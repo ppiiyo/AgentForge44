@@ -1,4 +1,7 @@
 import winston from 'winston';
+import { AsyncLocalStorage } from 'async_hooks';
+
+export const executionAsyncStore = new AsyncLocalStorage<string>();
 
 /**
  * Recursively scans and masks keys resembling api_key, password, secret, token, credentials
@@ -41,10 +44,19 @@ const maskFormat = winston.format((info) => {
   return maskSecrets(info);
 });
 
+const executionIdFormat = winston.format((info) => {
+  const executionId = executionAsyncStore.getStore();
+  if (executionId) {
+    info.execution_id = executionId;
+  }
+  return info;
+});
+
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
+    executionIdFormat(),
     maskFormat(),
     winston.format.json()
   ),
@@ -58,3 +70,4 @@ export const logger = winston.createLogger({
     })
   ]
 });
+
