@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from "../types.js";
 import { routeNode } from "../nodes/RouterNode.js";
+import { validateURLForSSRF } from "../utils/ssrf-validator.js";
+import { safeJsonParse } from "../utils/safe-json.js";
 
 function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | null {
   const conn = connections.find(c => c.sourceId === nodeId);
@@ -502,7 +504,7 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
           let headers: Record<string, string> = { "Content-Type": "application/json" };
           try {
             if (headersStr.trim().startsWith("{")) {
-              headers = { ...headers, ...JSON.parse(headersStr) };
+              headers = { ...headers, ...safeJsonParse(headersStr) };
             }
           } catch {}
 
@@ -514,6 +516,10 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
           let responseText = "";
           let responseStatus = 250;
           try {
+            const isSafe = await validateURLForSSRF(url);
+            if (!isSafe) {
+              throw new Error("SSRF Prevention: Request to private/reserved network is blocked");
+            }
             const fetchRes = await fetch(url, fetchOptions);
             responseStatus = fetchRes.status;
             responseText = await fetchRes.text();

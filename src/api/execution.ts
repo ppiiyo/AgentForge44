@@ -3,6 +3,8 @@ import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
 import { searchIndexedLibrary } from './advancedPhase4.js';
 import { routeNode } from '../nodes/RouterNode.js';
+import { validateURLForSSRF } from '../utils/ssrf-validator.js';
+import { safeJsonParse } from '../utils/safe-json.js';
 
 function getValueByDotPath(obj: any, pathStr: string): any {
   if (!obj || !pathStr) return undefined;
@@ -356,7 +358,7 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             let headers: Record<string, string> = { "Content-Type": "application/json" };
             try {
               if (headersStr.trim().startsWith("{")) {
-                headers = { ...headers, ...JSON.parse(headersStr) };
+                headers = { ...headers, ...safeJsonParse(headersStr) };
               }
             } catch {}
 
@@ -368,6 +370,10 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             let responseText = "";
             let responseStatus = 250;
             try {
+              const isSafe = await validateURLForSSRF(url);
+              if (!isSafe) {
+                throw new Error("SSRF Prevention: Request to private/reserved network is blocked");
+              }
               const fetchRes = await fetch(url, fetchOptions);
               responseStatus = fetchRes.status;
               responseText = await fetchRes.text();
