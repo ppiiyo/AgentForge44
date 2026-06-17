@@ -17,10 +17,10 @@ router.post('/deploy', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/deploy/list', (req: Request, res: Response) => {
+router.get('/deploy/list', async (req: Request, res: Response) => {
   try {
     const graphId = req.query.graphId as string;
-    const deployments = DeploymentManager.getDeployments(graphId);
+    const deployments = await DeploymentManager.getDeployments(graphId);
     res.json(deployments);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -30,7 +30,7 @@ router.get('/deploy/list', (req: Request, res: Response) => {
 router.get('/deploy/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const dep = DeploymentManager.getDeploymentById(id);
+    const dep = await DeploymentManager.getDeploymentById(id);
     if (!dep) {
       res.status(404).json({ error: "Deployment not found" });
       return;

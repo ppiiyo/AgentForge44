@@ -91,7 +91,7 @@ router.delete('/graphs/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/graphs/:id/versions', (req: Request, res: Response) => {
+router.post('/graphs/:id/versions', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { message, author, snapshot } = req.body;
@@ -99,34 +99,37 @@ router.post('/graphs/:id/versions', (req: Request, res: Response) => {
       res.status(400).json({ error: "Missing required workflow snapshot state to commit." });
       return;
     }
-    const newVer = VersionManager.commit(id, message, author, snapshot);
+    const result = VersionManager.commit(id, message, author, snapshot);
+    const newVer = result instanceof Promise ? await result : result;
     res.json(newVer);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/graphs/:id/versions', (req: Request, res: Response) => {
+router.get('/graphs/:id/versions', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const versions = VersionManager.getVersions(id);
+    const result = VersionManager.getVersions(id);
+    const versions = result instanceof Promise ? await result : result;
     res.json(versions);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/graphs/:id/rollback/:versionId', (req: Request, res: Response) => {
+router.post('/graphs/:id/rollback/:versionId', async (req: Request, res: Response) => {
   try {
     const { id, versionId } = req.params;
-    const restored = VersionManager.rollback(id, versionId);
+    const result = VersionManager.rollback(id, versionId);
+    const restored = result instanceof Promise ? await result : result;
     res.json({ success: true, restored });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/graphs/:id/diff', (req: Request, res: Response) => {
+router.get('/graphs/:id/diff', async (req: Request, res: Response) => {
   try {
     const v1 = req.query.v1 as string;
     const v2 = req.query.v2 as string;
@@ -134,7 +137,8 @@ router.get('/graphs/:id/diff', (req: Request, res: Response) => {
       res.status(400).json({ error: "Query parameters v1 and v2 are required for diff operation." });
       return;
     }
-    const difference = VersionManager.computeDiff(v1, v2);
+    const result = VersionManager.computeDiff(v1, v2);
+    const difference = result instanceof Promise ? await result : result;
     res.json(difference);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

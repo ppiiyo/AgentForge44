@@ -82,7 +82,7 @@ export function userRateLimiter(req: express.Request, res: express.Response, nex
 /**
  * Auth Router Endpoints
  */
-router.post('/auth/register', (req: express.Request, res: express.Response) => {
+router.post('/auth/register', async (req: express.Request, res: express.Response) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password) {
@@ -91,7 +91,7 @@ router.post('/auth/register', (req: express.Request, res: express.Response) => {
     }
 
     const assignedRole = role && ['admin', 'editor', 'viewer', 'api_user'].includes(role) ? role : 'viewer';
-    const user = UserManager.register(email, password, assignedRole);
+    const user = await UserManager.register(email, password, assignedRole);
     const token = signToken(user);
 
     logger.info(`User registered successfully: ${email}`);
@@ -101,7 +101,7 @@ router.post('/auth/register', (req: express.Request, res: express.Response) => {
   }
 });
 
-router.post('/auth/login', (req: express.Request, res: express.Response) => {
+router.post('/auth/login', async (req: express.Request, res: express.Response) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -109,7 +109,7 @@ router.post('/auth/login', (req: express.Request, res: express.Response) => {
       return;
     }
 
-    const user = UserManager.login(email, password);
+    const user = await UserManager.login(email, password);
     const token = signToken(user);
 
     logger.info(`User logged in: ${email}`);

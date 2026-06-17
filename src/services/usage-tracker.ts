@@ -1,4 +1,5 @@
-import { sqlite } from '../db/index.js';
+import { db, tables } from '../db/index.js';
+import { eq, sql } from 'drizzle-orm';
 
 // --- SLIDING WINDOW MEMORY DECK ---
 const WINDOW_MS = 60 * 1000; // 1 minute
@@ -31,32 +32,28 @@ export function checkSlidingWindow(key: string, limit: number = MAX_REQUESTS, du
   return true;
 }
 
-// --- SQLITE USER BUDGETS & TOKENS ENGINE ---
-export function ensureBudgetSchema() {
-  try {
-    sqlite.prepare("ALTER TABLE users ADD COLUMN budget INTEGER NOT NULL DEFAULT 1000000").run();
-  } catch (err) {}
-  try {
-    sqlite.prepare("ALTER TABLE users ADD COLUMN used_tokens INTEGER NOT NULL DEFAULT 0").run();
-  } catch (err) {}
-}
-
+// --- SECURE DYNAMIC USER BUDGETS & TOKENS ENGINE ---
 export interface UserBudgetInfo {
   budget: number;
   usedTokens: number;
 }
 
 /**
- * Fetches user budget information from sqlite securely
+ * Fetches user budget information from the active database adapter
  */
-export function getUserBudget(userId: string): UserBudgetInfo {
-  ensureBudgetSchema();
+export async function getUserBudget(userId: string): Promise<UserBudgetInfo> {
   try {
-    const row = sqlite.prepare("SELECT budget, used_tokens FROM users WHERE id = ?").get(userId) as any;
-    if (row) {
+    const rows = await db.select({
+      budget: tables.users.budget,
+      usedTokens: tables.users.usedTokens
+    })
+    .from(tables.users)
+    .where(eq(tables.users.id, userId));
+    
+    if (rows && rows.length > 0) {
       return {
-        budget: row.budget,
-        usedTokens: row.used_tokens
+        budget: rows[0].budget ?? 1000000,
+        usedTokens: rows[0].usedTokens ?? 0
       };
     }
   } catch (err) {
@@ -69,18 +66,21 @@ export function getUserBudget(userId: string): UserBudgetInfo {
 /**
  * Checks if user has enough remaining budget tokens
  */
-export function checkUserBudget(userId: string, estimatedTokensRequired: number): boolean {
-  const { budget, usedTokens } = getUserBudget(userId);
+export async function checkUserBudget(userId: string, estimatedTokensRequired: number): Promise<boolean> {
+  const { budget, usedTokens } = await getUserBudget(userId);
   return (usedTokens + estimatedTokensRequired) <= budget;
 }
 
 /**
  * Deducts and increments used tokens of a user
  */
-export function recordUserUsage(userId: string, actualTokensUsed: number): void {
-  ensureBudgetSchema();
+export async function recordUserUsage(userId: string, actualTokensUsed: number): Promise<void> {
   try {
-    sqlite.prepare("UPDATE users SET used_tokens = used_tokens + ? WHERE id = ?").run(actualTokensUsed, userId);
+    await db.update(tables.users)
+      .set({
+        usedTokens: sql`${tables.users.usedTokens} + ${actualTokensUsed}`
+      })
+      .where(eq(tables.users.id, userId));
   } catch (err) {
     console.error(`[Usage Tracker] Failed to increment token usage for user ${userId}:`, err);
   }

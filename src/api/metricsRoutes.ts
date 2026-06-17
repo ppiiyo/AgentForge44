@@ -3,37 +3,40 @@ import { MetricsCollector } from './metricsAndVersions.js';
 
 const router = Router();
 
-router.get('/metrics/summary', (req: Request, res: Response) => {
+router.get('/metrics/summary', async (req: Request, res: Response) => {
   try {
     const periodQuery = req.query.period as string;
     let periodDays = 7;
     if (periodQuery === '24h') periodDays = 1;
     else if (periodQuery === '30d') periodDays = 30;
     
-    const summary = MetricsCollector.getSummary(periodDays);
+    const result = MetricsCollector.getSummary(periodDays);
+    const summary = result instanceof Promise ? await result : result;
     res.json(summary);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/metrics/executions', (req: Request, res: Response) => {
+router.get('/metrics/executions', async (req: Request, res: Response) => {
   try {
     const graphId = req.query.graph_id as string;
     if (!graphId) {
       res.status(400).json({ error: "Missing graph_id query parameter." });
       return;
     }
-    const list = MetricsCollector.getExecutionsByGraph(graphId);
+    const result = MetricsCollector.getExecutionsByGraph(graphId);
+    const list = result instanceof Promise ? await result : result;
     res.json(list);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get('/metrics/cost-breakdown', (req: Request, res: Response) => {
+router.get('/metrics/cost-breakdown', async (req: Request, res: Response) => {
   try {
-    const breakdown = MetricsCollector.getCostBreakdown();
+    const result = MetricsCollector.getCostBreakdown();
+    const breakdown = result instanceof Promise ? await result : result;
     res.json(breakdown);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

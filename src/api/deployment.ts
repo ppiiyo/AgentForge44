@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { db } from '../db/index.js';
-import { deployments } from '../db/schema.js';
+import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
@@ -37,10 +36,10 @@ export interface CloudProvider {
   getLogs(deploymentId: string): Promise<string[]>;
 }
 
-function readDeployments(): Deployment[] {
+async function readDeployments(): Promise<Deployment[]> {
   try {
-    const rows = db.select().from(deployments).all();
-    return rows.map(r => ({
+    const rows = await db.select().from(tables.deployments);
+    return rows.map((r: any) => ({
       id: r.id,
       graphId: r.graphId,
       graphName: r.graphName,
@@ -57,23 +56,23 @@ function readDeployments(): Deployment[] {
   }
 }
 
-function writeDeployments(all: Deployment[]): void {
+async function writeDeployments(all: Deployment[]): Promise<void> {
   try {
     const activeIds = new Set(all.map(d => d.id));
-    const currentDbItems = db.select().from(deployments).all();
+    const currentDbItems = await db.select().from(tables.deployments);
     
     // Remove deleted ones
     for (const item of currentDbItems) {
       if (!activeIds.has(item.id)) {
-        db.delete(deployments).where(eq(deployments.id, item.id)).run();
+        await db.delete(tables.deployments).where(eq(tables.deployments.id, item.id));
       }
     }
 
     // Insert or update remaining
     for (const d of all) {
-      const existing = db.select().from(deployments).where(eq(deployments.id, d.id)).all();
+      const existing = await db.select().from(tables.deployments).where(eq(tables.deployments.id, d.id));
       if (existing.length > 0) {
-        db.update(deployments)
+        await db.update(tables.deployments)
           .set({
             graphId: d.graphId,
             graphName: d.graphName,
@@ -84,10 +83,9 @@ function writeDeployments(all: Deployment[]): void {
             config: JSON.stringify(d.config || {}),
             createdAt: d.createdAt
           })
-          .where(eq(deployments.id, d.id))
-          .run();
+          .where(eq(tables.deployments.id, d.id));
       } else {
-        db.insert(deployments).values({
+        await db.insert(tables.deployments).values({
           id: d.id,
           graphId: d.graphId,
           graphName: d.graphName,
@@ -97,7 +95,7 @@ function writeDeployments(all: Deployment[]): void {
           logs: JSON.stringify(d.logs || []),
           config: JSON.stringify(d.config || {}),
           createdAt: d.createdAt
-        }).run();
+        });
       }
     }
   } catch (err) {
@@ -218,7 +216,7 @@ class BaseProvider implements CloudProvider {
   constructor(public providerName: 'vercel' | 'railway' | 'fly') {}
 
   async deploy(graphId: string, graphName: string, config: DeploymentConfig): Promise<Deployment> {
-    const all = readDeployments();
+    const all = await readDeployments();
     const id = `dep-${Date.now()}`;
     
     // Generate actual config files under the workspace!
@@ -256,7 +254,7 @@ class BaseProvider implements CloudProvider {
     };
 
     all.push(newDep);
-    writeDeployments(all);
+    await writeDeployments(all);
 
     // Simulate async logs setup background timer!
     this.startSimulatedProvisioning(id);
@@ -266,55 +264,60 @@ class BaseProvider implements CloudProvider {
 
   private startSimulatedProvisioning(depId: string) {
     let tick = 0;
-    const interval = setInterval(() => {
-      const all = readDeployments();
-      const depIdx = all.findIndex(d => d.id === depId);
-      if (depIdx === -1) {
-        clearInterval(interval);
-        return;
-      }
-
-      const dep = all[depIdx];
-      if (dep.status !== 'provisioning') {
-        clearInterval(interval);
-        return;
-      }
-
-      tick++;
-      if (tick === 1) {
-        dep.logs.push(`[cloud-agent] Remote orchestration server accepted zip manifest. Handing over to ingress coordinator...`);
-      } else if (tick === 2) {
-        dep.logs.push(`[cloud-agent] [Docker] Parsing environment file context... setting port mappings to 3000.`);
-        if (dep.config.apiKeyAuth) {
-          dep.logs.push(`[cloud-agent] [Docker] Set secure variable AGENTFORGE_API_KEY=[ENCRYPTED SHIELDED_STRIKE]`);
+    const interval = setInterval(async () => {
+      try {
+        const all = await readDeployments();
+        const depIdx = all.findIndex(d => d.id === depId);
+        if (depIdx === -1) {
+          clearInterval(interval);
+          return;
         }
-      } else if (tick === 3) {
-        dep.logs.push(`[cloud-agent] [Docker] Initializing microVM container host machine instance...`);
-        dep.logs.push(`[cloud-agent] Spinning up network routers, preparing reverse proxy channels...`);
-      } else if (tick === 4) {
-        dep.logs.push(`[cloud-agent] Running standalone server tests & healthchecks... HTTP status 200 OK`);
-        dep.logs.push(`[system] Deploy pipeline SUCCESS. Standalone runtime instance online.`);
-        dep.logs.push(`[system] Target deployed microservice endpoint: ${dep.url}/api/run`);
-        dep.status = 'active';
-      }
 
-      all[depIdx] = { ...dep };
-      writeDeployments(all);
+        const dep = all[depIdx];
+        if (dep.status !== 'provisioning') {
+          clearInterval(interval);
+          return;
+        }
 
-      if (dep.status === 'active' || tick >= 4) {
+        tick++;
+        if (tick === 1) {
+          dep.logs.push(`[cloud-agent] Remote orchestration server accepted zip manifest. Handing over to ingress coordinator...`);
+        } else if (tick === 2) {
+          dep.logs.push(`[cloud-agent] [Docker] Parsing environment file context... setting port mappings to 3000.`);
+          if (dep.config.apiKeyAuth) {
+            dep.logs.push(`[cloud-agent] [Docker] Set secure variable AGENTFORGE_API_KEY=[ENCRYPTED SHIELDED_STRIKE]`);
+          }
+        } else if (tick === 3) {
+          dep.logs.push(`[cloud-agent] [Docker] Initializing microVM container host machine instance...`);
+          dep.logs.push(`[cloud-agent] Spinning up network routers, preparing reverse proxy channels...`);
+        } else if (tick === 4) {
+          dep.logs.push(`[cloud-agent] Running standalone server tests & healthchecks... HTTP status 200 OK`);
+          dep.logs.push(`[system] Deploy pipeline SUCCESS. Standalone runtime instance online.`);
+          dep.logs.push(`[system] Target deployed microservice endpoint: ${dep.url}/api/run`);
+          dep.status = 'active';
+        }
+
+        all[depIdx] = { ...dep };
+        await writeDeployments(all);
+
+        if (dep.status === 'active' || tick >= 4) {
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Error in simulated provisioning timer:", err);
         clearInterval(interval);
       }
     }, 4500);
   }
 
   async getStatus(deploymentId: string): Promise<'provisioning' | 'active' | 'failed' | 'undeployed'> {
-    const all = readDeployments();
+    const all = await readDeployments();
     const found = all.find(d => d.id === deploymentId);
     return found ? found.status : 'failed';
   }
 
   async undeploy(deploymentId: string): Promise<boolean> {
-    const all = readDeployments();
+    const all = await readDeployments();
     const idx = all.findIndex(d => d.id === deploymentId);
     if (idx !== -1) {
       all[idx].status = 'undeployed';
@@ -322,14 +325,14 @@ class BaseProvider implements CloudProvider {
       all[idx].logs.push(`[cloud-agent] Stopping container machines... offlined.`);
       all[idx].logs.push(`[cloud-agent] Removing route rules from edge servers.`);
       all[idx].logs.push(`[system] Undeployed successfully.`);
-      writeDeployments(all);
+      await writeDeployments(all);
       return true;
     }
     return false;
   }
 
   async getLogs(deploymentId: string): Promise<string[]> {
-    const all = readDeployments();
+    const all = await readDeployments();
     const found = all.find(d => d.id === deploymentId);
     return found ? found.logs : [];
   }
@@ -340,16 +343,16 @@ export const RailwayProvider = new BaseProvider('railway');
 export const FlyProvider = new BaseProvider('fly');
 
 export const DeploymentManager = {
-  getDeployments(graphId?: string): Deployment[] {
-    const all = readDeployments();
+  async getDeployments(graphId?: string): Promise<Deployment[]> {
+    const all = await readDeployments();
     if (graphId) {
       return all.filter(d => d.graphId === graphId);
     }
     return all;
   },
 
-  getDeploymentById(id: string): Deployment | null {
-    const all = readDeployments();
+  async getDeploymentById(id: string): Promise<Deployment | null> {
+    const all = await readDeployments();
     return all.find(d => d.id === id) || null;
   },
 
@@ -363,7 +366,7 @@ export const DeploymentManager = {
   },
 
   async stopDeployment(id: string): Promise<boolean> {
-    const all = readDeployments();
+    const all = await readDeployments();
     const dep = all.find(d => d.id === id);
     if (!dep) return false;
     
@@ -376,7 +379,7 @@ export const DeploymentManager = {
   },
 
   async getStatus(id: string): Promise<'provisioning' | 'active' | 'failed' | 'undeployed'> {
-    const dep = this.getDeploymentById(id);
+    const dep = await this.getDeploymentById(id);
     if (!dep) return 'failed';
     const serviceMap = {
       vercel: VercelProvider,
@@ -387,7 +390,7 @@ export const DeploymentManager = {
   },
 
   async getLogs(id: string): Promise<string[]> {
-    const dep = this.getDeploymentById(id);
+    const dep = await this.getDeploymentById(id);
     if (!dep) return [];
     const serviceMap = {
       vercel: VercelProvider,

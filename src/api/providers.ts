@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { checkUserBudget, recordUserUsage } from "../services/usage-tracker.js";
+import { cache, computeHash } from "../services/cache.js";
+import { logger } from "../utils/logger.js";
 
 export interface LLMCallConfig {
   temperature?: number;
@@ -27,8 +29,24 @@ export abstract class LLMProvider {
     const userId = config?.userId;
     const estInputTokens = Math.ceil((prompt || "").length / 4);
 
+    // Compute precise key for the model and prompt snapshot
+    const model = (this as any).model || this.getName();
+    const promptHash = computeHash(prompt || "");
+    const cacheKey = `llm:cache:${model}:${promptHash}`;
+
+    // Prompt cache lookup
+    try {
+      const cached = await cache.get(cacheKey);
+      if (cached) {
+        logger.info(`[Prompt Cache] HIT for model "${model}" with key ${cacheKey}`);
+        return JSON.parse(cached) as LLMResponse;
+      }
+    } catch (err: any) {
+      logger.warn(`[Prompt Cache] Read hit failed: ${err.message}`);
+    }
+
     if (userId) {
-      const allowed = checkUserBudget(userId, estInputTokens);
+      const allowed = await checkUserBudget(userId, estInputTokens);
       if (!allowed) {
         const err = new Error("429 Budget Exceeded");
         (err as any).status = 429;
@@ -38,9 +56,18 @@ export abstract class LLMProvider {
 
     const response = await this._generate(prompt, config);
 
+    // Dynamic cache storage
+    if (response && response.text) {
+      try {
+        await cache.set(cacheKey, JSON.stringify(response), 3600); // 1-hour default TTL
+      } catch (err: any) {
+        logger.warn(`[Prompt Cache] Storing response failed: ${err.message}`);
+      }
+    }
+
     if (userId) {
       const estOutputTokens = Math.ceil((response.text || "").length / 4);
-      recordUserUsage(userId, estInputTokens + estOutputTokens);
+      await recordUserUsage(userId, estInputTokens + estOutputTokens);
     }
 
     return response;

@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { StepLog, FlowNode, FlowConnection } from '../types.js';
-import { db } from '../db/index.js';
-import { metrics, versions } from '../db/schema.js';
+import { db, tables, sqlite } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+
+const dbType = process.env.DB_TYPE || 'sqlite';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
 if (!fs.existsSync(DATA_DIR)) {
@@ -109,7 +110,7 @@ export class MetricsCollector {
     return { tokens: totalTokens, cost: Number(cost.toFixed(6)) };
   }
 
-  static logExecution(
+  static async logExecution(
     graphId: string,
     graphName: string,
     status: 'success' | 'failed',
@@ -117,8 +118,8 @@ export class MetricsCollector {
     stepLogs: StepLog[],
     errorMessage?: string,
     executionId?: string
-  ): MetricsExecutionLog {
-    const finalExecutionId = executionId || `exec_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  ): Promise<MetricsExecutionLog> {
+    const finalExecutionId = executionId || `exec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const finishedTime = Date.now();
     
     let totalTokens = 0;
@@ -138,7 +139,7 @@ export class MetricsCollector {
       totalCostUsd += cost;
 
       return {
-        id: `node_exec_${Math.random().toString(36).substr(2, 9)}`,
+        id: `node_exec_${Math.random().toString(36).substring(2, 11)}`,
         executionId: finalExecutionId,
         nodeId: log.nodeId,
         nodeType: log.nodeId.split('-')[0] || 'unknown',
@@ -173,44 +174,97 @@ export class MetricsCollector {
     writeJsonFile(METRICS_FILE, records);
 
     // SQL persistence
-    db.insert(metrics).values({
-      id: newLog.id,
-      graphId: newLog.graphId,
-      graphName: newLog.graphName,
-      status: newLog.status,
-      totalTokens: newLog.totalTokens,
-      totalCostUsd: newLog.totalCostUsd,
-      totalLatencyMs: newLog.totalLatencyMs,
-      errorMessage: newLog.errorMessage || null,
-      nodeExecutions: JSON.stringify(newLog.nodeExecutions),
-      createdAt: newLog.startedAt
-    }).run();
+    try {
+      if (dbType === 'postgres') {
+        await db.insert(tables.metrics).values({
+          id: newLog.id,
+          graphId: newLog.graphId,
+          graphName: newLog.graphName,
+          status: newLog.status,
+          totalTokens: newLog.totalTokens,
+          totalCostUsd: newLog.totalCostUsd,
+          totalLatencyMs: newLog.totalLatencyMs,
+          errorMessage: newLog.errorMessage || null,
+          nodeExecutions: JSON.stringify(newLog.nodeExecutions),
+          createdAt: newLog.startedAt
+        });
+      } else if (sqlite) {
+        sqlite.prepare(`
+          INSERT INTO metrics (id, graph_id, graph_name, status, total_tokens, total_cost_usd, total_latency_ms, error_message, node_executions, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          newLog.id,
+          newLog.graphId,
+          newLog.graphName,
+          newLog.status,
+          newLog.totalTokens,
+          newLog.totalCostUsd,
+          newLog.totalLatencyMs,
+          newLog.errorMessage || null,
+          JSON.stringify(newLog.nodeExecutions),
+          newLog.startedAt
+        );
+      }
+    } catch (err) {
+      console.error('[Metrics] Failed SQL persistence of execution log:', err);
+    }
 
     return newLog;
   }
 
   static getSummary(periodDays: number = 7): any {
-    let records: MetricsExecutionLog[] = [];
-
-    if (isTest) {
-      records = readJsonFile<MetricsExecutionLog[]>(METRICS_FILE, []);
-    } else {
-      const dbMetrics = db.select().from(metrics).all();
-      records = dbMetrics.map(m => ({
-        id: m.id,
-        graphId: m.graphId,
-        graphName: m.graphName,
-        startedAt: m.createdAt,
-        finishedAt: new Date(new Date(m.createdAt).getTime() + m.totalLatencyMs).toISOString(),
-        status: m.status as 'success' | 'failed',
-        totalTokens: m.totalTokens,
-        totalCostUsd: m.totalCostUsd,
-        totalLatencyMs: m.totalLatencyMs,
-        errorMessage: m.errorMessage || undefined,
-        nodeExecutions: JSON.parse(m.nodeExecutions)
-      }));
+    if (dbType === 'postgres') {
+      return (async () => {
+        try {
+          const rows = await db.select().from(tables.metrics);
+          return this.processRecords(rows.map((m: any) => ({
+            id: m.id,
+            graphId: m.graphId,
+            graphName: m.graphName,
+            startedAt: m.createdAt,
+            finishedAt: new Date(new Date(m.createdAt).getTime() + m.totalLatencyMs).toISOString(),
+            status: m.status as any,
+            totalTokens: m.totalTokens,
+            totalCostUsd: Number(m.totalCostUsd),
+            totalLatencyMs: m.totalLatencyMs,
+            errorMessage: m.errorMessage || undefined,
+            nodeExecutions: JSON.parse(m.nodeExecutions)
+          })), periodDays);
+        } catch (err) {
+          console.error('[Metrics] Failed to fetch PG summary metrics:', err);
+          return this.processRecords([], periodDays);
+        }
+      })();
     }
 
+    // Sync SQLite/local logic
+    let records: MetricsExecutionLog[] = [];
+    if (isTest) {
+      records = readJsonFile<MetricsExecutionLog[]>(METRICS_FILE, []);
+    } else if (sqlite) {
+      try {
+        const rows = sqlite.prepare('SELECT * FROM metrics').all() as any[];
+        records = rows.map(m => ({
+          id: m.id,
+          graphId: m.graph_id,
+          graphName: m.graph_name,
+          startedAt: m.created_at,
+          finishedAt: new Date(new Date(m.created_at).getTime() + m.total_latency_ms).toISOString(),
+          status: m.status as any,
+          totalTokens: m.total_tokens,
+          totalCostUsd: m.total_cost_usd,
+          totalLatencyMs: m.total_latency_ms,
+          errorMessage: m.error_message || undefined,
+          nodeExecutions: JSON.parse(m.node_executions)
+        }));
+      } catch (err) {
+        console.error('[Metrics] SQLite read summary error:', err);
+      }
+    }
+    return this.processRecords(records, periodDays);
+  }
+
+  private static processRecords(records: MetricsExecutionLog[], periodDays: number): any {
     const cutoffTime = Date.now() - periodDays * 24 * 60 * 60 * 1000;
     const filtered = records.filter(r => new Date(r.startedAt).getTime() >= cutoffTime);
 
@@ -248,7 +302,31 @@ export class MetricsCollector {
     };
   }
 
-  static getExecutionsByGraph(graphId: string): MetricsExecutionLog[] {
+  static getExecutionsByGraph(graphId: string): any {
+    if (dbType === 'postgres') {
+      return (async () => {
+        try {
+          const rows = await db.select().from(tables.metrics).where(eq(tables.metrics.graphId, graphId));
+          return rows.map((m: any) => ({
+            id: m.id,
+            graphId: m.graphId,
+            graphName: m.graphName,
+            startedAt: m.createdAt,
+            finishedAt: new Date(new Date(m.createdAt).getTime() + m.totalLatencyMs).toISOString(),
+            status: m.status as any,
+            totalTokens: m.totalTokens,
+            totalCostUsd: m.totalCostUsd,
+            totalLatencyMs: m.totalLatencyMs,
+            errorMessage: m.errorMessage || undefined,
+            nodeExecutions: JSON.parse(m.nodeExecutions)
+          })).sort((a: any, b: any) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+        } catch (err) {
+          console.error('[Metrics] PG find execution for graph error:', err);
+          return [];
+        }
+      })();
+    }
+
     if (isTest) {
       const records = readJsonFile<MetricsExecutionLog[]>(METRICS_FILE, []);
       return records
@@ -256,50 +334,66 @@ export class MetricsCollector {
         .sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
     }
 
-    const dbMetrics = db.select().from(metrics).where(eq(metrics.graphId, graphId)).all();
-    return dbMetrics.map(m => ({
-      id: m.id,
-      graphId: m.graphId,
-      graphName: m.graphName,
-      startedAt: m.createdAt,
-      finishedAt: new Date(new Date(m.createdAt).getTime() + m.totalLatencyMs).toISOString(),
-      status: m.status as 'success' | 'failed',
-      totalTokens: m.totalTokens,
-      totalCostUsd: m.totalCostUsd,
-      totalLatencyMs: m.totalLatencyMs,
-      errorMessage: m.errorMessage || undefined,
-      nodeExecutions: JSON.parse(m.nodeExecutions)
-    })).sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    if (sqlite) {
+      try {
+        const rows = sqlite.prepare('SELECT * FROM metrics WHERE graph_id = ?').all(graphId) as any[];
+        return rows.map(m => ({
+          id: m.id,
+          graphId: m.graph_id,
+          graphName: m.graph_name,
+          startedAt: m.created_at,
+          finishedAt: new Date(new Date(m.created_at).getTime() + m.total_latency_ms).toISOString(),
+          status: m.status as any,
+          totalTokens: m.total_tokens,
+          totalCostUsd: m.total_cost_usd,
+          totalLatencyMs: m.total_latency_ms,
+          errorMessage: m.error_message || undefined,
+          nodeExecutions: JSON.parse(m.node_executions)
+        })).sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+      } catch (err) {
+        console.error('[Metrics] SQLite get metrics error:', err);
+      }
+    }
+    return [];
   }
 
   static getCostBreakdown(): any {
-    let records: MetricsExecutionLog[] = [];
-
-    if (isTest) {
-      records = readJsonFile<MetricsExecutionLog[]>(METRICS_FILE, []);
-    } else {
-      const dbMetrics = db.select().from(metrics).all();
-      records = dbMetrics.map(m => ({
-        id: m.id,
-        graphId: m.graphId,
-        graphName: m.graphName,
-        startedAt: m.createdAt,
-        finishedAt: new Date(new Date(m.createdAt).getTime() + m.totalLatencyMs).toISOString(),
-        status: m.status as 'success' | 'failed',
-        totalTokens: m.totalTokens,
-        totalCostUsd: m.totalCostUsd,
-        totalLatencyMs: m.totalLatencyMs,
-        errorMessage: m.errorMessage || undefined,
-        nodeExecutions: JSON.parse(m.nodeExecutions)
-      }));
+    if (dbType === 'postgres') {
+      return (async () => {
+        try {
+          const rows = await db.select().from(tables.metrics);
+          return this.computeBreakdown(rows.map((m: any) => ({
+            nodeExecutions: JSON.parse(m.nodeExecutions)
+          })));
+        } catch (err) {
+          console.error('[Metrics] PG cost breakdown error:', err);
+          return this.computeBreakdown([]);
+        }
+      })();
     }
 
+    let records: any[] = [];
+    if (isTest) {
+      records = readJsonFile<any[]>(METRICS_FILE, []);
+    } else if (sqlite) {
+      try {
+        const rows = sqlite.prepare('SELECT node_executions FROM metrics').all() as any[];
+        records = rows.map(r => ({ nodeExecutions: JSON.parse(r.node_executions) }));
+      } catch (err) {
+        console.error('[Metrics] SQLite breakdown error:', err);
+      }
+    }
+    return this.computeBreakdown(records);
+  }
+
+  private static computeBreakdown(records: any[]): any {
     let geminiCost = 0;
     let reviewerCost = 0;
     let toolCost = 0;
 
     records.forEach(r => {
-      r.nodeExecutions.forEach(n => {
+      const nodeExecutions = r.nodeExecutions || [];
+      nodeExecutions.forEach((n: any) => {
         if (n.nodeType === 'gemini') geminiCost += n.costUsd;
         else if (n.nodeType === 'reviewer') reviewerCost += n.costUsd;
         else toolCost += n.costUsd;
@@ -315,7 +409,28 @@ export class MetricsCollector {
 }
 
 export class VersionManager {
-  static getVersions(graphId: string): GraphVersion[] {
+  static getVersions(graphId: string): any {
+    if (dbType === 'postgres') {
+      return (async () => {
+        try {
+          const rows = await db.select().from(tables.versions).where(eq(tables.versions.graphId, graphId));
+          return rows.map((v: any) => ({
+            id: v.id,
+            graphId: v.graphId,
+            versionNumber: v.versionNumber,
+            createdAt: v.createdAt,
+            author: v.author,
+            snapshot: JSON.parse(v.snapshot),
+            commitMessage: v.commitMessage,
+            diffSummary: v.diffSummary
+          })).sort((a: any, b: any) => b.versionNumber - a.versionNumber);
+        } catch (err) {
+          console.error('[Versions] PG getVersions error:', err);
+          return [];
+        }
+      })();
+    }
+
     if (isTest) {
       const allVersions = readJsonFile<GraphVersion[]>(VERSIONS_FILE, []);
       return allVersions
@@ -323,17 +438,24 @@ export class VersionManager {
         .sort((a,b) => b.versionNumber - a.versionNumber);
     }
 
-    const dbVersions = db.select().from(versions).where(eq(versions.graphId, graphId)).all();
-    return dbVersions.map(v => ({
-      id: v.id,
-      graphId: v.graphId,
-      versionNumber: v.versionNumber,
-      createdAt: v.createdAt,
-      author: v.author,
-      snapshot: JSON.parse(v.snapshot),
-      commitMessage: v.commitMessage,
-      diffSummary: v.diffSummary
-    })).sort((a,b) => b.versionNumber - a.versionNumber);
+    if (sqlite) {
+      try {
+        const rows = sqlite.prepare('SELECT * FROM versions WHERE graph_id = ?').all(graphId) as any[];
+        return rows.map(v => ({
+          id: v.id,
+          graphId: v.graph_id,
+          versionNumber: v.version_number,
+          createdAt: v.created_at,
+          author: v.author,
+          snapshot: JSON.parse(v.snapshot),
+          commitMessage: v.commit_message,
+          diffSummary: v.diff_summary
+        })).sort((a,b) => b.versionNumber - a.versionNumber);
+      } catch (err) {
+        console.error('[Versions] SQLite getVersions error:', err);
+      }
+    }
+    return [];
   }
 
   static commit(
@@ -341,8 +463,26 @@ export class VersionManager {
     message: string,
     author: string,
     snapshot: any
-  ): GraphVersion {
-    const graphVersions = this.getVersions(graphId);
+  ): any {
+    const rawVersions = this.getVersions(graphId);
+    
+    if (rawVersions instanceof Promise) {
+      return (async () => {
+        const resolved = await rawVersions;
+        return await this.performCommit(graphId, message, author, snapshot, resolved);
+      })();
+    }
+    
+    return this.performCommit(graphId, message, author, snapshot, rawVersions);
+  }
+
+  private static async performCommit(
+    graphId: string,
+    message: string,
+    author: string,
+    snapshot: any,
+    graphVersions: GraphVersion[]
+  ): Promise<GraphVersion> {
     const nextVerNum = graphVersions.length > 0 ? Math.max(...graphVersions.map(v => v.versionNumber)) + 1 : 1;
 
     let diffSummary = "Initial workspace version";
@@ -361,7 +501,7 @@ export class VersionManager {
     }
 
     const newVersion: GraphVersion = {
-      id: `ver_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      id: `ver_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       graphId,
       versionNumber: nextVerNum,
       createdAt: new Date().toISOString(),
@@ -381,16 +521,36 @@ export class VersionManager {
     writeJsonFile(VERSIONS_FILE, allVersions);
 
     // SQL persistence
-    db.insert(versions).values({
-      id: newVersion.id,
-      graphId: newVersion.graphId,
-      versionNumber: newVersion.versionNumber,
-      createdAt: newVersion.createdAt,
-      author: newVersion.author,
-      snapshot: JSON.stringify(newVersion.snapshot),
-      commitMessage: newVersion.commitMessage,
-      diffSummary: newVersion.diffSummary
-    }).run();
+    try {
+      if (dbType === 'postgres') {
+        await db.insert(tables.versions).values({
+          id: newVersion.id,
+          graphId: newVersion.graphId,
+          versionNumber: newVersion.versionNumber,
+          createdAt: newVersion.createdAt,
+          author: newVersion.author,
+          snapshot: JSON.stringify(newVersion.snapshot),
+          commitMessage: newVersion.commitMessage,
+          diffSummary: newVersion.diffSummary
+        });
+      } else if (sqlite) {
+        sqlite.prepare(`
+          INSERT INTO versions (id, graph_id, version_number, created_at, author, snapshot, commit_message, diff_summary)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          newVersion.id,
+          newVersion.graphId,
+          newVersion.versionNumber,
+          newVersion.createdAt,
+          newVersion.author,
+          JSON.stringify(newVersion.snapshot),
+          newVersion.commitMessage,
+          newVersion.diffSummary
+        );
+      }
+    } catch (err) {
+      console.error('[Versions] SQLite write version trace error:', err);
+    }
 
     return newVersion;
   }
@@ -403,57 +563,74 @@ export class VersionManager {
         throw new Error(`Version id ${versionId} not found for graph ${graphId}`);
       }
 
-      const projectsDir = path.join(process.cwd(), 'projects');
-      const safeName = graphId.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
-      const filePath = path.join(projectsDir, `${safeName}.json`);
-
-      const payload = {
-        name: targetVersion.snapshot.name,
-        nodes: targetVersion.snapshot.nodes,
-        connections: targetVersion.snapshot.connections,
-        savedAt: new Date().toISOString()
-      };
-
-      fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+      this.writeSnapshotToFile(graphId, targetVersion.snapshot);
       return targetVersion;
     }
 
-    const dbVer = db.select().from(versions).where(eq(versions.id, versionId)).all()[0];
-    if (!dbVer) {
-      throw new Error(`Version id ${versionId} not found for graph ${graphId}`);
+    if (dbType === 'postgres') {
+      return (async () => {
+        const rows = await db.select().from(tables.versions).where(eq(tables.versions.id, versionId));
+        const dbVer = rows[0];
+        if (!dbVer) {
+          throw new Error(`Version id ${versionId} not found for graph ${graphId}`);
+        }
+        const parsedSnapshot = JSON.parse(dbVer.snapshot);
+        this.writeSnapshotToFile(graphId, parsedSnapshot);
+
+        return {
+          id: dbVer.id,
+          graphId: dbVer.graphId,
+          versionNumber: dbVer.versionNumber,
+          createdAt: dbVer.createdAt,
+          author: dbVer.author,
+          snapshot: parsedSnapshot,
+          commitMessage: dbVer.commitMessage,
+          diffSummary: dbVer.diffSummary
+        };
+      })();
     }
 
-    const payloadSnapshot = JSON.parse(dbVer.snapshot);
+    if (sqlite) {
+      try {
+        const dbVer = sqlite.prepare('SELECT * FROM versions WHERE id = ?').get(versionId) as any;
+        if (!dbVer) {
+          throw new Error(`Version id ${versionId} not found for graph ${graphId}`);
+        }
+        const parsedSnapshot = JSON.parse(dbVer.snapshot);
+        this.writeSnapshotToFile(graphId, parsedSnapshot);
 
+        return {
+          id: dbVer.id,
+          graphId: dbVer.graph_id,
+          versionNumber: dbVer.version_number,
+          createdAt: dbVer.created_at,
+          author: dbVer.author,
+          snapshot: parsedSnapshot,
+          commitMessage: dbVer.commit_message,
+          diffSummary: dbVer.diff_summary
+        };
+      } catch (err) {
+        console.error('[Versions] SQLite rollback load error:', err);
+        throw err;
+      }
+    }
+  }
+
+  private static writeSnapshotToFile(graphId: string, snapshot: any) {
     const projectsDir = path.join(process.cwd(), 'projects');
     const safeName = graphId.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
     const filePath = path.join(projectsDir, `${safeName}.json`);
 
     const payload = {
-      name: payloadSnapshot.name,
-      nodes: payloadSnapshot.nodes,
-      connections: payloadSnapshot.connections,
+      name: snapshot.name,
+      nodes: snapshot.nodes || [],
+      connections: snapshot.connections || [],
       savedAt: new Date().toISOString()
     };
-
     fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
-    
-    return {
-      id: dbVer.id,
-      graphId: dbVer.graphId,
-      versionNumber: dbVer.versionNumber,
-      createdAt: dbVer.createdAt,
-      author: dbVer.author,
-      snapshot: payloadSnapshot,
-      commitMessage: dbVer.commitMessage,
-      diffSummary: dbVer.diffSummary
-    };
   }
 
   static computeDiff(versionIdA: string, versionIdB: string): any {
-    let snapshotA: any;
-    let snapshotB: any;
-
     if (isTest) {
       const allVersions = readJsonFile<GraphVersion[]>(VERSIONS_FILE, []);
       const verA = allVersions.find(v => v.id === versionIdA);
@@ -461,18 +638,41 @@ export class VersionManager {
       if (!verA || !verB) {
         return { addedIds: [], deletedIds: [], modifiedIds: [] };
       }
-      snapshotA = verA.snapshot;
-      snapshotB = verB.snapshot;
-    } else {
-      const dbVerA = db.select().from(versions).where(eq(versions.id, versionIdA)).all()[0];
-      const dbVerB = db.select().from(versions).where(eq(versions.id, versionIdB)).all()[0];
-      if (!dbVerA || !dbVerB) {
-        return { addedIds: [], deletedIds: [], modifiedIds: [] };
-      }
-      snapshotA = JSON.parse(dbVerA.snapshot);
-      snapshotB = JSON.parse(dbVerB.snapshot);
+      return this.performSnapshotDiff(verA.snapshot, verB.snapshot);
     }
 
+    if (dbType === 'postgres') {
+      return (async () => {
+        try {
+          const rowsA = await db.select().from(tables.versions).where(eq(tables.versions.id, versionIdA));
+          const rowsB = await db.select().from(tables.versions).where(eq(tables.versions.id, versionIdB));
+          if (rowsA.length === 0 || rowsB.length === 0) {
+            return { addedIds: [], deletedIds: [], modifiedIds: [] };
+          }
+          return this.performSnapshotDiff(JSON.parse(rowsA[0].snapshot), JSON.parse(rowsB[0].snapshot));
+        } catch (err) {
+          console.error('[Versions] PG computeDiff error:', err);
+          return { addedIds: [], deletedIds: [], modifiedIds: [] };
+        }
+      })();
+    }
+
+    if (sqlite) {
+      try {
+        const dbVerA = sqlite.prepare('SELECT snapshot FROM versions WHERE id = ?').get(versionIdA) as any;
+        const dbVerB = sqlite.prepare('SELECT snapshot FROM versions WHERE id = ?').get(versionIdB) as any;
+        if (!dbVerA || !dbVerB) {
+          return { addedIds: [], deletedIds: [], modifiedIds: [] };
+        }
+        return this.performSnapshotDiff(JSON.parse(dbVerA.snapshot), JSON.parse(dbVerB.snapshot));
+      } catch (err) {
+        console.error('[Versions] SQLite computeDiff error:', err);
+      }
+    }
+    return { addedIds: [], deletedIds: [], modifiedIds: [] };
+  }
+
+  private static performSnapshotDiff(snapshotA: any, snapshotB: any): any {
     const nodesA = snapshotA.nodes || [];
     const nodesB = snapshotB.nodes || [];
 
