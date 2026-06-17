@@ -21,7 +21,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Run TypeScript Linter Check
         run: npm run lint
