@@ -98,4 +98,38 @@ describe('Server API Integration Suite', () => {
       expect(response.status).toBe(400);
     });
   });
+
+  describe('Express Payload Limit Sub-suite', () => {
+    it('should successfully handle a JSON payload of 5MB', async () => {
+      const largeString = 'a'.repeat(5 * 1024 * 1024); // 5MB of characters
+      const response = await request(app)
+        .post('/api/test-payload')
+        .send({ data: largeString });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.received).toBe(true);
+      expect(response.body.size).toBeGreaterThanOrEqual(5 * 1024 * 1024);
+    });
+
+    it('should reject a JSON payload of 15MB with a 413 (Payload Too Large) error', async () => {
+      const hugeString = 'b'.repeat(15 * 1024 * 1024); // 15MB of characters
+      const response = await request(app)
+        .post('/api/test-payload')
+        .send({ data: hugeString });
+      
+      expect(response.status).toBe(413);
+    });
+
+    it('should successfully handle a base64-encoded payload of 8MB', async () => {
+      // 8MB base64 string
+      const base64String = 'c'.repeat(8 * 1024 * 1024);
+      const response = await request(app)
+        .post('/api/test-payload')
+        .send({ base64: base64String });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.received).toBe(true);
+      expect(response.body.size).toBeGreaterThanOrEqual(8 * 1024 * 1024);
+    });
+  });
 });

@@ -64,7 +64,13 @@ const apiRateLimiter = rateLimit({
 app.use('/api', apiRateLimiter);
 
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeRequestBody);
+
+// Endpoint for testing request payload limits
+app.post('/api/test-payload', (req: express.Request, res: express.Response) => {
+  res.json({ received: true, size: req.body ? JSON.stringify(req.body).length : 0 });
+});
 
 // Setup OpenAPI Documentation
 setupSwagger(app);
@@ -112,7 +118,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: any) => {
   }
   logger.error("Unhandled Server Exception captured:", { error: err.message || err });
   if (!res.headersSent) {
-    res.status(500).json({
+    const statusCode = err.status || err.statusCode || 500;
+    res.status(statusCode).json({
       success: false,
       error: err.message || "Internal Server Error Connection Interrupt"
     });
