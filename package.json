@@ -47,6 +47,7 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-i18next": "^17.0.8",
+    "react-is": "^19.0.0",
     "reactflow": "^11.11.4",
     "recharts": "^3.8.1",
     "safe-regex": "^2.1.1",
