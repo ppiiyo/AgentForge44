@@ -1,5 +1,4 @@
 import safeRegex from 'safe-regex';
-import { Worker } from 'worker_threads';
 
 /**
  * Validates whether a regex pattern is safe from ReDoS attacks.
@@ -8,7 +7,7 @@ export function validateRegex(pattern: string): boolean {
   try {
     if (!pattern) return true;
     return safeRegex(pattern);
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -17,7 +16,7 @@ export function validateRegex(pattern: string): boolean {
  * Executes a regex test with a robust static ReDoS safety check.
  * If the pattern is safe, evaluated directly. Otherwise, statically blocked.
  */
-export function testRegexWithTimeout(pattern: string, input: string, timeoutMs: number = 100): Promise<boolean> {
+export function testRegexWithTimeout(pattern: string, input: string, _timeoutMs: number = 100): Promise<boolean> {
   return new Promise((resolve) => {
     if (!validateRegex(pattern)) {
       // ReDoS pattern statically blocked
