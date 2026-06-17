@@ -476,13 +476,13 @@ export class VersionManager {
     return this.performCommit(graphId, message, author, snapshot, rawVersions);
   }
 
-  private static async performCommit(
+  private static performCommit(
     graphId: string,
     message: string,
     author: string,
     snapshot: any,
     graphVersions: GraphVersion[]
-  ): Promise<GraphVersion> {
+  ): any {
     const nextVerNum = graphVersions.length > 0 ? Math.max(...graphVersions.map(v => v.versionNumber)) + 1 : 1;
 
     let diffSummary = "Initial workspace version";
@@ -523,16 +523,23 @@ export class VersionManager {
     // SQL persistence
     try {
       if (dbType === 'postgres') {
-        await db.insert(tables.versions).values({
-          id: newVersion.id,
-          graphId: newVersion.graphId,
-          versionNumber: newVersion.versionNumber,
-          createdAt: newVersion.createdAt,
-          author: newVersion.author,
-          snapshot: JSON.stringify(newVersion.snapshot),
-          commitMessage: newVersion.commitMessage,
-          diffSummary: newVersion.diffSummary
-        });
+        return (async () => {
+          try {
+            await db.insert(tables.versions).values({
+              id: newVersion.id,
+              graphId: newVersion.graphId,
+              versionNumber: newVersion.versionNumber,
+              createdAt: newVersion.createdAt,
+              author: newVersion.author,
+              snapshot: JSON.stringify(newVersion.snapshot),
+              commitMessage: newVersion.commitMessage,
+              diffSummary: newVersion.diffSummary
+            });
+          } catch (err) {
+            console.error('[Versions] PG write version trace error:', err);
+          }
+          return newVersion;
+        })();
       } else if (sqlite) {
         sqlite.prepare(`
           INSERT INTO versions (id, graph_id, version_number, created_at, author, snapshot, commit_message, diff_summary)
