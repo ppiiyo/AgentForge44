@@ -34,6 +34,25 @@ export interface PresenceLogRecord {
  */
 export const activeRooms: Record<string, Record<string, PresenceUser>> = {};
 
+export interface SocketResource {
+  socket: any;
+  cleanup: () => void;
+}
+
+export const socketResources = new Map<string, SocketResource>();
+
+export function cleanupSocketResources(socketId: string) {
+  const rs = socketResources.get(socketId);
+  if (rs) {
+    try {
+      rs.cleanup();
+    } catch (e) {
+      console.error(`Error in cleanupSocketResources for ${socketId}:`, e);
+    }
+    socketResources.delete(socketId);
+  }
+}
+
 /**
  * Save presence historical logging in DB files
  */
@@ -109,6 +128,42 @@ export class CollaborationServer {
     this.io.on('connection', (socket: Socket) => {
       let currentRoom: string | null = null;
       let currentUser: { id: string; name: string; color: string } | null = null;
+
+      // Register the socket resource immediately with a standard closure-based cleanup
+      socketResources.set(socket.id, {
+        socket,
+        cleanup: () => {
+          if (currentRoom && currentUser) {
+            const u = activeRooms[currentRoom]?.[currentUser.id];
+            if (u) {
+              // Unset locking
+              if (u.editingNodeId) {
+                this.io.to(currentRoom).emit('node:lock', {
+                  nodeId: u.editingNodeId,
+                  userId: currentUser.id,
+                  userName: currentUser.name,
+                  locked: false
+                });
+              }
+
+              delete activeRooms[currentRoom][currentUser.id];
+              
+              // Clean empty rooms
+              if (Object.keys(activeRooms[currentRoom]).length === 0) {
+                delete activeRooms[currentRoom];
+              }
+            }
+
+            logPresenceHistory(currentRoom, currentUser, 'left');
+            
+            if (activeRooms[currentRoom]) {
+              this.io.to(currentRoom).emit('presence:update', Object.values(activeRooms[currentRoom]));
+            }
+
+            console.log(`👤 User '${currentUser.name}' disconnected from '${currentRoom}'`);
+          }
+        }
+      });
 
       // 1. Join Room Event Handler
       socket.on('room:join', ({ graphId, user }: { graphId: string; user: { id: string; name: string; color: string } }) => {
@@ -212,40 +267,21 @@ export class CollaborationServer {
 
       // 5. Explicit user leaves or disconnect
       const handleDisconnect = () => {
-        if (currentRoom && currentUser) {
-          const u = activeRooms[currentRoom]?.[currentUser.id];
-          if (u) {
-            // Unset locking
-            if (u.editingNodeId) {
-              this.io.to(currentRoom).emit('node:lock', {
-                nodeId: u.editingNodeId,
-                userId: currentUser.id,
-                userName: currentUser.name,
-                locked: false
-              });
-            }
-
-            delete activeRooms[currentRoom][currentUser.id];
-            
-            // Clean empty rooms
-            if (Object.keys(activeRooms[currentRoom]).length === 0) {
-              delete activeRooms[currentRoom];
-            }
-          }
-
-          logPresenceHistory(currentRoom, currentUser, 'left');
-          
-          if (activeRooms[currentRoom]) {
-            this.io.to(currentRoom).emit('presence:update', Object.values(activeRooms[currentRoom]));
-          }
-
-          console.log(`👤 User '${currentUser.name}' disconnected from '${currentRoom}'`);
-        }
+        cleanupSocketResources(socket.id);
         socket.removeAllListeners();
       };
 
       socket.on('room:leave', handleDisconnect);
-      socket.on('disconnect', handleDisconnect);
+      socket.on('disconnect', (reason) => {
+        console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
+        
+        // Удаляем все слушатели, привязанные к этому сокету
+        socket.removeAllListeners();
+        
+        // Очищаем ссылки на объекты графа/сессии
+        // (если есть хранение в Map/Set)
+        cleanupSocketResources(socket.id);
+      });
     });
   }
 }
