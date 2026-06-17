@@ -241,6 +241,7 @@ export class CollaborationServer {
 
           console.log(`👤 User '${currentUser.name}' disconnected from '${currentRoom}'`);
         }
+        socket.removeAllListeners();
       };
 
       socket.on('room:leave', handleDisconnect);

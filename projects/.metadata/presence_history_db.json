@@ -1,0 +1,34 @@
+[
+  {
+    "id": "pres_1781680174652_g8o7a",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-06-17T07:09:34.652Z"
+  },
+  {
+    "id": "pres_1781680174653_b4cwe",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-06-17T07:09:34.653Z"
+  },
+  {
+    "id": "pres_1781680205290_bv8e6",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-06-17T07:10:05.290Z"
+  },
+  {
+    "id": "pres_1781680205291_n1jx1",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-06-17T07:10:05.291Z"
+  }
+]

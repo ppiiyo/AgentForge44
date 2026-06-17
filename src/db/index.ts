@@ -7,8 +7,9 @@ const DB_PATH = path.join(process.cwd(), 'agentforge.db');
 
 const sqlite = new Database(DB_PATH);
 
-// Enable WAL-mode for sqlite for better concurrency performance
+// Enable WAL-mode for sqlite for better concurrency performance and set busy_timeout
 sqlite.pragma('journal_mode = WAL');
+sqlite.pragma('busy_timeout = 5000');
 sqlite.pragma('foreign_keys = ON');
 
 // Automatically initialize schema if tables don't exist
