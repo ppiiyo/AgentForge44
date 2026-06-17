@@ -78,5 +78,21 @@
     "userName": "Alpha Agent",
     "action": "left",
     "timestamp": "2026-06-17T07:31:58.385Z"
+  },
+  {
+    "id": "pres_1781681901633_ypho2",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-06-17T07:38:21.633Z"
+  },
+  {
+    "id": "pres_1781681901635_wgx45",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-06-17T07:38:21.635Z"
   }
 ]
