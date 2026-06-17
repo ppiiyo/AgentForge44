@@ -16,11 +16,13 @@ sqlite.pragma('foreign_keys = ON');
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'viewer',
     created_at TEXT NOT NULL
   );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email);
 
   CREATE TABLE IF NOT EXISTS projects (
     id TEXT PRIMARY KEY,
@@ -94,13 +96,15 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS api_keys (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
-    key_hash TEXT NOT NULL UNIQUE,
+    key_hash TEXT NOT NULL,
     name TEXT NOT NULL,
     scopes TEXT NOT NULL,
     last_used_at TEXT,
     expires_at TEXT,
     created_at TEXT NOT NULL
   );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_hash_unique ON api_keys (key_hash);
 `);
 
 export const db = drizzle(sqlite, { schema });

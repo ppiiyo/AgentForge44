@@ -126,5 +126,37 @@
     "userName": "Alpha Agent",
     "action": "left",
     "timestamp": "2026-06-17T09:02:32.613Z"
+  },
+  {
+    "id": "pres_1781688830841_9p6ts",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-06-17T09:33:50.841Z"
+  },
+  {
+    "id": "pres_1781688830842_nud5a",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-06-17T09:33:50.842Z"
+  },
+  {
+    "id": "pres_1781688894347_ia2xb",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-06-17T09:34:54.347Z"
+  },
+  {
+    "id": "pres_1781688894348_i2w8n",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-06-17T09:34:54.348Z"
   }
 ]

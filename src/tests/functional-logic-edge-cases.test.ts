@@ -42,8 +42,8 @@ describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
 
       const engine = new StatefulExecutionEngine(nodes, connections);
 
-      // Verify that executing this massive chain throws "Max execution steps reached"
-      await expect(engine.runWorkflow({})).rejects.toThrow("Max execution steps reached");
+      // Verify that executing this massive chain throws "Max execution steps (50) reached. Possible infinite loop detected."
+      await expect(engine.runWorkflow({})).rejects.toThrow("Possible infinite loop detected");
     });
   });
 
