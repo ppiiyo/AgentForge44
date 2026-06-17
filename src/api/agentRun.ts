@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from "../types.js";
+import { MAX_EXECUTION_STEPS } from "./execution.js";
 import { routeNode } from "../nodes/RouterNode.js";
 import { validateURLForSSRF, validateUrl } from "../utils/ssrf-validator.js";
 import { safeJsonParse } from "../utils/safe-json.js";
@@ -232,7 +233,7 @@ export async function executePipeline(
     return visited;
   }
 
-  let totalStepsExecuted = 0;
+  let stepCount = 0;
 
   let safetyCeiling = 500; // global safety ticker limits
   while (activatedNodes.size > 0 && safetyCeiling-- > 0) {
@@ -263,9 +264,12 @@ export async function executePipeline(
     // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
     const promises = eligibleNodes.map(async (node) => {
       // Track global steps completed
-      totalStepsExecuted++;
-      if (totalStepsExecuted > 50) {
-        throw new Error("Max execution steps reached");
+      stepCount++;
+      if (stepCount >= Math.floor(MAX_EXECUTION_STEPS * 0.8)) {
+        console.warn(`Warning: Execution step count has reached 80% of the limit (${stepCount}/${MAX_EXECUTION_STEPS}).`);
+      }
+      if (stepCount > MAX_EXECUTION_STEPS) {
+        throw new Error(`Max execution steps (${MAX_EXECUTION_STEPS}) reached. Possible infinite loop detected.`);
       }
 
       // Fast path track execution frequency

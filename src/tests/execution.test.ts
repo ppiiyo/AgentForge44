@@ -118,4 +118,64 @@ describe('StatefulExecutionEngine Unit Suite', () => {
     expect(logB).toBeDefined();
     expect(logOutput).toBeDefined();
   });
+
+  it('should execute a 10-node sequential chain successfully', async () => {
+    // 10 nodes: Input + 8 Prompts + 1 Output
+    const nodes: FlowNode[] = [
+      { id: 'input', type: 'input', title: 'Input', x: 0, y: 0, fields: { variables: [] }, description: '' },
+      { id: 'n1', type: 'prompt', title: 'Node 1', x: 0, y: 0, fields: { template: '1' }, description: '' },
+      { id: 'n2', type: 'prompt', title: 'Node 2', x: 0, y: 0, fields: { template: '2' }, description: '' },
+      { id: 'n3', type: 'prompt', title: 'Node 3', x: 0, y: 0, fields: { template: '3' }, description: '' },
+      { id: 'n4', type: 'prompt', title: 'Node 4', x: 0, y: 0, fields: { template: '4' }, description: '' },
+      { id: 'n5', type: 'prompt', title: 'Node 5', x: 0, y: 0, fields: { template: '5' }, description: '' },
+      { id: 'n6', type: 'prompt', title: 'Node 6', x: 0, y: 0, fields: { template: '6' }, description: '' },
+      { id: 'n7', type: 'prompt', title: 'Node 7', x: 0, y: 0, fields: { template: '7' }, description: '' },
+      { id: 'n8', type: 'prompt', title: 'Node 8', x: 0, y: 0, fields: { template: '8' }, description: '' },
+      { id: 'output', type: 'output', title: 'Output', x: 0, y: 0, fields: {}, description: '' }
+    ];
+
+    const connections: FlowConnection[] = [
+      { id: 'c1', sourceId: 'input', targetId: 'n1' },
+      { id: 'c2', sourceId: 'n1', targetId: 'n2' },
+      { id: 'c3', sourceId: 'n2', targetId: 'n3' },
+      { id: 'c4', sourceId: 'n3', targetId: 'n4' },
+      { id: 'c5', sourceId: 'n4', targetId: 'n5' },
+      { id: 'c6', sourceId: 'n5', targetId: 'n6' },
+      { id: 'c7', sourceId: 'n6', targetId: 'n7' },
+      { id: 'c8', sourceId: 'n7', targetId: 'n8' },
+      { id: 'c9', sourceId: 'n8', targetId: 'output' }
+    ];
+
+    const engine = new StatefulExecutionEngine(nodes, connections);
+    const runResult = await engine.runWorkflow();
+
+    expect(runResult.logs.length).toBe(10);
+    expect(runResult.finalResult).toBeDefined();
+  });
+
+  it('should detect infinite loop and terminate at step 50', async () => {
+    // 5 nodes in a loop: Input + N1 + N2 + N3 + N4 + N5 (each executed up to 10 times, total steps > 50)
+    const nodes: FlowNode[] = [
+      { id: 'input', type: 'input', title: 'Input', x: 0, y: 0, fields: { variables: [] }, description: '' },
+      { id: 'n1', type: 'prompt', title: 'Node 1', x: 0, y: 0, fields: { template: '1' }, description: '' },
+      { id: 'n2', type: 'prompt', title: 'Node 2', x: 0, y: 0, fields: { template: '2' }, description: '' },
+      { id: 'n3', type: 'prompt', title: 'Node 3', x: 0, y: 0, fields: { template: '3' }, description: '' },
+      { id: 'n4', type: 'prompt', title: 'Node 4', x: 0, y: 0, fields: { template: '4' }, description: '' },
+      { id: 'n5', type: 'prompt', title: 'Node 5', x: 0, y: 0, fields: { template: '5' }, description: '' }
+    ];
+
+    const connections: FlowConnection[] = [
+      { id: 'c1', sourceId: 'input', targetId: 'n1' },
+      { id: 'c2', sourceId: 'n1', targetId: 'n2' },
+      { id: 'c3', sourceId: 'n2', targetId: 'n3' },
+      { id: 'c4', sourceId: 'n3', targetId: 'n4' },
+      { id: 'c5', sourceId: 'n4', targetId: 'n5' },
+      { id: 'c6', sourceId: 'n5', targetId: 'n1' } // backedge
+    ];
+
+    const engine = new StatefulExecutionEngine(nodes, connections);
+    
+    // The engine should throw the custom Max execution steps error
+    await expect(engine.runWorkflow()).rejects.toThrow('Max execution steps (50) reached. Possible infinite loop detected.');
+  });
 });

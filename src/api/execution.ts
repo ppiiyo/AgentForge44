@@ -1,4 +1,6 @@
 import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../types.js';
+
+export const MAX_EXECUTION_STEPS = 50;
 import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
 import { executeTool } from './tools.js';
 import { searchIndexedLibrary } from './advancedPhase4.js';
@@ -156,7 +158,7 @@ export class StatefulExecutionEngine {
       return visited;
     };
 
-    let totalStepsExecuted = 0;
+    let stepCount = 0;
 
     let safetyCeiling = 500; // global safety ticker limits
     while (activatedNodes.size > 0 && safetyCeiling-- > 0) {
@@ -186,9 +188,12 @@ export class StatefulExecutionEngine {
       // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
       const promises = eligibleNodes.map(async (node) => {
         // Track global steps completed
-        totalStepsExecuted++;
-        if (totalStepsExecuted > 50) {
-          throw new Error("Max execution steps reached");
+        stepCount++;
+        if (stepCount >= Math.floor(MAX_EXECUTION_STEPS * 0.8)) {
+          console.warn(`Warning: Execution step count has reached 80% of the limit (${stepCount}/${MAX_EXECUTION_STEPS}).`);
+        }
+        if (stepCount > MAX_EXECUTION_STEPS) {
+          throw new Error(`Max execution steps (${MAX_EXECUTION_STEPS}) reached. Possible infinite loop detected.`);
         }
 
         // Fast path track execution frequency

@@ -132,4 +132,34 @@ describe('Server API Integration Suite', () => {
       expect(response.body.size).toBeGreaterThanOrEqual(8 * 1024 * 1024);
     });
   });
+
+  describe('Infinite Loop Express Integration', () => {
+    it('should gracefully return 500 and not crash when an infinite loop is executed', async () => {
+      const response = await request(app)
+        .post('/api/runs')
+        .set('Authorization', 'Bearer forge_production_admin_token')
+        .send({
+          nodes: [
+            { id: 'input', type: 'input', title: 'Input', x: 0, y: 0, fields: { variables: [] }, description: '' },
+            { id: 'n1', type: 'prompt', title: 'Node 1', x: 0, y: 0, fields: { template: '1' }, description: '' },
+            { id: 'n2', type: 'prompt', title: 'Node 2', x: 0, y: 0, fields: { template: '2' }, description: '' },
+            { id: 'n3', type: 'prompt', title: 'Node 3', x: 0, y: 0, fields: { template: '3' }, description: '' },
+            { id: 'n4', type: 'prompt', title: 'Node 4', x: 0, y: 0, fields: { template: '4' }, description: '' },
+            { id: 'n5', type: 'prompt', title: 'Node 5', x: 0, y: 0, fields: { template: '5' }, description: '' }
+          ],
+          connections: [
+            { id: 'c1', sourceId: 'input', targetId: 'n1' },
+            { id: 'c2', sourceId: 'n1', targetId: 'n2' },
+            { id: 'c3', sourceId: 'n2', targetId: 'n3' },
+            { id: 'c4', sourceId: 'n3', targetId: 'n4' },
+            { id: 'c5', sourceId: 'n4', targetId: 'n5' },
+            { id: 'c6', sourceId: 'n5', targetId: 'n1' }
+          ]
+        });
+
+      expect(response.status).toBe(500);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('Max execution steps (50) reached. Possible infinite loop detected.');
+    });
+  });
 });
