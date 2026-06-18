@@ -23,7 +23,7 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
 
   constructor() {
     const dbPath = path.join(process.cwd(), 'agentforge.db');
-    this.sqliteInstance = new Database(dbPath);
+    this.sqliteInstance = new Database(dbPath, { timeout: 10000 });
     
     // WAL mode
     this.sqliteInstance.pragma('journal_mode = WAL');

@@ -110,7 +110,8 @@ export default defineConfig(() => {
         '**/dist/**',
         '**/*.spec.ts',
         '**/.{idea,git,cache,output,temp}**'
-      ]
+      ],
+      fileParallelism: false,
     },
   };
 });
