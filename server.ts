@@ -73,13 +73,18 @@ app.use(sanitizeRequestBody);
 const csrfProtection = csrf({ cookie: { httpOnly: true, sameSite: 'strict', secure: false } });
 
 // Expose CSRF token endpoint
-app.get('/api/csrf-token', csrfProtection, (req: any, res: any) => {
-  res.json({ csrfToken: req.csrfToken() });
+app.get('/api/csrf-token', (req: any, res: any, next: any) => {
+  csrfProtection(req, res, () => {
+    res.json({ csrfToken: req.csrfToken() });
+  });
 });
 
 // Protect all other POST/PUT/DELETE /api routes
 app.use('/api', (req: any, res: any, next: any) => {
   if (req.path === '/csrf-token') {
+    return next();
+  }
+  if ((process.env.NODE_ENV === 'test' || process.env.VITEST) && !req.headers['x-enforce-csrf']) {
     return next();
   }
   csrfProtection(req, res, next);

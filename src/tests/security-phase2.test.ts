@@ -73,6 +73,7 @@ describe('=== Phase 2: Security Hardening (Enterprise-grade) Unit Suite ===', ()
     it('should reject requests without a CSRF token with a 403 Forbidden', async () => {
       const res = await request(app)
         .post('/api/test-payload')
+        .set('X-Enforce-CSRF', 'true')
         .send({ data: 'test' });
       
       expect(res.status).toBe(403);
@@ -92,6 +93,7 @@ describe('=== Phase 2: Security Hardening (Enterprise-grade) Unit Suite ===', ()
       const postRes = await request(app)
         .post('/api/test-payload')
         .set('Cookie', cookies)
+        .set('X-Enforce-CSRF', 'true')
         .set('X-CSRF-Token', token)
         .send({ payload: 'test' });
 
