@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GeminiProvider, OpenAIProvider, AnthropicProvider, OllamaProvider } from '../../api/providers.js';
+import { cache } from '../../services/cache.js';
 
 // Mock the GoogleGenAI SDK module
 vi.mock('@google/genai', () => {
@@ -25,6 +26,7 @@ describe('LLM Providers Unit Suite', () => {
 
   beforeEach(() => {
     global.fetch = vi.fn();
+    cache.clearLocalCache();
   });
 
   afterEach(() => {
