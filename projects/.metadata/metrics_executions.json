@@ -2488,5 +2488,145 @@
     "totalLatencyMs": 8,
     "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
     "nodeExecutions": []
+  },
+  {
+    "id": "exec_1781805447672_j30dq",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-18T17:57:21.756Z",
+    "finishedAt": "2026-06-18T17:57:27.672Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 5916,
+    "errorMessage": "[SERVICE_OVERLOAD] LLM request failed: Model provider temporary service overload. (Original: {\"error\":{\"code\":503,\"message\":\"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.\",\"status\":\"UNAVAILABLE\"}})",
+    "nodeExecutions": []
+  },
+  {
+    "id": "exec_1781805461578_0t12i",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-18T17:57:39.812Z",
+    "finishedAt": "2026-06-18T17:57:41.578Z",
+    "status": "success",
+    "totalTokens": 735,
+    "totalCostUsd": 0.003699,
+    "totalLatencyMs": 1766,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_rzcqqccxw",
+        "executionId": "exec_1781805461578_0t12i",
+        "nodeId": "cb-input",
+        "nodeType": "cb",
+        "tokensUsed": 51,
+        "costUsd": 0.000263,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"message\",\n    \"value\": \"Hello! Tell me an interesting fact about deep space.\",\n    \"label\": \"User Message\"\n  }\n]",
+        "outputPreview": "{\n  \"message\": \"Hello! Tell me an interesting fact about deep space.\"\n}"
+      },
+      {
+        "id": "node_exec_k8ev020n9",
+        "executionId": "exec_1781805461578_0t12i",
+        "nodeId": "cb-prompt",
+        "nodeType": "cb",
+        "tokensUsed": 57,
+        "costUsd": 0.000398,
+        "latencyMs": 0,
+        "inputPreview": "You are a friendly astronomer. Respond to this query in a humorous & smart way:\n\n\"{message}\"",
+        "outputPreview": "You are a friendly astronomer. Respond to this query in a humorous & smart way:\n\n\"Hello! Tell me an interesting fact about deep space.\""
+      },
+      {
+        "id": "node_exec_mcjd6nc9r",
+        "executionId": "exec_1781805461578_0t12i",
+        "nodeId": "cb-gemini",
+        "nodeType": "cb",
+        "tokensUsed": 327,
+        "costUsd": 0.00009,
+        "latencyMs": 1766,
+        "inputPreview": "You are a friendly astronomer. Respond to this query in a humorous & smart way:\n\n\"Hello! Tell me an interesting fact about deep space.\"",
+        "outputPreview": "Greetings, fellow space traveler! 🚀\n\nIf you’re looking for a fact that will make your brain do a little backflip, look no further than the **\"Diamond Rain\"** occurring on Neptune and Uranus.\n\nHere’s "
+      },
+      {
+        "id": "node_exec_vzxa6ukps",
+        "executionId": "exec_1781805461578_0t12i",
+        "nodeId": "cb-output",
+        "nodeType": "cb",
+        "tokensUsed": 300,
+        "costUsd": 0.002948,
+        "latencyMs": 0,
+        "inputPreview": "Pipeline Stream Completed",
+        "outputPreview": "Greetings, fellow space traveler! 🚀\n\nIf you’re looking for a fact that will make your brain do a little backflip, look no further than the **\"Diamond Rain\"** occurring on Neptune and Uranus.\n\nHere’s "
+      }
+    ]
+  },
+  {
+    "id": "574e2969-1030-440d-bdce-8df1c94a7e59",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-18T18:11:05.966Z",
+    "finishedAt": "2026-06-18T18:11:05.970Z",
+    "status": "success",
+    "totalTokens": 85,
+    "totalCostUsd": 0.000543,
+    "totalLatencyMs": 4,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_ccpb47bbx",
+        "executionId": "574e2969-1030-440d-bdce-8df1c94a7e59",
+        "nodeId": "inp-1",
+        "nodeType": "inp",
+        "tokensUsed": 61,
+        "costUsd": 0.000333,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"unsafe\",\n    \"value\": \"<script>alert(\\\"xss\\\")</script><iframe src=\\\"javascript:alert(1)\\\"></iframe>\",\n    \"label\": \"Unsafe\"\n  }\n]",
+        "outputPreview": "{\n  \"unsafe\": \"<script>alert(\\\"xss\\\")</script><iframe src=\\\"javascript:alert(1)\\\"></iframe>\"\n}"
+      },
+      {
+        "id": "node_exec_3a1ttakcd",
+        "executionId": "574e2969-1030-440d-bdce-8df1c94a7e59",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 24,
+        "costUsd": 0.00021,
+        "latencyMs": 0,
+        "inputPreview": "Before: {unsafe}",
+        "outputPreview": "Before: <script>alert(\"xss\")</script><iframe src=\"javascript:alert(1)\"></iframe>"
+      }
+    ]
+  },
+  {
+    "id": "efe72d72-9fa4-41c7-bb00-9e88ca95fd6b",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-06-18T18:11:44.371Z",
+    "finishedAt": "2026-06-18T18:11:44.388Z",
+    "status": "success",
+    "totalTokens": 67,
+    "totalCostUsd": 0.000363,
+    "totalLatencyMs": 17,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_3iv7o24nl",
+        "executionId": "efe72d72-9fa4-41c7-bb00-9e88ca95fd6b",
+        "nodeId": "inp-1",
+        "nodeType": "inp",
+        "tokensUsed": 61,
+        "costUsd": 0.000333,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"unsafe\",\n    \"value\": \"<script>alert(\\\"xss\\\")</script><iframe src=\\\"javascript:alert(1)\\\"></iframe>\",\n    \"label\": \"Unsafe\"\n  }\n]",
+        "outputPreview": "{\n  \"unsafe\": \"<script>alert(\\\"xss\\\")</script><iframe src=\\\"javascript:alert(1)\\\"></iframe>\"\n}"
+      },
+      {
+        "id": "node_exec_37fd314hn",
+        "executionId": "efe72d72-9fa4-41c7-bb00-9e88ca95fd6b",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 6,
+        "costUsd": 0.00003,
+        "latencyMs": 14,
+        "inputPreview": "Before: {unsafe}",
+        "outputPreview": "Before: "
+      }
+    ]
   }
 ]

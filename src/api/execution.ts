@@ -1,4 +1,5 @@
 import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../types.js';
+import DOMPurify from 'isomorphic-dompurify';
 
 export const MAX_EXECUTION_STEPS = 50;
 import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
@@ -268,6 +269,9 @@ export class StatefulExecutionEngine {
               const regex = new RegExp(`\\{${k}\\}`, 'g');
               renderedPrompt = renderedPrompt.replace(regex, String(v));
             });
+
+            // Sanitize rendered prompt to prevent XSS
+            renderedPrompt = DOMPurify.sanitize(renderedPrompt);
 
             nodeOutputs[node.id] = renderedPrompt;
             activeValue = renderedPrompt;

@@ -4,6 +4,7 @@ import { MAX_EXECUTION_STEPS } from "./execution.js";
 import { routeNode } from "../nodes/RouterNode.js";
 import { validateURLForSSRF, validateUrl } from "../utils/ssrf-validator.js";
 import { safeJsonParse } from "../utils/safe-json.js";
+import DOMPurify from 'isomorphic-dompurify';
 
 function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | null {
   const conn = connections.find(c => c.sourceId === nodeId);
@@ -339,6 +340,9 @@ export async function executePipeline(
             const regex = new RegExp(`\\{${k}\\}`, 'g');
             renderedPrompt = renderedPrompt.replace(regex, String(v));
           });
+
+          // Sanitize the rendered prompt to prevent XSS
+          renderedPrompt = DOMPurify.sanitize(renderedPrompt);
 
           nodeOutputs[node.id] = renderedPrompt;
           activeValue = renderedPrompt;
