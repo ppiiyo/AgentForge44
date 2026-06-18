@@ -3,8 +3,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import csrf from 'csurf';
 import { setupSecurity } from './src/middleware/security.js';
 import { sanitizeRequestBody } from './src/middleware/sanitize.js';
 import schedulerAndWebhooksRouter from './src/api/schedulerAndWebhooks.js';
@@ -49,7 +47,6 @@ app.use(cors({
 }));
 
 setupSecurity(app);
-app.use(cookieParser());
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
@@ -69,26 +66,6 @@ app.use('/api', apiRateLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeRequestBody);
-
-const csrfProtection = csrf({ cookie: { httpOnly: true, sameSite: 'strict', secure: false } });
-
-// Expose CSRF token endpoint
-app.get('/api/csrf-token', (req: any, res: any, next: any) => {
-  csrfProtection(req, res, () => {
-    res.json({ csrfToken: req.csrfToken() });
-  });
-});
-
-// Protect all other POST/PUT/DELETE /api routes
-app.use('/api', (req: any, res: any, next: any) => {
-  if (req.path === '/csrf-token') {
-    return next();
-  }
-  if ((process.env.NODE_ENV === 'test' || process.env.VITEST) && !req.headers['x-enforce-csrf']) {
-    return next();
-  }
-  csrfProtection(req, res, next);
-});
 
 // Endpoint for testing request payload limits
 app.post('/api/test-payload', (req: express.Request, res: express.Response) => {
@@ -136,9 +113,6 @@ app.get('/api/health', (req: express.Request, res: express.Response) => {
 
 // Sentry Error Capture Middleware
 app.use((err: any, req: express.Request, res: express.Response, next: any) => {
-  if (err && err.code === 'EBADCSRFTOKEN') {
-    return res.status(403).json({ error: 'Invalid or missing CSRF token' });
-  }
   if (process.env.SENTRY_DSN) {
     Sentry.captureException(err);
   }

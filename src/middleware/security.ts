@@ -6,19 +6,32 @@ export function setupSecurity(app: Express) {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          "https://app.posthog.com",
+          "https://*.sentry.io",
+          "https://cdn.jsdelivr.net",
+          "https://unpkg.com"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'", "https://api.openai.com", "https://generativelanguage.googleapis.com"],
-        fontSrc: ["'self'", "data:"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-      },
+        connectSrc: [
+          "'self'",
+          "ws:",
+          "wss:",
+          "https://app.posthog.com",
+          "https://*.sentry.io",
+          "https://api.openai.com",
+          "https://generativelanguage.googleapis.com",
+          "https://api.anthropic.com"
+        ],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        frameSrc: ["'self'"] // Allowed for preview iframes
+      }
     },
-    crossOriginEmbedderPolicy: true,
-    crossOriginOpenerPolicy: true,
-    crossOriginResourcePolicy: { policy: "same-site" },
+    crossOriginEmbedderPolicy: false, // critical for socket.io inside iframes
+    crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
 }
-

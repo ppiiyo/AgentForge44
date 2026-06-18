@@ -17,26 +17,6 @@ export const FlowConnectionSchema = z.object({
   targetId: z.string().min(1, "Connection targetId is required"),
 });
 
-export const NodeSchema = z.object({
-  id: z.string().min(1, "Node ID is required"),
-  type: z.string(),
-  title: z.string().optional(),
-  x: z.number().optional(),
-  y: z.number().optional(),
-});
-
-export const EdgeSchema = z.object({
-  id: z.string().optional(),
-  sourceId: z.string().min(1, "Source ID is required"),
-  targetId: z.string().min(1, "Target ID is required"),
-});
-
-export const SaveGraphSchema = z.object({
-  name: z.string().min(1).max(100),
-  nodes: z.array(NodeSchema).max(100),
-  edges: z.array(EdgeSchema).max(200),
-});
-
 export const GraphSaveSchema = z.object({
   id: z.string().optional(),
   name: z.string().optional(),
