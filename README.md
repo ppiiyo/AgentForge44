@@ -146,6 +146,74 @@ AgentForge44/
 
 ---
 
+## 📖 API Documentation
+
+Платформа AgentForge44 предоставляет гибкий REST API для программного создания, изменения, выполнения и мониторинга мультиагентных систем.
+
+### Swagger/OpenAPI Интерактивная Консоль
+- **Swagger UI**: Вы можете открыть консоль тестирования напрямую в браузере по адресу `/api-docs`.
+- **Файл Спецификации**: Полная OpenAPI-спецификация в формате JSON доступна по эндпоинту `/swagger.json`.
+- **Авторизация**: Для выполнения защищенных запросов в Swagger UI используйте кнопку **Authorize** и укажите JWT Bearer токен в формате `Bearer YOUR_JWT_TOKEN`.
+
+### Пример использования cURL для ключевых эндпоинтов
+
+Ниже приведены примеры запросов к основным компонентам API:
+
+#### 1. Создать/Сохранить новый рабочий граф (`POST /api/graphs`)
+```bash
+curl -X POST http://localhost:3000/api/graphs \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "coder-flow",
+    "name": "Self-Correcting Multi-Agent Coder",
+    "nodes": [
+      {
+        "id": "input-1",
+        "type": "input",
+        "position": { "x": 100, "y": 150 },
+        "data": { "title": "Input Specs", "value": "Write a fast fibonacci function" }
+      },
+      {
+        "id": "llm-critic",
+        "type": "llm",
+        "position": { "x": 350, "y": 150 },
+        "data": { "title": "Gemini Critic", "model": "gemini-2.5-flash", "prompt": "Check complexity and correct error." }
+      }
+    ],
+    "connections": [
+      { "id": "e-1", "source": "input-1", "target": "llm-critic" }
+    ]
+  }'
+```
+
+#### 2. Загрузить конфигурацию графа по ID (`GET /api/graphs/:id`)
+```bash
+curl -X GET http://localhost:3000/api/graphs/coder-flow \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+#### 3. Запустить цепочку выполнения агентов (`POST /api/execute`)
+```bash
+curl -X POST http://localhost:3000/api/execute \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graphId": "coder-flow",
+    "inputs": {
+      "user_request": "Solve bubble sort in rust"
+    }
+  }'
+```
+
+#### 4. Получить сводную статистику употребления токенов и затрат (`GET /api/metrics/summary`)
+```bash
+curl -X GET http://localhost:3000/api/metrics/summary \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
 ## 🧪 Тестирование и верификация
 
 Запустите автоматизированные тесты для проверки целостности логики выполнения узлов:

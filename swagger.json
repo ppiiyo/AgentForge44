@@ -1,0 +1,354 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AgentForge44 API",
+    "version": "1.0.0",
+    "description": "API для визуального конструктора мультиагентных систем"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT Bearer token to authorize requests."
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Retrieve server health status",
+        "description": "Health check endpoint for verifying server status and connections.",
+        "responses": {
+          "200": {
+            "description": "Server is online and healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/graphs": {
+      "post": {
+        "summary": "Save a new graph setup",
+        "description": "Save a new agent flow graph configuration to persistence.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "example": "my-visual-agent"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "My Visual Agent"
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "connections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Graph configuration saved successfully."
+          },
+          "400": {
+            "description": "Validation payload error."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        }
+      }
+    },
+    "/api/graphs/{id}": {
+      "get": {
+        "summary": "Retrieve a single graph configuration by ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-visual-agent"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully fetched graph config."
+          },
+          "404": {
+            "description": "Graph not found."
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an existing graph configuration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "connections": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Graph successfully modified."
+          },
+          "404": {
+            "description": "Target graph not found."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a saved graph schema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Graph permanently erased."
+          },
+          "404": {
+            "description": "Graph target not found."
+          }
+        }
+      }
+    },
+    "/api/graphs/{id}/versions": {
+      "post": {
+        "summary": "Create a version commit snapshot checkpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message",
+                  "snapshot"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "example": "Added sub-agents"
+                  },
+                  "author": {
+                    "type": "string",
+                    "example": "admin"
+                  },
+                  "snapshot": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkpoint version snapshot registered."
+          },
+          "400": {
+            "description": "Missing mandatory snapshot payload."
+          }
+        }
+      },
+      "get": {
+        "summary": "List all version rollback snapshots of a graph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of version headers returned successfully."
+          }
+        }
+      }
+    },
+    "/api/graphs/{id}/rollback/{versionId}": {
+      "post": {
+        "summary": "Rollback active graph context to a specific version block ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Graph rolled back successfully."
+          }
+        }
+      }
+    },
+    "/api/graphs/{id}/diff": {
+      "get": {
+        "summary": "Compare differences between two version ID references",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "v1",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "v2",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of added, modified, deleted vertices/links."
+          }
+        }
+      }
+    },
+    "/api/graphs/{id}/presence": {
+      "get": {
+        "summary": "Retrieve collaboration sync presences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presence peer listing and history."
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

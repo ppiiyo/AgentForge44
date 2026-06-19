@@ -1,6 +1,7 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import path from 'path';
 
 const options = {
   definition: {
@@ -12,13 +13,38 @@ const options = {
     },
     servers: [
       { url: 'http://localhost:3000' }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your JWT Bearer token to authorize requests.'
+        }
+      }
+    },
+    security: [
+      {
+        bearerAuth: []
+      }
     ]
   },
-  apis: ['./server.ts', './src/api/*.ts']
+  apis: [
+    path.join(process.cwd(), 'server.ts'),
+    path.join(process.cwd(), 'src/api/*.ts'),
+    path.join(process.cwd(), 'src/api/**/*.ts')
+  ]
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+export const swaggerSpec = swaggerJsdoc(options);
 
 export function setupSwagger(app: Express) {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  
+  // Endpoint to serve generated swagger.json directly
+  app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
 }

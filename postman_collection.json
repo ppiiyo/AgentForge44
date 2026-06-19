@@ -1,0 +1,261 @@
+{
+  "info": {
+    "_postman_id": "44dfbe91-ea60-449d-b4b4-07d2c3dfb8ee",
+    "name": "AgentForge44 API Collection",
+    "description": "Enterprise ready multi-agent visual orchestrator backend API collection containing key automation and visualization routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "General Options",
+      "item": [
+        {
+          "name": "Server Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Verifies that the backend Express server and essential background workers are responsive and active."
+          },
+          "response": [
+            {
+              "name": "Healthy Server Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/health",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "health"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewtype": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Service Swagger Spec JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/swagger.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "swagger.json"
+              ]
+            },
+            "description": "Downloads the generated live OpenAPI v3 compliant json specification model."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agent Workflows and Graphs",
+      "item": [
+        {
+          "name": "Save Agent Graph Configuration",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"coder-flow\",\n  \"name\": \"Self-Correcting Multi-Agent Coder\",\n  \"nodes\": [\n    {\n      \"id\": \"input-1\",\n      \"type\": \"input\",\n      \"position\": { \"x\": 100, \"y\": 150 },\n      \"data\": { \"title\": \"Input Specs\", \"value\": \"Write a fast fibonacci function\" }\n    },\n    {\n      \"id\": \"llm-critic\",\n      \"type\": \"llm\",\n      \"position\": { \"x\": 350, \"y\": 150 },\n      \"data\": { \"title\": \"Gemini Critic\", \"model\": \"gemini-2.5-flash\", \"prompt\": \"Check complexity and correct error.\" }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"e-1\",\n      \"source\": \"input-1\",\n      \"target\": \"llm-critic\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/graphs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "graphs"
+              ]
+            },
+            "description": "Creates or updates an active multiagent pipeline layout on server storage."
+          },
+          "response": [
+            {
+              "name": "Successfully Saved Graph Spec",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewtype": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"id\": \"coder-flow\",\n  \"name\": \"coder-flow\",\n  \"nodes\": [\n    {\n      \"id\": \"input-1\",\n      \"type\": \"input\",\n      \"position\": { \"x\": 100, \"y\": 150 },\n      \"data\": { \"title\": \"Input Specs\", \"value\": \"Write a fast fibonacci function\" }\n    },\n    {\n      \"id\": \"llm-critic\",\n      \"type\": \"llm\",\n      \"position\": { \"x\": 350, \"y\": 150 },\n      \"data\": { \"title\": \"Gemini Critic\", \"model\": \"gemini-2.5-flash\", \"prompt\": \"Check complexity and correct\" }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"e-1\",\n      \"source\": \"input-1\",\n      \"target\": \"llm-critic\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Retrieve Saved Graph Context",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/graphs/coder-flow",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "graphs",
+                "coder-flow"
+              ]
+            },
+            "description": "Fetches a saved agent workflow specification JSON matching the graphID path."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Agent Execution Engine",
+      "item": [
+        {
+          "name": "Run Multi-Agent Pipeline Graph",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"graphId\": \"coder-flow\",\n  \"inputs\": {\n    \"user_request\": \"Solve binary search in rust\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "execute"
+              ]
+            },
+            "description": "Sends starting payloads to trigger execute flow queues and self-correction code nodes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Monitoring and Auditing",
+      "item": [
+        {
+          "name": "Retrieve Metrics dashboard Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "metrics",
+                "summary"
+              ]
+            },
+            "description": "Assembles a chronological summation of token counts, latency profiles, and estimated dollars spent."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "bearerToken",
+      "value": "your-jwt-auth-token-here",
+      "type": "string"
+    }
+  ]
+}
