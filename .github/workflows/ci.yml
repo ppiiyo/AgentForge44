@@ -23,6 +23,15 @@ jobs:
       - name: Install Application Dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Run npm audit security scan
+        run: npm audit --audit-level=high
+
+      - name: Run Snyk Dependency Scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
       - name: Run TypeScript Linter Check
         run: npm run lint
 

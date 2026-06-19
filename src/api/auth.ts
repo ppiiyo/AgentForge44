@@ -8,9 +8,9 @@ export class SecretsShield {
   private algorithm = 'aes-256-gcm';
   private masterKey: Buffer;
 
-  constructor() {
+  constructor(customKeySource?: string) {
     // Collect server master key or synthesize a persistent fallback
-    const keySource = process.env.ENCRYPTION_MASTER_KEY || "agentforge_master_secret_aes_32bytes_key_002";
+    const keySource = customKeySource || process.env.ENCRYPTION_MASTER_KEY || "agentforge_master_secret_aes_32bytes_key_002";
     // Ensure accurate 32-byte master key size
     this.masterKey = crypto.scryptSync(keySource, 'agentforge-salt', 32);
   }

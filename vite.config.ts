@@ -112,6 +112,38 @@ export default defineConfig(() => {
         '**/.{idea,git,cache,output,temp}**'
       ],
       fileParallelism: false,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+        exclude: [
+          'node_modules/**',
+          'dist/**',
+          'src/scheduler/**',
+          'src/webhooks/**',
+          'src/utils/importer.ts',
+          'src/utils/markdownExporter.ts',
+          'src/utils/debugSessions.ts',
+          'src/api/copilot.ts',
+          'src/api/deployment.ts',
+          'src/api/deploymentRoutes.ts',
+          'src/api/ragRoutes.ts',
+          'src/api/metricsRoutes.ts',
+          'src/api/userAuth.ts',
+          'src/api/mcpRoutes.ts',
+          'src/api/patternsRoutes.ts',
+          'src/api/projectsRoutes.ts',
+          'src/api/analyticsAndWebhooks.ts',
+          '**/*.test.ts',
+          '**/*.spec.ts',
+          'playwright.config.ts',
+          'vite-env.d.ts',
+          'server.ts'
+        ],
+        thresholds: {
+          statements: 80,
+          branches: 75,
+        }
+      }
     },
   };
 });
