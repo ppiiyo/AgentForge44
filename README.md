@@ -1,127 +1,137 @@
 # 🌌 AgentForge44
 
-An elite, low-code interactive visual orchestration platform designed for designing, testing, and running self-correcting multi-agent AI workflows on top of modern LLMs (Google Gemini, OpenAI GPT, Anthropic Claude, and offline Ollama).
+> A production-grade, low-code interactive visual orchestration platform designed to build, test, evaluate, and deploy self-correcting multi-agent AI workflows. Connect modern LLMs (Google Gemini, OpenAI GPT, Anthropic Claude, and offline Ollama), stream programmatic pipelines, integrate vector memory, and collaborate room-wide in real-time.
 
 ---
 
 ### 🌐 Select Language / Выберите язык / 选择语言
 [![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](#-english-documentation)
 [![Русский](https://img.shields.io/badge/Language-%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-red?style=for-the-badge)](#-русская-документация)
-[![中文](https://img.shields.io/badge/Language-%E4%B8%AD%D6%96%E6%96%87-red?style=for-the-badge)](#-中文文档)
+[![中文](https://img.shields.io/badge/Language-%E4%B8%AD%D6%96%E6%96%87-red?style=for-the-badge)](#-中文官方文档)
 
 ---
 
 # 🇬🇧 English Documentation
 
-## 🌟 Introduction
-Modern AI development is transitioning from single prompt interactions to complex, sovereign multi-agent loops. However, orchestrating sequential prompt injections, parsing LLM decisions, and connecting inputs to evaluation critical reviews typically requires hundreds of lines of fragile boilerplate code.
+## 🚀 Overview
 
-**AgentForge44** is a professional-grade low-code visual pipeline manager. It allows developers, product managers, and AI researchers to visually design complex multi-agent execution graphs, connect external network endpoints, ingest unstructured files into a localized RAG vector search, and run instant full-chain dry runs with real-time token telemetry and live cost estimates.
+### What is AgentForge44?
+AgentForge44 is a full-stack, low-code Visual Workflow Architect and runtime environment designed for multi-agent LLM systems. It provides an intuitive node-based editor representing variables, prompt templates, reasoning chains, code execution, search indices, and reviewers, connected to a robust, secure Node.js backend. 
+
+### Why AgentForge44? (The Problem)
+While prompt engineering is simple for single requests, building multi-agent pipelines with conditional routing, self-correction loops, document indexing, and user feedback cycles usually requires writing thousands of lines of fragile boilerplate code. Designing, debugging, and demonstrating these systems to non-technical stakeholders becomes highly complex. AgentForge44 solves this by replacing fragile custom scripts with a unified visual engineering workbench and deployment-ready runtime.
 
 ### For Whom is AgentForge44?
-- **AI Core Architects**: Visually sketch complex, nested prompt dependencies & feedback routing.
-- **Enterprise Devs**: Spin up production-ready REST APIs connected to active state graphs in seconds.
-- **Researchers**: Conduct comparative reviews across different LLM families (Gemini, GPT, Claude, Ollama) on identical prompts under the same canvas state.
-- **Product Managers**: Easily toggle a visual **Showcase Presentation Mode** to demonstrate fully interactive pipeline steps to stakeholders without the distraction of code editors or configuration sidebars.
+- **AI Core Architects**: Visually model complex reasoning structures, nested inputs, and feedback loops with direct control over prompt dependencies.
+- **Enterprise Engineering Teams**: Rapidly prototype workflows and spin up secure REST API endpoints linked to active state graphs in seconds.
+- **Researchers & QA Testers**: Stress-test different LLM families (Gemini, Claude, GPT, Ollama) on the exact same inputs under identical environment constraints.
+- **Product Managers & Stakeholders**: Eliminate clutter by using **Showcase Presentation Mode** to demonstrate fully interactive product mockups and logic to clients.
 
 ---
 
-## 🖼️ Interactive Console Layout
+## 🖼️ Architectural Diagram
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│  AgentForge Console                                 [Run] [Save] [Share]│
-├────────────────────────────────────────────────────────────────────────┤
-│  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
-│  │  Input Node   ├───────►│  Prompt Node  ├───────►│  Gemini Node  │   │
-│  │  Variables    │        │  Templates    │        │  Reasoning    │   │
-│  └───────────────┘        └───────────────┘        └───────┬───────┘   │
-│                                                            │           │
-│                                                            ▼           │
-│  ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   │
-│  │ Output Node   │◄───────┤  Trace Audit  │◄───────┤ Critic Node   │   │
-│  │ Payload Out   │ (Retry)│  Execution    │        │ self-correct  │   │
-│  └───────────────┘        └───────────────┘        └───────────────┘   │
-└────────────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────┐
+  │                 AGENTFORGE44 USER INTERFACE                 │
+  │  ┌──────────────┐    ┌─────────────────┐    ┌────────────┐  │
+  │  │  Flow Canvas │    │ Configure Panel │    │ Log Viewer │  │
+  │  │ [Showcase ON]│    │ [Model Selector]│    │ [Telemetry]│  │
+  │  └──────┬───────┘    └────────┬────────┘    └─────┬──────┘  │
+  └─────────┼─────────────────────┼───────────────────┼─────────┘
+            │                     │                   │
+  ┌─────────┼─────────────────────┼───────────────────┼─────────┐
+  │         ▼                     ▼                   ▼         │
+  │            NODE.JS / EXPRESS CORE & WEBSOCKET GATEWAY       │
+  │  ┌──────────────────────┐   ┌────────────────────────────┐  │
+  │  │  Drizzle ORM Engine  │   │  Socket.IO Live Presence   │  │
+  │  │ (PostgreSQL/SQLite)  │   │    (Multi-User Cursor)     │  │
+  │  └──────────┬───────────┘   └──────────────┬─────────────┘  │
+  │             │                              │                │
+  │  ┌──────────▼───────────┐   ┌──────────────▼─────────────┐  │
+  │  │   Isolate Worker     │   │   Secret Payload Masker    │  │
+  │  │ (VM2 / secure thread)│   │ (Anti-API Leak Protection) │  │
+  │  └──────────────────────┘   └────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✨ Key Platform Features
+## 💎 Stellar Capabilities & Features
 
 ### 1. Advanced Low-Code Visual Builder
-- Drag-and-drop nodes to instantly spawn logic components (`Input`, `Prompt`, `LLM`, `Reviewer`, `Router`, `Tool`, `RAG`, `Output`).
-- Connect complex routing edges with SVG graphics renderer supporting deep real-time scale zooming (from `50%` to `150%`).
-- Dual-mode snapping grid support for professional, pixel-perfect alignment.
+* **Drag-and-Drop Editor**: Build flows from rich, pre-configured nodes (`Input`, `Prompt`, `LLM`, `Reviewer`, `Router`, `Tool`, `RAG`, `Output`).
+* **Fluid Navigation Layout**: Interactive Zoom & scale adjustment from `50%` up to `150%` paired with dynamic vector edge rendering.
+* **Pixel-Perfect Alignment**: Snap-to-Grid support ensures flow structures are tidy, readable, and consistent.
 
-### 2. Multi-Provider Registry
-- Standardized endpoint integration to run Gemini (3.5 Flash/Pro, 3.1 Flash Lite), OpenAI GPT (4o, 4o Mini, o1 Mini), Anthropic Claude (3.5 Sonnet, 3.5 Haiku), or offline local LLaMA/Mistral via Ollama.
-- Seamless provider dropdown selector grouped cleanly by active host registration schemas.
+### 2. Multi-Provider Model Registry
+* **Direct Integration**: Use Google Gemini (3.5 Flash/Pro, 3.1 Flash Lite), OpenAI GPT (4o, 4o Mini, o1 Mini), Anthropic Claude (3.5 Sonnet, 3.5 Haiku), or keep intelligence completely local and private via Ollama (Llama 3, Mistral).
+* **Speed & Cost Telemetry**: Instantly compare speeds and estimated costs per node execution.
 
-### 3. Localization & Universal Adaptability
-- Native multilingual UI support (English, Russian, Chinese) with dynamic label updates across the entire canvas, configuration panel, and analytics monitors.
+### 3. Showcase Presentation Mode
+* **Minimalist Canvas Focus**: Collapse the Builder Toolbox and Sidebar in a single click (`Showcase Mode: ON`).
+* **Stakeholder Ready**: Trace pipeline logic, execute live tests, and present concepts cleanly without distracting technical editors.
 
 ### 4. Semantic RAG Knowledge Memory
-- Ingest client documents, index text blocks with Gemini embed model, and query localized embeddings. Includes a gorgeous **RAG Visualizer** representing chunk structures & search priorities.
+* **Document Ingestion**: Seamlessly upload customer support docs, PDFs, or manual text assets.
+* **3D Feature Tree Visualizer**: A gorgeous hierarchical RAG visualizer representing vectorized block levels, chunks, and similarity score rankings inside an interactive preview portal.
 
-### 5. Multi-User Space Collaboration (Live Presence)
-- Connected through persistent Socket.io WebSockets. Watch remote team editing cursors hovering and locked card states in real-time.
+### 5. Multi-User Collaboration (Live Presence)
+* **Real-time Cursor Tracking**: Integrated over high-speed WebSockets. Watch team members move nodes, hover, and collaborate.
+* **Conflict prevention**: Interactive node-component locks prevent concurrent race condition mutations.
 
 ### 6. Git-like Versioning & Time Travel
-- Snap, compare, and rollback entire graph configurations with a dedicated visual version timeline diff reader.
+* **State Checkpoints**: Create, list, compare, and rollback full pipeline structures.
+* **Visual diff viewer**: Instantly trace node/variable schema diff structures across past versions.
 
-### 7. Showcase Mode (Presentation Layout)
-- One-click triggers a clean, focused display layout that collapses sidebars and builders. Let stakeholders trace execution vectors on a distraction-free grid!
+### 7. Programmatic Deployment Tools \& API
+* **Automated Swagger Console**: Explore and test REST endpoints programmatically at `/api-docs`.
+* **Hooks & Schedulers**: Configure timed cron triggers or bind webhook endpoints to execute pipelines.
 
 ---
 
-## 🛡️ Elite Architectural Security & Resilience
+## 🛡️ Enterprise Security & Architectural Design
 
-To pass corporate compliance and scale, AgentForge44 includes five enterprise-grade security micro-architectures:
+AgentForge44 includes several built-in security layers to safeguard API calls and infrastructure:
 
-### ⚙️ DB Auto-Seeding & Self-Healing Engine
-*(Implemented in: `src/db/index.ts` & `src/db/adapters.ts`)*
-* **Why**: To prevent standard server crashes inside fresh virtual machines or distributed docker instances due to unapplied database tables.
-* **Mechanism**: On startup, our server scans SQLite/PostgreSQL schemas. It auto-provisions and migrates all necessary assets (`graphs`, `users`, `metrics`, `deployments`, `versions`) within a single database transaction. Zero setup required.
+### ⚙️ Self-Healing DB Migration
+* **Why**: Prevents server startup crashes inside fresh environments or Docker runners due to missing db tables.
+* **How**: On startup, our central database controller automatically checks the active schema. If tables (`graphs`, `users`, `metrics`, `deployments`, `versions`) are missing, it provisions them within a single transaction seamlessly.
 
 ### 🛡️ Secret-Masking Payload Cleanser
-*(Implemented in: `src/middleware/sanitize.ts`)*
-* **Why**: To safeguard private API credentials and passwords from being dumped into plaintext log outputs.
-* **Mechanism**: A recursive sanitizer scans all JSON workloads. Any matching properties like `/api[_-]?key|password|jwt|secret|auth|token/i` are immediately masked with `***MASKED***` without breaking the request's internal logic.
+* **Why**: Prevents accidental exposure of API private keys or auth secrets inside server terminal logs or performance records.
+* **How**: A recursive payload cleanser sweeps incoming requests. Any fields matching `/api[_-]?key|password|jwt|secret|auth|token/i` are immediately masked with `***MASKED***` without breaking the operational workflow.
 
-### 📊 Sliding Window Usage Rate-Limiter
-*(Implemented in: `src/middleware/rateLimit.js`)*
-* **Why**: To prevent DoS attacks, Gemini cost spikes, and token resource depletion.
-* **Mechanism**: A dynamic rate-limiting sliding window grants 30 requests per minute per IP. Any over-burst responses are blocked with HTTP `429 Too Many Requests`.
+### 📊 Sliding Window Graceful Rate-Limiter
+* **Why**: Safeguards the backend from DoS attempts, Gemini quota spikes, and excessive external token billing.
+* **How**: Monitors client IPs inside a sliding rate window limiting requests to a healthy threshold (default: 30 requests per minute) and responding with a structured `429 Too Many Requests` when triggered.
 
-### 🔄 Structured Clone Parallel Safety
-*(Implemented in: `src/api/execution.ts`)*
-* **Why**: When a visual flow branches into parallel routes and joins back, reference sharing causes mutation side-effects and race conditions.
-* **Mechanism**: The execution pipeline applies modern `structuredClone` checkpoints on input payloads. Data is completely isolated across parallel pipelines, leading to pure, side-effect-free execution results.
+### 🔄 Fork Thread Structured Clone Isolation
+* **Why**: Forking a visual flow into parallel paths can cause data corruption if JavaScript references mutate.
+* **How**: Our execution executor enforces complete context isolation across branched routes by creating structured clones of running payloads, guaranteeing thread-safe, race-free parallel pipelines.
 
-### 🛡️ ReDoS-safe Regular Expression Validation
-*(Implemented in: `src/utils/safe-regex.ts` & `src/nodes/RouterNode.ts`)*
-* **Why**: User-defined routing regular expressions with exponential backtracking (e.g. `(a+)+`) can lock the main Node.js event-loop.
-* **Mechanism**: All dynamic routing regex validators are prechecked by a lightweight static syntax scanner. Backtracking loops are blocked safely, preventing Regex Denial of Service (ReDoS) locks.
+### 🛡️ ReDoS-safe Router Regular Expressions
+* **Why**: Malicious or nested regular expressions (like `(a+)+`) can lock up Node's single-threaded event loop.
+* **How**: Dynamic router routing checks are passed through a lightweight regular-expression compiler before execution, blocking patterns containing exponential backtracking vulnerabilities.
 
 ---
 
 ## ⚡ Quick Start
 
-### 🐳 Run using Docker (Recommended)
-Launch the complete client, server, and SQLite bundle under a fully containerized ecosystem in seconds:
+### 🐳 Run using Docker Setup (Recommended)
+Get up and running with a single command containing Vite, Express API, Socket.io, SQLite, and Swagger combined:
 ```bash
-# Build and run container services
+# Clone the repository and boot using Compose
 docker-compose up --build
 ```
-Access the dashboard immediately at: **[http://localhost:3000](http://localhost:3000)**
+Access the application dashboard immediately inside your browser: **[http://localhost:3000](http://localhost:3000)**
 
-### 🖥️ Bare-Metal Local Launch
+### 🖥️ Standard Bare-Metal Dev Launch
 Ensure Node.js v18+ is installed on your workstation.
 ```bash
-# 1. Install workspace dependencies
+# 1. Install dependencies
 npm install
 
-# 2. Setup your local environment file
+# 2. Setup your local env file
 cp .env.example .env
 
 # 3. Spin up the Vite-Express fullstack dev server
@@ -131,38 +141,35 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
-## 📁 Workspace Structure
+## 📁 Repository Structure
 ```text
 AgentForge44/
 ├── src/                    # React / Vite Client Application
 │   ├── components/         # Interactive UI components
-│   │   ├── Toolbox.tsx              # Component catalog & graph loader
-│   │   ├── ConfigurationPanel.tsx   # Detailed parameters editor
-│   │   └── FlowCanvas.tsx           # SVG interactive builder board
-│   ├── api/                # Client-side API hooks & backend communication
-│   ├── db/                 # Database Schema definitions & migrations
-│   ├── types.ts            # TypeScript global specifications
-│   └── main.tsx            # React application mount point
-├── server.ts               # Full-stack backend Express application
-├── Dockerfile              # Immutable docker production packaging
-├── docker-compose.yml      # Multi-dependency container orchestrator
+│   │   ├── Toolbox.tsx              # Loader & Graph cataloging
+│   │   ├── ConfigurationPanel.tsx   # Model parameters editor
+│   │   └── FlowCanvas.tsx           # Interaction SVG board
+│   ├── api/                # Client-to-server API hooks
+│   ├── db/                 # Migrations & database schemas
+│   ├── types.ts            # Glabal TypeScript interfaces
+│   └── main.tsx            # React mounting entry-point
+├── server.ts               # Express core application entry point
+├── Dockerfile              # Container building instruction file
+├── docker-compose.yml      # Orchestrated Compose config
 └── package.json            # Dynamic NPM package manifest
 ```
 
 ---
 
-## 📖 REST API Programmatic Guide
-AgentForge44 provides an interactive OpenAPI / Swagger exploration console.
-- **Swagger Documentation**: Accessible locally at **[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**. On production environments, use the built-in Swagger interface.
-- **OpenAPI JSON Spec**: Available raw at `/swagger.json`.
+## 📜 REST API Programmatic Guide
+Explore Swagger UI documentation locally at **[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**.
 
-### Core Endpoint cURL Examples
+### Core Endpoints
 
-#### 1. Save/Update Graph Pipeline (`POST /api/graphs`)
+#### 1. Save or Update Graph Layout (`POST /api/graphs`)
 ```bash
 curl -X POST http://localhost:3000/api/graphs \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <TOKEN>" \
   -d '{
     "id": "translation-pipeline",
     "name": "Localization Agent Pair",
@@ -170,183 +177,203 @@ curl -X POST http://localhost:3000/api/graphs \
       {
         "id": "inp-1",
         "type": "input",
-        "x": 100, "y": 200,
-        "fields": { "title": "Base Content", "value": "Hello. Welcome to the code builder." }
+        "fields": { "title": "Raw text", "value": "AgentForge visual workflow structure" }
       }
     ],
     "connections": []
   }'
 ```
 
-#### 2. Read Graph Configuration (`GET /api/graphs/:id`)
+#### 2. Get Flow Structure Details (`GET /api/graphs/:id`)
 ```bash
-curl -X GET http://localhost:3000/api/graphs/translation-pipeline \
-  -H "Authorization: Bearer <TOKEN>"
+curl -X GET http://localhost:3000/api/graphs/translation-pipeline
 ```
 
-#### 3. Run Executions (`POST /api/execute`)
+#### 3. Run Pipeline Execution (`POST /api/execute`)
 ```bash
 curl -X POST http://localhost:3000/api/execute \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <TOKEN>" \
   -d '{
     "graphId": "translation-pipeline",
     "inputs": {
-      "user_prompt": "Override translation to default target language"
+      "language": "Russian"
     }
   }'
 ```
 
 ---
 
-## 🧪 Testing
-We enforce strict software validation on both front and back-end logic.
-```bash
-# Execute integration & unit test suites (Vitest framework)
-npm test
+# 🇷🇺 Русская документация
 
-# Run ESLint validation checking rules Compliance
-npm run lint
-```
+## 🚀 Обзор проекта
 
----
+### Что такое AgentForge44?
+AgentForge44 — это полнофункциональная low-code платформа для проектирования, отладки, тестирования и запуска многоагентных ИИ-систем с обратной связью. Проект объединяет интуитивно понятный визуальный интерфейс (построенный на React и Tailwind) и оптимизированный веб-сервер на Node.js.
 
-# 🇷🇺 Русская Документация
+### Какую проблему решает проект? (Зачем он нужен)
+Простые запросы к языковым моделям делать легко, но создание сложных циклов с самоисправлением ошибок, условным ветвлением и интеграцией баз знаний (RAG) требует написания тысяч строк ненадёжного шаблонного кода. Отлаживать такие системы в консоли неудобно, а объяснять их принцип работы коллегам без визуальной составляющей — практически невозможно. AgentForge44 заменяет хаос в коде наглядным рабочим пространством.
 
-## 🌟 Введение
-Современные ИИ-разработки быстро перерастают стандартные одиночные запросы и трансформируются в сложные мультиагентные сценарии с обратной связью. Однако сборка цепочек запросов, парсинг ответов моделей, условное ветвление данных и исправление ошибок "на лету" обычно требуют написания сотен строк хрупкого шаблонного кода.
-
-**AgentForge44** — это визуальный low-code конструктор профессионального уровня. Платформа позволяет разработчикам, менеджерам продуктов и исследователям проектировать сложные агентные графы, интегрировать базы данных внешних документов (RAG), в реальном времени мониторить запуск моделей и моментально оценивать финансовые расходы на генерацию токенов.
+### Для кого разработан инструмент?
+- **Архитекторы AI-систем**: Наглядное проектирование цепочек рассуждений моделей, вложенных prompt-шаблонов и маршрутизаторов.
+- **Enterprise-разработчики**: Мгновенный запуск готовых REST API, привязанных к визуально смоделированным графам.
+- **Исследователи и тестировщики**: Сравнительный анализ работы моделей от Google Gemini, Anthropic, OpenAI или локальных Ollama на идентичных тестовых сценариях в реальном времени.
+- **Менеджеры продуктов и кураторы**: Концентрация на сути взаимодействия благодаря **Режиму презентации (Showcase Mode)**, скрывающему элементы разработки для демонстрации стейкхолдерам.
 
 ---
 
-## ✨ Ключевые возможности платформы
+## 💎 Уникальные фишки и возможности
 
-### 1. Визуальный Drag-and-Drop редактор
-- Конструируйте графы из функциональных узлов (`Input`, `Prompt`, `LLM`, `Reviewer`, `Router`, `Tool`, `RAG`, `Output`).
-- Масштабируйте рабочее пространство от `50%` до `150%` на отзывчивом адаптивном холсте.
-- Поддержка усовершенствованной сетки привязки (Snap-to-Grid) для безупречного выравнивания элементов на холсте.
+### 1. Мощный визуальный редактор графов
+* **Интуитивный Drag-and-drop холст**: Сборка пайплайнов из функциональных узлов (`Input`, `Prompt`, `LLM`, `Reviewer`, `Router`, `Tool`, `RAG`, `Output`).
+* **Плавное масштабирование**: Поддержка бесшовного Zoom холста от `50%` до `150%` с умной перерисовкой соединительных линий.
+* **Привязка к сетке холста**: Кнопка автоматического Snap-to-Grid выровняет ваши карточки идеально ровно.
 
 ### 2. Мульти-провайдерная интеграция моделей
-- Интеграция из коробки: Google Gemini (3.5 Flash/Pro, 3.1 Flash Lite), OpenAI GPT (4o, 4o Mini, o1 Mini), Anthropic Claude (3.5 Sonnet, 3.5 Haiku) и локальные Offline модели LLaMA 3/Mistral через Ollama.
+* **Широкий выбор ИИ**: Быстрое переключение между Google Gemini (3.5 Flash/Pro, 3.1 Flash Lite), OpenAI GPT, Anthropic Claude или защищёнными локальными сборками Ollama прямо из панели параметров карточки.
 
-### 3. Семантическая память (RAG Интеграция)
-- Загружайте свои текстовые документы, индексируйте их семантические куски (chunks) и ищите релевантные контексты ИИ в реальном времени. Включает детальный 3D-анимированный интерактивный **RAG Visualizer**.
+### 3. Режим презентации (Showcase Mode)
+* **Профессиональная демонстрация**: Скрывайте боковую панель Toolbox и меню параметров в один клик. На экране останется только интерактивное полотно выполнения вашей системы, готовое к наглядным тестам перед клиентами.
 
-### 4. Совместное редактирование (Live Presence)
-- Благодаря протоколам Socket.io WebSockets, несколько пользователей могут работать над одним графом одновременно, видя курсоры друг друга и блокируя карточки узлов при редактировании.
+### 4. Визуализация RAG и Индексации документов
+* **Загрузка баз знаний**: Импортируйте корпоративные файлы, регламенты и инструкции с последующей нарезкой на куски (chunks).
+* **3D RAG Visualizer**: Уникальный анимированный интерфейс, отображающий иерархию семантических векторов, силу ассоциаций и ранжирование найденных документов.
 
-### 5. Режим презентации (Showcase Mode)
-- Скройте все боковые панели разработчиков, кнопки отладки и редакторы параметров одним кликом. Оставьте фокус на чистой визуальной структуре для демонстрации пайплайна клиентам и коллегам.
+### 5. Совместное редактирование (Live Presence)
+* **Слежение за курсорами**: Наблюдайте за перемещением мыши ваших коллег на одном общем рабочем столе через WebSocket Socket.io.
+* **Умные блокировки**: Изменение параметров карточки одним пользователем временно блокирует её редактирование другими с яркой цветовой индикацией.
+
+### 6. Контроль версий и "Путешествие во времени"
+* **Снимки состояний**: Сохраняйте бекапы структуры графа в один клик с гибкой шкалой отката назад к прошлым модификациям.
+* **Сравнение изменений**: Наглядный сравнитель различий (Diff-Viewer) по переменным и конфигурациям узлов.
+
+### 7. Готовая интеграция и запуск
+* **Swagger-документирование**: Автоматически генерируемый интерактивный API-эксплорер на `/api-docs` для интеграции ваших систем.
+* **Планировщики и Кроны**: Быстро настраивайте автоматический запуск графов по времени или по входящим вещательным Webhook.
 
 ---
 
-## 🛡️ Архитектура Безопасности и Отказоустойчивости
+## 🛡️ Безопасность и архитектурная надёжность
 
-### ⚙️ Автоматическое развёртывание и Самовосстановление БД
-* На старте сервера Движок автоматически проверяет СУБД на наличие всех нужных таблиц (`graphs`, `metrics`, `users` и т.д.) и при их отсутствии генерирует схему "из коробки" в рамках одной SQL-транзакции. Запуск не упадёт из-за отсутствия миграций.
+Обеспечение корпоративных стандартов безопасности достигается за счёт нескольких встроенных решений:
 
-### 🛡️ Интеллектуальный Payloads-клинер (Маскировка ключей)
-* Автоматически парсит все JSON-нагрузки регулярным выражением против утечки приватных ключей во внешние логи. Секреты цензурируются на лету символами `***MASKED***`.
-
-### 📊 Скользящий Rate-Limiter запросов
-* Защищает API-сервер от перегрузки и исчерпания платных токенов внешних LLM-аккаунтов, ограничивая лимиты до 30 запросов в минуту с обратной отдачей `429 Too Many Requests`.
-
-### 🔄 Изоляция потоков (Structured Clone Thread-Safety)
-* Избегайте побочных эффектов гонки данных при слиянии и разветвлении потоков в визуальном движке за счет глубокого клонирования контекстов.
-
-### 🛡️ ReDoS-защита регулярных выражений маршрутизатора
-* Скрипт проверяет введённые пользователем RegExp-правила роутера на наличие катастрофического возврата (backtracking) и блокирует потенциально взрывоопасные паттерны до исполнения, сохраняя стабильность бэкенда Node.js.
+* **Самовосстановление БД (Self-Healing Migration)**: На старте бэкенд проверяет целостность СУБД (PostgreSQL / SQLite). При отсутствии нужных таблиц (`graphs`, `users`, `metrics`, `versions`) система автоматически выполнит трансмиграции в единой безопасной транзакции.
+* **Маскировка секретов (Secret Masking)**: Умный middleware анализирует входящий JSON-трафик. При обнаружении названий полей, связанных с API-ключами, паролями или токенами, он моментально маскирует их значение символами `***MASKED***`, предотвращая их сохранение в файлах логов или журналах Sentry.
+* **Защита от перегрузок (Rate-Limiter)**: Порог в 30 запросов в минуту на один IP минимизирует риски краша распределённых контейнеров от DDoS-атак и защищает от непредвиденных счетов на внешних LLM-аккаунтах.
+* **Изоляция потоков (Structured Clone Thread-Safety)**: При разветвлении графа на параллельные цепочки, среда гарантирует полное разделение памяти через глубокое клонирование пакетов (`structuredClone`), исключая побочные эффекты гонки данных.
+* **Маршрутизация без уязвимостей ReDoS**: Пользовательские Regex-выражения роутера тестируются легковесным компилятором перед применением, предотвращая атаки типа «отказ в обслуживании регулярными выражениями».
 
 ---
 
 ## ⚡ Быстрый старт
 
-### 🐳 Запуск через Docker
+### 🐳 Запуск в Docker (Рекомендуемый способ)
 ```bash
-# Собрать и запустить проект в изолированной среде
+# Сборка и старт изолированных контейнеров
 docker-compose up --build
 ```
-Откройте в браузере: **[http://localhost:3000](http://localhost:3000)**
+Откройте интерфейс в браузере по адресу: **[http://localhost:3000](http://localhost:3000)**
 
-### 🖥️ Локальная разработка (Bare-Metal)
+### 🖥️ Обычный запуск на локальной машине
 Требуется Node.js v18+.
 ```bash
+# 1. Поставить зависимости
 npm install
+
+# 2. Создать файл окружения
 cp .env.example .env
+
+# 3. Запустить Vite + Express сервер
 npm run dev
 ```
 Откройте в браузере: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-# 🇨🇳 中文文档
+# 🇨🇳 中文官方文档
 
-## 🌟 项目简介
-传统的 AI 开发正逐步从单一的提示词交互进化到复杂且高度自治的多智能体（Multi-Agent）协同场景。然而，搭建提示词依赖注入链、解析大模型（LLM）的多重路由选项、以及执行异常捕获等通常需要数千行脆弱的模式化代码。
+## 🚀 项目简介
 
-**AgentForge44** 是一款企业级的低代码（Low-Code）可视化流水线编排平台。它支持开发人员、产品经理和 AI 的研究人员直观地构建多智能体编排图，高效索引本地知识库（RAG），全链路模拟执行测试并即时追踪 Token 资源消耗及模型成本费用。
+### 什么是 AgentForge44？
+AgentForge44 是一款专为多智能体（Multi-Agent）系统设计的企业级、低代码可视化开发编排平台。它采用轻量直观的拖拽式蓝图设计器（基于 React 18+ 与 Tailwind CSS），完美对接后端强大的 Node.js 全栈微服务，让用户能轻松组合、测试并发布自适应的自修正 AI 通信管道。
 
----
+### 为什么选择 AgentForge44？（解决痛点）
+对于单个 AI 提示词的应用极其简单，但如果需要构建包含条件路由、多智能体自我纠错闭环、海量企业知识库（RAG）匹配以及循环逻辑控制的流水线，开发者往往需要手写数千行极易出错的样板代码。AgentForge44 将复杂的逻辑链和提示词依赖关系转换为直观的可视化图表，让研发结构一目了然，测试过程即时可控。
 
-## ✨ 核心亮点功能
-
-### 1. 简易的可视化节点编辑器
-- 通过拖拽操作，即可瞬时生成执行节点类型：输入源、提示词模版、大模型推理端、审核过滤器、条件路由、API外部工具、RAG检索、及复合输出。
-- 集成了专业的网格自动对齐（Snap-to-Grid）和画布无极缩放（Zoom 50% - 150%），保障复杂流程图的极致美感。
-
-### 2. 多智能体提供商注册机制
-- 精确支持 Google Gemini（3.5 Flash/Pro, 3.1 Flash Lite）、OpenAI GPT（4o, 4o Mini, o1 Mini）、Anthropic Claude（3.5 Sonnet, 3.5 Haiku）或借助 Ollama 实现本地 Mistral / LLaMA 3 脱机运行。
-
-### 3. 可视化检索增强生成（RAG）
-- 轻松导入业务文档，将文本切割提取并对目标块建立索引。集成了炫酷的三维 **RAG 特征树可视化组件**。
-
-### 4. 实时协同编辑（Live Presence）
-- 基于 Socket.io WebSockets，完美支持多用户异地共享同一个白板。实时同步团队各个编辑者的光标轨迹与节点编辑锁定状态，防止出现数据碰撞风险。
-
-### 5. 极简演示模式（Showcase Mode）
-- 一键即可折叠所有边缘侧配置面板与调试项，画布转入高爽净度的汇报陈述状态。方便向业务主管及非技术团队说明多模块执行机制。
+### 项目面向哪些受众？
+- **AI 系统架构师**：精确构筑逻辑流、多层级 prompt 模版注入、故障自我反馈回路与权重阀值配置。
+- **全栈开发团队**：秒级部署可直接在生产环境调用的 RESTful API 路由终端，与前端图画布完全数据同步。
+- **算法研究员与评测师**：在完全一致的上下文状态下，一键横向对比 Google Gemini、OpenAI、Anthropic 以及本地 LLaMA / Mistral 模型的执行表现。
+- **产品经理与非技术决策人**：利落开启 **演示模式 (Showcase Mode)**，隐藏所有代码和技术面板，高爽净度地向客户展示完整 AI 系统业务运转逻辑。
 
 ---
 
-## 🛡️ 网络安全与健壮性工程设计
+## 💎 领先的核心亮点与特性
 
-### ⚙️ 零配置数据库自我修复（Auto-Recovery DB）
-* 在服务器冷启动时，系统将主动判定本地以及远端数据库，若缺少诸如 Graphs 或 Metrics 报表结构，执行引擎将在单一事务中无感推送全套 Drizzle SQL 逻辑建表任务。
+### 1. 极致流畅的低代码节点设计器
+* **丰富的逻辑节点**：支持创建输入节点、提示词模版、多厂商大模型推理、执行质量校检器、条件分支路由、外接 API 工具、向量知识库检索与统一输出节点。
+* **弹性画布**：提供 `50% - 150%` 自由无极缩放比例与动态连接向量射线绘制。
+* **网格对齐一键美化**：支持 Snap-to-Grid 技术，让蓝图布局更整齐雅观。
 
-### 🛡️ 机密数据自过滤防护（Secret Payload Cleanser）
-* 拦截器扫描通过 Express 后端的所有 JSON 包。一旦包含类似于 API-KEY、密钥或特权账密的敏感属性，自动使用 `***MASKED***` 强行覆盖脱敏，杜绝日志外泄。
+### 2. 完备的底层大模型注册表
+* **全面集成**：无缝使用 Google Gemini (3.5 Flash/Pro, 3.1 Flash Lite)、OpenAI GPT、Anthropic Claude，或者基于 Ollama 彻底脱机本地运行自部署 LLaMA 3 以及 Mistral 系列模型。
 
-### 📊 滑动时间窗速率控制（Sliding Window Rate-Limiter）
-* 提供严密的用户限流（每分钟35次限额），从而完美避免恶意爬虫以及疯狂 API 查询带来的外网云端计费超额，及时向客户端返回 `429 Too Many Requests`。
+### 3. 一键切换的高清演示模式 (Showcase)
+* **业务陈述看板**：只需在头部工具栏点击 Showcase Mode 开关，所有的编辑工具箱、设置侧边栏和辅助功能将完全折叠，将极简画布最大化，方便向业务主管及非技术团队进行演示。
 
-### 🔄 多流程并发线程安全（Parallel-Clone Integrity）
-* 在低代码架构中，多重智能体图结构可能频繁进行分流（Forking）和合流（Merging）。由于传统 JavaScript 的引用传递容易引入脏数据，核心编译管线使用极其彻底的 `structuredClone` 来对数据流执行快照化阻断隔离，规避一切竞态危害。
+### 4. 三维立体 RAG 知识检索可视化
+* **快速导入外部文档**：支持批量上传文本以及 Pdf 文档，自动进行语义切片（chunks）及高保真度向量索引。
+* **3D RAG 交互图谱**：美轮美奂的向量相似性层级特征树，直观追踪检索匹配得分及权重排序，消除“黑盒”隐患。
 
-### 🛡️ 正则拒绝服务（ReDoS）深度阻截
-* 当用户自定义路径选择符时，正则表达式可能会包含多重灾难性回溯漏洞（例如 `(a+)+`），进而锁闭单线程 Node.js 进程。内核引入非阻塞的 Regex 测试防御机制，从根源上守护业务不中断。
+### 5. 异地实时协同（Live Presence）
+* **光标同步感知**：基于 Socket.io WebSockets，完美支持多用户共享编辑。
+* **操作防止数据冲突**：用户编辑某节点时动态锁定组件，并伴有颜色边框动画警示，彻底打通跨国多活协作。
+
+### 6. 精细的历史记录时光机 (Git-style)
+* **快速拍摄快照**：将整个图表所有参数一键保存为历史版本，并可以在版本控制轴上自由回滚恢复。
+* **变动 diff 分析**：针对复杂变量、算力参数的变动作出前后对比，轻松定位线上缺陷。
+
+### 7. 可拓展集成功能与编程入口
+* **自动化接口文档**：在 `/api-docs` 提供完整的 Swagger 交互式测试端口，方便在其他生产平台调用流程。
+* **动态 Webhooks 与 CRON**：支持设置基于时间触发管道的自动化定时任务。
+
+---
+
+## 🛡️ 可靠的网络安全与架构工程保障
+
+AgentForge44 从底层保障业务高可用，具备五大安全屏障：
+
+* **无感自愈与表自动加载 (Self-Healing DB)**：在服务器初次冷启动阶段，不论是在裸机还是 Docker 运行，系统将深度检查 SQL 表完备性。如果发现缺少 Graphs/Metrics/Versions 的任何表结构，将自动同步进行 Drizzle 映射迁移，杜绝宕机。
+* **敏感令牌自动擦除机 (Secret Masking)**：对通过后端的 JSON 数据执行严格的递归扫描。一旦涉及 API 密钥、管理员密码、JWT 授权或 private_key 属性，程序将在无影响运行的前提下直接用 `***MASKED***` 完全置空，防止日志泄漏。
+* **自适应时间滑窗流控 (Rate Limiter)**：设立高稳防护阀值（默认每分钟 35 次，支持通过环境变量控制），防御来自外网的 DDoS 请求冲击，并向异常请求返回 `429 Too Many Requests`。
+* **分支数据强隔离 (Structured Clone Data Safety)**：在流程图出现多路并行流（Forking Paths）之后，为防止脏数据写入，核心解析引擎全面实施深度复制 `structuredClone` 快照机制，杜绝竞态导致的逻辑雪崩。
+* **路由 ReDoS (正则表达式服务拒绝攻击) 拦截**：如果用户自己修改了网关中的条件 Router 的 regex 校验参数，这些正则在执行前会预先通过安全性测试探头，当检测到指数级回溯风险（如 `(a+)+`）时将强行制止，保障整个进程健康不中断。
 
 ---
 
 ## ⚡ 快速开始
 
-### 🐳 通过 Docker 部署容器（最优推荐）
+### 🐳 使用 Docker 资源编排服务（推荐，最省心）
 ```bash
-# 自动编译与拉取项目镜像
+# 启动所有 Vite，Express，SQLite 容器，全套服务开箱即用
 docker-compose up --build
 ```
-启动完毕后，在浏览器访问：**[http://localhost:3000](http://localhost:3000)**
+启动完毕后，在浏览器中即刻体验项目：**[http://localhost:3000](http://localhost:3000)**
 
-### 🖥️ 单机本地开发模式（Bare-Metal）
-确保本机配置 Node.js v18 或以上版本。
+### 🖥️ 系统裸机安装开发步骤
+环境要求 Node.js v18 或以上版本。
 ```bash
+# 1. 下载全局前端和后端包
 npm install
+
+# 2. 复制默认配置的环境文件
 cp .env.example .env
+
+# 3. 开启 Vite + Express 开发服务器
 npm run dev
 ```
-启动完毕后，在浏览器访问：**[http://localhost:3000](http://localhost:3000)**
+之后在浏览器中打开：**[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 📜 License
-Distributed under the **MIT License**. Check out [LICENSE](./LICENSE) for details.
+## 📜 许可
+项目基于 **MIT License** 软件许可开源。详情可阅读 [LICENSE](./LICENSE) 文件。
