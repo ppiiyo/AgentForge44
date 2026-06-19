@@ -8,7 +8,7 @@ import {
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
   CopyPlus, FileJson, X, Globe, History, Undo, Redo,
-  Compass, FlaskConical, BookOpen, GitBranch, FolderPlus, Network, Zap, ShoppingBag
+  Compass, FlaskConical, BookOpen, GitBranch, FolderPlus, Network, Zap, ShoppingBag, Presentation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -256,6 +256,7 @@ export default function App() {
 
   // Advanced Usability & Premium States
   const [canvasZoom, setCanvasZoom] = useState<number>(1.0);
+  const [showcaseMode, setShowcaseMode] = useState<boolean>(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
   const [jsonStringInput, setJsonStringInput] = useState<string>("");
   const [importError, setImportError] = useState<string | null>(null);
@@ -1544,25 +1545,27 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
       <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative" id="app_main">
         
         {/* Left Side: Builder Toolbox & Node Editor */}
-        <Toolbox
-          currentLang={currentLang}
-          onCreateNode={handleCreateNode}
-          savedSnapshots={savedSnapshots}
-          onRestoreSnapshot={handleRestoreSnapshot}
-          onDeleteSnapshot={handleDeleteSnapshot}
-          onSaveSnapshot={handleSaveSnapshot}
-          projectNameInput={projectNameInput}
-          onProjectNameInputChange={setProjectNameInput}
-          onSaveProjectToServer={handleSaveProjectToServer}
-          savingProject={savingProject}
-          serverProjects={serverProjects}
-          loadingProjects={loadingProjects}
-          currentSavedProjectName={currentSavedProjectName}
-          onLoadProjectFromServer={(proj) => {
-            handleLoadProjectFromServer(proj);
-            setProjectNameInput(proj.name);
-          }}
-        />
+        {!showcaseMode && (
+          <Toolbox
+            currentLang={currentLang}
+            onCreateNode={handleCreateNode}
+            savedSnapshots={savedSnapshots}
+            onRestoreSnapshot={handleRestoreSnapshot}
+            onDeleteSnapshot={handleDeleteSnapshot}
+            onSaveSnapshot={handleSaveSnapshot}
+            projectNameInput={projectNameInput}
+            onProjectNameInputChange={setProjectNameInput}
+            onSaveProjectToServer={handleSaveProjectToServer}
+            savingProject={savingProject}
+            serverProjects={serverProjects}
+            loadingProjects={loadingProjects}
+            currentSavedProjectName={currentSavedProjectName}
+            onLoadProjectFromServer={(proj) => {
+              handleLoadProjectFromServer(proj);
+              setProjectNameInput(proj.name);
+            }}
+          />
+        )}
 
         {/* Center Canvas Grid & Dynamic Flow Vectors */}
         <main 
@@ -1944,11 +1947,29 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               <LayoutGrid size={13} />
               <span>{currentLang === 'ru' ? (snapToGrid ? "Сетка: Вкл" : "Без сетки") : currentLang === 'zh' ? (snapToGrid ? "对齐网格" : "自由式") : (snapToGrid ? "Snapping" : "Freeflow")}</span>
             </button>
+
+            <span className="text-slate-800">|</span>
+
+            {/* Showcase Mode Toggle */}
+            <button
+              id="btn_toggle_showcase"
+              onClick={() => setShowcaseMode(!showcaseMode)}
+              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-extrabold shrink-0 ${
+                showcaseMode 
+                  ? 'bg-sky-500 text-slate-950 border-sky-400 shadow-lg shadow-sky-500/20' 
+                  : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:text-sky-400 hover:bg-slate-850'
+              }`}
+              title="Toggle Showcase Presentation Mode to free canvas space"
+            >
+              <Presentation size={13} />
+              <span>{currentLang === 'ru' ? (showcaseMode ? "Шоукейс: Вкл" : "Показ") : currentLang === 'zh' ? (showcaseMode ? "演示模式: 开启" : "演示模式") : (showcaseMode ? "Showcase: ON" : "Showcase Mode")}</span>
+            </button>
           </div>
         </main>
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
-        <section className="w-full xl:w-[480px] border-t xl:border-t-0 xl:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden" id="right_sidebar">
+        {!showcaseMode && (
+          <section className="w-full xl:w-[480px] border-t xl:border-t-0 xl:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden" id="right_sidebar">
           
           {/* Section tab headers */}
           <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">
@@ -2878,7 +2899,8 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
 
             </AnimatePresence>
           </div>
-        </section>
+          </section>
+        )}
 
       </div>
 
