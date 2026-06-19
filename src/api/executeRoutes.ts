@@ -230,4 +230,53 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
   }
 });
 
+/**
+ * @swagger
+ * /api/llm-providers:
+ *   get:
+ *     summary: Retrieve the list of active model providers and schemas
+ *     description: Returns the dynamic registry of supported models from the backend.
+ *     responses:
+ *       200:
+ *         description: A JSON array of active provider objects.
+ */
+router.get('/llm-providers', (req: Request, res: Response) => {
+  res.json([
+    {
+      id: "google",
+      name: "Google Gemini",
+      models: [
+        { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Default, recommended)", speed: "Fast", cost: "Low" },
+        { id: "gemini-3.5-pro", name: "Gemini 3.5 Pro (Complex Reasoning)", speed: "Balanced", cost: "Medium" },
+        { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite (High scalability layer)", speed: "Ultra-fast", cost: "Very Low" }
+      ]
+    },
+    {
+      id: "openai",
+      name: "OpenAI GPT",
+      models: [
+        { id: "gpt-4o-mini", name: "GPT-4o Mini", speed: "Fast", cost: "Low" },
+        { id: "gpt-4o", name: "GPT-4o (Reasoning)", speed: "Balanced", cost: "Medium" },
+        { id: "o1-mini", name: "o1 Mini (Developer)", speed: "Specialized", cost: "Medium" }
+      ]
+    },
+    {
+      id: "anthropic",
+      name: "Anthropic Claude",
+      models: [
+        { id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet", speed: "Balanced", cost: "Medium-High" },
+        { id: "claude-3-5-haiku-latest", name: "Claude 3.5 Haiku", speed: "Fast", cost: "Low" }
+      ]
+    },
+    {
+      id: "ollama",
+      name: "Ollama (Offline Local)",
+      models: [
+        { id: "llama3", name: "Llama 3 (8B Local)", speed: "Hardware dependent", cost: "Free/Local" },
+        { id: "mistral", name: "Mistral (7B Local)", speed: "Hardware dependent", cost: "Free/Local" }
+      ]
+    }
+  ]);
+});
+
 export default router;

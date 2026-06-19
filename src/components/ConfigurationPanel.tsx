@@ -1,9 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../types';
+
+interface Model {
+  id: string;
+  name: string;
+  speed?: string;
+  cost?: string;
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  models: Model[];
+}
+
+const DEFAULT_PROVIDERS: Provider[] = [
+  {
+    id: "google",
+    name: "Google Gemini",
+    models: [
+      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Default, recommended)", speed: "Fast", cost: "Low" },
+      { id: "gemini-3.5-pro", name: "Gemini 3.5 Pro (Complex Reasoning)", speed: "Balanced", cost: "Medium" },
+      { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite (High scalability layer)", speed: "Ultra-fast", cost: "Very Low" }
+    ]
+  },
+  {
+    id: "openai",
+    name: "OpenAI GPT",
+    models: [
+      { id: "gpt-4o-mini", name: "GPT-4o Mini", speed: "Fast", cost: "Low" },
+      { id: "gpt-4o", name: "GPT-4o (Reasoning)", speed: "Balanced", cost: "Medium" },
+      { id: "o1-mini", name: "o1 Mini (Developer)", speed: "Specialized", cost: "Medium" }
+    ]
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic Claude",
+    models: [
+      { id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet", speed: "Balanced", cost: "Medium-High" },
+      { id: "claude-3-5-haiku-latest", name: "Claude 3.5 Haiku", speed: "Fast", cost: "Low" }
+    ]
+  },
+  {
+    id: "ollama",
+    name: "Ollama (Offline Local)",
+    models: [
+      { id: "llama3", name: "Llama 3 (8B Local)", speed: "Hardware dependent", cost: "Free/Local" },
+      { id: "mistral", name: "Mistral (7B Local)", speed: "Hardware dependent", cost: "Free/Local" }
+    ]
+  }
+];
 
 interface ConfigurationPanelProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -41,6 +91,21 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const node = nodes.find(n => n.id === selectedNodeId);
   const activeLock = node ? locks[node.id] : null;
   const isLockedByOther = activeLock && activeLock.userId !== userId;
+
+  const [providers, setProviders] = useState<Provider[]>([]);
+
+  useEffect(() => {
+    fetch('/api/llm-providers')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setProviders(data);
+        }
+      })
+      .catch(err => {
+        console.warn("Could not retrieve provider registry, using defaults:", err);
+      });
+  }, []);
 
   const handleAddVariable = (nodeId: string) => {
     setNodes(prev => prev.map(n => {
@@ -267,8 +332,15 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                     onChange={(e) => onUpdateNodeField(node.id, 'model', e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-300"
                   >
-                    <option value="gemini-3.5-flash">🚀 Gemini 3.5 Flash (Lightweight, ultra-fast)</option>
-                    <option value="gemini-3.5-pro">🧠 Gemini 3.5 Pro (Deep complex logic, reasoning)</option>
+                    {(providers.length > 0 ? providers : DEFAULT_PROVIDERS).map(prov => (
+                      <optgroup key={prov.id} label={prov.name} className="text-slate-500 bg-slate-950 font-bold">
+                        {prov.models.map(m => (
+                          <option key={m.id} value={m.id} className="text-slate-200">
+                            {m.name} ({m.speed || "Fast"})
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
 

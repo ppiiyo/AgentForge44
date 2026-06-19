@@ -5,6 +5,8 @@ import { promises as fsPromises } from 'fs';
 import { VersionManager } from './metricsAndVersions.js';
 import { activeRooms, getPresenceHistory } from './collaboration.js';
 import { validateBody, GraphSaveSchema } from '../utils/validation.js';
+import { db, tables } from '../db/index.js';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -58,6 +60,30 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
     const { id, name, nodes, connections } = req.body;
     const projName = id || name || "untitled_graph";
     const safeName = projName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_graph";
+
+    // 1. Database write with upsert logic
+    try {
+      const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      if (existing.length > 0) {
+        await db.update(tables.graphs).set({
+          name: safeName,
+          nodes: JSON.stringify(nodes || []),
+          connections: JSON.stringify(connections || [])
+        }).where(eq(tables.graphs.id, safeName));
+      } else {
+        await db.insert(tables.graphs).values({
+          id: safeName,
+          name: safeName,
+          nodes: JSON.stringify(nodes || []),
+          connections: JSON.stringify(connections || []),
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (dbErr: any) {
+      console.warn("[Database] POST /graphs failed, falling back only to filesystem storage:", dbErr.message);
+    }
+
+    // 2. Dual write filesystem write
     const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
     const payload = {
       id: safeName,
@@ -67,6 +93,7 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
       savedAt: new Date().toISOString()
     };
     await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+
     res.status(201).json({ success: true, id: safeName, name: safeName, nodes, connections });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -101,10 +128,41 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+
+    // 1. Try database read first
+    try {
+      const row = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      if (row.length > 0) {
+        res.json({
+          id: safeName,
+          name: row[0].name,
+          nodes: typeof row[0].nodes === 'string' ? JSON.parse(row[0].nodes) : row[0].nodes,
+          connections: typeof row[0].connections === 'string' ? JSON.parse(row[0].connections) : row[0].connections
+        });
+        return;
+      }
+    } catch (dbErr: any) {
+      console.warn("[Database] GET /graphs/:id read failed, checking filesystem:", dbErr.message);
+    }
+
+    // 2. Fallback to filesystem read
     const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
     if (fs.existsSync(filePath)) {
       const raw = await fsPromises.readFile(filePath, 'utf-8');
       const content = JSON.parse(raw);
+
+      // Auto-migrate to database
+      try {
+        await db.insert(tables.graphs).values({
+          id: safeName,
+          name: content.name || safeName,
+          nodes: JSON.stringify(content.nodes || []),
+          connections: JSON.stringify(content.connections || []),
+          createdAt: new Date().toISOString()
+        });
+        console.log(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database.`);
+      } catch {}
+
       res.json({
          id: safeName,
          name: content.name || safeName,
@@ -164,20 +222,44 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
     const { id } = req.params;
     const { name, nodes, connections } = req.body;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
-    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
-    if (fs.existsSync(filePath)) {
-      const payload = {
-        id: safeName,
-        name: name || safeName,
-        nodes: nodes || [],
-        connections: connections || [],
-        savedAt: new Date().toISOString()
-      };
-      await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
-      res.json({ success: true, id: safeName, name: name || safeName, nodes, connections });
-    } else {
-      res.status(404).json({ error: "Graph not found" });
+
+    // 1. Update database record
+    let dbUpdated = false;
+    try {
+      const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      if (existing.length > 0) {
+        await db.update(tables.graphs).set({
+          name: name || safeName,
+          nodes: JSON.stringify(nodes || []),
+          connections: JSON.stringify(connections || [])
+        }).where(eq(tables.graphs.id, safeName));
+        dbUpdated = true;
+      } else {
+        await db.insert(tables.graphs).values({
+          id: safeName,
+          name: name || safeName,
+          nodes: JSON.stringify(nodes || []),
+          connections: JSON.stringify(connections || []),
+          createdAt: new Date().toISOString()
+        });
+        dbUpdated = true;
+      }
+    } catch (dbErr: any) {
+      console.warn("[Database] PUT /graphs/:id failed, continuing with filesystem backup:", dbErr.message);
     }
+
+    // 2. Update filesystem backup
+    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+    const payload = {
+      id: safeName,
+      name: name || safeName,
+      nodes: nodes || [],
+      connections: connections || [],
+      savedAt: new Date().toISOString()
+    };
+    await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+
+    res.json({ success: true, id: safeName, name: name || safeName, nodes, connections });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -209,12 +291,21 @@ router.delete('/graphs/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+
+    // 1. Delete database record
+    try {
+      await db.delete(tables.graphs).where(eq(tables.graphs.id, safeName));
+    } catch (dbErr: any) {
+      console.warn("[Database] DELETE /graphs/:id failed, proceeding with filesystem removal:", dbErr.message);
+    }
+
+    // 2. Delete filesystem backup
     const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
     if (fs.existsSync(filePath)) {
       await fsPromises.unlink(filePath);
       res.json({ success: true, message: `Graph ${safeName} has been deleted.` });
     } else {
-      res.status(404).json({ error: "Graph not found" });
+      res.json({ success: true, message: `Graph deletion operations executed for ${safeName}.` });
     }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
