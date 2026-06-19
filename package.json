@@ -41,7 +41,7 @@
     "helmet": "^8.2.0",
     "i18next": "^26.3.1",
     "ioredis": "^5.11.1",
-    "isolated-vm": "^6.1.2",
+    "isolated-vm": "^5.0.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "node-cron": "^4.2.1",
