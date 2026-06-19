@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { generateSecureId } from '../utils/idGenerator.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'agentforge_secret_jwt_key_2026';
 
@@ -59,7 +60,7 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 // User-DB Management using central database adapter (Postgres / SQLite)
 export const UserManager = {
   async register(email: string, passwordPlain: string, role: string = 'viewer') {
-    const id = `usr_${Math.random().toString(36).substring(2, 11)}`;
+    const id = generateSecureId('usr');
     const passwordHash = hashPassword(passwordPlain);
     try {
       await db.insert(tables.users).values({

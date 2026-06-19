@@ -26,6 +26,7 @@ import { CopilotPanel } from './components/CopilotPanel';
 import { SyncHubPanel } from './components/SyncHubPanel';
 import { TimeTravelDebugger } from './components/TimeTravelDebugger';
 import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
+import { useHotkeys } from './hooks/useHotkeys';
 import { AppHeader } from './components/AppHeader';
 import { Toolbox } from './components/Toolbox';
 import { FlowCanvas } from './components/FlowCanvas';
@@ -256,6 +257,9 @@ export default function App() {
 
   // Advanced Usability & Premium States
   const [canvasZoom, setCanvasZoom] = useState<number>(1.0);
+  const [connectingSourceId, setConnectingSourceId] = useState<string | null>(null);
+  const [connectingCursorPos, setConnectingCursorPos] = useState<{ x: number, y: number } | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [showcaseMode, setShowcaseMode] = useState<boolean>(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
   const [jsonStringInput, setJsonStringInput] = useState<string>("");
@@ -350,6 +354,40 @@ export default function App() {
       }
     };
   }, [selectedNodeId]);
+
+  // Premium workspace hotkey shortcuts
+  useHotkeys([
+    {
+      key: 'Enter',
+      ctrl: true,
+      handler: () => {
+        handleRunPipeline();
+      }
+    },
+    {
+      key: 'Escape',
+      handler: () => {
+        setSelectedNodeId(null);
+      }
+    },
+    {
+      key: 'Delete',
+      handler: () => {
+        if (selectedNodeId) {
+          handleDeleteNode(selectedNodeId);
+        }
+      }
+    },
+    {
+      key: 'Backspace',
+      handler: () => {
+        if (selectedNodeId) {
+          handleDeleteNode(selectedNodeId);
+        }
+      }
+    }
+  ], [selectedNodeId, nodes, connections]);
+
   const [serverGeneratedCode, setServerGeneratedCode] = useState<string>("");
   const [loadingServerGeneratedCode, setLoadingServerGeneratedCode] = useState<boolean>(false);
 
@@ -866,45 +904,50 @@ export default function App() {
 
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!draggedNodeId) return;
-      
-      const dx = (e.clientX - dragStartPos.current.x) / canvasZoom;
-      const dy = (e.clientY - dragStartPos.current.y) / canvasZoom;
-      
-      let finalX = 0;
-      let finalY = 0;
-      
-      setNodes(prev => prev.map(n => {
-        if (n.id === draggedNodeId) {
-          // Snap grid or boundary clamps
-          let newX = nodeStartPos.current.x + dx;
-          let newY = nodeStartPos.current.y + dy;
+      if (draggedNodeId) {
+        const dx = (e.clientX - dragStartPos.current.x) / canvasZoom;
+        const dy = (e.clientY - dragStartPos.current.y) / canvasZoom;
+        
+        let finalX = 0;
+        let finalY = 0;
+        
+        setNodes(prev => prev.map(n => {
+          if (n.id === draggedNodeId) {
+            let newX = nodeStartPos.current.x + dx;
+            let newY = nodeStartPos.current.y + dy;
 
-          if (snapToGrid) {
-            newX = Math.round(newX / 15) * 15;
-            newY = Math.round(newY / 15) * 15;
+            if (snapToGrid) {
+              newX = Math.round(newX / 15) * 15;
+              newY = Math.round(newY / 15) * 15;
+            }
+
+            // Expanded limits to prevent getting stuck
+            newX = Math.max(10, Math.min(4000, newX));
+            newY = Math.max(10, Math.min(4000, newY));
+            
+            finalX = newX;
+            finalY = newY;
+            return { ...n, x: newX, y: newY };
           }
+          return n;
+        }));
 
-          newX = Math.max(10, Math.min(1000, newX));
-          newY = Math.max(10, Math.min(700, newY));
-          
-          finalX = newX;
-          finalY = newY;
-          return { ...n, x: newX, y: newY };
+        const now = Date.now();
+        if (now - lastEmitTime.current > 40) {
+          broadcastNodeMoved(draggedNodeId, finalX, finalY);
+          lastEmitTime.current = now;
         }
-        return n;
-      }));
-
-      const now = Date.now();
-      if (now - lastEmitTime.current > 40) {
-        broadcastNodeMoved(draggedNodeId, finalX, finalY);
-        lastEmitTime.current = now;
+      } else if (connectingSourceId) {
+        if (!canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / canvasZoom + canvasRef.current.scrollLeft;
+        const y = (e.clientY - rect.top) / canvasZoom + canvasRef.current.scrollTop;
+        setConnectingCursorPos({ x, y });
       }
     };
 
     const handleGlobalMouseUp = () => {
       if (draggedNodeId) {
-        // Enforce final accurate sync broadcast on drop
         setNodes(prev => {
           const matching = prev.find(n => n.id === draggedNodeId);
           if (matching) {
@@ -912,11 +955,19 @@ export default function App() {
           }
           return prev;
         });
+        setDraggedNodeId(null);
       }
-      setDraggedNodeId(null);
+      if (connectingSourceId) {
+        if (hoveredNodeId && hoveredNodeId !== connectingSourceId) {
+          handleConnectNodes(connectingSourceId, hoveredNodeId);
+        }
+        setConnectingSourceId(null);
+        setConnectingCursorPos(null);
+        setHoveredNodeId(null);
+      }
     };
 
-    if (draggedNodeId) {
+    if (draggedNodeId || connectingSourceId) {
       window.addEventListener('mousemove', handleGlobalMouseMove);
       window.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -925,7 +976,7 @@ export default function App() {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [draggedNodeId]);
+  }, [draggedNodeId, connectingSourceId, hoveredNodeId, canvasZoom, snapToGrid]);
 
   // Trace animator to illuminate executing nodes in Flowise/Langflow style
   const animateNodeProgress = async (logsList: StepLog[]) => {
@@ -1637,6 +1688,30 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               );
             })}
 
+            {/* Live Connecting Line SVG visual */}
+            {connectingSourceId && connectingCursorPos && (() => {
+              const srcNode = nodes.find(n => n.id === connectingSourceId);
+              if (!srcNode) return null;
+              const sourceX = srcNode.x + 190;
+              const sourceY = srcNode.y + 42;
+              const targetX = connectingCursorPos.x;
+              const targetY = connectingCursorPos.y;
+              const dx = Math.abs(targetX - sourceX) * 0.45;
+              const pathString = `M ${sourceX} ${sourceY} C ${sourceX + dx} ${sourceY}, ${targetX - dx} ${targetY}, ${targetX} ${targetY}`;
+              return (
+                <g>
+                  <path 
+                    d={pathString} 
+                    fill="none" 
+                    stroke="#10b981" 
+                    strokeWidth={2.5} 
+                    strokeDasharray="5, 5"
+                    className="animate-pulse"
+                  />
+                </g>
+              );
+            })()}
+
             {/* Glowing active execution lines during run */}
             {isRunning && connections.map(conn => {
               const srcNode = nodes.find(n => n.id === conn.sourceId);
@@ -1705,12 +1780,37 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                     className={`absolute w-48 rounded-2xl bg-slate-900 border text-left flex flex-col transition-all cursor-grab active:cursor-grabbing hover:shadow-xl ${borderStyle}`}
                     style={{ left: node.x, top: node.y }}
                     onMouseDown={(e) => handleNodeMouseDown(node.id, e)}
+                    onMouseEnter={() => connectingSourceId && setHoveredNodeId(node.id)}
+                    onMouseLeave={() => setHoveredNodeId(null)}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     id={`node-card-${node.id}`}
                   >
-                    {/* Header bar of node */}
+                    {/* Input connector port handle */}
+                    <div 
+                      className="absolute -left-2 top-[42px] -translate-y-1/2 w-4 h-4 rounded-full border-2 border-slate-950 bg-slate-800 hover:bg-sky-500 hover:scale-125 z-30 cursor-crosshair transition-all flex items-center justify-center shadow-lg"
+                      style={{
+                        borderColor: hoveredNodeId === node.id ? '#38bdf8' : '#1e293b'
+                      }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                    </div>
+
+                    {/* Output connector port handle */}
+                    <div 
+                      className="absolute -right-2 top-[42px] -translate-y-1/2 w-4 h-4 rounded-full border-2 border-slate-950 bg-slate-800 hover:bg-emerald-500 hover:scale-125 z-30 cursor-crosshair transition-all flex items-center justify-center shadow-lg"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setConnectingSourceId(node.id);
+                        const startX = node.x + 190;
+                        const startY = node.y + 42;
+                        setConnectingCursorPos({ x: startX, y: startY });
+                      }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                    </div>
                     <div className="px-3 py-2 rounded-t-2xl bg-slate-950 border-b border-slate-850/60 flex items-center justify-between gap-1">
                       <div className="flex items-center space-x-1.5 min-w-0 flex-1">
                         <span className="shrink-0">
@@ -1724,14 +1824,14 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                           {node.type === 'rag' && <BookOpen size={11} className="text-teal-405" />}
                           {node.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
                         </span>
-                        <span className="font-bold text-[11px] text-slate-100 tracking-wide truncate flex-1">
+                        <span className="font-bold text-xs text-slate-100 tracking-wide truncate flex-1">
                           {node.title}
                         </span>
                       </div>
                       
                       <div className="flex items-center space-x-1.5 shrink-0">
                         {nodeStatus !== 'idle' && (
-                          <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none ${
+                          <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none ${
                             nodeStatus === 'running' ? 'bg-amber-950/80 text-amber-400 border border-amber-800/20' :
                             nodeStatus === 'completed' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/20' :
                             'bg-rose-950/80 text-rose-400 border border-rose-800/20'
@@ -1752,60 +1852,60 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
 
                     {/* Node descriptive summaries and properties */}
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
-                      <p className="text-[10px] text-slate-400 font-medium leading-normal mb-2">
+                      <p className="text-xs text-slate-400 font-medium leading-normal mb-2">
                         {node.description}
                       </p>
 
                       <div className="space-y-1.5 pt-1.5 border-t border-slate-850/40">
                         {node.type === 'input' && (
-                          <span className="text-[9px] font-mono text-blue-400/90 font-bold bg-blue-950/20 px-1.5 py-0.5 rounded border border-blue-950/50">
+                          <span className="text-xs font-mono text-blue-400/90 font-bold bg-blue-950/20 px-1.5 py-0.5 rounded border border-blue-950/50">
                             {node.fields.variables?.length || 0} Key parameters mapped
                           </span>
                         )}
                         {node.type === 'prompt' && (
-                          <div className="text-[9px] text-slate-500 font-mono truncate">
+                          <div className="text-xs text-slate-500 font-mono truncate">
                             {node.fields.template ? `"${node.fields.template.slice(0, 20)}..."` : 'Template empty'}
                           </div>
                         )}
                         {node.type === 'gemini' && (
                           <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-teal-400 font-mono block">
+                            <span className="text-xs font-bold text-teal-400 font-mono block">
                               ⚙️ Model: {node.fields.model || 'gemini-3.5-flash'}
                             </span>
                             {node.fields.useSearchGrounding && (
-                              <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold text-emerald-400">
+                              <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-400">
                                 Grounding: Enabled ✅
                               </span>
                             )}
                           </div>
                         )}
                         {node.type === 'reviewer' && (
-                          <span className="text-[9px] font-mono text-amber-400 font-bold bg-amber-950/20 px-1.5 py-0.5 rounded border border-amber-950/50 block w-fit">
+                          <span className="text-xs font-mono text-amber-400 font-bold bg-amber-950/20 px-1.5 py-0.5 rounded border border-amber-950/50 block w-fit">
                             Audit check turn: {node.fields.maxIterations || 1}
                           </span>
                         )}
                         {node.type === 'output' && (
-                          <span className="text-[9px] font-mono text-indigo-400 font-bold uppercase bg-indigo-950/20 px-2 py-0.5 rounded">
+                          <span className="text-xs font-mono text-indigo-400 font-bold uppercase bg-indigo-950/20 px-2 py-0.5 rounded">
                             {node.fields.format || 'markdown'} View
                           </span>
                         )}
                         {node.type === 'router' && (
-                          <span className="text-[9px] font-mono text-sky-400 font-bold uppercase bg-sky-950/20 px-2 py-0.5 rounded border border-sky-900/10 block w-fit">
+                          <span className="text-xs font-mono text-sky-400 font-bold uppercase bg-sky-950/20 px-2 py-0.5 rounded border border-sky-900/10 block w-fit">
                             🔀 {node.fields.conditions?.length || 0} Routes Checked
                           </span>
                         )}
                         {node.type === 'tool' && (
-                          <span className="text-[9px] font-mono text-rose-400 font-bold uppercase bg-rose-955 px-2 py-0.5 rounded border border-rose-900/10 block w-full truncate">
+                          <span className="text-xs font-mono text-rose-400 font-bold uppercase bg-rose-955 px-2 py-0.5 rounded border border-rose-900/10 block w-full truncate">
                             🌐 {node.fields.method || 'GET'} : {node.fields.url ? node.fields.url.replace(/^https?:\/\//i, '').slice(0, 18) + '...' : 'None'}
                           </span>
                         )}
                         {node.type === 'rag' && (
                           <div className="space-y-1">
-                            <span className="text-[9.5px] font-mono text-teal-400 font-bold uppercase bg-teal-950/20 px-2 py-0.5 rounded border border-teal-900/15 block w-fit">
+                            <span className="text-xs font-mono text-teal-400 font-bold uppercase bg-teal-950/20 px-2 py-0.5 rounded border border-teal-900/15 block w-fit">
                               📚 Limit: {node.fields.limit || 3} Files
                             </span>
                             {nodeStatus === 'completed' && (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-teal-350 bg-teal-950/40 border border-teal-900/35 px-2 py-0.5 rounded mt-1 shadow-sm animate-bounce">
+                              <span className="inline-flex items-center gap-1 text-xs font-extrabold text-teal-350 bg-teal-950/40 border border-teal-900/35 px-2 py-0.5 rounded mt-1 shadow-sm animate-bounce">
                                 Grounded: {node.fields.ragResults?.length || 3} Docs
                               </span>
                             )}
@@ -1813,20 +1913,20 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                         )}
                         {node.type === 'multimodal' && (
                           <div className="space-y-1">
-                            <span className="text-[9.5px] font-mono text-amber-400 font-bold uppercase bg-amber-950/20 px-2 py-0.5 rounded border border-amber-900/15 block w-fit">
+                            <span className="text-xs font-mono text-amber-400 font-bold uppercase bg-amber-950/20 px-2 py-0.5 rounded border border-amber-900/15 block w-fit">
                               📼 Modality: {node.fields.mediaType || 'image'}
                             </span>
                             {node.fields.useGeminiLive && (
-                              <span className="inline-flex items-center gap-0.5 text-[8.5px] font-extrabold text-amber-500 animate-pulse bg-amber-950/20 px-1 py-0.2 rounded border border-amber-900/30">
+                              <span className="inline-flex items-center gap-0.5 text-xs font-extrabold text-amber-500 animate-pulse bg-amber-950/20 px-1 py-0.2 rounded border border-amber-900/30">
                                 🔗 Live Streams Connected
                               </span>
                             )}
                             {node.fields.mediaData ? (
-                              <span className="text-[8.5px] text-emerald-400 font-semibold block mt-1">
+                              <span className="text-xs text-emerald-400 font-semibold block mt-1">
                                 📄 Attachment Loaded ✓
                               </span>
                             ) : (
-                              <span className="text-[8.5px] text-slate-500 font-semibold block mt-1">
+                              <span className="text-xs text-slate-500 font-semibold block mt-1">
                                 ⚠️ No Attachment Ingested
                               </span>
                             )}

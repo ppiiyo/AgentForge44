@@ -9,6 +9,7 @@ import { recordDebugSession } from '../utils/debugSessions.js';
 import { logger } from '../utils/logger.js';
 import { slidingWindowRateLimiter } from '../middleware/rateLimit.js';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
+import { generateSecureId } from '../utils/idGenerator.js';
 
 const router = Router();
 
@@ -117,7 +118,7 @@ router.post('/evals', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/stream-pipeline', async (req: Request, res: Response) => {
+router.post('/stream-pipeline', async (req: Request, res: Response) => {
   // Setup SSE Headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -131,14 +132,7 @@ router.get('/stream-pipeline', async (req: Request, res: Response) => {
   };
 
   try {
-    const payloadQuery = req.query.payload as string;
-    if (!payloadQuery) {
-      writeSSEEvent("error", { message: "Query payload is empty." });
-      res.end();
-      return;
-    }
-
-    const { nodes, connections, variables } = JSON.parse(decodeURIComponent(payloadQuery));
+    const { nodes, connections, variables } = req.body;
     if (!nodes || !connections) {
       writeSSEEvent("error", { message: "Invalid graph payload parameter configurations." });
       res.end();
@@ -210,7 +204,7 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
 
     res.json({
       success: true,
-      runId: `run_${Math.random().toString(36).substr(2, 9)}`,
+      runId: generateSecureId('run'),
       engine: "AgentForge44 Stateful Execution V2",
       results: trackingResult
     });
@@ -277,6 +271,36 @@ router.get('/llm-providers', (req: Request, res: Response) => {
       ]
     }
   ]);
+});
+
+// isolated-vm specific nodes runner mapping
+import { getSandbox, releaseSandbox } from '../utils/sandbox.js';
+
+router.post('/execute-node/:runId', async (req: Request, res: Response) => {
+  const { runId } = req.params;
+  const { code, inputData } = req.body;
+  
+  const sandbox = getSandbox(runId);
+  const wrappedCode = `
+    (async () => {
+      const input = ${JSON.stringify(inputData)};
+      ${code}
+    })()
+  `;
+  
+  const result = await sandbox.execute(wrappedCode, 10000);
+  
+  if (!result.success) {
+    releaseSandbox(runId);
+    return res.status(400).json({ error: result.error });
+  }
+  
+  res.json(result);
+});
+
+router.post('/complete-run/:runId', (req: Request, res: Response) => {
+  releaseSandbox(req.params.runId);
+  res.json({ success: true });
 });
 
 export default router;
