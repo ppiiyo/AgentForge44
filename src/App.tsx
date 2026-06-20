@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Sparkles, Play, Copy, Plus, Trash, Eye, RefreshCw, 
   FileCode, ExternalLink, Code, Workflow, TrendingUp, 
-  GitFork, ChevronRight, Database, Terminal, CheckSquare, 
+  GitFork, ChevronRight, ChevronLeft, Database, Terminal, CheckSquare, 
   GitPullRequest, Star, Lightbulb, Info, Settings, HelpCircle, 
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
@@ -299,6 +299,8 @@ export default function App() {
   const [isDryRunningNode, setIsDryRunningNode] = useState<string | null>(null);
   const [dryRunOutput, setDryRunOutput] = useState<Record<string, string>>({});
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState<boolean>(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(false);
 
   // Server-Side Project & Compiled Code State Management
   interface SavedServerProject {
@@ -1578,10 +1580,10 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
       />
 
       {/* Main Studio Console Layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative" id="app_main">
+      <div className="flex-1 flex flex-row overflow-hidden relative" id="app_main">
         
         {/* Left Side: Builder Toolbox & Node Editor */}
-        {!showcaseMode && (
+        {!showcaseMode && !leftSidebarCollapsed && (
           <Toolbox
             currentLang={currentLang}
             onCreateNode={handleCreateNode}
@@ -1714,6 +1716,38 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
 
             <span className="text-slate-800">|</span>
 
+            {/* Left Sidebar Toggle */}
+            <button
+              id="btn_toggle_left_sidebar"
+              onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
+                !leftSidebarCollapsed 
+                  ? 'bg-sky-950/45 text-sky-400 border-sky-900/40' 
+                  : 'bg-slate-950/50 border-slate-850 text-slate-400 hover:text-slate-200'
+              }`}
+              title={leftSidebarCollapsed ? "Show Toolbox Sidebar" : "Hide Toolbox Sidebar"}
+            >
+              {leftSidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+              <span>{currentLang === 'ru' ? "Инструменты" : currentLang === 'zh' ? "工具箱" : "Toolbox"}</span>
+            </button>
+
+            {/* Right Sidebar Toggle */}
+            <button
+              id="btn_toggle_right_sidebar"
+              onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
+                !rightSidebarCollapsed 
+                  ? 'bg-sky-950/45 text-sky-400 border-sky-900/40' 
+                  : 'bg-slate-950/50 border-slate-850 text-slate-400 hover:text-slate-200'
+              }`}
+              title={rightSidebarCollapsed ? "Show Panel Sidebar" : "Hide Panel Sidebar"}
+            >
+              {rightSidebarCollapsed ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
+              <span>{currentLang === 'ru' ? "Панель" : currentLang === 'zh' ? "面板" : "Tabs"}</span>
+            </button>
+
+            <span className="text-slate-800">|</span>
+
             {/* Showcase Mode Toggle */}
             <button
               id="btn_toggle_showcase"
@@ -1732,7 +1766,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         </main>
 
         {/* Dynamic Node Specific Properties & Configuration HUD */}
-        {!showcaseMode && selectedNodeId && (
+        {!showcaseMode && !rightSidebarCollapsed && selectedNodeId && (
           <ConfigurationPanel
             currentLang={currentLang as any}
             nodes={nodes}
@@ -1752,7 +1786,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         )}
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
-        {!showcaseMode && (
+        {!showcaseMode && !rightSidebarCollapsed && (
           <section className="w-full md:w-[380px] lg:w-[420px] border-t md:border-t-0 md:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden shrink-0" id="right_sidebar">
           
           {/* Section tab headers */}
