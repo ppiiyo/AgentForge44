@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FlowNode, FlowConnection } from '../types.js';
-import { db } from '../db/index.js';
-import { marketplaceItems } from '../db/schema.js';
+import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
@@ -508,35 +507,46 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
 ];
 
 export class MarketplaceManager {
-  private static seedIfEmpty(): void {
-    const count = db.select().from(marketplaceItems).all().length;
-    if (count === 0) {
-      for (const t of SEED_TEMPLATES) {
-        db.insert(marketplaceItems).values({
-          id: t.id,
-          name: t.title,
-          description: t.description,
-          type: t.category,
-          data: JSON.stringify({
-            ...t.graphSnapshot,
-            tags: t.tags // include tags in snapshot storage for simple extraction
-          }),
-          author: t.authorId,
-          downloads: t.downloadsCount,
-          rating: t.rating,
-          reviews: '[]',
-          createdAt: t.createdAt
-        }).run();
+  private static async seedIfEmpty(): Promise<void> {
+    try {
+      const list = await db.select().from(tables.marketplaceItems);
+      const count = list.length;
+      if (count === 0) {
+        for (const t of SEED_TEMPLATES) {
+          await db.insert(tables.marketplaceItems).values({
+            id: t.id,
+            name: t.title,
+            description: t.description,
+            type: t.category,
+            data: JSON.stringify({
+              ...t.graphSnapshot,
+              tags: t.tags
+            }),
+            author: t.authorId,
+            downloads: t.downloadsCount,
+            rating: t.rating,
+            reviews: '[]',
+            createdAt: t.createdAt
+          });
+        }
       }
+    } catch (err: any) {
+      console.warn("Could not query or seed marketplaceItems database table:", err.message);
     }
   }
 
-  static getItems(category?: string, tag?: string, search?: string, sortBy?: string): MarketplaceItem[] {
-    this.seedIfEmpty();
-    const rows = db.select().from(marketplaceItems).all();
+  static async getItems(category?: string, tag?: string, search?: string, sortBy?: string): Promise<MarketplaceItem[]> {
+    await this.seedIfEmpty();
+    let rows: any[] = [];
+    try {
+      rows = await db.select().from(tables.marketplaceItems);
+    } catch {}
     
     let items: MarketplaceItem[] = rows.map(row => {
-      const parsedData = JSON.parse(row.data);
+      let parsedData: any = {};
+      try {
+        parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data || {};
+      } catch {}
       return {
         id: row.id,
         title: row.name,
@@ -583,13 +593,19 @@ export class MarketplaceManager {
     return items;
   }
 
-  static getItemById(id: string): MarketplaceItem | null {
-    this.seedIfEmpty();
-    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, id)).all();
+  static async getItemById(id: string): Promise<MarketplaceItem | null> {
+    await this.seedIfEmpty();
+    let rows: any[] = [];
+    try {
+      rows = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, id));
+    } catch {}
     if (rows.length === 0) return null;
     
     const row = rows[0];
-    const parsedData = JSON.parse(row.data);
+    let parsedData: any = {};
+    try {
+      parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data || {};
+    } catch {}
     return {
       id: row.id,
       title: row.name,
@@ -608,15 +624,15 @@ export class MarketplaceManager {
     };
   }
 
-  static publishItem(
+  static async publishItem(
     title: string,
     description: string,
     category: 'agent' | 'tool' | 'template' | 'rag-pipeline',
     graphSnapshot: any,
     tags: string[],
     authorId: string = "user_developer"
-  ): MarketplaceItem {
-    this.seedIfEmpty();
+  ): Promise<MarketplaceItem> {
+    await this.seedIfEmpty();
     
     if (!graphSnapshot || !Array.isArray(graphSnapshot.nodes)) {
       throw new Error("Invalid graph snapshot payload. A valid nodes array is required.");
@@ -641,56 +657,62 @@ export class MarketplaceManager {
       createdAt: new Date().toISOString()
     };
 
-    db.insert(marketplaceItems).values({
-      id: newItem.id,
-      name: newItem.title,
-      description: newItem.description,
-      type: newItem.category,
-      data: JSON.stringify({
-        nodes: newItem.graphSnapshot.nodes,
-        connections: newItem.graphSnapshot.connections,
-        tags: newItem.tags
-      }),
-      author: newItem.authorId,
-      downloads: newItem.downloadsCount,
-      rating: newItem.rating,
-      reviews: '[]',
-      createdAt: newItem.createdAt
-    }).run();
+    try {
+      await db.insert(tables.marketplaceItems).values({
+        id: newItem.id,
+        name: newItem.title,
+        description: newItem.description,
+        type: newItem.category,
+        data: JSON.stringify({
+          nodes: newItem.graphSnapshot.nodes,
+          connections: newItem.graphSnapshot.connections,
+          tags: newItem.tags
+        }),
+        author: newItem.authorId,
+        downloads: newItem.downloadsCount,
+        rating: newItem.rating,
+        reviews: '[]',
+        createdAt: newItem.createdAt
+      });
+    } catch {}
 
     return newItem;
   }
 
-  static incrementDownload(id: string): MarketplaceItem {
-    const item = this.getItemById(id);
+  static async incrementDownload(id: string): Promise<MarketplaceItem> {
+    const item = await this.getItemById(id);
     if (!item) {
       throw new Error("Marketplace item not found.");
     }
     
     const nextDownloads = item.downloadsCount + 1;
     
-    db.update(marketplaceItems)
-      .set({ downloads: nextDownloads })
-      .where(eq(marketplaceItems.id, id))
-      .run();
+    try {
+      await db.update(tables.marketplaceItems)
+        .set({ downloads: nextDownloads })
+        .where(eq(tables.marketplaceItems.id, id));
+    } catch {}
       
     item.downloadsCount = nextDownloads;
     return item;
   }
 
-  static getReviews(itemId: string): MarketplaceReview[] {
-    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, itemId)).all();
+  static async getReviews(itemId: string): Promise<MarketplaceReview[]> {
+    let rows: any[] = [];
+    try {
+      rows = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, itemId));
+    } catch {}
     if (rows.length === 0) return [];
     
     try {
-      return JSON.parse(rows[0].reviews) as MarketplaceReview[];
+      return typeof rows[0].reviews === 'string' ? JSON.parse(rows[0].reviews) : rows[0].reviews || [];
     } catch {
       return [];
     }
   }
 
-  static addReview(itemId: string, userId: string, rating: number, comment: string): MarketplaceReview {
-    const rows = db.select().from(marketplaceItems).where(eq(marketplaceItems.id, itemId)).all();
+  static async addReview(itemId: string, userId: string, rating: number, comment: string): Promise<MarketplaceReview> {
+    const rows = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, itemId));
     if (rows.length === 0) {
       throw new Error("Marketplace item not found.");
     }
@@ -698,7 +720,7 @@ export class MarketplaceManager {
     const row = rows[0];
     let reviewsList: MarketplaceReview[] = [];
     try {
-      reviewsList = JSON.parse(row.reviews) as MarketplaceReview[];
+      reviewsList = typeof row.reviews === 'string' ? JSON.parse(row.reviews) : row.reviews || [];
     } catch {
       reviewsList = [];
     }
@@ -715,19 +737,20 @@ export class MarketplaceManager {
     reviewsList.push(newReview);
     const avgRating = reviewsList.reduce((sum, r) => sum + r.rating, 0) / reviewsList.length;
 
-    db.update(marketplaceItems)
-      .set({
-        reviews: JSON.stringify(reviewsList),
-        rating: Number(avgRating.toFixed(1))
-      })
-      .where(eq(marketplaceItems.id, itemId))
-      .run();
+    try {
+      await db.update(tables.marketplaceItems)
+        .set({
+          reviews: JSON.stringify(reviewsList),
+          rating: Number(avgRating.toFixed(1))
+        })
+        .where(eq(tables.marketplaceItems.id, itemId));
+    } catch {}
 
     return newReview;
   }
 
-  static getFeatured(): MarketplaceItem[] {
-    const items = this.getItems();
+  static async getFeatured(): Promise<MarketplaceItem[]> {
+    const items = await this.getItems();
     return items.sort((a, b) => b.rating - a.rating).slice(0, 3);
   }
 }

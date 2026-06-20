@@ -1557,22 +1557,24 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
       
       {/* Dynamic Top Navigation HUD */}
       <AppHeader
-        currentLang={currentLang}
-        translations={translations}
-        activeWorkflow={activeWorkflow}
-        workflows={workflows}
-        onLoadWorkflow={handleLoadWorkflow}
-        onLoadMultiAgentPattern={handleLoadMultiAgentPattern}
-        past={past}
-        future={future}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onSetLang={(lang) => {
+        currentLang={currentLang as any}
+        onLanguageChange={(lang) => {
           setCurrentLang(lang);
           i18nInstance.changeLanguage(lang);
           localStorage.setItem("agentforge_lang", lang);
           posthog.capture('language_switched', { locale: lang });
         }}
+        projectNameInput={projectNameInput}
+        onProjectNameInputChange={setProjectNameInput}
+        onSaveProject={() => handleSaveProjectToServer(projectNameInput)}
+        savingProject={savingProject}
+        onRunPipeline={handleRunPipeline}
+        isRunning={isRunning}
+        onAutoAlign={handleAutoAlignNodes}
+        onShowImportExport={() => setIsImportExportModalOpen(true)}
+        onSaveSnapshot={() => handleSaveSnapshot()}
+        nodesCount={nodes.length}
+        connectionsCount={connections.length}
       />
 
       {/* Main Studio Console Layout */}
@@ -1728,6 +1730,26 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
             </button>
           </div>
         </main>
+
+        {/* Dynamic Node Specific Properties & Configuration HUD */}
+        {!showcaseMode && (
+          <ConfigurationPanel
+            currentLang={currentLang as any}
+            nodes={nodes}
+            selectedNodeId={selectedNodeId}
+            locks={locks as any}
+            userId={userId || "local-user"}
+            onUpdateNodeField={handleUpdateNodeField}
+            onConnectNodes={handleConnectNodes}
+            onDuplicateNode={handleDuplicateNode}
+            onDeleteNode={handleDeleteNode}
+            onDryRunNode={handleDryRunNode}
+            isDryRunningNode={isDryRunningNode}
+            dryRunOutput={dryRunOutput}
+            setNodes={setNodes}
+            setDryRunOutput={setDryRunOutput}
+          />
+        )}
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
         {!showcaseMode && (
