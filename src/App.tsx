@@ -1578,7 +1578,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
       />
 
       {/* Main Studio Console Layout */}
-      <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative" id="app_main">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative" id="app_main">
         
         {/* Left Side: Builder Toolbox & Node Editor */}
         {!showcaseMode && (
@@ -1606,7 +1606,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         {/* Center Canvas Grid & Dynamic Flow Vectors */}
         <main 
           onMouseMove={handleCanvasMouseMove}
-          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden min-w-0" 
+          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden min-w-0 min-h-0" 
           ref={canvasRef} 
           id="canvas_stage"
         >
@@ -1732,7 +1732,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         </main>
 
         {/* Dynamic Node Specific Properties & Configuration HUD */}
-        {!showcaseMode && (
+        {!showcaseMode && selectedNodeId && (
           <ConfigurationPanel
             currentLang={currentLang as any}
             nodes={nodes}
@@ -1753,7 +1753,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
         {!showcaseMode && (
-          <section className="w-full xl:w-[480px] border-t xl:border-t-0 xl:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden" id="right_sidebar">
+          <section className="w-full md:w-[380px] lg:w-[420px] border-t md:border-t-0 md:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden shrink-0" id="right_sidebar">
           
           {/* Section tab headers */}
           <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">

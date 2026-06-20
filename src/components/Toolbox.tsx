@@ -67,7 +67,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   });
 
   return (
-    <aside className="w-full xl:w-80 border-b xl:border-b-0 xl:border-r border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0" id="left_toolbox">
+    <aside className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 animate-[fadeIn_0.3s_ease-out]" id="left_toolbox">
       <div className="p-4 border-b border-slate-850">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
           <Plus size={14} className="text-sky-400" /> {t('toolboxHeader')}

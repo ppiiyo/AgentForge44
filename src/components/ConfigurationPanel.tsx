@@ -156,7 +156,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   };
 
   return (
-    <aside className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 p-4" id="right_config_panel">
+    <aside className="w-full md:w-64 lg:w-72 border-t md:border-t-0 md:border-l border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 p-4 animate-[fadeIn_0.3s_ease-out]" id="right_config_panel">
       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
         <Settings size={14} className="text-sky-450 animate-spin" /> 
         {currentLang === 'ru' ? "СВОЙСТВА И НАСТРОЙКИ" : currentLang === 'zh' ? "节点属性配置" : "PROPERTIES & CONFIGURATION"}
