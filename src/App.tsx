@@ -1553,7 +1553,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-x-hidden" id="app_root">
+    <div className="h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
       
       {/* Dynamic Top Navigation HUD */}
       <AppHeader
@@ -1606,7 +1606,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         {/* Center Canvas Grid & Dynamic Flow Vectors */}
         <main 
           onMouseMove={handleCanvasMouseMove}
-          className="flex-1 min-h-[500px] xl:min-h-0 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] overflow-auto relative p-8 select-none flex flex-col" 
+          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden" 
           ref={canvasRef} 
           id="canvas_stage"
         >
