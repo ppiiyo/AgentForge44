@@ -10,6 +10,7 @@ import ReactFlow, {
   Position,
   BackgroundVariant,
   NodeProps,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { 
