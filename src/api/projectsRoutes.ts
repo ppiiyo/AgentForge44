@@ -67,16 +67,25 @@ router.get('/projects', async (req: Request, res: Response) => {
 
             // Non-blocking auto-seeding into database
             try {
-              await db.insert(tables.graphs).values({
-                id: record.id,
-                name: record.name,
-                nodes: JSON.stringify(record.nodes),
-                connections: JSON.stringify(record.connections),
-                createdAt: record.createdAt
-              });
-              console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" to the active database successfully.`);
+              const existingRecord = await db.select().from(tables.graphs).where(eq(tables.graphs.id, record.id));
+              if (existingRecord.length === 0) {
+                await db.insert(tables.graphs).values({
+                  id: record.id,
+                  name: record.name,
+                  nodes: JSON.stringify(record.nodes),
+                  connections: JSON.stringify(record.connections),
+                  createdAt: record.createdAt
+                });
+                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" to the active database successfully.`);
+              } else {
+                console.log(`[Self-Heal] Graph "${record.id}" already preset in active database.`);
+              }
             } catch (seedErr: any) {
-              console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
+              if (seedErr.message.includes('UNIQUE') || seedErr.message.includes('duplicate')) {
+                console.log(`[Self-Heal] Graph "${record.id}" already exists in the destination database.`);
+              } else {
+                console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
+              }
             }
 
             projectsList.push({
