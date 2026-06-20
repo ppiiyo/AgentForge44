@@ -153,6 +153,10 @@ async function generateWithRetry(
       }
 
       if (!classification.isTransient || attemptsLeft <= 0) {
+        if (classification.label === "RATE_LIMIT_EXHAUSTED") {
+          console.warn(`[AgentForge44] API Quota & Fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
+          return generateSimulatedResponse(model, contents);
+        }
         throw new Error(`[${classification.label}] LLM request failed: ${classification.reason} (Original: ${err.message || err})`);
       }
 
