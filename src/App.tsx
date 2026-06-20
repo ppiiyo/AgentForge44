@@ -299,8 +299,12 @@ export default function App() {
   const [isDryRunningNode, setIsDryRunningNode] = useState<string | null>(null);
   const [dryRunOutput, setDryRunOutput] = useState<Record<string, string>>({});
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState<boolean>(false);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(false);
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : true
+  );
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : true
+  );
 
   // Server-Side Project & Compiled Code State Management
   interface SavedServerProject {
@@ -848,6 +852,22 @@ export default function App() {
 
   useEffect(() => {
     fetchServerProjects();
+  }, []);
+
+  // Listen to viewport changes and auto-collapse sidebars when viewing on mobile screens
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setLeftSidebarCollapsed(true);
+        setRightSidebarCollapsed(true);
+      } else {
+        setLeftSidebarCollapsed(false);
+        setRightSidebarCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Proactive reactive compiler to keep server generated code perfectly in sync with the live canvas topology
@@ -1602,6 +1622,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
               handleLoadProjectFromServer(proj);
               setProjectNameInput(proj.name);
             }}
+            onClose={() => setLeftSidebarCollapsed(true)}
           />
         )}
 
@@ -1782,15 +1803,16 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
             dryRunOutput={dryRunOutput}
             setNodes={setNodes}
             setDryRunOutput={setDryRunOutput}
+            onClose={() => setSelectedNodeId(null)}
           />
         )}
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
         {!showcaseMode && !rightSidebarCollapsed && (
-          <section className="w-full md:w-[380px] lg:w-[420px] border-t md:border-t-0 md:border-l border-slate-850 bg-slate-900/40 flex flex-col overflow-hidden shrink-0" id="right_sidebar">
+          <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-30 shadow-2xl md:shadow-none" id="right_sidebar">
           
           {/* Section tab headers */}
-          <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto" id="tab_headers">
+          <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto items-center relative" id="tab_headers">
             {[
               { id: 'logs', label: currentLang === 'ru' ? '⚡ Запуск' : currentLang === 'zh' ? '⚡ 运行' : '⚡ Run', icon: RefreshCw },
               { id: 'copilot', label: currentLang === 'ru' ? '🤖 Копилот' : currentLang === 'zh' ? '🤖 智能助手' : '🤖 Copilot', icon: Sparkles },
@@ -1818,6 +1840,16 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
                 <span>{tab.label}</span>
               </button>
             ))}
+
+            {/* Sticky close button for mobile screens */}
+            <button
+              type="button"
+              onClick={() => setRightSidebarCollapsed(true)}
+              className="md:hidden sticky right-0 bg-slate-900/95 hover:bg-slate-800 text-slate-400 hover:text-slate-100 p-2.5 px-3.5 border-l border-slate-850 z-10 flex items-center justify-center shrink-0"
+              title="Close Panel Sidebar"
+            >
+              <X size={14} />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5" id="tab_contents">

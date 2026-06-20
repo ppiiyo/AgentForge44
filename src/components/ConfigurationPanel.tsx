@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
-  Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload
+  Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload, X
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../types';
 
@@ -70,6 +70,7 @@ interface ConfigurationPanelProps {
   dryRunOutput: Record<string, string>;
   setNodes: React.Dispatch<React.SetStateAction<FlowNode[]>>;
   setDryRunOutput: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onClose?: () => void;
 }
 
 export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
@@ -86,7 +87,8 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   isDryRunningNode,
   dryRunOutput,
   setNodes,
-  setDryRunOutput
+  setDryRunOutput,
+  onClose
 }) => {
   const node = nodes.find(n => n.id === selectedNodeId);
   const activeLock = node ? locks[node.id] : null;
@@ -156,11 +158,23 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   };
 
   return (
-    <aside className="w-full md:w-64 lg:w-72 border-t md:border-t-0 md:border-l border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 p-4 animate-[fadeIn_0.3s_ease-out]" id="right_config_panel">
-      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-        <Settings size={14} className="text-sky-450 animate-spin" /> 
-        {currentLang === 'ru' ? "СВОЙСТВА И НАСТРОЙКИ" : currentLang === 'zh' ? "节点属性配置" : "PROPERTIES & CONFIGURATION"}
-      </h3>
+    <aside className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-64 lg:w-72 border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 p-4 z-35 shadow-2xl md:shadow-none animate-[fadeIn_0.3s_ease-out]" id="right_config_panel">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Settings size={14} className="text-sky-450 animate-spin" /> 
+          {currentLang === 'ru' ? "СВОЙСТВА И НАСТРОЙКИ" : currentLang === 'zh' ? "节点属性配置" : "PROPERTIES & CONFIGURATION"}
+        </h3>
+        {onClose && (
+          <button 
+            type="button"
+            onClick={onClose}
+            className="md:hidden text-slate-500 hover:text-slate-200 p-1.5 hover:bg-slate-850 rounded-xl transition-all cursor-pointer active:scale-95"
+            title="Close Settings"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
 
       {selectedNodeId && node ? (
         <motion.div 

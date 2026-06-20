@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Plus, Database, Terminal, Sparkles, CheckSquare, GitBranch, Globe, 
-  BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass
+  BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../types';
 
@@ -27,6 +27,7 @@ interface ToolboxProps {
   loadingProjects: boolean;
   currentSavedProjectName: string | null;
   onLoadProjectFromServer: (proj: any) => void;
+  onClose?: () => void;
 }
 
 export const Toolbox: React.FC<ToolboxProps> = ({
@@ -43,7 +44,8 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   serverProjects,
   loadingProjects,
   currentSavedProjectName,
-  onLoadProjectFromServer
+  onLoadProjectFromServer,
+  onClose
 }) => {
   const { t } = useTranslation();
   const [toolboxSearch, setToolboxSearch] = useState<string>("");
@@ -67,11 +69,23 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   });
 
   return (
-    <aside className="w-full md:w-64 lg:w-72 border-b md:border-b-0 md:border-r border-slate-850 bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 animate-[fadeIn_0.3s_ease-out]" id="left_toolbox">
+    <aside className="absolute md:relative left-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-64 lg:w-72 border-r border-slate-850 bg-slate-900/95 md:bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 z-30 shadow-2xl md:shadow-none animate-[fadeIn_0.3s_ease-out]" id="left_toolbox">
       <div className="p-4 border-b border-slate-850">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-          <Plus size={14} className="text-sky-400" /> {t('toolboxHeader')}
-        </h3>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Plus size={14} className="text-sky-400" /> {t('toolboxHeader')}
+          </h3>
+          {onClose && (
+            <button 
+              type="button"
+              onClick={onClose}
+              className="md:hidden text-slate-500 hover:text-slate-200 p-1.5 hover:bg-slate-850 rounded-xl transition-all cursor-pointer active:scale-95"
+              title="Close Toolbox"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <p className="text-xs text-slate-500 mb-3.5 leading-relaxed">
           {t('toolboxDesc')}
         </p>

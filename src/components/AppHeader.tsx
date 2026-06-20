@@ -38,6 +38,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   connectionsCount
 }) => {
   const { t } = useTranslation();
+  const [langOpen, setLangOpen] = React.useState(false);
 
   return (
     <header className="p-4 bg-slate-900/90 backdrop-blur border-b border-slate-800 flex items-center justify-between gap-4 z-40 relative">
@@ -127,24 +128,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </button>
 
         {/* Language selector */}
-        <div className="relative group">
-          <button className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 border border-slate-850 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-bold leading-none select-none">
+        <div className="relative" onMouseLeave={() => setLangOpen(false)}>
+          <button 
+            type="button"
+            onClick={() => setLangOpen(!langOpen)}
+            className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 border border-slate-850 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-bold leading-none select-none"
+          >
             <Globe size={14} />
             <span className="uppercase">{currentLang}</span>
           </button>
-          <div className="absolute right-0 top-full mt-1.5 hidden group-hover:flex flex-col bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-2xl z-50 w-24">
-            {(['en', 'ru', 'zh'] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => onLanguageChange(lang)}
-                className={`text-[10px] font-extrabold uppercase px-2 py-1.5 rounded-lg text-left transition-all ${
-                  currentLang === lang ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-100'
-                }`}
-              >
-                {lang === 'en' ? 'EN' : lang === 'ru' ? 'РУ' : 'ZH'}
-              </button>
-            ))}
-          </div>
+          {langOpen && (
+            <div className="absolute right-0 top-full mt-1.5 flex flex-col bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-2xl z-50 w-24">
+              {(['en', 'ru', 'zh'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => {
+                    onLanguageChange(lang);
+                    setLangOpen(false);
+                  }}
+                  className={`text-[10px] font-extrabold uppercase px-2 py-1.5 rounded-lg text-left transition-all ${
+                    currentLang === lang ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-100'
+                  }`}
+                >
+                  {lang === 'en' ? 'EN' : lang === 'ru' ? 'РУ' : 'ZH'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Active execution trigger */}
