@@ -302,7 +302,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   }, [onSelectNode]);
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: '650px' }}>
+    <div className="w-full h-full min-h-0 flex-1 relative animate-[fadeIn_0.5s_ease-out]">
       <ReactFlow
         nodes={reactFlowNodes}
         edges={reactFlowEdges}

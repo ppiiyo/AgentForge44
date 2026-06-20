@@ -1606,7 +1606,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         {/* Center Canvas Grid & Dynamic Flow Vectors */}
         <main 
           onMouseMove={handleCanvasMouseMove}
-          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden" 
+          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden min-w-0" 
           ref={canvasRef} 
           id="canvas_stage"
         >
