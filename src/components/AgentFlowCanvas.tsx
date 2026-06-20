@@ -13,6 +13,7 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { motion } from 'motion/react';
 import { 
   Database, Terminal, Sparkles, CheckSquare, FileCode, GitBranch, Globe, 
   BookOpen, Layers, Trash 
@@ -71,8 +72,14 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
   }
 
   return (
-    <div
-      className={`w-48 rounded-2xl border text-left flex flex-col transition-all text-slate-100 ${borderStyle}`}
+    <motion.div
+      whileHover={{ 
+        scale: 1.025, 
+        y: -3, 
+        boxShadow: isSelected ? "0 15px 30px -10px rgba(14, 165, 233, 0.2)" : "0 12px 24px -10px rgba(0, 0, 0, 0.4)" 
+      }}
+      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+      className={`w-48 rounded-2xl border text-left flex flex-col transition-all text-slate-100 cursor-pointer ${borderStyle}`}
       style={{ minHeight: '140px' }}
     >
       {/* Input connector handle */}
@@ -220,7 +227,7 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
