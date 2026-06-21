@@ -5,6 +5,7 @@ import { promises as fsPromises } from 'fs';
 import { CodeGenerator } from './codeGenerator.js';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { validateBody, GraphSaveSchema, PipelineExecuteSchema } from '../utils/validation.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -107,14 +108,15 @@ router.get('/projects', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/projects', async (req: Request, res: Response) => {
+router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
-    const { name, nodes, connections } = req.body;
-    if (!name || typeof name !== 'string') {
+    const { name, id, nodes, connections } = req.body;
+    const resolvedName = name || id;
+    if (!resolvedName || typeof resolvedName !== 'string') {
       res.status(400).json({ error: "Valid project name is required" });
       return;
     }
-    const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_project";
+    const safeName = resolvedName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_project";
 
     // 1. Write metadata configurations to active DB
     try {
@@ -179,7 +181,7 @@ router.delete('/projects/:name', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/projects/export', (req: Request, res: Response) => {
+router.post('/projects/export', validateBody(GraphSaveSchema), (req: Request, res: Response) => {
   try {
     const { nodes, connections, language } = req.body;
     if (!nodes || !connections) {
