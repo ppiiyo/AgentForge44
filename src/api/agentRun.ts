@@ -168,6 +168,414 @@ async function generateWithRetry(
   throw new Error("Failed to generate content.");
 }
 
+export interface ExecutionContext {
+  ai: GoogleGenAI;
+  apiKey: string;
+  globalVariables: Record<string, string>;
+  nodeOutputs: Record<string, any>;
+  activeValueReference: { value: any };
+  stepStart: number;
+  localValue: any;
+  connections: FlowConnection[];
+  logs: StepLog[];
+  iterationsCount: Record<string, number>;
+}
+
+export interface NodeExecutionStrategy {
+  execute(node: FlowNode, context: ExecutionContext): Promise<void>;
+}
+
+export class InputNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const variablesMap: Record<string, string> = {};
+    const variables = node.fields.variables || [];
+    variables.forEach((v: { key: string; value?: string; val?: string }) => {
+      if (v.key) {
+        const value = v.value !== undefined ? v.value : (v.val !== undefined ? v.val : "");
+        variablesMap[v.key] = value;
+        context.globalVariables[v.key] = value;
+      }
+    });
+    context.nodeOutputs[node.id] = variablesMap;
+    context.activeValueReference.value = variablesMap;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: node.title,
+      status: 'completed',
+      input: JSON.stringify(variables, null, 2),
+      output: JSON.stringify(variablesMap, null, 2),
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class PromptNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const template = node.fields.template || "";
+    let renderedPrompt = template;
+
+    const sourceObj = typeof context.localValue === 'object' && context.localValue !== null 
+      ? { ...context.globalVariables, ...context.localValue } 
+      : context.globalVariables;
+
+    Object.entries(sourceObj).forEach(([k, v]) => {
+      const regex = new RegExp(`\\{${k}\\}`, 'g');
+      renderedPrompt = renderedPrompt.replace(regex, String(v));
+    });
+
+    context.nodeOutputs[node.id] = renderedPrompt;
+    context.activeValueReference.value = renderedPrompt;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: node.title,
+      status: 'completed',
+      input: template,
+      output: renderedPrompt,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class GeminiNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const promptText = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue);
+    const model = node.fields.model || 'gemini-3.5-flash';
+    const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
+    const systemInstruction = node.fields.systemInstruction || "";
+    const useSearchGrounding = !!node.fields.useSearchGrounding;
+
+    const isSandbox = !context.apiKey || context.apiKey === "sandbox_free_test_gemini" || context.apiKey === "your_gemini_api_key_here";
+    let responseText = "";
+    let resolvedModelName = model;
+    const groundingSources: Array<{ title: string; uri: string }> = [];
+
+    if (isSandbox) {
+      const { response, resolvedModel: simModel } = generateSimulatedResponse(model, promptText);
+      responseText = response.text || "";
+      resolvedModelName = simModel;
+    } else {
+      const config: any = {
+        temperature: temp,
+        systemInstruction: systemInstruction || undefined,
+      };
+      if (useSearchGrounding) {
+        config.tools = [{ googleSearch: {} }];
+      }
+
+      const { response, resolvedModel } = await generateWithRetry(context.ai, model, promptText, config);
+      responseText = response.text || "";
+      resolvedModelName = resolvedModel;
+
+      const metadata = response.candidates?.[0]?.groundingMetadata;
+      if (metadata?.groundingChunks) {
+        metadata.groundingChunks.forEach((chunk: any) => {
+          if (chunk.web?.title && chunk.web?.uri) {
+            groundingSources.push({
+              title: chunk.web.title,
+              uri: chunk.web.uri
+            });
+          }
+        });
+      }
+    }
+
+    context.nodeOutputs[node.id] = responseText;
+    context.activeValueReference.value = responseText;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: `${node.title} (${resolvedModelName})`,
+      status: 'completed',
+      input: promptText,
+      output: responseText,
+      groundingSources: groundingSources.length > 0 ? groundingSources : undefined,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class ReviewerNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const criteria = node.fields.criteria || "";
+    const maxIterations = Math.max(1, Number(node.fields.maxIterations) || 1);
+    const reviewTargetText = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue);
+
+    const isSandbox = !context.apiKey || context.apiKey === "sandbox_free_test_gemini" || context.apiKey === "your_gemini_api_key_here";
+    let runText = reviewTargetText;
+    let iteration = 0;
+    let critiqueResponse = "";
+    let passed = false;
+
+    if (isSandbox) {
+      iteration = 1;
+      passed = true;
+      critiqueResponse = "PASS: Output meets all criteria perfectly under simulated audit environment.";
+    } else {
+      while (iteration < maxIterations && !passed) {
+        iteration++;
+        const reviewerPrompt = `Analyze the following content generated by our coding unit against these strict quality requirements:
+Requirements: "${criteria}"
+
+Content to analyze:
+\`\`\`
+${runText}
+\`\`\`
+
+If it perfectly matches, output exactly "PASS".
+If it fails any criteria, explain details & write exactly "FAIL [explanation]", then outline the precise suggestions for correct output.`;
+
+        const { response } = await generateWithRetry(
+          context.ai,
+          'gemini-3.5-flash',
+          reviewerPrompt,
+          {
+            temperature: 0.1,
+            systemInstruction: "You are an automated strict unit testing system and layout auditor."
+          }
+        );
+
+        critiqueResponse = response.text || "";
+        if (critiqueResponse.trim().startsWith("PASS")) {
+          passed = true;
+          break;
+        } else {
+          const correctionPrompt = `A code/text critique was returned:
+Critic critique: ${critiqueResponse}
+
+Please regenerate the output from scratch, integrating all criticisms. Maintain high standards. No introductions, only the final polished code.`;
+
+          const { response: correctionRes } = await generateWithRetry(
+            context.ai,
+            'gemini-3.5-flash',
+            `${reviewTargetText}\n\n${correctionPrompt}`,
+            {
+              temperature: 0.2,
+              systemInstruction: "You are a self-healing master developer unit."
+            }
+          );
+          runText = correctionRes.text || "";
+        }
+      }
+    }
+
+    context.nodeOutputs[node.id] = runText;
+    context.activeValueReference.value = runText;
+    context.iterationsCount[node.id] = (context.iterationsCount[node.id] || 0) + iteration;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: node.title,
+      status: 'completed',
+      input: `Criteria: ${criteria}`,
+      output: passed 
+        ? `Passed audit successfully after ${iteration} iterations!\n\n${critiqueResponse}` 
+        : `Audit completed maximum cycles (${iteration}). Output refined iteratively with critique:\n\n${critiqueResponse}`,
+      iterationCount: iteration,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class ToolNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const urlRaw = node.fields.url || "";
+    const method = node.fields.method || "GET";
+    const headersRaw = node.fields.headers || "{}";
+    const bodyRaw = node.fields.body || "";
+
+    let url = urlRaw;
+    let body = bodyRaw;
+    let headersStr = headersRaw;
+
+    const substitute = (text: string) => {
+      let out = text;
+      const sourceObj = { ...context.globalVariables, lastOutput: typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue) };
+      Object.entries(sourceObj).forEach(([k, v]) => {
+        const r1 = new RegExp(`\\{${k}\\}`, 'g');
+        out = out.replace(r1, String(v));
+        const r2 = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+        out = out.replace(r2, String(v));
+      });
+      return out;
+    };
+
+    url = substitute(url);
+    body = substitute(body);
+    headersStr = substitute(headersStr);
+
+    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    try {
+      if (headersStr.trim().startsWith("{")) {
+        headers = { ...headers, ...safeJsonParse(headersStr) };
+      }
+    } catch {}
+
+    const fetchOptions: any = { method, headers };
+    if (method !== 'GET' && body) {
+      fetchOptions.body = body;
+    }
+
+    let responseText = "";
+    let responseStatus = 250;
+    try {
+      await validateUrl(url);
+      const fetchRes = await fetch(url, fetchOptions);
+      responseStatus = fetchRes.status;
+      responseText = await fetchRes.text();
+    } catch (err: any) {
+      if (err.message && err.message.startsWith("SSRF attempt blocked:")) {
+        throw err;
+      }
+      throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
+    }
+
+    context.nodeOutputs[node.id] = responseText;
+    context.activeValueReference.value = responseText;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: `${node.title} (${method} ${responseStatus})`,
+      status: 'completed',
+      input: `URL: ${url}\nBody: ${body || 'None'}`,
+      output: responseText,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class MultimodalNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const mediaType = node.fields.mediaType || 'image';
+    const mediaDataRaw = node.fields.mediaData || "";
+    const analysisPrompt = node.fields.analysisPrompt || "Process and summarize this document.";
+    const useGeminiLive = !!node.fields.useGeminiLive;
+
+    let base64Data = mediaDataRaw;
+    if (base64Data.includes(";base64,")) {
+      base64Data = base64Data.split(";base64,").pop() || "";
+    }
+
+    let mimeType = "image/png";
+    if (mediaType === 'audio') mimeType = "audio/mp3";
+    else if (mediaType === 'pdf') mimeType = "application/pdf";
+    else if (mediaType === 'excel') mimeType = "text/csv";
+
+    let responseText = "";
+    const isSandbox = !context.apiKey || context.apiKey === "sandbox_free_test_gemini" || context.apiKey === "your_gemini_api_key_here";
+
+    if (isSandbox || !base64Data) {
+      if (useGeminiLive) {
+        responseText = `[Gemini Live API Voice Session Connected]\n` +
+          `- Established persistent WebSocket bridge to gemini-3.1-flash-live-preview\n` +
+          `- Modality configured: [Modality.AUDIO] for real-time speech conversion\n` +
+          `- Input audio source mapped at 16kHz PCM little-endian\n` +
+          `- Client stream started: transmitting voice frames...\n` +
+          `- [Model Turn Response]: "Привет! Я прослушал вашу аудиозапись. На ней обсуждаются итоги квартала и новые финансовые цели. Как я могу еще помочь?"`;
+      } else {
+        if (mediaType === 'excel') {
+          responseText = JSON.stringify({
+            status: "success",
+            documentClass: "Excel Document Ledger",
+            totalRowsProcessed: 124,
+            parsedColumns: ["ID", "Employee", "Department", "Revenue", "Margin_Percentage"],
+            calculations: { grossSum: 154200.00, averageMargin: "18.4%" },
+            extractedValues: { topPerformer: "Sales Division A", forecastConfidence: "98.2%" }
+          }, null, 2);
+        } else if (mediaType === 'pdf') {
+          responseText = `[Document Processing Engine (WASM-OCR & Gemini Vision)]\n` +
+            `Source File: invoice_ledger_scanned.pdf\n` +
+            `Status: Successfully processed and indexed\n\n` +
+            `--- EXTRACTED INVOICE DETAILS ---\n` +
+            `Invoice Reference ID: INV-2026-9501\n` +
+            `Vendor: Global Logistics Inc.\n` +
+            `Issue Date: 2026-06-12\n` +
+            `Total Amount Due: $1,420.50 USD\n` +
+            `Line Items:\n` +
+            `1. API Gateway Routing Host - $420.00\n` +
+            `2. Cloud Compute Sandbox Cluster - $1,000.50`;
+        } else if (mediaType === 'audio') {
+          responseText = `[Audio Transcriber Stream Module]\n` +
+            `Decoded PCM data frequency: 24kHz\n` +
+            `Detected speaker count: 2\n\n` +
+            `Transcript Speech Output:\n` +
+            `"Алло, здравствуйте! Я хотел бы узнать, в безопасности ли мои скрипты при запуске на вашем сервере? Да, конечно, наши среды полностью изолированы в Docker и WASM контейнерах."`;
+        } else {
+          responseText = `[Vision Analyst Model - OCR Result]\n` +
+            `Source Image: user_provided_diagram.png\n` +
+            `Diagram Category: Node-Based AI Agent Flow Architecture\n\n` +
+            `Detected Elements:\n` +
+            `- Prompt Node connected to Gemini LLM\n` +
+            `- Reviewer looping back to prompt with max iterations = 3\n` +
+            `Analysis Notes: The flowchart shows a fully responsive self-healing code generation workflow.`;
+        }
+      }
+    } else {
+      try {
+        const activeModel = useGeminiLive ? "gemini-3.1-flash-live-preview" : "gemini-3.5-flash";
+        const mediaPart = { inlineData: { mimeType, data: base64Data } };
+        const textPart = { text: analysisPrompt };
+
+        const response = await context.ai.models.generateContent({
+          model: activeModel,
+          contents: { parts: [mediaPart, textPart] }
+        });
+        responseText = response.text || "Processed successfully with no output.";
+      } catch (e: any) {
+        throw new Error(`Multimodal Document process failed: ${e.message}`);
+      }
+    }
+
+    context.nodeOutputs[node.id] = responseText;
+    context.activeValueReference.value = responseText;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: `${node.title} (${mediaType.toUpperCase()} ${useGeminiLive ? 'Live' : 'Vision'})`,
+      status: 'completed',
+      input: `Prompt: ${analysisPrompt}\nMedia source type: ${mediaType}`,
+      output: responseText,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+export class RouterNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    context.nodeOutputs[node.id] = context.localValue;
+    context.activeValueReference.value = context.localValue;
+  }
+}
+
+export class OutputNodeStrategy implements NodeExecutionStrategy {
+  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+    const finalStr = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue, null, 2);
+    context.nodeOutputs[node.id] = finalStr;
+    context.activeValueReference.value = finalStr;
+
+    context.logs.push({
+      nodeId: node.id,
+      nodeTitle: node.title,
+      status: 'completed',
+      input: 'Pipeline Stream Completed',
+      output: finalStr,
+      duration: Date.now() - context.stepStart
+    });
+  }
+}
+
+const strategies: Record<string, NodeExecutionStrategy> = {
+  input: new InputNodeStrategy(),
+  prompt: new PromptNodeStrategy(),
+  gemini: new GeminiNodeStrategy(),
+  reviewer: new ReviewerNodeStrategy(),
+  tool: new ToolNodeStrategy(),
+  multimodal: new MultimodalNodeStrategy(),
+  router: new RouterNodeStrategy(),
+  output: new OutputNodeStrategy()
+};
+
 export async function executePipeline(
   nodes: FlowNode[],
   connections: FlowConnection[]
@@ -222,8 +630,7 @@ export async function executePipeline(
   const executedCount: Record<string, number> = {};
   const iterationsCount: Record<string, number> = {};
 
-  // For backward-compatibility logic, track a single activeValue
-  let activeValue: any = {};
+  const activeValueRef = { value: {} as any };
 
   // Traversal Reachability Helper to reset downstream nodes upon looping back
   function getReachableNodes(startId: string, visited = new Set<string>()): Set<string> {
@@ -259,11 +666,10 @@ export async function executePipeline(
     }
 
     if (eligibleNodes.length === 0) {
-      // Bailed or unresolved branches/dependencies remaining. Clear and exit
       break;
     }
 
-    const currentActiveValue = activeValue;
+    const currentActiveValue = activeValueRef.value;
 
     // 2. Execute all eligible nodes CONCURRENTLY for High-Throughput Parallel Execution
     const promises = eligibleNodes.map(async (node) => {
@@ -311,362 +717,23 @@ export async function executePipeline(
       }
 
       try {
-        if (node.type === 'input') {
-          const variablesMap: Record<string, string> = {};
-          const variables = node.fields.variables || [];
-          variables.forEach((v: { key: string; value?: string; val?: string }) => {
-            if (v.key) {
-              const value = v.value !== undefined ? v.value : (v.val !== undefined ? v.val : "");
-              variablesMap[v.key] = value;
-              globalVariables[v.key] = value;
-            }
-          });
-          nodeOutputs[node.id] = variablesMap;
-          activeValue = variablesMap;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: JSON.stringify(variables, null, 2),
-            output: JSON.stringify(variablesMap, null, 2),
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'prompt') {
-          const template = node.fields.template || "";
-          let renderedPrompt = template;
-
-          // Replace tags {placeholder} from local values & global variables
-          const sourceObj = typeof localValue === 'object' && localValue !== null ? { ...globalVariables, ...localValue } : globalVariables;
-          Object.entries(sourceObj).forEach(([k, v]) => {
-            const regex = new RegExp(`\\{${k}\\}`, 'g');
-            renderedPrompt = renderedPrompt.replace(regex, String(v));
-          });
-
-          nodeOutputs[node.id] = renderedPrompt;
-          activeValue = renderedPrompt;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: template,
-            output: renderedPrompt,
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'gemini') {
-          const promptText = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
-          const model = node.fields.model || 'gemini-3.5-flash';
-          const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
-          const systemInstruction = node.fields.systemInstruction || "";
-          const useSearchGrounding = !!node.fields.useSearchGrounding;
-
-          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
-          let responseText = "";
-          let resolvedModelName = model;
-          const groundingSources: Array<{ title: string; uri: string }> = [];
-
-          if (isSandbox) {
-            const { response, resolvedModel: simModel } = generateSimulatedResponse(model, promptText);
-            responseText = response.text || "";
-            resolvedModelName = simModel;
-          } else {
-            const config: any = {
-              temperature: temp,
-              systemInstruction: systemInstruction || undefined,
-            };
-            if (useSearchGrounding) {
-              config.tools = [{ googleSearch: {} }];
-            }
-
-            const { response, resolvedModel } = await generateWithRetry(ai, model, promptText, config);
-            responseText = response.text || "";
-            resolvedModelName = resolvedModel;
-
-            const metadata = response.candidates?.[0]?.groundingMetadata;
-            if (metadata?.groundingChunks) {
-              metadata.groundingChunks.forEach((chunk: any) => {
-                if (chunk.web?.title && chunk.web?.uri) {
-                  groundingSources.push({
-                    title: chunk.web.title,
-                    uri: chunk.web.uri
-                  });
-                }
-              });
-            }
-          }
-
-          nodeOutputs[node.id] = responseText;
-          activeValue = responseText;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: `${node.title} (${resolvedModelName})`,
-            status: 'completed',
-            input: promptText,
-            output: responseText,
-            groundingSources: groundingSources.length > 0 ? groundingSources : undefined,
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'reviewer') {
-          const criteria = node.fields.criteria || "";
-          const maxIterations = Math.max(1, Number(node.fields.maxIterations) || 1);
-          const reviewTargetText = typeof localValue === 'string' ? localValue : JSON.stringify(localValue);
-
-          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
-          let runText = reviewTargetText;
-          let iteration = 0;
-          let critiqueResponse = "";
-          let passed = false;
-
-          if (isSandbox) {
-            iteration = 1;
-            passed = true;
-            critiqueResponse = "PASS: Output meets all criteria perfectly under simulated audit environment.";
-          } else {
-            // Keep running sequential self-heal review loops on the node level
-            while (iteration < maxIterations && !passed) {
-              iteration++;
-              const reviewerPrompt = `Analyze the following content generated by our coding unit against these strict quality requirements:
-Requirements: "${criteria}"
-
-Content to analyze:
-\`\`\`
-${runText}
-\`\`\`
-
-If it perfectly matches, output exactly "PASS".
-If it fails any criteria, explain details & write exactly "FAIL [explanation]", then outline the precise suggestions for correct output.`;
-
-              const { response } = await generateWithRetry(
-                ai,
-                'gemini-3.5-flash',
-                reviewerPrompt,
-                {
-                  temperature: 0.1,
-                  systemInstruction: "You are an automated strict unit testing system and layout auditor."
-                }
-              );
-
-              critiqueResponse = response.text || "";
-              if (critiqueResponse.trim().startsWith("PASS")) {
-                passed = true;
-                break;
-              } else {
-                const correctionPrompt = `A code/text critique was returned:
-Critic critique: ${critiqueResponse}
-
-Please regenerate the output from scratch, integrating all criticisms. Maintain high standards. No introductions, only the final polished code.`;
-
-                const { response: correctionRes } = await generateWithRetry(
-                  ai,
-                  'gemini-3.5-flash',
-                  `${reviewTargetText}\n\n${correctionPrompt}`,
-                  {
-                    temperature: 0.2,
-                    systemInstruction: "You are a self-healing master developer unit."
-                  }
-                );
-                runText = correctionRes.text || "";
-              }
-            }
-          }
-
-          nodeOutputs[node.id] = runText;
-          activeValue = runText;
-          iterationsCount[node.id] = (iterationsCount[node.id] || 0) + iteration;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: `Criteria: ${criteria}`,
-            output: passed 
-              ? `Passed audit successfully after ${iteration} iterations!\n\n${critiqueResponse}` 
-              : `Audit completed maximum cycles (${iteration}). Output refined iteratively with critique:\n\n${critiqueResponse}`,
-            iterationCount: iteration,
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'tool') {
-          const urlRaw = node.fields.url || "";
-          const method = node.fields.method || "GET";
-          const headersRaw = node.fields.headers || "{}";
-          const bodyRaw = node.fields.body || "";
-
-          let url = urlRaw;
-          let body = bodyRaw;
-          let headersStr = headersRaw;
-
-          const substitute = (text: string) => {
-            let out = text;
-            const sourceObj = { ...globalVariables, lastOutput: typeof localValue === 'string' ? localValue : JSON.stringify(localValue) };
-            Object.entries(sourceObj).forEach(([k, v]) => {
-              const r1 = new RegExp(`\\{${k}\\}`, 'g');
-              out = out.replace(r1, String(v));
-              const r2 = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
-              out = out.replace(r2, String(v));
-            });
-            return out;
+        const strategy = strategies[node.type];
+        if (strategy) {
+          const context: ExecutionContext = {
+            ai,
+            apiKey,
+            globalVariables,
+            nodeOutputs,
+            activeValueReference: activeValueRef,
+            stepStart,
+            localValue,
+            connections,
+            logs,
+            iterationsCount
           };
-
-          url = substitute(url);
-          body = substitute(body);
-          headersStr = substitute(headersStr);
-
-          let headers: Record<string, string> = { "Content-Type": "application/json" };
-          try {
-            if (headersStr.trim().startsWith("{")) {
-              headers = { ...headers, ...safeJsonParse(headersStr) };
-            }
-          } catch {}
-
-          const fetchOptions: any = { method, headers };
-          if (method !== 'GET' && body) {
-            fetchOptions.body = body;
-          }
-
-          let responseText = "";
-          let responseStatus = 250;
-          try {
-            await validateUrl(url);
-            const fetchRes = await fetch(url, fetchOptions);
-            responseStatus = fetchRes.status;
-            responseText = await fetchRes.text();
-          } catch (err: any) {
-            if (err.message && err.message.startsWith("SSRF attempt blocked:")) {
-              throw err;
-            }
-            throw new Error(`HTTP Tool node failed: ${err.message || String(err)}`);
-          }
-
-          nodeOutputs[node.id] = responseText;
-          activeValue = responseText;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: `${node.title} (${method} ${responseStatus})`,
-            status: 'completed',
-            input: `URL: ${url}\nBody: ${body || 'None'}`,
-            output: responseText,
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'multimodal') {
-          const mediaType = node.fields.mediaType || 'image';
-          const mediaDataRaw = node.fields.mediaData || "";
-          const analysisPrompt = node.fields.analysisPrompt || "Process and summarize this document.";
-          const useGeminiLive = !!node.fields.useGeminiLive;
-          const outputVariables = node.fields.outputVariables || "";
-
-          let base64Data = mediaDataRaw;
-          if (base64Data.includes(";base64,")) {
-            base64Data = base64Data.split(";base64,").pop() || "";
-          }
-
-          let mimeType = "image/png";
-          if (mediaType === 'audio') mimeType = "audio/mp3";
-          else if (mediaType === 'pdf') mimeType = "application/pdf";
-          else if (mediaType === 'excel') mimeType = "text/csv";
-
-          let responseText = "";
-          const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
-
-          if (isSandbox || !base64Data) {
-            // Simulated multimodal mocks
-            if (useGeminiLive) {
-              responseText = `[Gemini Live API Voice Session Connected]\n` +
-                `- Established persistent WebSocket bridge to gemini-3.1-flash-live-preview\n` +
-                `- Modality configured: [Modality.AUDIO] for real-time speech conversion\n` +
-                `- Input audio source mapped at 16kHz PCM little-endian\n` +
-                `- Client stream started: transmitting voice frames...\n` +
-                `- [Model Turn Response]: "Привет! Я прослушал вашу аудиозапись. На ней обсуждаются итоги квартала и новые финансовые цели. Как я могу еще помочь?"`;
-            } else {
-              if (mediaType === 'excel') {
-                responseText = JSON.stringify({
-                  status: "success",
-                  documentClass: "Excel Document Ledger",
-                  totalRowsProcessed: 124,
-                  parsedColumns: ["ID", "Employee", "Department", "Revenue", "Margin_Percentage"],
-                  calculations: { grossSum: 154200.00, averageMargin: "18.4%" },
-                  extractedValues: { topPerformer: "Sales Division A", forecastConfidence: "98.2%" }
-                }, null, 2);
-              } else if (mediaType === 'pdf') {
-                responseText = `[Document Processing Engine (WASM-OCR & Gemini Vision)]\n` +
-                  `Source File: invoice_ledger_scanned.pdf\n` +
-                  `Status: Successfully processed and indexed\n\n` +
-                  `--- EXTRACTED INVOICE DETAILS ---\n` +
-                  `Invoice Reference ID: INV-2026-9501\n` +
-                  `Vendor: Global Logistics Inc.\n` +
-                  `Issue Date: 2026-06-12\n` +
-                  `Total Amount Due: $1,420.50 USD\n` +
-                  `Line Items:\n` +
-                  `1. API Gateway Routing Host - $420.00\n` +
-                  `2. Cloud Compute Sandbox Cluster - $1,000.50`;
-              } else if (mediaType === 'audio') {
-                responseText = `[Audio Transcriber Stream Module]\n` +
-                  `Decoded PCM data frequency: 24kHz\n` +
-                  `Detected speaker count: 2\n\n` +
-                  `Transcript Speech Output:\n` +
-                  `"Алло, здравствуйте! Я хотел бы узнать, в безопасности ли мои скрипты при запуске на вашем сервере? Да, конечно, наши среды полностью изолированы в Docker и WASM контейнерах."`;
-              } else {
-                responseText = `[Vision Analyst Model - OCR Result]\n` +
-                  `Source Image: user_provided_diagram.png\n` +
-                  `Diagram Category: Node-Based AI Agent Flow Architecture\n\n` +
-                  `Detected Elements:\n` +
-                  `- Prompt Node connected to Gemini LLM\n` +
-                  `- Reviewer looping back to prompt with max iterations = 3\n` +
-                  `Analysis Notes: The flowchart shows a fully responsive self-healing code generation workflow.`;
-              }
-            }
-          } else {
-            try {
-              const activeModel = useGeminiLive ? "gemini-3.1-flash-live-preview" : "gemini-3.5-flash";
-              const mediaPart = { inlineData: { mimeType, data: base64Data } };
-              const textPart = { text: analysisPrompt };
-
-              const response = await ai.models.generateContent({
-                model: activeModel,
-                contents: { parts: [mediaPart, textPart] }
-              });
-              responseText = response.text || "Processed successfully with no output.";
-            } catch (e: any) {
-              throw new Error(`Multimodal Document process failed: ${e.message}`);
-            }
-          }
-
-          nodeOutputs[node.id] = responseText;
-          activeValue = responseText;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: `${node.title} (${mediaType.toUpperCase()} ${useGeminiLive ? 'Live' : 'Vision'})`,
-            status: 'completed',
-            input: `Prompt: ${analysisPrompt}\nMedia source type: ${mediaType}`,
-            output: responseText,
-            duration: Date.now() - stepStart
-          });
-
-        } else if (node.type === 'router') {
-          nodeOutputs[node.id] = localValue;
-          activeValue = localValue;
-
-        } else if (node.type === 'output') {
-          const finalStr = typeof localValue === 'string' ? localValue : JSON.stringify(localValue, null, 2);
-          nodeOutputs[node.id] = finalStr;
-          activeValue = finalStr;
-
-          logs.push({
-            nodeId: node.id,
-            nodeTitle: node.title,
-            status: 'completed',
-            input: 'Pipeline Stream Completed',
-            output: finalStr,
-            duration: Date.now() - stepStart
-          });
+          await strategy.execute(node, context);
+        } else {
+          console.warn(`[Agent Executor] No strategy handler implemented for unique node type: ${node.type}`);
         }
       } catch (err: any) {
         logs.push({
@@ -687,7 +754,7 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
     // Update activeValue to be the output of the last completed node in this level
     if (eligibleNodes.length > 0) {
       const lastEligibleNode = eligibleNodes[eligibleNodes.length - 1];
-      activeValue = nodeOutputs[lastEligibleNode.id];
+      activeValueRef.value = nodeOutputs[lastEligibleNode.id];
     }
 
     // 3. Complete currently processed nodes & calculate successor activations
@@ -725,7 +792,6 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
         });
 
       } else if (completedNode.type === 'reviewer') {
-        // Find if custom loop target in graph is defined
         const incomingPredecessors = connections
           .filter(c => c.targetId === completedNode.id)
           .map(c => c.sourceId);
@@ -735,11 +801,9 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
         const isPassed = latestLog && latestLog.output && latestLog.output.includes("Passed audit");
 
         if (!isPassed && incomingPredecessors.length > 0) {
-          // If reviewer failed, re-inject upstream input/prompt node to loop-back
           const loopHeadId = incomingPredecessors[0];
           console.warn(`[AgentForge44 Executor] Critique loop-back re-injects to loop head node: ${loopHeadId}`);
 
-          // Reset completion states of loop head and all its downstream descendants to allow re-evaluation
           const loopContainedNodes = getReachableNodes(loopHeadId);
           for (const reachableId of loopContainedNodes) {
             completedNodes.delete(reachableId);
@@ -747,13 +811,11 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
           }
           activatedNodes.add(loopHeadId);
         } else {
-          // Normal sequential successor activation
           const targets = connections.filter(c => c.sourceId === completedNode.id);
           targets.forEach(t => activatedNodes.add(t.targetId));
         }
 
       } else {
-        // Default standard activations
         const targets = connections.filter(c => c.sourceId === completedNode.id);
         targets.forEach(t => activatedNodes.add(t.targetId));
       }
@@ -766,7 +828,7 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
   if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
     finalResultText = String(nodeOutputs[outputNodes[0].id]);
   } else {
-    finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
+    finalResultText = typeof activeValueRef.value === 'string' ? activeValueRef.value : JSON.stringify(activeValueRef.value, null, 2);
   }
 
   return {
