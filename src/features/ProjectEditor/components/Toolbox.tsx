@@ -4,7 +4,7 @@ import {
   Plus, Database, Terminal, Sparkles, CheckSquare, GitBranch, Globe, 
   BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X
 } from 'lucide-react';
-import { FlowNode, NodeType } from '../types';
+import { FlowNode, NodeType } from '../../../types';
 
 interface ToolboxProps {
   currentLang: 'en' | 'ru' | 'zh';

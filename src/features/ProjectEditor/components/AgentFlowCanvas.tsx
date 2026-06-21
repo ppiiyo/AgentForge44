@@ -18,7 +18,7 @@ import {
   Database, Terminal, Sparkles, CheckSquare, FileCode, GitBranch, Globe, 
   BookOpen, Layers, Trash 
 } from 'lucide-react';
-import { FlowNode, FlowConnection } from '../types';
+import { FlowNode, FlowConnection } from '../../../types';
 
 interface AgentFlowCanvasProps {
   currentLang: 'en' | 'ru' | 'zh';

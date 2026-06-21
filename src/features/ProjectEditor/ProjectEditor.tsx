@@ -8,9 +8,9 @@ import {
   ChevronRight, 
   Presentation 
 } from 'lucide-react';
-import { Toolbox } from '../../components/Toolbox';
-import { AgentFlowCanvas } from '../../components/AgentFlowCanvas';
-import { ConfigurationPanel } from '../../components/ConfigurationPanel';
+import { Toolbox } from './components/Toolbox';
+import { AgentFlowCanvas } from './components/AgentFlowCanvas';
+import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { FlowNode, FlowConnection } from '../../types';
 
 interface ProjectEditorProps {
