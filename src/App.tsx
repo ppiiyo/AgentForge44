@@ -4,7 +4,7 @@ import {
   Sparkles, Play, Copy, Plus, Trash, Eye, RefreshCw, 
   FileCode, ExternalLink, Code, Workflow, TrendingUp, 
   GitFork, ChevronRight, ChevronLeft, Database, Terminal, CheckSquare, 
-  GitPullRequest, Star, Lightbulb, Info, Settings, HelpCircle, 
+  GitPullRequest, Star, Lightbulb, Info, HelpCircle, 
   Layers, Sliders, Check, AlertCircle, RefreshCcw,
   Download, Upload, LayoutGrid, ZoomIn, ZoomOut,
   CopyPlus, FileJson, X, Globe, History, Undo, Redo,

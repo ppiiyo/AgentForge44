@@ -11,7 +11,7 @@ import {
 import { Toolbox } from '../../components/Toolbox';
 import { AgentFlowCanvas } from '../../components/AgentFlowCanvas';
 import { ConfigurationPanel } from '../../components/ConfigurationPanel';
-import { FlowNode, FlowConnection, WorkflowType } from '../../types';
+import { FlowNode, FlowConnection } from '../../types';
 
 interface ProjectEditorProps {
   currentLang: 'en' | 'ru' | 'zh';
