@@ -148,21 +148,23 @@ export class CollaborationServer {
 
       // 2. Custom rate limiter per socket connection (max 50 events per 10 seconds to prevent DDoS)
       const messageHistory: { timestamp: number }[] = [];
-      socket.use((packet, next) => {
-        const now = Date.now();
-        // Remove logs older than 10 seconds
-        while (messageHistory.length > 0 && now - messageHistory[0].timestamp > 10000) {
-          messageHistory.shift();
-        }
+      if (typeof socket.use === 'function') {
+        socket.use((packet, next) => {
+          const now = Date.now();
+          // Remove logs older than 10 seconds
+          while (messageHistory.length > 0 && now - messageHistory[0].timestamp > 10000) {
+            messageHistory.shift();
+          }
 
-        if (messageHistory.length >= 50) {
-          console.warn(`[SocketJS] Throttled rapid messaging rate from socket ID: ${socket.id}`);
-          return next(new Error('Rate limit exceeded: Too many socket events sent.'));
-        }
+          if (messageHistory.length >= 50) {
+            console.warn(`[SocketJS] Throttled rapid messaging rate from socket ID: ${socket.id}`);
+            return next(new Error('Rate limit exceeded: Too many socket events sent.'));
+          }
 
-        messageHistory.push({ timestamp: now });
-        next();
-      });
+          messageHistory.push({ timestamp: now });
+          next();
+        });
+      }
 
       // Register the socket resource immediately with a standard closure-based cleanup
       socketResources.set(socket.id, {
