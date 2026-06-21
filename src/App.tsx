@@ -28,9 +28,9 @@ import { TimeTravelDebugger } from './components/TimeTravelDebugger';
 import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
 import { useHotkeys } from './hooks/useHotkeys';
 import { AppHeader } from './components/AppHeader';
-import { Toolbox } from './components/Toolbox';
-import { AgentFlowCanvas } from './components/AgentFlowCanvas';
-import { ConfigurationPanel } from './components/ConfigurationPanel';
+import { ProjectEditor } from './features/ProjectEditor/ProjectEditor';
+import { Dashboard } from './features/Dashboard/Dashboard';
+import { Settings } from './features/Settings/Settings';
 import * as Sentry from '@sentry/react';
 import posthog from 'posthog-js';
 
@@ -321,6 +321,7 @@ export default function App() {
   const [projectNameInput, setProjectNameInput] = useState<string>("");
   const [currentSavedProjectName, setCurrentSavedProjectName] = useState<string | null>(null);
   const [codeDisplayType, setCodeDisplayType] = useState<'client' | 'compiled'>('compiled');
+  const [currentView, setCurrentView] = useState<'editor' | 'dashboard' | 'settings'>('editor');
 
   const lastEmitTime = useRef(0);
 
@@ -1599,13 +1600,65 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
         connectionsCount={connections.length}
       />
 
+      {/* Subheader Navigation Bar */}
+      <div className="bg-slate-900 border-b border-slate-850 px-6 py-2 flex items-center justify-between z-30 shrink-0" id="sub_navigation_bar">
+        <div className="flex space-x-1">
+          {[
+            { id: 'editor', label: currentLang === 'ru' ? '🛠️ Холст Конструктора' : currentLang === 'zh' ? '🛠️ 视觉画布' : '🛠️ Flow Editor', desc: currentLang === 'ru' ? 'Визуальный редактор' : 'Visual creator workspace' },
+            { id: 'dashboard', label: currentLang === 'ru' ? '📊 Консоль Аналитики' : currentLang === 'zh' ? '📊 监控总览' : '📊 Metrics Dashboard', desc: currentLang === 'ru' ? 'Обсервабилити и логи' : 'Observability & Telemetry' },
+            { id: 'settings', label: currentLang === 'ru' ? '⚙️ Настройки Системы' : currentLang === 'zh' ? '⚙️ 系统配置' : '⚙️ Workspace Settings', desc: currentLang === 'ru' ? 'Конфигурация схемы и локализация' : 'Preferences & Import/Export' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              id={`btn_view_nav_${tab.id}`}
+              onClick={() => setCurrentView(tab.id as any)}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold flex flex-col items-start transition-all cursor-pointer ${
+                currentView === tab.id 
+                  ? 'bg-slate-950 text-sky-400 border border-slate-800 shadow-inner shadow-black/40' 
+                  : 'text-slate-400 hover:text-slate-200 border border-transparent'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className="text-[9px] text-slate-500 font-medium leading-none mt-0.5">{tab.desc}</span>
+            </button>
+          ))}
+        </div>
+        
+        <div className="hidden sm:flex items-center space-x-3 text-xs text-slate-500">
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse"></span>
+            <span className="font-mono text-[10px] font-bold">Node.JS Core Running</span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Studio Console Layout */}
       <div className="flex-1 flex flex-row overflow-hidden relative" id="app_main">
-        
-        {/* Left Side: Builder Toolbox & Node Editor */}
-        {!showcaseMode && !leftSidebarCollapsed && (
-          <Toolbox
+        {currentView === 'editor' ? (
+          <ProjectEditor
             currentLang={currentLang}
+            translations={translations}
+            nodes={nodes}
+            setNodes={setNodes}
+            connections={connections}
+            setConnections={setConnections}
+            selectedNodeId={selectedNodeId}
+            setSelectedNodeId={setSelectedNodeId}
+            highlightedNodeId={highlightedNodeId}
+            nodeExecutionStatuses={nodeExecutionStatuses as any}
+            isRunning={isRunning}
+            showcaseMode={showcaseMode}
+            setShowcaseMode={setShowcaseMode}
+            leftSidebarCollapsed={leftSidebarCollapsed}
+            setLeftSidebarCollapsed={setLeftSidebarCollapsed}
+            rightSidebarCollapsed={rightSidebarCollapsed}
+            setRightSidebarCollapsed={setRightSidebarCollapsed}
+            canvasZoom={canvasZoom}
+            setCanvasZoom={setCanvasZoom}
+            snapToGrid={snapToGrid}
+            setSnapToGrid={setSnapToGrid}
+            canvasLocked={canvasLocked}
+            setCanvasLocked={setCanvasLocked}
             onCreateNode={handleCreateNode}
             savedSnapshots={savedSnapshots}
             onRestoreSnapshot={handleRestoreSnapshot}
@@ -1618,197 +1671,53 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
             serverProjects={serverProjects}
             loadingProjects={loadingProjects}
             currentSavedProjectName={currentSavedProjectName}
-            onLoadProjectFromServer={(proj) => {
-              handleLoadProjectFromServer(proj);
-              setProjectNameInput(proj.name);
-            }}
-            onClose={() => setLeftSidebarCollapsed(true)}
-          />
-        )}
-
-        {/* Center Canvas Grid & Dynamic Flow Vectors */}
-        <main 
-          onMouseMove={handleCanvasMouseMove}
-          className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden min-w-0 min-h-0" 
-          ref={canvasRef} 
-          id="canvas_stage"
-        >
-          
-          {/* Legend indicator */}
-          <div className="absolute top-4 left-4 bg-slate-900/80 border border-slate-850 px-3 py-1.5 rounded-xl backdrop-blur text-[10.5px] text-slate-400 z-10 font-semibold flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
-            <span>Flow Canvas Grid: Drag nodes to position. Left hand is input, Right hand is output.</span>
-          </div>
-
-          <AgentFlowCanvas
-            currentLang={currentLang as any}
-            nodes={nodes}
-            connections={connections}
-            selectedNodeId={selectedNodeId}
-            highlightedNodeId={highlightedNodeId}
-            nodeExecutionStatuses={nodeExecutionStatuses as any}
-            isRunning={isRunning}
-            onSelectNode={setSelectedNodeId}
-            onDeleteNode={handleDeleteNode}
-            onConnectNodes={handleConnectNodes}
-            onChangeNodePosition={(nodeId, x, y) => {
-              setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, x, y } : n));
-            }}
-            canvasZoom={canvasZoom}
-            snapToGrid={snapToGrid}
-            canvasLocked={canvasLocked}
-          />
-
-          {/* Canvas Premium Controls Float Board */}
-          <div className="absolute bottom-6 left-6 bg-slate-900/95 border border-slate-800 px-4 py-2.5 rounded-2xl shadow-xl backdrop-blur-md flex items-center space-x-3.5 z-20" id="canvas_premium_controls">
-            <div className="flex items-center space-x-1 border-r border-slate-800 pr-3">
-              <button 
-                onClick={() => setCanvasZoom(z => Math.max(0.5, z - 0.1))} 
-                className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-slate-850"
-                title="Zoom Out"
-                id="btn_zoom_out"
-              >
-                <ZoomOut size={14} />
-              </button>
-              <span className="text-xs font-mono font-bold text-slate-300 w-12 text-center select-none">
-                {Math.round(canvasZoom * 100)}%
-              </span>
-              <button 
-                onClick={() => setCanvasZoom(z => Math.min(1.5, z + 0.1))} 
-                className="text-slate-400 hover:text-slate-100 p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-slate-850"
-                title="Zoom In"
-                id="btn_zoom_in"
-              >
-                <ZoomIn size={14} />
-              </button>
-            </div>
-            
-            <button 
-              id="btn_zoom_reset"
-              onClick={() => setCanvasZoom(1.0)} 
-              className="text-slate-405 hover:text-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-slate-850 cursor-pointer transition-all"
-            >
-              Reset Scale
-            </button>
-
-            <span className="text-slate-755">|</span>
-
-            <button 
-              id="btn_auto_align_grid"
-              onClick={handleAutoAlignNodes} 
-              className="text-sky-450 hover:text-sky-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-sky-500/10 border border-sky-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
-              title="Automatically arrange nodes sequentially on the grid"
-            >
-              <LayoutGrid size={13} className="text-sky-400" />
-              <span>{translations[currentLang].autoAlign}</span>
-            </button>
-
-            <span className="text-slate-800">|</span>
-
-            {/* Lock Canvas Nodes Option */}
-            <button
-              id="btn_toggle_lock"
-              onClick={() => setCanvasLocked(!canvasLocked)}
-              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
-                canvasLocked 
-                  ? 'bg-rose-950/40 text-rose-450 border-rose-900/30' 
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-850'
-              }`}
-              title={canvasLocked ? "Unlock positions" : "Lock node positions"}
-            >
-              <Sliders size={13} />
-              <span>{currentLang === 'ru' ? (canvasLocked ? "Закреплено" : "Регулировка") : currentLang === 'zh' ? (canvasLocked ? "已锁定" : "自如拖拽") : (canvasLocked ? "Locked" : "Dragging")}</span>
-            </button>
-
-            {/* Grid Snapping Toggle */}
-            <button
-              id="btn_toggle_snap"
-              onClick={() => setSnapToGrid(!snapToGrid)}
-              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
-                snapToGrid 
-                  ? 'bg-emerald-950/40 text-emerald-450 border-emerald-900/30' 
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-850'
-              }`}
-              title="Toggle Aligning snap steps to grid nodes"
-            >
-              <LayoutGrid size={13} />
-              <span>{currentLang === 'ru' ? (snapToGrid ? "Сетка: Вкл" : "Без сетки") : currentLang === 'zh' ? (snapToGrid ? "对齐网格" : "自由式") : (snapToGrid ? "Snapping" : "Freeflow")}</span>
-            </button>
-
-            <span className="text-slate-800">|</span>
-
-            {/* Left Sidebar Toggle */}
-            <button
-              id="btn_toggle_left_sidebar"
-              onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
-              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
-                !leftSidebarCollapsed 
-                  ? 'bg-sky-950/45 text-sky-400 border-sky-900/40' 
-                  : 'bg-slate-950/50 border-slate-850 text-slate-400 hover:text-slate-200'
-              }`}
-              title={leftSidebarCollapsed ? "Show Toolbox Sidebar" : "Hide Toolbox Sidebar"}
-            >
-              {leftSidebarCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-              <span>{currentLang === 'ru' ? "Инструменты" : currentLang === 'zh' ? "工具箱" : "Toolbox"}</span>
-            </button>
-
-            {/* Right Sidebar Toggle */}
-            <button
-              id="btn_toggle_right_sidebar"
-              onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
-              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
-                !rightSidebarCollapsed 
-                  ? 'bg-sky-950/45 text-sky-400 border-sky-900/40' 
-                  : 'bg-slate-950/50 border-slate-850 text-slate-400 hover:text-slate-200'
-              }`}
-              title={rightSidebarCollapsed ? "Show Panel Sidebar" : "Hide Panel Sidebar"}
-            >
-              {rightSidebarCollapsed ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
-              <span>{currentLang === 'ru' ? "Панель" : currentLang === 'zh' ? "面板" : "Tabs"}</span>
-            </button>
-
-            <span className="text-slate-800">|</span>
-
-            {/* Showcase Mode Toggle */}
-            <button
-              id="btn_toggle_showcase"
-              onClick={() => setShowcaseMode(!showcaseMode)}
-              className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-extrabold shrink-0 ${
-                showcaseMode 
-                  ? 'bg-sky-500 text-slate-950 border-sky-400 shadow-lg shadow-sky-500/20' 
-                  : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:text-sky-400 hover:bg-slate-850'
-              }`}
-              title="Toggle Showcase Presentation Mode to free canvas space"
-            >
-              <Presentation size={13} />
-              <span>{currentLang === 'ru' ? (showcaseMode ? "Шоукейс: Вкл" : "Показ") : currentLang === 'zh' ? (showcaseMode ? "演示模式: 开启" : "演示模式") : (showcaseMode ? "Showcase: ON" : "Showcase Mode")}</span>
-            </button>
-          </div>
-        </main>
-
-        {/* Dynamic Node Specific Properties & Configuration HUD */}
-        {!showcaseMode && !rightSidebarCollapsed && selectedNodeId && (
-          <ConfigurationPanel
-            currentLang={currentLang as any}
-            nodes={nodes}
-            selectedNodeId={selectedNodeId}
-            locks={locks as any}
-            userId={userId || "local-user"}
-            onUpdateNodeField={handleUpdateNodeField}
-            onConnectNodes={handleConnectNodes}
-            onDuplicateNode={handleDuplicateNode}
-            onDeleteNode={handleDeleteNode}
-            onDryRunNode={handleDryRunNode}
+            onLoadProjectFromServer={handleLoadProjectFromServer}
+            handleDeleteNode={handleDeleteNode}
+            handleConnectNodes={handleConnectNodes}
+            handleUpdateNodeField={handleUpdateNodeField}
+            handleDuplicateNode={handleDuplicateNode}
+            handleDryRunNode={handleDryRunNode}
             isDryRunningNode={isDryRunningNode}
             dryRunOutput={dryRunOutput}
-            setNodes={setNodes}
             setDryRunOutput={setDryRunOutput}
-            onClose={() => setSelectedNodeId(null)}
+            handleAutoAlignNodes={handleAutoAlignNodes}
+            userId={userId || "local-user"}
+            locks={locks}
+          />
+        ) : currentView === 'dashboard' ? (
+          <Dashboard
+            currentLang={currentLang as any}
+            activeGraphId={activeWorkflow?.id || "canvas-workspace"}
+          />
+        ) : (
+          <Settings
+            currentLang={currentLang}
+            setCurrentLang={(lang) => {
+              setCurrentLang(lang);
+              i18nInstance.changeLanguage(lang);
+              localStorage.setItem("agentforge_lang", lang);
+              posthog.capture('language_switched', { locale: lang });
+            }}
+            snapToGrid={snapToGrid}
+            setSnapToGrid={setSnapToGrid}
+            canvasLocked={canvasLocked}
+            setCanvasLocked={setCanvasLocked}
+            canvasZoom={canvasZoom}
+            setCanvasZoom={setCanvasZoom}
+            activeWorkflow={activeWorkflow}
+            jsonStringInput={jsonStringInput}
+            setJsonStringInput={setJsonStringInput}
+            importError={importError}
+            handleImportWorkflowJSON={handleImportWorkflowJSON}
+            isImportExportModalOpen={isImportExportModalOpen}
+            setIsImportExportModalOpen={setIsImportExportModalOpen}
+            userNameInput={projectNameInput}
+            onUserNameInputChange={setProjectNameInput}
           />
         )}
 
         {/* Right Tabbed Panel: Logs / Code / Statistics */}
-        {!showcaseMode && !rightSidebarCollapsed && (
+        {currentView === 'editor' && !showcaseMode && !rightSidebarCollapsed && (
           <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-30 shadow-2xl md:shadow-none" id="right_sidebar">
           
           {/* Section tab headers */}
