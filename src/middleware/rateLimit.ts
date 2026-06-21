@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
+import { verifyToken } from '../api/userAuth.js';
+import rateLimit from 'express-rate-limit';
 
 /**
  * Enterprise Sliding Window Rate Limiter Middleware
@@ -35,3 +37,65 @@ export function slidingWindowRateLimiter(req: Request, res: Response, next: Next
 
   next();
 }
+
+// Anonymous rate limiter: 100 requests per 15 minutes
+const anonymousRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  message: {
+    success: false,
+    error: 'Too many requests under anonymous block, please sign in or try again later.',
+    retryAfter: '15 minutes'
+  }
+});
+
+// Authenticated rate limiter: 1000 requests per 15 minutes
+const authenticatedRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false,
+  message: {
+    success: false,
+    error: 'Rate limit exceeded for your account, please wait before sending more requests.',
+    retryAfter: '15 minutes'
+  }
+});
+
+/**
+ * Tiered Rate Limiter middleware
+ * Automatically parses token to detect auth status and routes to corresponding rate limit bracket:
+ * - Anonymous: 100 req / 15 min
+ * - Authenticated / Licensed key: 1000 req / 15 min
+ */
+export function tieredRateLimiter(req: Request, res: Response, next: NextFunction): void {
+  // Check if token exists to identify if authenticated
+  let isAuthenticated = false;
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (token) {
+      const MASTER_API_KEY = process.env.AGENTFORGE_API_KEY;
+      if (MASTER_API_KEY && token === MASTER_API_KEY) {
+        isAuthenticated = true;
+      } else {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          (req as any).user = decoded;
+          isAuthenticated = true;
+        }
+      }
+    }
+  }
+
+  if (isAuthenticated) {
+    authenticatedRateLimiter(req, res, next);
+  } else {
+    anonymousRateLimiter(req, res, next);
+  }
+}
+

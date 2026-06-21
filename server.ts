@@ -2,12 +2,12 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import cors from 'cors';
+import { corsMiddleware } from './src/middleware/cors.js';
 import { setupSecurity } from './src/middleware/security.js';
 import { sanitizeRequestBody } from './src/middleware/sanitize.js';
 import schedulerAndWebhooksRouter from './src/api/schedulerAndWebhooks.js';
 import copilotRouter from './src/api/copilot.js';
-import rateLimit from 'express-rate-limit';
+import { tieredRateLimiter } from './src/middleware/rateLimit.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
 import { logger } from './src/utils/logger.js';
@@ -41,10 +41,7 @@ export const app = express();
 app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+app.use(corsMiddleware);
 
 setupSecurity(app);
 
@@ -53,15 +50,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const apiRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000,
-  message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: false,
-});
-app.use('/api', apiRateLimiter);
+app.use('/api', tieredRateLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

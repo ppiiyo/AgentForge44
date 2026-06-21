@@ -1,37 +1,54 @@
 import helmet from 'helmet';
-import type { Express } from 'express';
+import { randomBytes } from 'crypto';
+import type { Express, Request, Response, NextFunction } from 'express';
+
+export function generateNonce(): string {
+  return randomBytes(16).toString('base64');
+}
 
 export function setupSecurity(app: Express) {
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "'unsafe-eval'",
-          "https://app.posthog.com",
-          "https://*.sentry.io",
-          "https://cdn.jsdelivr.net",
-          "https://unpkg.com"
-        ],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: [
-          "'self'",
-          "ws:",
-          "wss:",
-          "https://app.posthog.com",
-          "https://*.sentry.io",
-          "https://api.openai.com",
-          "https://generativelanguage.googleapis.com",
-          "https://api.anthropic.com"
-        ],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-        frameSrc: ["'self'"] // Allowed for preview iframes
-      }
-    },
-    crossOriginEmbedderPolicy: false, // critical for socket.io inside iframes
-    crossOriginResourcePolicy: { policy: "cross-origin" }
-  }));
+  // Middelware to insert a secure random nonce into res.locals for template views
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.locals.nonce = generateNonce();
+    next();
+  });
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const nonce = res.locals.nonce;
+
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'", // Kept for Vite client runtime hydration compatibility
+            "'unsafe-eval'",   // Kept for isolated-vm or Vite local bundling
+            `'nonce-${nonce}'`,
+            "https://app.posthog.com",
+            "https://*.sentry.io",
+            "https://cdn.jsdelivr.net",
+            "https://unpkg.com"
+          ],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          connectSrc: [
+            "'self'",
+            "ws:",
+            "wss:",
+            "https://app.posthog.com",
+            "https://*.sentry.io",
+            "https://api.openai.com",
+            "https://generativelanguage.googleapis.com",
+            "https://api.anthropic.com"
+          ],
+          fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+          frameSrc: ["'self'"] // Allowed for preview iframes
+        }
+      },
+      crossOriginEmbedderPolicy: false, // critical for socket.io inside iframes
+      crossOriginResourcePolicy: { policy: "cross-origin" }
+    })(req, res, next);
+  });
 }
+

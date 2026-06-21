@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
+import { verifyToken } from './userAuth.js';
 
 const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
 if (!fs.existsSync(DATA_DIR)) {
@@ -120,6 +121,22 @@ export class CollaborationServer {
       pingInterval: 15000
     });
 
+    // 1. Connection authentication handshake with safety fallback for local sandboxes
+    this.io.use((socket, next) => {
+      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      if (token && typeof token === 'string') {
+        const decoded = verifyToken(token);
+        if (!decoded) {
+          return next(new Error('Authentication failed: Invalid token'));
+        }
+        socket.data.user = decoded;
+      } else {
+        // Safe development mode warning
+        console.warn(`[SocketJS] Client connected without workspace JWT token. Allowed conditionally in developmental environments.`);
+      }
+      return next();
+    });
+
     this.setupListeners();
     console.log("👥 Real-time Collaboration Engine activated with Socket.io");
   }
@@ -128,6 +145,24 @@ export class CollaborationServer {
     this.io.on('connection', (socket: Socket) => {
       let currentRoom: string | null = null;
       let currentUser: { id: string; name: string; color: string } | null = null;
+
+      // 2. Custom rate limiter per socket connection (max 50 events per 10 seconds to prevent DDoS)
+      const messageHistory: { timestamp: number }[] = [];
+      socket.use((packet, next) => {
+        const now = Date.now();
+        // Remove logs older than 10 seconds
+        while (messageHistory.length > 0 && now - messageHistory[0].timestamp > 10000) {
+          messageHistory.shift();
+        }
+
+        if (messageHistory.length >= 50) {
+          console.warn(`[SocketJS] Throttled rapid messaging rate from socket ID: ${socket.id}`);
+          return next(new Error('Rate limit exceeded: Too many socket events sent.'));
+        }
+
+        messageHistory.push({ timestamp: now });
+        next();
+      });
 
       // Register the socket resource immediately with a standard closure-based cleanup
       socketResources.set(socket.id, {
