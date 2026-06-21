@@ -16,7 +16,7 @@ import 'reactflow/dist/style.css';
 import { motion } from 'motion/react';
 import { 
   Database, Terminal, Sparkles, CheckSquare, FileCode, GitBranch, Globe, 
-  BookOpen, Layers, Trash 
+  BookOpen, Layers, Trash, Clock, Cpu
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../../../types';
 
@@ -127,6 +127,8 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
             {node.type === 'tool' && <Globe size={11} className="text-rose-455" />}
             {node.type === 'rag' && <BookOpen size={11} className="text-teal-455" />}
             {node.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
+            {node.type === 'human_confirmation' && <Clock size={11} className="text-rose-400 animate-pulse" />}
+            {node.type === 'prompt_optimizer' && <Cpu size={11} className="text-emerald-400 animate-bounce" />}
           </span>
           <span className="font-bold text-xs text-slate-100 tracking-wide truncate flex-1">
             {node.title}
@@ -223,6 +225,24 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
               <span className="text-[10px] font-mono text-amber-400 font-bold uppercase bg-amber-950/20 px-2 py-0.5 rounded border border-amber-900/15 block w-fit">
                 📼 {node.fields.mediaType || 'image'}
               </span>
+            </div>
+          )}
+          {node.type === 'human_confirmation' && (
+            <div className="space-y-1">
+              <span className="text-[9.5px] font-mono text-rose-450 font-bold uppercase bg-rose-955 px-2 py-0.5 rounded border border-rose-900/15 block w-fit">
+                ⏱️ HALT: Wait Approval
+              </span>
+              {node.fields.message && (
+                <p className="text-[9px] text-slate-500 font-medium truncate italic">"{node.fields.message}"</p>
+              )}
+            </div>
+          )}
+          {node.type === 'prompt_optimizer' && (
+            <div className="space-y-1">
+              <span className="text-[9.5px] font-mono text-emerald-400 font-bold uppercase bg-emerald-955 px-2 py-0.5 rounded border border-emerald-900/15 block w-fit">
+                🧪 COT Optimizer
+              </span>
+              <span className="text-[9px] text-slate-500 font-mono block truncate">Persona: {node.fields.targetPersona || "General"}</span>
             </div>
           )}
         </div>

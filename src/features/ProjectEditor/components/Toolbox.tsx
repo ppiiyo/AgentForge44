@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Plus, Database, Terminal, Sparkles, CheckSquare, GitBranch, Globe, 
-  BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X
+  BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X,
+  Clock, Cpu, Settings, Code, FileJson
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../../../types';
 
 interface ToolboxProps {
   currentLang: 'en' | 'ru' | 'zh';
-  onCreateNode: (type: NodeType) => void;
+  onCreateNode: (type: NodeType, customFields?: any, customTitle?: string) => void;
   savedSnapshots: Array<{
     id: string;
     name: string;
@@ -49,6 +50,9 @@ export const Toolbox: React.FC<ToolboxProps> = ({
 }) => {
   const { t } = useTranslation();
   const [toolboxSearch, setToolboxSearch] = useState<string>("");
+  const [swaggerInput, setSwaggerInput] = useState<string>("");
+  const [swaggerError, setSwaggerError] = useState<string>("");
+  const [swaggerSuccess, setSwaggerSuccess] = useState<string>("");
 
   const creators = [
     { type: 'input' as NodeType, label: 'Inputs', desc: 'Variables parameters', color: 'hover:border-blue-500/40 hover:bg-blue-950/10' },
@@ -59,6 +63,8 @@ export const Toolbox: React.FC<ToolboxProps> = ({
     { type: 'tool' as NodeType, label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
     { type: 'rag' as NodeType, label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
     { type: 'multimodal' as NodeType, label: 'Multimodal (PDF/Audio/Excel)', desc: 'Process documents pipeline', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
+    { type: 'human_confirmation' as NodeType, label: 'Human confirmation', desc: 'Approve execution pipeline', color: 'hover:border-rose-600/40 hover:bg-rose-950/10' },
+    { type: 'prompt_optimizer' as NodeType, label: 'Prompt Optimizer', desc: 'Few-Shot COT prompt helper', color: 'hover:border-emerald-500/40 hover:bg-emerald-950/10' },
     { type: 'output' as NodeType, label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10' }
   ];
 
@@ -67,6 +73,65 @@ export const Toolbox: React.FC<ToolboxProps> = ({
     const s = toolboxSearch.toLowerCase();
     return tb.label.toLowerCase().includes(s) || tb.type.toLowerCase().includes(s) || tb.desc.toLowerCase().includes(s);
   });
+
+  const handleImportSwagger = () => {
+    setSwaggerError("");
+    setSwaggerSuccess("");
+    if (!swaggerInput.trim()) {
+      setSwaggerError("Please enter Swagger JSON/YAML specs.");
+      return;
+    }
+
+    try {
+      // Very robust parser that can handle both clean JSON and partial object definitions
+      let parsed: any;
+      try {
+        parsed = JSON.parse(swaggerInput);
+      } catch {
+        // Fallback: try evaluating as single object
+        parsed = Function(`return (${swaggerInput})`)();
+      }
+
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error("Specified text does not represent a valid OpenAPI/Swagger schema structure.");
+      }
+
+      const paths = parsed.paths || {};
+      const host = parsed.host || parsed.servers?.[0]?.url || "https://api.example.com";
+      const basePath = parsed.basePath || "";
+      const baseFinalUrl = host.startsWith("http") ? `${host}${basePath}` : `https://${host}${basePath}`;
+
+      let added = 0;
+      Object.keys(paths).forEach(pathName => {
+        const pathObj = paths[pathName];
+        Object.keys(pathObj).forEach(method => {
+          if (['get', 'post', 'put', 'delete', 'patch'].includes(method.toLowerCase())) {
+            const endpoint = pathObj[method];
+            const originalTitle = endpoint.summary || endpoint.operationId || `API ${method.toUpperCase()} ${pathName}`;
+            
+            const customFields = {
+              url: `${baseFinalUrl}${pathName}`,
+              method: method.toUpperCase(),
+              headers: '{"Content-Type": "application/json"}',
+              body: method.toLowerCase() !== 'get' ? '{\n  "query": "{{query}}"\n}' : ''
+            };
+
+            onCreateNode('tool', customFields, originalTitle);
+            added++;
+          }
+        });
+      });
+
+      if (added > 0) {
+        setSwaggerSuccess(currentLang === 'ru' ? `Успешно импортировано ${added} OpenAPI эндпоинтов.` : `Successfully imported ${added} API endpoints.`);
+        setSwaggerInput("");
+      } else {
+        throw new Error("No endpoints matched methods (GET, POST, etc.) in the parsed specification.");
+      }
+    } catch (e: any) {
+      setSwaggerError(e.message || "Failed to process OpenAPI specification.");
+    }
+  };
 
   return (
     <aside className="absolute md:relative left-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-64 lg:w-72 border-r border-slate-850 bg-slate-900/95 md:bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 z-30 shadow-2xl md:shadow-none animate-[fadeIn_0.3s_ease-out]" id="left_toolbox">
@@ -127,11 +192,37 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                 {tb.type === 'rag' && <BookOpen size={11} className="text-teal-400" />}
                 {tb.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
                 {tb.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
+                {tb.type === 'human_confirmation' && <Clock size={11} className="text-rose-400" />}
+                {tb.type === 'prompt_optimizer' && <Cpu size={11} className="text-emerald-400" />}
                 {tb.label}
               </span>
               <span className="text-[9px] text-slate-500">Add node</span>
             </button>
           ))}
+        </div>
+
+        {/* Swagger Importer collapsible/card UI block */}
+        <div className="mt-4 pt-3.5 border-t border-slate-850/80">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
+            <FileJson size={11} className="text-rose-400" /> Swagger Importer
+          </span>
+          <p className="text-[9px] text-slate-500 mb-2 leading-relaxed">
+            {currentLang === 'ru' ? "Вставьте JSON спецификации Swagger/OpenAPI" : "Paste Swagger/OpenAPI JSON specification"}
+          </p>
+          <textarea
+            value={swaggerInput}
+            onChange={(e) => setSwaggerInput(e.target.value)}
+            placeholder='{ "paths": { "/api/v1": { "get": {} } } }'
+            className="w-full h-14 bg-slate-950 font-mono text-[9px] text-slate-300 p-2 rounded-xl border border-slate-800 focus:outline-none focus:border-rose-500/45 focus:ring-1 focus:ring-rose-500/25 placeholder-slate-700 resize-none leading-normal"
+          />
+          {swaggerError && <p className="text-[9px] text-rose-450 mt-1">{swaggerError}</p>}
+          {swaggerSuccess && <p className="text-[9px] text-emerald-400 mt-1">{swaggerSuccess}</p>}
+          <button
+            onClick={handleImportSwagger}
+            className="w-full mt-2 bg-slate-950 text-slate-300 text-[10px] font-bold border border-slate-800 hover:border-rose-500/40 hover:bg-rose-950/20 py-1.5 rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+          >
+            <Plus size={10} /> {currentLang === 'ru' ? "Импортировать в Схему" : "Import Spec Route"}
+          </button>
         </div>
       </div>
 

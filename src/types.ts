@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'multimodal';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer';
 
 export interface BaseNode {
   id: string;
@@ -96,7 +96,25 @@ export interface MultimodalNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | MultimodalNode;
+export interface HumanConfirmationNode extends BaseNode {
+  type: 'human_confirmation';
+  fields: {
+    message: string;
+    approvedValue?: string;
+    rejectedMessage?: string;
+  };
+}
+
+export interface PromptOptimizerNode extends BaseNode {
+  type: 'prompt_optimizer';
+  fields: {
+    originalPrompt: string;
+    targetPersona: string;
+    optimizedPrompt?: string;
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode;
 
 export interface FlowConnection {
   id: string;

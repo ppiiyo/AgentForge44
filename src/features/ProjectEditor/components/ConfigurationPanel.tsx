@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
-  Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload, X
+  Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload, X, Sparkles
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../../../types';
 
@@ -337,10 +337,11 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             )}
 
             {/* Gemini node settings */}
+            {/* Gemini node settings with resilient failover & search grounding */}
             {node.type === 'gemini' && (
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Reasoning Core Model</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase font-bold text-sky-400">Primary Reasoning Core Model</label>
                   <select
                     value={node.fields.model || 'gemini-3.5-flash'}
                     onChange={(e) => onUpdateNodeField(node.id, 'model', e.target.value)}
@@ -350,7 +351,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                       <optgroup key={prov.id} label={prov.name} className="text-slate-500 bg-slate-950 font-bold">
                         {prov.models.map(m => (
                           <option key={m.id} value={m.id} className="text-slate-200">
-                            {m.name} ({m.speed || "Fast"})
+                             {m.name} ({m.speed || "Fast"})
                           </option>
                         ))}
                       </optgroup>
@@ -358,10 +359,10 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                <div className="flex items-center justify-between p-2 bg-slate-955/60 border border-slate-800 rounded-xl">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-300 block">Google Search Grounding</span>
-                    <span className="text-[9px] text-slate-500 block">Real-time web verification enabled.</span>
+                    <span className="text-[10px] font-bold text-slate-350 block">Google Search Grounding</span>
+                    <span className="text-[9px] text-slate-500 block">Real-time web verification query grounding.</span>
                   </div>
                   <input
                     type="checkbox"
@@ -369,6 +370,52 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
                     onChange={(e) => onUpdateNodeField(node.id, 'useSearchGrounding', e.target.checked)}
                     className="accent-teal-550 rounded cursor-pointer h-4.5 w-4.5"
                   />
+                </div>
+
+                {/* Resilience & Fallback Controls */}
+                <div className="p-3 bg-slate-950/80 border border-slate-850 rounded-xl space-y-2.5">
+                  <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1">
+                    🛡️ Resilience & Failover Routing
+                  </span>
+                  
+                  <div className="space-y-1">
+                    <span className="text-[9px] text-slate-500 block">Fallback Secondary Model</span>
+                    <select
+                      value={node.fields.fallbackModel || 'gemini-2.5-pro'}
+                      onChange={(e) => onUpdateNodeField(node.id, 'fallbackModel', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded p-1 text-[11px] text-slate-205"
+                    >
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro (Fallback / Precision)</option>
+                      <option value="claude-3.5-sonnet">Claude 3.5 Sonnet (Fallback)</option>
+                      <option value="gpt-4o-mini">GPT-4o-mini (Fallback / Fast)</option>
+                      <option value="llama-3.1">Meta Llama 3.1 70B (Failover)</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[9px] text-slate-500 block">Max Failover Retries</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={5}
+                        value={node.fields.failoverRetries || 2}
+                        onChange={(e) => onUpdateNodeField(node.id, 'failoverRetries', parseInt(e.target.value) || 0)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-xs text-slate-100 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block">Timeout limit (ms)</span>
+                      <input
+                        type="number"
+                        step={1000}
+                        min={100}
+                        value={node.fields.failoverTimeout || 10000}
+                        onChange={(e) => onUpdateNodeField(node.id, 'failoverTimeout', parseInt(e.target.value) || 10000)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-xs text-slate-100 font-mono"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -429,16 +476,71 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
 
             {/* RAG Knowledge embeddings limit config */}
             {node.type === 'rag' && (
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Limit Target Document Elements</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={node.fields.limit || 3}
-                  onChange={(e) => onUpdateNodeField(node.id, 'limit', parseInt(e.target.value) || 3)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-100 font-mono"
-                />
+              <div className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Limit Target Document Elements</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={node.fields.limit || 3}
+                    onChange={(e) => onUpdateNodeField(node.id, 'limit', parseInt(e.target.value) || 3)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-100 font-mono"
+                  />
+                </div>
+
+                <div className="pt-2.5 border-t border-slate-850">
+                  <label className="block text-[10px] font-bold text-teal-400 uppercase tracking-wider mb-2">Vector Store DB Connection</label>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-[9px] text-slate-500 block mb-1">Database Provider</span>
+                      <select
+                        value={node.fields.vectorDbProvider || 'pgvector'}
+                        onChange={(e) => onUpdateNodeField(node.id, 'vectorDbProvider', e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-300"
+                      >
+                        <option value="pgvector">🐘 PGVector (PostgreSQL)</option>
+                        <option value="pinecone">🌲 Pinecone DB</option>
+                        <option value="qdrant">🎯 Qdrant AI</option>
+                        <option value="chroma">🎨 Chroma DB (Default)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <span className="text-[9px] text-slate-500 block mb-1">Endpoint Connection Host URL</span>
+                      <input
+                        type="text"
+                        placeholder="https://xyz-index.pinecone.io"
+                        value={node.fields.vectorDbHost || ''}
+                        onChange={(e) => onUpdateNodeField(node.id, 'vectorDbHost', e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-205 font-mono"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[9px] text-slate-500 block mb-1">Index Name</span>
+                        <input
+                          type="text"
+                          placeholder="wiki_embeddings"
+                          value={node.fields.vectorDbIndex || ''}
+                          onChange={(e) => onUpdateNodeField(node.id, 'vectorDbIndex', e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-205"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-500 block mb-1">Dimensions</span>
+                        <input
+                          type="number"
+                          placeholder="1536"
+                          value={node.fields.vectorDbDim || 1536}
+                          onChange={(e) => onUpdateNodeField(node.id, 'vectorDbDim', parseInt(e.target.value) || 1536)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-205 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -487,9 +589,123 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               </div>
             )}
 
+            {/* Human Confirmation Settings */}
+            {node.type === 'human_confirmation' && (
+              <div className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Verification Inquiry Message</label>
+                  <textarea
+                    rows={3}
+                    value={node.fields.message || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'message', e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 placeholder-slate-700"
+                    placeholder="Ask for approval instructions..."
+                  />
+                </div>
+
+                <div className="p-3 bg-slate-950 border border-slate-850 rounded-xl space-y-2">
+                  <span className="text-[10px] font-bold text-slate-400 block tracking-wider uppercase mb-1">Interactive Proof (Live simulation)</span>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        onUpdateNodeField(node.id, 'approvedValue', 'approved_by_human_admin');
+                        onUpdateNodeField(node.id, 'rejectedMessage', '');
+                      }}
+                      className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        node.fields.approvedValue === 'approved_by_human_admin'
+                          ? 'bg-emerald-500/20 text-emerald-350 border-emerald-500/40'
+                          : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        onUpdateNodeField(node.id, 'approvedValue', '');
+                        onUpdateNodeField(node.id, 'rejectedMessage', 'Inquiry rejected on live console.');
+                      }}
+                      className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        node.fields.rejectedMessage
+                          ? 'bg-rose-500/20 text-rose-350 border-rose-500/40'
+                          : 'bg-slate-900 hover:bg-slate-850 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      ✕ Reject
+                    </button>
+                  </div>
+                  <div className="text-[9px] text-center text-slate-500 font-mono italic font-bold">
+                    {node.fields.approvedValue ? "Status: APPROVED ✓" : node.fields.rejectedMessage ? "Status: REJECTED ✕" : "Status: AWAITING APPROVAL ⏱️"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Prompt Optimizer Settings */}
+            {node.type === 'prompt_optimizer' && (
+              <div className="space-y-3.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-550 uppercase">Input Draft Prompt</label>
+                  <textarea
+                    rows={4}
+                    value={node.fields.originalPrompt || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'originalPrompt', e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 placeholder-slate-755 font-mono"
+                    placeholder="e.g. Write a brief about marketing..."
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-550 uppercase">Target Assistant Persona</label>
+                  <input
+                    type="text"
+                    value={node.fields.targetPersona || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'targetPersona', e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-100"
+                    placeholder="e.g. Senior Copywriter"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    const optimizedText = `You are a professional ${node.fields.targetPersona || 'expert copywriter assistant'}. Using Step-by-Step Chain-of-Thought (COT) validation and Few-Shot reasoning, follow these guidelines to execute the task perfectly:
+
+## Operational Guidelines:
+1. Deconstruct the initial requirements into discrete sub-evaluation items.
+2. Self-correct grammar, tone, and logical flows iteratively before reaching a final summary.
+3. Keep the output extremely structured, clear, and action-oriented.
+
+## Initial Request Input:
+"${node.fields.originalPrompt || 'Write a brief about marketing'}"
+
+## Optimized Reasoning Flow:
+- Context Extraction: Define clear target goals.
+- Execution Formula: Synthesize final output.`;
+                    onUpdateNodeField(node.id, 'optimizedPrompt', optimizedText);
+                  }}
+                  className="w-full bg-gradient-to-r from-emerald-600/20 to-teal-600/20 hover:from-emerald-600/30 hover:to-teal-600/30 text-emerald-300 hover:text-emerald-250 border border-emerald-500/30 text-[10.5px] font-bold py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                >
+                  <Sparkles size={11} className="text-emerald-400 animate-pulse" />
+                  <span>Optimize Prompt (Few-Shot & COT)</span>
+                </button>
+
+                {node.fields.optimizedPrompt && (
+                  <div className="space-y-1 mt-2 font-mono">
+                    <span className="text-[9px] text-slate-550 font-bold uppercase block">Optimized Blueprint:</span>
+                    <textarea
+                      rows={6}
+                      readOnly
+                      value={node.fields.optimizedPrompt}
+                      className="w-full bg-slate-950 border border-slate-900 rounded-lg p-2 text-[9px] text-emerald-400 leading-normal focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Connection Wire Setup selector */}
             <div className="pt-2">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">Target Connect Link</label>
+              <label className="block text-[10px] font-bold text-slate-550 uppercase mb-1.5">Target Connect Link</label>
               <select 
                 id={`target-selector-${node.id}`}
                 defaultValue="" 

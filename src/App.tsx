@@ -1230,7 +1230,9 @@ export default function App() {
       'rag': 5,
       'multimodal': 6,
       'reviewer': 7,
-      'output': 8
+      'output': 8,
+      'human_confirmation': 9,
+      'prompt_optimizer': 10
     };
 
     const counts: Record<NodeType, number> = {
@@ -1242,7 +1244,9 @@ export default function App() {
       'rag': 0,
       'multimodal': 0,
       'reviewer': 0,
-      'output': 0
+      'output': 0,
+      'human_confirmation': 0,
+      'prompt_optimizer': 0
     };
 
     setNodes(prev => {
@@ -1336,58 +1340,68 @@ export default function App() {
   };
 
   // Addition of dynamic nodes
-  const handleCreateNode = (type: NodeType) => {
+  const handleCreateNode = (type: NodeType, customFields?: any, customTitle?: string) => {
     recordAction();
     const id = `node-${type}-${Date.now().toString().slice(-4)}`;
-    let title = "Custom Node";
+    let title = customTitle || "Custom Node";
     let description = "Node definition";
     let initialFields: any = {};
 
     switch (type) {
       case 'input':
-        title = "Input variables";
+        title = customTitle || "Input variables";
         description = "Initial template variable map definition.";
         initialFields = { variables: [{ key: 'topic', value: 'Open Source', label: 'Topic Key' }] };
         break;
       case 'prompt':
-        title = "Prompt Template";
+        title = customTitle || "Prompt Template";
         description = "Custom blueprint rendering with variables.";
         initialFields = { template: "Write a short brief about {topic}." };
         break;
       case 'gemini':
-        title = "Gemini LLM Unit";
+        title = customTitle || "Gemini LLM Unit";
         description = "Generators powered by Google Gemini.";
         initialFields = { model: 'gemini-3.5-flash', temperature: 0.7, systemInstruction: 'You are custom logic generator.', useSearchGrounding: false };
         break;
       case 'reviewer':
-        title = "Critique & Review";
+        title = customTitle || "Critique & Review";
         description = "Automated loop review self-corrections.";
         initialFields = { criteria: "Check if outline is concise.", maxIterations: 1 };
         break;
       case 'output':
-        title = "Final Output Display";
+        title = customTitle || "Final Output Display";
         description = "Aggregated result viewer.";
         initialFields = { format: 'markdown', value: '' };
         break;
       case 'router':
-        title = "Execution Router";
+        title = customTitle || "Execution Router";
         description = "Evaluate and branch traffic flows.";
         initialFields = { conditions: [], defaultTargetNodeId: '' };
         break;
       case 'tool':
-        title = "External Tool API";
+        title = customTitle || "External Tool API";
         description = "HTTP request connection controller.";
         initialFields = { url: 'https://api.github.com/zen', method: 'GET', headers: '{}', body: '' };
         break;
       case 'rag':
-        title = "RAG Search Retriever";
+        title = customTitle || "RAG Search Retriever";
         description = "Query your vector-indexed library database.";
         initialFields = { searchQuery: '{{topic}}', limit: 3, ragResults: [] };
         break;
       case 'multimodal':
-        title = "Multimodal Document Hub";
+        title = customTitle || "Multimodal Document Hub";
         description = "Ingest, parse and analyze PDF, spreadsheets, audio or image sheets.";
         initialFields = { mediaType: 'image', mediaData: '', analysisPrompt: 'Transcribe, extract or analyze the table variables of this attachment.', useGeminiLive: false, outputVariables: 'extractedText=text' };
+        break;
+      case 'human_confirmation':
+        title = customTitle || "Human Confirmation";
+        description = "Halts graph execution to ask for human approval before proceeding.";
+        initialFields = { message: "Confirm system cost before finalizing pipeline execution?", approvedValue: "", rejectedMessage: "Execution rejected by administrator" };
+        break;
+      case 'prompt_optimizer':
+        title = customTitle || "Prompt Optimizer";
+        description = "LLM-assisted Prompt engineering optimization using Few-Shot and Chain of Thought.";
+        initialFields = { originalPrompt: "Write an email draft.", targetPersona: "Product Marketing Manager", optimizedPrompt: "" };
         break;
     }
 
@@ -1398,7 +1412,7 @@ export default function App() {
       x: 100 + Math.random() * 80,
       y: 100 + Math.random() * 80,
       description,
-      fields: initialFields
+      fields: { ...initialFields, ...customFields }
     };
 
     setNodes(prev => [...prev, newNode]);

@@ -91,6 +91,16 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         description = "Ingest, parse and analyze PDF, spreadsheets, audio or image sheets.";
         initialFields = { mediaType: 'image', mediaData: '', analysisPrompt: 'Transcribe, extract or analyze the table variables of this attachment.', useGeminiLive: false, outputVariables: 'extractedText=text' };
         break;
+      case 'human_confirmation':
+        title = "Wait Human Gate";
+        description = "Halt agent trace execution to retrieve manual OK or payload approval.";
+        initialFields = { message: 'Operator, please review current pipeline transaction. Approve to proceed.', approvedValue: 'Action Approved', rejectedMessage: 'Cancelled' };
+        break;
+      case 'prompt_optimizer':
+        title = "Instruct COT Optimizer";
+        description = "Inject a dynamically compiled Few-shot CoT optimized instruction template.";
+        initialFields = { originalPrompt: 'Explain quantum computing in simple language', targetPersona: 'E-learning Curriculum Lead Designer', optimizedPrompt: '' };
+        break;
     }
 
     const newNode: FlowNode = {
