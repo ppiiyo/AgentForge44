@@ -1,5 +1,7 @@
 import React from 'react';
 import { MetricsDashboard } from '../../components/MetricsDashboard';
+// @ts-ignore
+import styles from './Dashboard.module.css';
 
 interface DashboardProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -11,7 +13,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   activeGraphId = "canvas-workspace"
 }) => {
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950 p-6" id="dashboard_feature_root">
+    <div className={`flex-1 overflow-y-auto bg-slate-950 p-6 ${styles.dashboardContainer}`} id="dashboard_feature_root">
+
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">

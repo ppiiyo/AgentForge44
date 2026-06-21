@@ -28,10 +28,12 @@ import { TimeTravelDebugger } from './components/TimeTravelDebugger';
 import { useCollaboration, RemoteCursor } from './hooks/useCollaboration';
 import { useHotkeys } from './hooks/useHotkeys';
 import { AppHeader } from './components/AppHeader';
-import { ProjectEditor } from './features/ProjectEditor/ProjectEditor';
-import { Dashboard } from './features/Dashboard/Dashboard';
-import { Settings } from './features/Settings/Settings';
+import { ProjectEditor } from './features/ProjectEditor';
+import { Dashboard } from './features/Dashboard';
+import { Settings } from './features/Settings';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import * as Sentry from '@sentry/react';
+
 import posthog from 'posthog-js';
 
 
@@ -1576,7 +1578,8 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
   };
 
   return (
-    <div className="h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
+    <ErrorBoundary>
+      <div className="h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
       
       {/* Dynamic Top Navigation HUD */}
       <AppHeader
@@ -2848,5 +2851,6 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
       </AnimatePresence>
 
     </div>
+    </ErrorBoundary>
   );
 }
