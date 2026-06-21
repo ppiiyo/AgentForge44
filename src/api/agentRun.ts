@@ -699,6 +699,7 @@ const strategies: Record<string, NodeExecutionStrategy> = {
   router: new RouterNodeStrategy(),
   output: new OutputNodeStrategy(),
   rag: new RAGNodeStrategy(),
+  'vector-search': new RAGNodeStrategy(),
   human_confirmation: new HumanConfirmationNodeStrategy(),
   prompt_optimizer: new PromptOptimizerNodeStrategy()
 };

@@ -109,9 +109,11 @@ export function getPresenceHistory(graphId: string): PresenceLogRecord[] {
  * Main Collaboration Server Setup Class
  */
 export class CollaborationServer {
-  private io: SocketIOServer;
+  public io: SocketIOServer;
+  public static instance: CollaborationServer | null = null;
 
   constructor(server: HTTPServer) {
+    CollaborationServer.instance = this;
     this.io = new SocketIOServer(server, {
       cors: {
         origin: '*',

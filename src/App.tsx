@@ -1228,6 +1228,7 @@ export default function App() {
       'tool': 3,
       'router': 4,
       'rag': 5,
+      'vector-search': 5,
       'multimodal': 6,
       'reviewer': 7,
       'output': 8,
@@ -1242,6 +1243,7 @@ export default function App() {
       'tool': 0,
       'router': 0,
       'rag': 0,
+      'vector-search': 0,
       'multimodal': 0,
       'reviewer': 0,
       'output': 0,
@@ -1384,6 +1386,7 @@ export default function App() {
         initialFields = { url: 'https://api.github.com/zen', method: 'GET', headers: '{}', body: '' };
         break;
       case 'rag':
+      case 'vector-search':
         title = customTitle || "RAG Search Retriever";
         description = "Query your vector-indexed library database.";
         initialFields = { searchQuery: '{{topic}}', limit: 3, ragResults: [] };

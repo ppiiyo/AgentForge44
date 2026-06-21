@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'vector-search' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer';
 
 export interface BaseNode {
   id: string;

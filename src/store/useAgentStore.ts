@@ -82,6 +82,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         initialFields = { url: 'https://api.github.com/zen', method: 'GET', headers: '{}', body: '' };
         break;
       case 'rag':
+      case 'vector-search':
         title = "RAG Search Retriever";
         description = "Query your vector-indexed library database.";
         initialFields = { searchQuery: '{{topic}}', limit: 3, ragResults: [] };

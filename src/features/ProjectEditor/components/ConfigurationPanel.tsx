@@ -475,7 +475,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             )}
 
             {/* RAG Knowledge embeddings limit config */}
-            {node.type === 'rag' && (
+            {(node.type === 'rag' || node.type === 'vector-search') && (
               <div className="space-y-3.5">
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase">Limit Target Document Elements</label>
