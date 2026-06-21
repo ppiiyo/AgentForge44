@@ -182,11 +182,11 @@ export interface ExecutionContext {
 }
 
 export interface NodeExecutionStrategy {
-  execute(node: FlowNode, context: ExecutionContext): Promise<void>;
+  execute(node: any, context: ExecutionContext): Promise<void>;
 }
 
 export class InputNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const variablesMap: Record<string, string> = {};
     const variables = node.fields.variables || [];
     variables.forEach((v: { key: string; value?: string; val?: string }) => {
@@ -211,7 +211,7 @@ export class InputNodeStrategy implements NodeExecutionStrategy {
 }
 
 export class PromptNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const template = node.fields.template || "";
     let renderedPrompt = template;
 
@@ -239,7 +239,7 @@ export class PromptNodeStrategy implements NodeExecutionStrategy {
 }
 
 export class GeminiNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const promptText = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue);
     const model = node.fields.model || 'gemini-3.5-flash';
     const temp = node.fields.temperature !== undefined ? Number(node.fields.temperature) : 0.7;
@@ -297,7 +297,7 @@ export class GeminiNodeStrategy implements NodeExecutionStrategy {
 }
 
 export class ReviewerNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const criteria = node.fields.criteria || "";
     const maxIterations = Math.max(1, Number(node.fields.maxIterations) || 1);
     const reviewTargetText = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue);
@@ -379,7 +379,7 @@ Please regenerate the output from scratch, integrating all criticisms. Maintain 
 }
 
 export class ToolNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const urlRaw = node.fields.url || "";
     const method = node.fields.method || "GET";
     const headersRaw = node.fields.headers || "{}";
@@ -446,7 +446,7 @@ export class ToolNodeStrategy implements NodeExecutionStrategy {
 }
 
 export class MultimodalNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const mediaType = node.fields.mediaType || 'image';
     const mediaDataRaw = node.fields.mediaData || "";
     const analysisPrompt = node.fields.analysisPrompt || "Process and summarize this document.";
@@ -542,14 +542,14 @@ export class MultimodalNodeStrategy implements NodeExecutionStrategy {
 }
 
 export class RouterNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     context.nodeOutputs[node.id] = context.localValue;
     context.activeValueReference.value = context.localValue;
   }
 }
 
 export class OutputNodeStrategy implements NodeExecutionStrategy {
-  async execute(node: FlowNode, context: ExecutionContext): Promise<void> {
+  async execute(node: any, context: ExecutionContext): Promise<void> {
     const finalStr = typeof context.localValue === 'string' ? context.localValue : JSON.stringify(context.localValue, null, 2);
     context.nodeOutputs[node.id] = finalStr;
     context.activeValueReference.value = finalStr;
