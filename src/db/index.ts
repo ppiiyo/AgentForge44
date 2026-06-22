@@ -1,6 +1,7 @@
 import { SqliteDatabaseAdapter, PostgresDatabaseAdapter, IDatabaseAdapter } from './adapters.js';
 import * as sqliteSchema from './schema.js';
 import * as pgSchema from './postgres-schema.js';
+import { traceSpan } from '../services/tracing.js';
 
 const dbType = process.env.DB_TYPE || 'sqlite';
 const databaseUrl = process.env.DATABASE_URL || '';
@@ -14,6 +15,18 @@ if (dbType === 'postgres') {
 }
 
 export const db = adapter.db;
+
+// Hook db.execute for automated SQL/Database query tracing
+if (db && typeof db.execute === 'function') {
+  const originalExecute = db.execute;
+  db.execute = function(this: any, ...args: any[]) {
+    const rawSql = args[0] && typeof args[0] === 'string' ? args[0] : (args[0]?.sql || 'db-query');
+    return traceSpan('db_query', {
+      dialect: dbType,
+      query: rawSql.substring(0, 100) // Keep query attributes clean and bounded
+    }, () => originalExecute.apply(this, args));
+  };
+}
 
 // Polymorphic table mapping that transparently points to the active dialect structure
 export const tables = {

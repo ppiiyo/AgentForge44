@@ -1,7 +1,17 @@
 import { Router, Request, Response } from 'express';
 import { MetricsCollector } from './metricsAndVersions.js';
+import { register } from '../services/metrics.js';
 
 const router = Router();
+
+router.get('/metrics', async (req: Request, res: Response) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err: any) {
+    res.status(500).end(err.message);
+  }
+});
 
 router.get('/metrics/summary', async (req: Request, res: Response) => {
   try {

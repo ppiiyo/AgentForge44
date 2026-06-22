@@ -2,6 +2,9 @@ import { GoogleGenAI } from "@google/genai";
 import { checkUserBudget, recordUserUsage } from "../services/usage-tracker.js";
 import { cache, computeHash } from "../services/cache.js";
 import { logger } from "../utils/logger.js";
+import { traceSpan } from "../services/tracing.js";
+import { llmCallCounter, llmCallDuration } from "../services/metrics.js";
+import { retryWithBackoff } from "../utils/retry.js";
 
 export interface LLMCallConfig {
   temperature?: number;
@@ -54,7 +57,47 @@ export abstract class LLMProvider {
       }
     }
 
-    const response = await this._generate(prompt, config);
+    const start = Date.now();
+    let status = "success";
+    let response: LLMResponse;
+
+    try {
+      response = await traceSpan("llm_generate", {
+        provider: this.getName(),
+        model: (this as any).model || "unknown",
+        prompt_length: (prompt || "").length
+      }, () => retryWithBackoff(() => this._generate(prompt, config), {
+        retries: (process.env.NODE_ENV === 'test' || process.env.VITEST || process.env.VITEST === 'true') ? 0 : 3,
+        delay: 50, // Lower initial delay for fast transient recoveries
+        factor: 2,
+        maxDelay: 5000,
+        shouldRetry: (err: any) => {
+          const errMsg = String(err.message || err).toLowerCase();
+          if (errMsg.includes("budget exceeded") || (err.status === 429 && errMsg.includes("budget"))) {
+            return false;
+          }
+          if (err.status === 400 || err.status === 401 || err.status === 403) {
+            return false;
+          }
+          // Also inspect error messages mirroring 400 Bad Request, 401 Unauthorized or 403 Forbidden
+          if (errMsg.includes("400") || errMsg.includes("401") || errMsg.includes("403")) {
+            return false;
+          }
+          return true;
+        }
+      }));
+    } catch (err: any) {
+      status = "error";
+      throw err;
+    } finally {
+      const durationSeconds = (Date.now() - start) / 1000;
+      try {
+        llmCallCounter.labels(this.getName(), (this as any).model || "unknown", status).inc();
+        llmCallDuration.labels(this.getName(), (this as any).model || "unknown", status).observe(durationSeconds);
+      } catch (err: any) {
+        logger.warn(`Failed to track LLM metrics: ${err.message}`);
+      }
+    }
 
     // Dynamic cache storage
     if (response && response.text) {

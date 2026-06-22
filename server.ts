@@ -16,6 +16,8 @@ import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
 import { logger } from './src/utils/logger.js';
 import { setupSwagger } from './src/api/swagger.js';
+import { register } from './src/services/metrics.js';
+import { initTracing } from './src/services/tracing.js';
 import authRoutes from './src/api/authRoutes.js';
 import projectsRouter from './src/api/projectsRoutes.js';
 import graphsRouter from './src/api/graphsRoutes.js';
@@ -28,6 +30,7 @@ import ragRouter from './src/api/ragRoutes.js';
 import patternsRouter from './src/api/patternsRoutes.js';
 
 dotenv.config();
+initTracing();
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -78,6 +81,14 @@ app.use('/api', marketplaceRouter);
 app.use('/api', deploymentRouter);
 app.use('/api', mcpRouter);
 app.use('/api', metricsRouter);
+app.get('/metrics', async (req: express.Request, res: express.Response) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err: any) {
+    res.status(500).end(err.message);
+  }
+});
 app.use('/api', ragRouter);
 app.use('/api', patternsRouter);
 app.use('/api', schedulerAndWebhooksRouter);
