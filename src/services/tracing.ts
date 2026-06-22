@@ -9,14 +9,13 @@ export function initTracing() {
   if (isInitialized) return { tracer };
 
   try {
-    const provider = new BasicTracerProvider();
+    const provider = new BasicTracerProvider({
+      spanProcessors: [
+        new SimpleSpanProcessor(new ConsoleSpanExporter())
+      ]
+    });
     
-    // Add simple console span processor to visualize operations in real-time
-    provider.addSpanProcessor(
-      new SimpleSpanProcessor(new ConsoleSpanExporter())
-    );
-    
-    provider.register();
+    trace.setGlobalTracerProvider(provider);
     
     // Fetch tracer from global trace context register
     tracer = trace.getTracer('agentforge44-core');
