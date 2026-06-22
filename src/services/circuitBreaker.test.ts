@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { CircuitBreaker, CircuitState } from './circuitBreaker.js';
 
 describe('CircuitBreaker State Transitions', () => {
@@ -62,7 +62,7 @@ describe('CircuitBreaker State Transitions', () => {
         await cb.execute(async () => {
           throw new Error('fail');
         });
-      } catch (err) {}
+      } catch (_err) {}
     }
     expect(cb.getState()).toBe(CircuitState.OPEN);
 
@@ -96,7 +96,7 @@ describe('CircuitBreaker State Transitions', () => {
          await cb.execute(async () => {
            throw new Error('fail');
          });
-       } catch (err) {}
+       } catch (_err) {}
     }
     expect(cb.getState()).toBe(CircuitState.OPEN);
 
