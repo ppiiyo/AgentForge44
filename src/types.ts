@@ -85,6 +85,15 @@ export interface RAGNode extends BaseNode {
   };
 }
 
+export interface VectorSearchNode extends BaseNode {
+  type: 'vector-search';
+  fields: {
+    searchQuery: string;
+    limit: number;
+    ragResults?: Array<{ id: string; source: string; text: string; score?: number }>;
+  };
+}
+
 export interface MultimodalNode extends BaseNode {
   type: 'multimodal';
   fields: {
@@ -114,7 +123,7 @@ export interface PromptOptimizerNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode;
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | VectorSearchNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode;
 
 export interface FlowConnection {
   id: string;
