@@ -43,11 +43,22 @@ export function setupSecurity(app: Express) {
             "https://api.anthropic.com"
           ],
           fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-          frameSrc: ["'self'"] // Allowed for preview iframes
+          frameSrc: ["'self'"], // Allowed for preview iframes
+          objectSrc: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"]
         }
       },
       crossOriginEmbedderPolicy: false, // critical for socket.io inside iframes
-      crossOriginResourcePolicy: { policy: "cross-origin" }
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+      },
+      noSniff: true,
+      xssFilter: true
     })(req, res, next);
   });
 }

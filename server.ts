@@ -28,6 +28,7 @@ import mcpRouter from './src/api/mcpRoutes.js';
 import metricsRouter from './src/api/metricsRoutes.js';
 import ragRouter from './src/api/ragRoutes.js';
 import patternsRouter from './src/api/patternsRoutes.js';
+import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 
 dotenv.config();
 initTracing();
@@ -52,6 +53,7 @@ app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
 setupSecurity(app);
+app.use('/api', enterpriseTenantContext);
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
