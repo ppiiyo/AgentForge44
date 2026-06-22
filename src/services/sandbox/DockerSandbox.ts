@@ -211,7 +211,7 @@ except Exception as e:
 
     try {
       const isJS = language === 'javascript';
-      const fileExt = isJS ? '.js' : '.py';
+      const fileExt = isJS ? '.cjs' : '.py';
       tempFile = path.join('/tmp', `sandbox_ps_${Date.now()}_${Math.random().toString(36).substring(2, 7)}${fileExt}`);
 
       // Prepare wrapped source script execution code
