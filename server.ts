@@ -8,6 +8,10 @@ import { sanitizeRequestBody } from './src/middleware/sanitize.js';
 import schedulerAndWebhooksRouter from './src/api/schedulerAndWebhooks.js';
 import copilotRouter from './src/api/copilot.js';
 import { tieredRateLimiter } from './src/middleware/rateLimit.js';
+import { correlationIdMiddleware } from './src/middleware/correlationId.js';
+import { createHealthRoutes } from './src/api/healthRoutes.js';
+import { GracefulShutdown } from './src/services/gracefulShutdown.js';
+import { adapter } from './src/db/index.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
 import { logger } from './src/utils/logger.js';
@@ -42,6 +46,7 @@ app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(corsMiddleware);
+app.use(correlationIdMiddleware);
 
 setupSecurity(app);
 
@@ -96,9 +101,7 @@ app.use('/api', copilotRouter);
  *                   type: string
  *                   example: ok
  */
-app.get('/api/health', (req: express.Request, res: express.Response) => {
-  res.json({ status: 'ok' });
-});
+app.use('/api', createHealthRoutes());
 
 // Sentry Error Capture Middleware
 app.use((err: any, req: express.Request, res: express.Response, next: any) => {
@@ -138,7 +141,10 @@ async function setupServer() {
   });
 
   // Start Socket.io Collaboration Server
-  new CollaborationServer(httpServer);
+  const collaborationServer = new CollaborationServer(httpServer);
+
+  // Initialize production-grade Graceful Shutdown
+  new GracefulShutdown(httpServer, collaborationServer.io, adapter);
 }
 
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
