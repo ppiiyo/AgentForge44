@@ -45,7 +45,27 @@ export class DockerSandbox {
     const useDocker = DockerSandbox.checkDockerAvailable();
 
     if (useDocker) {
-      return this.runInDocker(code, language, timeoutMs, startTime);
+      try {
+        const dockerRes = await this.runInDocker(code, language, timeoutMs, startTime);
+        const isDockerError = dockerRes.error && (
+          dockerRes.error.includes('docker:') ||
+          dockerRes.error.includes('Cannot connect') ||
+          dockerRes.error.includes('Permission denied') ||
+          dockerRes.error.includes('daemon') ||
+          dockerRes.error.includes('No such image') ||
+          dockerRes.error.includes('no such file or directory') ||
+          dockerRes.error.includes('Timeout') ||
+          dockerRes.error.includes('Unable to find image')
+        );
+        if (!dockerRes.success && isDockerError) {
+          logger.warn(`Docker execution failed due to potential infrastructure or timeout issue: ${dockerRes.error}. Falling back to child process.`);
+          return this.runInSecureChildProcess(code, language, timeoutMs, startTime);
+        }
+        return dockerRes;
+      } catch (err: any) {
+        logger.error(`Docker execution threw an error: ${err.message}. Falling back to child process.`);
+        return this.runInSecureChildProcess(code, language, timeoutMs, startTime);
+      }
     } else {
       return this.runInSecureChildProcess(code, language, timeoutMs, startTime);
     }

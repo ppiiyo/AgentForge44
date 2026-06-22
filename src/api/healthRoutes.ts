@@ -7,9 +7,7 @@ export function createHealthRoutes(): Router {
   // Liveness probe - is the process alive?
   router.get('/health', (req: Request, res: Response) => {
     res.status(200).json({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      status: 'ok'
     });
   });
 
