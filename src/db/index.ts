@@ -3,8 +3,10 @@ import * as sqliteSchema from './schema.js';
 import * as pgSchema from './postgres-schema.js';
 import { traceSpan } from '../services/tracing.js';
 
-const dbType = process.env.DB_TYPE || 'sqlite';
 const databaseUrl = process.env.DATABASE_URL || '';
+const dbType = (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://'))
+  ? 'postgres'
+  : (process.env.DB_TYPE || 'sqlite');
 
 export let adapter: IDatabaseAdapter;
 

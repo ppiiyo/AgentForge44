@@ -11,6 +11,8 @@ logs/
 # SQLite database files
 agentforge.db
 agentforge.db-journal
+agentforge.db-shm
+agentforge.db-wal
 *.sqlite
 *.db
 
