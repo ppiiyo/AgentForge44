@@ -5,6 +5,10 @@ import { routeNode } from "../nodes/RouterNode.js";
 import { validateURLForSSRF, validateUrl } from "../utils/ssrf-validator.js";
 import { safeJsonParse } from "../utils/safe-json.js";
 import { ragService } from "../services/rag.service.js";
+import { validateDatabaseConfig } from "./db.js";
+
+// Run pre-flight database config check immediately upon evaluation of this runner module
+validateDatabaseConfig(process.env.DB_TYPE || 'sqlite', process.env.DATABASE_URL || '');
 
 function getNextNodeId(nodeId: string, connections: FlowConnection[]): string | null {
   const conn = connections.find(c => c.sourceId === nodeId);
