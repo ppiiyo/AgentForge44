@@ -10,24 +10,30 @@ describe('GeminiNodeStrategy', () => {
   });
 
   it('throws MissingApiKeyError when active API key is empty/sandbox-only in real environment', async () => {
-    const strategy = new GeminiNodeStrategy();
-    const node = { id: 'n1', type: 'gemini', fields: { model: 'gemini-3.5-flash' }, title: 'Gemini Node' } as any;
-    
-    // Empty key context
-    const context: any = {
-      ai: {},
-      apiKey: '',
-      globalVariables: {},
-      nodeOutputs: {},
-      activeValueReference: { value: '' },
-      stepStart: Date.now(),
-      localValue: 'Test prompt',
-      connections: [],
-      logs: [],
-      iterationsCount: {}
-    };
+    const oldKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = ''; // Force unconfigured environment for fail-fast check
 
-    await expect(strategy.execute(node, context)).rejects.toThrow(MissingApiKeyError);
+    try {
+      const strategy = new GeminiNodeStrategy();
+      const node = { id: 'n1', type: 'gemini', fields: { model: 'gemini-3.5-flash' }, title: 'Gemini Node' } as any;
+      
+      const context: any = {
+        ai: {},
+        apiKey: 'prod_billing_key_44',
+        globalVariables: {},
+        nodeOutputs: {},
+        activeValueReference: { value: '' },
+        stepStart: Date.now(),
+        localValue: 'Test prompt',
+        connections: [],
+        logs: [],
+        iterationsCount: {}
+      };
+
+      await expect(strategy.execute(node, context)).rejects.toThrow(MissingApiKeyError);
+    } finally {
+      process.env.GEMINI_API_KEY = oldKey;
+    }
   });
 });
 

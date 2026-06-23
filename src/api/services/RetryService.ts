@@ -116,11 +116,11 @@ export async function generateWithRetry(
       const classification = classifyLLMError(err);
       attemptsLeft--;
 
-      // If hard quota, check if we can fall back to lite model
-      if (classification.label === "RATE_LIMIT_EXHAUSTED") {
+      // If hard quota or service overload, check if we can fall back to lite model
+      if (classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") {
         if (currentModel === "gemini-3.5-flash" || currentModel === "gemini-3.1-pro-preview") {
           const fallbackModel = "gemini-3.1-flash-lite";
-          console.warn(`[AgentForge44] RATE_LIMIT_EXHAUSTED on ${currentModel}. Trying fallback model ${fallbackModel}...`);
+          console.warn(`[AgentForge44] ${classification.label} on ${currentModel}. Trying fallback model ${fallbackModel}...`);
           currentModel = fallbackModel;
           attemptsLeft = 2; // give fallback 2 retry attempts
           currentDelay = delayMs;
@@ -129,8 +129,8 @@ export async function generateWithRetry(
       }
 
       if (!classification.isTransient || attemptsLeft <= 0) {
-        if (classification.label === "RATE_LIMIT_EXHAUSTED") {
-          console.warn(`[AgentForge44] API Quota & Fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
+        if (classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") {
+          console.warn(`[AgentForge44] API Quota or Service Overload fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
           return generateSimulatedResponse(model, contents);
         }
         throw new Error(`[${classification.label}] LLM request failed: ${classification.reason} (Original: ${err.message || err})`);
