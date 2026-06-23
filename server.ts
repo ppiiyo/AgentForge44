@@ -12,6 +12,8 @@ import { correlationIdMiddleware } from './src/middleware/correlationId.js';
 import { createHealthRoutes } from './src/api/healthRoutes.js';
 import { GracefulShutdown } from './src/services/gracefulShutdown.js';
 import { adapter } from './src/db/index.js';
+import { validateDatabaseConfig } from './src/api/db.js';
+import { runSchemaMigrations } from './src/api/migrate.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
 import { logger } from './src/utils/logger.js';
@@ -33,11 +35,11 @@ import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 dotenv.config();
 
 // Pre-flight database credential validation for enterprise database backends
-if (process.env.DB_TYPE === 'postgres' && !process.env.DATABASE_URL) {
-  logger.error('CRITICAL CONFIGURATION ERROR: DB_TYPE is set to "postgres" but DATABASE_URL environment variable is missing.');
-  throw new Error(
-    'DATABASE_URL environment variable is required when DB_TYPE is set to "postgres" or a PostgreSQL connection is requested. Please define DATABASE_URL inside your environment configuration or .env file to prevent connection initialization failures.'
-  );
+try {
+  validateDatabaseConfig(process.env.DB_TYPE || 'sqlite', process.env.DATABASE_URL || '');
+} catch (error: any) {
+  logger.error(`CRITICAL PRE-FLIGHT CHECK FAILURE: ${error.message}`);
+  throw error;
 }
 
 initTracing();
@@ -143,6 +145,14 @@ app.use((err: any, req: express.Request, res: express.Response, next: any) => {
 });
 
 async function setupServer() {
+  // Execute auto-run database table schema migrations on server start
+  try {
+    await runSchemaMigrations(adapter);
+  } catch (migErr: any) {
+    logger.error('CRITICAL ERROR: Database connection / schema auto-migrations failed. Execution halted.', { error: migErr.message });
+    process.exit(1);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
