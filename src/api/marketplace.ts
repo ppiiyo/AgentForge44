@@ -540,13 +540,17 @@ export class MarketplaceManager {
     let rows: any[] = [];
     try {
       rows = await db.select().from(tables.marketplaceItems);
-    } catch {}
+    } catch (err: any) {
+      console.warn("Failed to select marketplace items:", err.message);
+    }
     
     let items: MarketplaceItem[] = rows.map(row => {
       let parsedData: any = {};
       try {
         parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data || {};
-      } catch {}
+      } catch (err: any) {
+        console.warn(`Failed to parse metadata for row "${row.id}":`, err.message);
+      }
       return {
         id: row.id,
         title: row.name,
@@ -598,14 +602,18 @@ export class MarketplaceManager {
     let rows: any[] = [];
     try {
       rows = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, id));
-    } catch {}
+    } catch (err: any) {
+      console.warn(`Failed to fetch marketplace item "${id}":`, err.message);
+    }
     if (rows.length === 0) return null;
     
     const row = rows[0];
     let parsedData: any = {};
     try {
       parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data || {};
-    } catch {}
+    } catch (err: any) {
+      console.warn(`Failed to parse data for row "${row.id}":`, err.message);
+    }
     return {
       id: row.id,
       title: row.name,
@@ -668,13 +676,15 @@ export class MarketplaceManager {
           connections: newItem.graphSnapshot.connections,
           tags: newItem.tags
         }),
+        createdAt: newItem.createdAt,
         author: newItem.authorId,
         downloads: newItem.downloadsCount,
         rating: newItem.rating,
-        reviews: '[]',
-        createdAt: newItem.createdAt
+        reviews: '[]'
       });
-    } catch {}
+    } catch (err: any) {
+      console.warn(`Failed to insert published item "${newItem.id}":`, err.message);
+    }
 
     return newItem;
   }
@@ -689,9 +699,11 @@ export class MarketplaceManager {
     
     try {
       await db.update(tables.marketplaceItems)
-        .set({ downloads: nextDownloads })
-        .where(eq(tables.marketplaceItems.id, id));
-    } catch {}
+         .set({ downloads: nextDownloads })
+         .where(eq(tables.marketplaceItems.id, id));
+    } catch (err: any) {
+      console.warn(`Failed to increment downloads for item "${id}":`, err.message);
+    }
       
     item.downloadsCount = nextDownloads;
     return item;
@@ -701,7 +713,9 @@ export class MarketplaceManager {
     let rows: any[] = [];
     try {
       rows = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, itemId));
-    } catch {}
+    } catch (err: any) {
+      console.warn(`Failed to get reviews for item "${itemId}":`, err.message);
+    }
     if (rows.length === 0) return [];
     
     try {
@@ -744,7 +758,9 @@ export class MarketplaceManager {
           rating: Number(avgRating.toFixed(1))
         })
         .where(eq(tables.marketplaceItems.id, itemId));
-    } catch {}
+    } catch (err: any) {
+      console.warn(`Failed to update review list for item "${itemId}":`, err.message);
+    }
 
     return newReview;
   }

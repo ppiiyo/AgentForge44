@@ -62,7 +62,9 @@ export async function routeNode(node: FlowNode, inputPayload: string): Promise<s
           selectedTargetId = cond.targetNodeId;
           break;
         }
-      } catch {}
+      } catch (err: any) {
+        console.warn("Failed to parse input payload as JSON during router node evaluation:", err.message);
+      }
     }
   }
 

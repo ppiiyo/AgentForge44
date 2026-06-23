@@ -78,10 +78,14 @@ export class SecureSandbox {
   dispose() {
     try {
       this.context.release();
-    } catch {}
+    } catch (err: any) {
+      console.warn("Isolated VM context release warning:", err.message);
+    }
     try {
       this.isolate.dispose();
-    } catch {}
+    } catch (err: any) {
+      console.warn("Isolated VM isolate dispose warning:", err.message);
+    }
   }
 }
 

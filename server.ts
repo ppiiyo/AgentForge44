@@ -10,6 +10,7 @@ import copilotRouter from './src/api/copilot.js';
 import { tieredRateLimiter } from './src/middleware/rateLimit.js';
 import { correlationIdMiddleware } from './src/middleware/correlationId.js';
 import { createHealthRoutes } from './src/api/healthRoutes.js';
+import { errorHandler } from './src/middleware/errorHandler.js';
 import { GracefulShutdown } from './src/services/gracefulShutdown.js';
 import { adapter } from './src/db/index.js';
 import { validateDatabaseConfig } from './src/api/db.js';
@@ -127,22 +128,8 @@ app.use('/api', copilotRouter);
  */
 app.use('/api', createHealthRoutes());
 
-// Sentry Error Capture Middleware
-app.use((err: any, req: express.Request, res: express.Response, next: any) => {
-  if (process.env.SENTRY_DSN) {
-    Sentry.captureException(err);
-  }
-  logger.error("Unhandled Server Exception captured:", { error: err.message || err });
-  if (!res.headersSent) {
-    const statusCode = err.status || err.statusCode || 500;
-    res.status(statusCode).json({
-      success: false,
-      error: err.message || "Internal Server Error Connection Interrupt"
-    });
-  } else {
-    next(err);
-  }
-});
+// Centralized Error Handling Middleware
+app.use(errorHandler);
 
 async function setupServer() {
   // Execute auto-run database table schema migrations on server start

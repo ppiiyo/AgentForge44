@@ -161,7 +161,9 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
           createdAt: new Date().toISOString()
         });
         console.log(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database.`);
-      } catch {}
+      } catch (migrateErr: any) {
+        console.warn(`[Self-Heal] Failed to auto-migrate graph "${safeName}" to SQL database:`, migrateErr.message);
+      }
 
       res.json({
          id: safeName,

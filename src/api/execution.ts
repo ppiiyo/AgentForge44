@@ -377,7 +377,9 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
               if (headersStr.trim().startsWith("{")) {
                 headers = { ...headers, ...safeJsonParse(headersStr) };
               }
-            } catch {}
+            } catch (jsonErr: any) {
+              console.warn("Failed to parse dynamic HTTP headers as JSON object:", jsonErr.message);
+            }
 
             const fetchOptions: any = { method, headers };
             if (method !== 'GET' && body) {

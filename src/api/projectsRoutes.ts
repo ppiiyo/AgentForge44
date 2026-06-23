@@ -31,7 +31,9 @@ router.get('/projects', async (req: Request, res: Response) => {
     let files: string[] = [];
     try {
       files = await fsPromises.readdir(PROJECTS_DIR);
-    } catch {}
+    } catch (fsErr: any) {
+      console.warn("Failed to read local filesystem projects directory:", fsErr.message);
+    }
 
     // 3. Process database-saved graphs first
     for (const row of dbGraphs) {
@@ -44,7 +46,9 @@ router.get('/projects', async (req: Request, res: Response) => {
           nodes: typeof row.nodes === 'string' ? JSON.parse(row.nodes) : row.nodes,
           connections: typeof row.connections === 'string' ? JSON.parse(row.connections) : row.connections
         });
-      } catch {}
+      } catch (parseErr: any) {
+        console.warn(`Failed to parse graph row for "${row.id}":`, parseErr.message);
+      }
     }
 
     // 4. Auto-seeding migration: Check if files contain older graphs not yet migrated to active DB
@@ -97,7 +101,9 @@ router.get('/projects', async (req: Request, res: Response) => {
               nodes: record.nodes,
               connections: record.connections
             });
-          } catch {}
+          } catch (fileErr: any) {
+            console.warn(`Failed to auto-seed local project file "${file}":`, fileErr.message);
+          }
         }
       }
     }
