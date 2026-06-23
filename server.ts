@@ -31,6 +31,15 @@ import patternsRouter from './src/api/patternsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 
 dotenv.config();
+
+// Pre-flight database credential validation for enterprise database backends
+if (process.env.DB_TYPE === 'postgres' && !process.env.DATABASE_URL) {
+  logger.error('CRITICAL CONFIGURATION ERROR: DB_TYPE is set to "postgres" but DATABASE_URL environment variable is missing.');
+  throw new Error(
+    'DATABASE_URL environment variable is required when DB_TYPE is set to "postgres" or a PostgreSQL connection is requested. Please define DATABASE_URL inside your environment configuration or .env file to prevent connection initialization failures.'
+  );
+}
+
 initTracing();
 
 if (process.env.SENTRY_DSN) {

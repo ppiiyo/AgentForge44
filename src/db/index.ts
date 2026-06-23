@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { SqliteDatabaseAdapter, PostgresDatabaseAdapter, IDatabaseAdapter } from './adapters.js';
 import * as sqliteSchema from './schema.js';
 import * as pgSchema from './postgres-schema.js';
@@ -7,6 +10,15 @@ const databaseUrl = process.env.DATABASE_URL || '';
 const dbType = (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://'))
   ? 'postgres'
   : (process.env.DB_TYPE || 'sqlite');
+
+// Validate the presence of PostgreSQL credentials when DB_TYPE is set to 'postgres'
+if (process.env.DB_TYPE === 'postgres' || dbType === 'postgres') {
+  if (!databaseUrl) {
+    throw new Error(
+      'CRITICAL CONFIGURATION ERROR: DATABASE_URL environment variable is required when DB_TYPE is set to "postgres" or a PostgreSQL connection is requested. Please define DATABASE_URL inside your environment configuration or .env file to prevent connection initialization failures.'
+    );
+  }
+}
 
 export let adapter: IDatabaseAdapter;
 
