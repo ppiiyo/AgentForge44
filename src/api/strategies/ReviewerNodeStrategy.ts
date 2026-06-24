@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic workflow node execution and field mapping */
 import { NodeExecutionStrategy, ExecutionContext } from './NodeStrategy.js';
 import { generateWithRetry } from '../services/RetryService.js';
 

@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import { logger } from '../../utils/logger.js';
 import { AgentForgeError } from '../../api/errors/AgentErrors.js';
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction): void {
+export function errorHandler(err: Error & { statusCode?: number; status?: number; code?: string }, req: Request, res: Response, next: NextFunction): void {
   if (process.env.SENTRY_DSN) {
     Sentry.captureException(err);
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic pipeline nodes and execution structures */
 import { GoogleGenAI } from "@google/genai";
 import { FlowConnection, StepLog } from '../../types.js';
 

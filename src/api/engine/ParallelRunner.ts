@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic workflow node execution and result tracking */
 import { ExecutionContext } from '../strategies/NodeStrategy.js';
 
 export interface ParallelTask {

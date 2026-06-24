@@ -48,6 +48,16 @@ const PROJECTS_DIR = path.join(process.cwd(), 'projects');
  *       401:
  *         description: Unauthorized.
  */
+// Helper to check ownership of a graph
+async function checkGraphOwnership(graphId: string, userId: string): Promise<{ allowed: boolean; exists: boolean }> {
+  const projectList = await db.select().from(tables.projects).where(eq(tables.projects.id, graphId));
+  const project = projectList[0];
+  if (!project) {
+    return { allowed: true, exists: false };
+  }
+  return { allowed: project.userId === userId, exists: true };
+}
+
 /**
  * Save a new graph
  * @param req.body Graph data
@@ -57,22 +67,48 @@ const PROJECTS_DIR = path.join(process.cwd(), 'projects');
  */
 router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { id, name, nodes, connections } = req.body;
     const projName = id || name || "untitled_graph";
     const safeName = projName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_graph";
 
-    // 1. Database write with upsert logic
+    // Security check: Check if graph is owned by another user
+    const ownership = await checkGraphOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this graph" });
+      return;
+    }
+
+    // 1. Create or update project record in DB to claim ownership
+    if (!ownership.exists) {
+      await db.insert(tables.projects).values({
+        id: safeName,
+        name: safeName,
+        userId: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    // 2. Database write with upsert logic
     try {
       const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
       if (existing.length > 0) {
         await db.update(tables.graphs).set({
           name: safeName,
+          projectId: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
         }).where(eq(tables.graphs.id, safeName));
       } else {
         await db.insert(tables.graphs).values({
           id: safeName,
+          projectId: safeName,
           name: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || []),
@@ -83,7 +119,7 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
       console.warn("[Database] POST /graphs failed, falling back only to filesystem storage:", dbErr.message);
     }
 
-    // 2. Dual write filesystem write
+    // 3. Dual write filesystem write
     const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
     const payload = {
       id: safeName,
@@ -126,8 +162,21 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
  */
 router.get('/graphs/:id', async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+
+    // Security check: Check if graph is owned by another user
+    const ownership = await checkGraphOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this graph" });
+      return;
+    }
 
     // 1. Try database read first
     try {
@@ -221,9 +270,22 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
  */
 router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
     const { name, nodes, connections } = req.body;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+
+    // Security check: Check if graph is owned by another user
+    const ownership = await checkGraphOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this graph" });
+      return;
+    }
 
     // 1. Update database record
     let dbUpdated = false;
@@ -291,8 +353,21 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
  */
 router.delete('/graphs/:id', async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+
+    // Security check: Check if graph is owned by another user
+    const ownership = await checkGraphOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this graph" });
+      return;
+    }
 
     // 1. Delete database record
     try {

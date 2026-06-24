@@ -139,10 +139,11 @@ router.post('/stream-pipeline', async (req: Request, res: Response) => {
       return;
     }
 
-    // Step-by-Step execution notifier tracking
-    writeSSEEvent("status", { message: "Synthesizing execution path graph..." });
-
-    const userId = (req as any).user?.id || 'anonymous';
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
     const engine = new StatefulExecutionEngine(nodes, connections, userId);
     
     // Track intermediate progression and stream chunks back directly to listener
@@ -198,7 +199,11 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
       return;
     }
 
-    const userId = (req as any).user?.id || 'anonymous';
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
     const engine = new StatefulExecutionEngine(nodes, connections, userId);
     const trackingResult = await engine.runWorkflow(inputs || {});
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic workflow node execution and result tracking */
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from '../../types.js';
 import { MAX_EXECUTION_STEPS } from '../execution.js';

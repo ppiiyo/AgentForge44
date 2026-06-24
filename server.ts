@@ -32,6 +32,7 @@ import metricsRouter from './src/api/metricsRoutes.js';
 import ragRouter from './src/api/ragRoutes.js';
 import patternsRouter from './src/api/patternsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
+import { unifiedGuardMiddleware } from './src/middleware/guard.js';
 
 dotenv.config();
 
@@ -77,6 +78,8 @@ app.use('/api', tieredRateLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeRequestBody);
+
+app.use('/api', unifiedGuardMiddleware);
 
 // Endpoint for testing request payload limits
 app.post('/api/test-payload', (req: express.Request, res: express.Response) => {

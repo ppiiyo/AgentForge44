@@ -4,8 +4,8 @@ import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { CodeGenerator } from './codeGenerator.js';
 import { db, tables } from '../db/index.js';
-import { eq } from 'drizzle-orm';
-import { validateBody, GraphSaveSchema, PipelineExecuteSchema } from '../utils/validation.js';
+import { eq, and } from 'drizzle-orm';
+import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -14,12 +14,34 @@ if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
 
+// Helper to check ownership of a project
+async function checkProjectOwnership(projectId: string, userId: string): Promise<{ allowed: boolean; exists: boolean }> {
+  const projectList = await db.select().from(tables.projects).where(eq(tables.projects.id, projectId));
+  const project = projectList[0];
+  if (!project) {
+    return { allowed: true, exists: false };
+  }
+  return { allowed: project.userId === userId, exists: true };
+}
+
 router.get('/projects', async (req: Request, res: Response) => {
   try {
-    // 1. Fetch all active graphs from SQLite / Postgres database
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    // 1. Fetch user projects to filter graphs
+    const userProjects = await db.select().from(tables.projects).where(eq(tables.projects.userId, userId));
+    const userProjectIds = new Set(userProjects.map(p => p.id));
+
+    // 2. Fetch all active graphs from SQLite / Postgres database
     let dbGraphs: any[] = [];
     try {
-      dbGraphs = await db.select().from(tables.graphs);
+      const allGraphs = await db.select().from(tables.graphs);
+      // Filter graphs: must be owned by the user or have no explicit project yet (which we can claim)
+      dbGraphs = allGraphs.filter(g => userProjectIds.has(g.id) || (g.projectId && userProjectIds.has(g.projectId)));
     } catch (dbErr: any) {
       console.warn("Database select failed, falling back purely to filesystem:", dbErr.message);
     }
@@ -27,7 +49,7 @@ router.get('/projects', async (req: Request, res: Response) => {
     const projectsList: any[] = [];
     const dbGraphIds = new Set(dbGraphs.map(g => g.id));
 
-    // 2. Read local filesystem directory
+    // 3. Read local filesystem directory
     let files: string[] = [];
     try {
       files = await fsPromises.readdir(PROJECTS_DIR);
@@ -35,7 +57,7 @@ router.get('/projects', async (req: Request, res: Response) => {
       console.warn("Failed to read local filesystem projects directory:", fsErr.message);
     }
 
-    // 3. Process database-saved graphs first
+    // 4. Process database-saved graphs first
     for (const row of dbGraphs) {
       try {
         projectsList.push({
@@ -51,10 +73,18 @@ router.get('/projects', async (req: Request, res: Response) => {
       }
     }
 
-    // 4. Auto-seeding migration: Check if files contain older graphs not yet migrated to active DB
+    // 5. Auto-seeding migration: Check if files contain older graphs not yet migrated to active DB
     for (const file of files) {
       if (file.endsWith('.json')) {
         const fileId = file.replace('.json', '');
+        
+        // Security check: Check if project is already registered by another user
+        const ownership = await checkProjectOwnership(fileId, userId);
+        if (ownership.exists && !ownership.allowed) {
+          // Belongs to another user, exclude completely!
+          continue;
+        }
+
         if (!dbGraphIds.has(fileId)) {
           try {
             const filePath = path.join(PROJECTS_DIR, file);
@@ -70,27 +100,34 @@ router.get('/projects', async (req: Request, res: Response) => {
               connections: content.connections || []
             };
 
+            // Auto-create project ownership in database
+            if (!ownership.exists) {
+              await db.insert(tables.projects).values({
+                id: fileId,
+                name: content.name || fileId,
+                userId: userId,
+                createdAt: record.createdAt,
+                updatedAt: stats.mtime.toISOString()
+              });
+              userProjectIds.add(fileId);
+            }
+
             // Non-blocking auto-seeding into database
             try {
               const existingRecord = await db.select().from(tables.graphs).where(eq(tables.graphs.id, record.id));
               if (existingRecord.length === 0) {
                 await db.insert(tables.graphs).values({
                   id: record.id,
+                  projectId: fileId,
                   name: record.name,
                   nodes: JSON.stringify(record.nodes),
                   connections: JSON.stringify(record.connections),
                   createdAt: record.createdAt
                 });
-                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" to the active database successfully.`);
-              } else {
-                console.log(`[Self-Heal] Graph "${record.id}" already preset in active database.`);
+                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" for user "${userId}"`);
               }
             } catch (seedErr: any) {
-              if (seedErr.message.includes('UNIQUE') || seedErr.message.includes('duplicate')) {
-                console.log(`[Self-Heal] Graph "${record.id}" already exists in the destination database.`);
-              } else {
-                console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
-              }
+              console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
             }
 
             projectsList.push({
@@ -116,6 +153,12 @@ router.get('/projects', async (req: Request, res: Response) => {
 
 router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { name, id, nodes, connections } = req.body;
     const resolvedName = name || id;
     if (!resolvedName || typeof resolvedName !== 'string') {
@@ -124,18 +167,42 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
     }
     const safeName = resolvedName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_project";
 
-    // 1. Write metadata configurations to active DB
+    // Security check: Check if project is owned by another user
+    const ownership = await checkProjectOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this project" });
+      return;
+    }
+
+    // 1. Create or update project record in DB
+    if (!ownership.exists) {
+      await db.insert(tables.projects).values({
+        id: safeName,
+        name: safeName,
+        userId: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      await db.update(tables.projects).set({
+        updatedAt: new Date().toISOString()
+      }).where(eq(tables.projects.id, safeName));
+    }
+
+    // 2. Write metadata configurations to active DB
     try {
       const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
       if (existing.length > 0) {
         await db.update(tables.graphs).set({
           name: safeName,
+          projectId: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
         }).where(eq(tables.graphs.id, safeName));
       } else {
         await db.insert(tables.graphs).values({
           id: safeName,
+          projectId: safeName,
           name: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || []),
@@ -146,7 +213,7 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
       console.warn("Database storage failed, falling back only to filesystem write:", dbErr.message);
     }
 
-    // 2. Dual-Write to disk layout for persistent backup
+    // 3. Dual-Write to disk layout for persistent backup
     const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
     const payload = {
       name: safeName,
@@ -164,11 +231,25 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
 
 router.delete('/projects/:name', async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const { name } = req.params;
     const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
-    // 1. Delete from database
+    // Security check: Check if project is owned by another user
+    const ownership = await checkProjectOwnership(safeName, userId);
+    if (ownership.exists && !ownership.allowed) {
+      res.status(403).json({ error: "Access denied to this project" });
+      return;
+    }
+
+    // 1. Delete from projects and graphs tables
     try {
+      await db.delete(tables.projects).where(eq(tables.projects.id, safeName));
       await db.delete(tables.graphs).where(eq(tables.graphs.id, safeName));
     } catch (dbErr: any) {
       console.warn("Database deletion failed, proceeding with filesystem removal:", dbErr.message);
@@ -187,7 +268,7 @@ router.delete('/projects/:name', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/projects/export', validateBody(GraphSaveSchema), (req: Request, res: Response) => {
+router.post('/projects/export', (req: Request, res: Response) => {
   try {
     const { nodes, connections, language } = req.body;
     if (!nodes || !connections) {

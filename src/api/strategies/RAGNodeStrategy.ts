@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic workflow node execution and field mapping */
 import { NodeExecutionStrategy, ExecutionContext } from './NodeStrategy.js';
 import { TemplateEngine } from '../services/TemplateEngine.js';
 import { ragService } from '../../services/rag.service.js';
