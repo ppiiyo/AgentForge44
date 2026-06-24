@@ -11,11 +11,12 @@ const PUBLIC_PATHS_ALLOWLIST = [
   '/api/auth/logout',
   '/api/health',
   '/api/marketplace',
-  '/api/marketplace/featured'
+  '/api/marketplace/featured',
+  '/api/test-payload'
 ];
 
 export function unifiedGuardMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const path = req.path;
+  const path = req.baseUrl + req.path;
 
   // 1. Skip non-API paths (UI, assets, Swagger UI)
   if (!path.startsWith('/api')) {

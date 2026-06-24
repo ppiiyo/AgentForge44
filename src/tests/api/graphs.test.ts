@@ -1,21 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../../../server.js';
+import { signToken } from '../../api/userAuth.js';
 
-describe('Graphs API Integration Suite', () => {
+describe('=== Graphs API Integration Suite ===', () => {
   const testGraphId = 'test-graph-workflow-44';
   const testGraphPayload = {
     id: testGraphId,
-    name: 'Dynamic Integration flow',
+    name: 'test-graph-workflow-44',
     nodes: [
       { id: 'start-node', type: 'input', title: 'Start', x: 0, y: 0 }
     ],
     connections: []
   };
 
+  const userToken = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
+
   it('should successfully create a new graph via POST /api/graphs', async () => {
     const res = await request(app)
       .post('/api/graphs')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(testGraphPayload);
 
     expect(res.status).toBe(201);
@@ -25,7 +29,8 @@ describe('Graphs API Integration Suite', () => {
 
   it('should retrieve the created graph via GET /api/graphs/:id', async () => {
     const res = await request(app)
-      .get(`/api/graphs/${testGraphId}`);
+      .get(`/api/graphs/${testGraphId}`)
+      .set('Authorization', `Bearer ${userToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(testGraphId);
@@ -43,6 +48,7 @@ describe('Graphs API Integration Suite', () => {
 
     const res = await request(app)
       .put(`/api/graphs/${testGraphId}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send(updatedPayload);
 
     expect(res.status).toBe(200);
@@ -52,14 +58,16 @@ describe('Graphs API Integration Suite', () => {
 
   it('should delete the saved graph workspace via DELETE /api/graphs/:id', async () => {
     const res = await request(app)
-      .delete(`/api/graphs/${testGraphId}`);
+      .delete(`/api/graphs/${testGraphId}`)
+      .set('Authorization', `Bearer ${userToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
 
     // Confirm GET returns 404
     const getRes = await request(app)
-      .get(`/api/graphs/${testGraphId}`);
+      .get(`/api/graphs/${testGraphId}`)
+      .set('Authorization', `Bearer ${userToken}`);
     expect(getRes.status).toBe(404);
   });
 });

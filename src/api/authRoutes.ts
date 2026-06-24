@@ -8,13 +8,13 @@ const router = express.Router();
 export function authMiddleware(req: express.Request, res: express.Response, next: express.NextFunction): void {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    res.status(401).json({ error: 'Authorization header is missing' });
+    res.status(401).json({ success: false, error: 'Unauthorized: Authorization header is missing' });
     return;
   }
 
   const token = authHeader.replace(/^Bearer\s+/i, '');
   if (!token) {
-    res.status(401).json({ error: 'Auth token is empty' });
+    res.status(401).json({ success: false, error: 'Unauthorized: Auth token is empty' });
     return;
   }
 
@@ -29,7 +29,7 @@ export function authMiddleware(req: express.Request, res: express.Response, next
   // 2. Validate JWT Token
   const decoded = verifyToken(token);
   if (!decoded) {
-    res.status(401).json({ error: 'Unauthorized: Invalid or expired credentials' });
+    res.status(401).json({ success: false, error: 'Unauthorized: Invalid or expired credentials' });
     return;
   }
 
