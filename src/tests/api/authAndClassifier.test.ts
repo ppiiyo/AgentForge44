@@ -57,7 +57,7 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
       authMiddleware(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authorization header is missing' }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized: Authorization header is missing' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -72,7 +72,7 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
       authMiddleware(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Auth token is empty' }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized: Auth token is empty' }));
       expect(next).not.toHaveBeenCalled();
     });
 
