@@ -10,22 +10,38 @@ export const users = pgTable('users', {
   usedTokens: integer('used_tokens').notNull().default(0),
 });
 
+export const workspaces = pgTable('workspaces', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const memberships = pgTable('memberships', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('viewer'), // 'owner' | 'editor' | 'viewer'
+  createdAt: text('created_at').notNull(),
+});
+
 export const projects = pgTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
   userId: text('user_id').notNull().default('anonymous'),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
 
 export const graphs = pgTable('graphs', {
   id: text('id').primaryKey(),
-  projectId: text('project_id'),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   nodes: text('nodes').notNull(), // JSON string
   connections: text('connections').notNull(), // JSON string
   version: integer('version').notNull().default(1),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });
 
@@ -39,6 +55,7 @@ export const metrics = pgTable('metrics', {
   totalLatencyMs: integer('total_latency_ms').notNull().default(0),
   errorMessage: text('error_message'),
   nodeExecutions: text('node_executions').notNull(), // JSON array
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });
 
@@ -51,6 +68,7 @@ export const versions = pgTable('versions', {
   snapshot: text('snapshot').notNull(), // JSON string
   commitMessage: text('commit_message').notNull(),
   diffSummary: text('diff_summary').notNull(),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
 });
 
 export const marketplaceItems = pgTable('marketplace_items', {
@@ -63,6 +81,7 @@ export const marketplaceItems = pgTable('marketplace_items', {
   downloads: integer('downloads').notNull().default(0),
   rating: doublePrecision('rating').notNull().default(0),
   reviews: text('reviews').notNull().default('[]'),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });
 
@@ -76,6 +95,7 @@ export const deployments = pgTable('deployments', {
   logs: text('logs'),
   config: text('config').notNull().default('{}'),
   deployedBy: text('deployed_by'),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });
 
@@ -87,5 +107,6 @@ export const apiKeys = pgTable('api_keys', {
   scopes: text('scopes').notNull(), // JSON stringified array of scopes
   lastUsedAt: text('last_used_at'),
   expiresAt: text('expires_at'),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });

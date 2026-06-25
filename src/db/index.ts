@@ -28,6 +28,8 @@ if (db && typeof db.execute === 'function') {
 // Polymorphic table mapping that transparently points to the active dialect structure
 export const tables = {
   users: dbType === 'postgres' ? pgSchema.users : sqliteSchema.users,
+  workspaces: dbType === 'postgres' ? pgSchema.workspaces : sqliteSchema.workspaces,
+  memberships: dbType === 'postgres' ? pgSchema.memberships : sqliteSchema.memberships,
   projects: dbType === 'postgres' ? pgSchema.projects : sqliteSchema.projects,
   graphs: dbType === 'postgres' ? pgSchema.graphs : sqliteSchema.graphs,
   metrics: dbType === 'postgres' ? pgSchema.metrics : sqliteSchema.metrics,
