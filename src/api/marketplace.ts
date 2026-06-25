@@ -509,6 +509,16 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
 export class MarketplaceManager {
   private static async seedIfEmpty(): Promise<void> {
     try {
+      // Ensure "default-workspace" exists first to satisfy foreign key constraint on tenantId
+      const wsCheck = await db.select().from(tables.workspaces).where(eq(tables.workspaces.id, 'default-workspace')).limit(1);
+      if (wsCheck.length === 0) {
+        await db.insert(tables.workspaces).values({
+          id: 'default-workspace',
+          name: 'Default Workspace',
+          createdAt: new Date().toISOString()
+        });
+      }
+
       const list = await db.select().from(tables.marketplaceItems);
       const count = list.length;
       if (count === 0) {

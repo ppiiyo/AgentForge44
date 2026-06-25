@@ -31,6 +31,16 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
     this.sqliteInstance.pragma('foreign_keys = ON');
 
     this.db = drizzleSqlite(this.sqliteInstance, { schema: sqliteSchema });
+
+    // Auto-bootstrap "default-workspace" workspace if table exists
+    try {
+      this.sqliteInstance.exec(`
+        INSERT OR IGNORE INTO workspaces (id, name, created_at)
+        VALUES ('default-workspace', 'Default Workspace', '${new Date().toISOString()}')
+      `);
+    } catch (e) {
+      // Table workspaces might not exist yet during initial schema push/creation
+    }
   }
 
   async healthCheck() {

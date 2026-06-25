@@ -12,7 +12,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "pretest": "drizzle-kit push",
+    "pretest": "drizzle-kit generate && drizzle-kit push",
     "test": "vitest run --exclude \"**/*.spec.ts\"",
     "test:e2e": "playwright test",
     "test:coverage": "vitest run --coverage --exclude \"**/*.spec.ts\"",
