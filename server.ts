@@ -14,6 +14,7 @@ import { errorHandler } from './src/middleware/errorHandler.js';
 import { GracefulShutdown } from './src/services/gracefulShutdown.js';
 import { adapter } from './src/db/index.js';
 import { validateDatabaseConfig } from './src/api/db.js';
+import { validateSecrets } from './src/config/secrets.ts';
 import { runSchemaMigrations } from './src/api/migrate.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
@@ -36,12 +37,13 @@ import { unifiedGuardMiddleware } from './src/middleware/guard.js';
 
 dotenv.config();
 
-// Pre-flight database credential validation for enterprise database backends
+// Pre-flight database and secrets credential validation
 try {
+  validateSecrets();
   validateDatabaseConfig(process.env.DB_TYPE || 'sqlite', process.env.DATABASE_URL || '');
 } catch (error: any) {
   logger.error(`CRITICAL PRE-FLIGHT CHECK FAILURE: ${error.message}`);
-  throw error;
+  process.exit(1);
 }
 
 initTracing();

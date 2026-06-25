@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { SECRETS } from '../config/secrets.js';
 
 /**
  * 1. Cryptographic Secrets Protection Service (AES-256-GCM)
@@ -6,21 +7,30 @@ import crypto from 'crypto';
  */
 export class SecretsShield {
   private algorithm = 'aes-256-gcm';
-  private masterKey: Buffer;
+  private keySource: string;
 
   constructor(customKeySource?: string) {
-    // Collect server master key or synthesize a persistent fallback
-    const keySource = customKeySource || process.env.ENCRYPTION_MASTER_KEY || "agentforge_master_secret_aes_32bytes_key_002";
-    // Ensure accurate 32-byte master key size
-    this.masterKey = crypto.scryptSync(keySource, 'agentforge-salt', 32);
+    // Collect server master key strictly from secrets config without hardcoded fallbacks
+    const keySource = customKeySource || SECRETS.ENCRYPTION_MASTER_KEY;
+    if (!keySource) {
+      throw new Error("CRITICAL SECURITY ERROR: Missing master key for encryption shield.");
+    }
+    // Only enforce 32+ character limit when using the central server secret
+    if (!customKeySource && keySource.length < 32) {
+      throw new Error("CRITICAL SECURITY ERROR: ENCRYPTION_MASTER_KEY must be at least 32 characters long.");
+    }
+    this.keySource = keySource;
   }
 
   /**
-   * Encrypts plain text string to GCM container format (iv:authTag:encryptedText)
+   * Encrypts plain text string to GCM container format (salt:iv:authTag:encryptedText)
    */
   encrypt(text: string): string {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const derivedKey = crypto.scryptSync(this.keySource, salt, 32);
+    
     const iv = crypto.randomBytes(12); // standard 96-bit IV
-    const cipher = crypto.createCipheriv(this.algorithm, this.masterKey, iv) as any;
+    const cipher = crypto.createCipheriv(this.algorithm, derivedKey, iv) as any;
     
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -28,6 +38,7 @@ export class SecretsShield {
     const tag = cipher.getAuthTag();
     
     return [
+      salt,
       iv.toString('hex'),
       tag.toString('hex'),
       encrypted
@@ -35,18 +46,29 @@ export class SecretsShield {
   }
 
   /**
-   * Decrypts safe custom GCM containers back to original credential token string
+   * Decrypts safe custom GCM containers back to original credential token string.
+   * Seamlessly handles both new dynamic-salt format (4 parts) and legacy fixed-salt format (3 parts).
    */
   decrypt(cipherText: string): string {
     const parts = cipherText.split(':');
-    if (parts.length !== 3) {
+    let salt: string;
+    let ivHex: string;
+    let tagHex: string;
+    let contentHex: string;
+
+    if (parts.length === 4) {
+      [salt, ivHex, tagHex, contentHex] = parts;
+    } else if (parts.length === 3) {
+      salt = 'agentforge-salt'; // Legacy fallback salt
+      [ivHex, tagHex, contentHex] = parts;
+    } else {
       throw new Error("Invalid GCM secrets container schema configuration.");
     }
 
-    const [ivHex, tagHex, contentHex] = parts;
+    const derivedKey = crypto.scryptSync(this.keySource, salt, 32);
     const iv = Buffer.from(ivHex, 'hex');
     const tag = Buffer.from(tagHex, 'hex');
-    const decipher = crypto.createDecipheriv(this.algorithm, this.masterKey, iv) as any;
+    const decipher = crypto.createDecipheriv(this.algorithm, derivedKey, iv) as any;
     
     decipher.setAuthTag(tag);
     

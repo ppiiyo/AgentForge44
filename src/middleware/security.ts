@@ -43,7 +43,8 @@ export function setupSecurity(app: Express) {
             "https://api.anthropic.com"
           ],
           fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-          frameSrc: ["'self'"], // Allowed for preview iframes
+          frameSrc: ["'self'", "https://*.google.com", "https://*.googleusercontent.com"], // Allowed for preview iframes and maps
+          frameAncestors: ["'self'", "https://*.google.com", "https://*.googleusercontent.com", "https://*.run.app"], // Allow AI Studio iframe integration
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"]

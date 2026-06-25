@@ -13,16 +13,25 @@ export const corsMiddleware: RequestHandler = cors({
     // Allow requests with no origin (such as mobile apps, curl, or server-to-server)
     if (!origin) return callback(null, true);
     
-    // Check if origin is within the allowed list or is a dynamic staging/development subdomain
-    const isAllowed = ALLOWED_ORIGINS.includes(origin) || 
-      /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
-      origin.includes('run.app'); // Allow the Cloud Run preview domain dynamically
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+    try {
+      const originUrl = new URL(origin);
+      const hostname = originUrl.hostname;
+      
+      // Strict subdomain/domain checks to prevent bypass (e.g. run.app.attacker.com)
+      const isAllowed = ALLOWED_ORIGINS.includes(origin) || 
+        hostname === 'localhost' || 
+        hostname === '127.0.0.1' ||
+        hostname === 'run.app' ||
+        hostname.endsWith('.run.app');
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    } catch {
+      callback(new Error('Invalid Origin header'));
     }
   },
   credentials: true,
