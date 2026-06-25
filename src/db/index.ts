@@ -37,6 +37,7 @@ export const tables = {
   marketplaceItems: dbType === 'postgres' ? pgSchema.marketplaceItems : sqliteSchema.marketplaceItems,
   deployments: dbType === 'postgres' ? pgSchema.deployments : sqliteSchema.deployments,
   apiKeys: dbType === 'postgres' ? pgSchema.apiKeys : sqliteSchema.apiKeys,
+  pipelineRuns: dbType === 'postgres' ? pgSchema.pipelineRuns : sqliteSchema.pipelineRuns,
 };
 
 // Export raw driver instance for legacy components

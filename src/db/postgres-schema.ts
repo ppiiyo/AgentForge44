@@ -110,3 +110,21 @@ export const apiKeys = pgTable('api_keys', {
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
 });
+
+export const pipelineRuns = pgTable('pipeline_runs', {
+  id: text('id').primaryKey(), // the executionId / runId
+  graphId: text('graph_id').notNull(),
+  status: text('status').notNull(), // 'pending' | 'running' | 'completed' | 'failed'
+  nodeOutputs: text('node_outputs').notNull().default('{}'), // JSON string of nodeOutputs
+  completedNodes: text('completed_nodes').notNull().default('[]'), // JSON string array of completed nodes
+  activatedNodes: text('activated_nodes').notNull().default('[]'), // JSON string array of activated nodes
+  stepCount: integer('step_count').notNull().default(0),
+  executedCount: text('executed_count').notNull().default('{}'), // JSON string of executedCount map
+  iterationsCount: text('iterations_count').notNull().default('{}'), // JSON string of iterationsCount map
+  logs: text('logs').notNull().default('[]'), // JSON string step logs
+  variables: text('variables').notNull().default('{}'), // JSON string of variables
+  error: text('error'),
+  tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});

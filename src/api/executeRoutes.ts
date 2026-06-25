@@ -11,6 +11,9 @@ import { slidingWindowRateLimiter } from '../middleware/rateLimit.js';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
 import { generateSecureId } from '../utils/idGenerator.js';
 import { requireRole } from './authRoutes.js';
+import { enqueuePipelineRun } from '../queue/executionQueue.js';
+import { db, tables } from '../db/index.js';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -200,19 +203,13 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
       return;
     }
 
-    const userId = (req as any).user?.id;
-    if (!userId) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
-    }
-    const engine = new StatefulExecutionEngine(nodes, connections, userId);
-    const trackingResult = await engine.runWorkflow(inputs || {});
+    const runId = generateSecureId('run');
+    await enqueuePipelineRun(runId, nodes, connections, inputs || {});
 
-    res.json({
+    res.status(202).json({
       success: true,
-      runId: generateSecureId('run'),
-      engine: "AgentForge44 Stateful Execution V2",
-      results: trackingResult
+      runId: runId,
+      status: "pending"
     });
 
   } catch (err: any) {
@@ -227,6 +224,82 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
         error: err.message || "Headless Run Interruption"
       });
     }
+  }
+});
+
+router.get('/runs/:id', async (req: Request, res: Response) => {
+  try {
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, req.params.id)).limit(1);
+    if (run.length === 0) {
+      res.status(404).json({ success: false, error: "Pipeline run not found." });
+      return;
+    }
+    const data = run[0];
+    const logs = JSON.parse(data.logs || '[]');
+    const nodeOutputs = JSON.parse(data.nodeOutputs || '{}');
+    
+    // Resolve finalResult matching the expected synchronous result structure if completed
+    let finalResult = "";
+    if (data.status === 'completed') {
+      const lastOutput = nodeOutputs['lastOutput'] || Object.values(nodeOutputs).pop();
+      finalResult = typeof lastOutput === 'string' ? lastOutput : JSON.stringify(lastOutput || "");
+    }
+
+    res.json({
+      success: true,
+      id: data.id,
+      status: data.status,
+      completedNodes: JSON.parse(data.completedNodes || '[]'),
+      activatedNodes: JSON.parse(data.activatedNodes || '[]'),
+      nodeOutputs,
+      logs,
+      error: data.error,
+      results: {
+        logs,
+        finalResult
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/runs/:id/resume', async (req: Request, res: Response) => {
+  try {
+    const runId = req.params.id;
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    if (run.length === 0) {
+      res.status(404).json({ success: false, error: "Pipeline run not found." });
+      return;
+    }
+    const data = run[0];
+    if (data.status !== 'failed') {
+      res.status(400).json({ success: false, error: `Only failed runs can be resumed. Current status: ${data.status}` });
+      return;
+    }
+
+    const { nodes, connections } = req.body;
+    if (!nodes || !connections) {
+      res.status(400).json({ success: false, error: "Nodes and connections are required to resume." });
+      return;
+    }
+
+    // Update status to pending/running
+    await db.update(tables.pipelineRuns).set({
+      status: 'pending',
+      error: null,
+      updatedAt: new Date().toISOString()
+    }).where(eq(tables.pipelineRuns.id, runId));
+
+    await enqueuePipelineRun(runId, nodes, connections, JSON.parse(data.variables || '{}'));
+
+    res.json({
+      success: true,
+      runId: runId,
+      status: 'pending'
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

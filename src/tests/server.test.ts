@@ -60,9 +60,28 @@ describe('Server API Integration Suite', () => {
         ]
       });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(202);
     expect(response.body.success).toBe(true);
-    expect(response.body.results.finalResult).toContain('Welcome to Express Web API Integ!');
+    expect(response.body.runId).toBeDefined();
+
+    const runId = response.body.runId;
+    let status = 'pending';
+    let data: any;
+    for (let i = 0; i < 20; i++) {
+      const getRes = await request(app)
+        .get(`/api/runs/${runId}`)
+        .set('Authorization', 'Bearer forge_production_admin_token');
+      expect(getRes.status).toBe(200);
+      data = getRes.body;
+      status = data.status;
+      if (status === 'completed' || status === 'failed') {
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    expect(status).toBe('completed');
+    expect(data.results.finalResult).toContain('Welcome to Express Web API Integ!');
   });
 
   describe('Secret Masking & Sanitization Unit Tests', () => {
@@ -157,9 +176,28 @@ describe('Server API Integration Suite', () => {
           ]
         });
 
-      expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('Max execution steps (50) reached. Possible infinite loop detected.');
+      expect(response.status).toBe(202);
+      expect(response.body.success).toBe(true);
+      expect(response.body.runId).toBeDefined();
+
+      const runId = response.body.runId;
+      let status = 'pending';
+      let data: any;
+      for (let i = 0; i < 20; i++) {
+        const getRes = await request(app)
+          .get(`/api/runs/${runId}`)
+          .set('Authorization', 'Bearer forge_production_admin_token');
+        expect(getRes.status).toBe(200);
+        data = getRes.body;
+        status = data.status;
+        if (status === 'completed' || status === 'failed') {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      expect(status).toBe('failed');
+      expect(data.error).toContain('Parallel execution failed');
     });
   });
 });
