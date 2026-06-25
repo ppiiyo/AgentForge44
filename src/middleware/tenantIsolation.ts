@@ -65,6 +65,18 @@ export async function enterpriseTenantContext(
     let wsId = wsHeader;
 
     if (userId) {
+      // Ensure the user exists in the database to satisfy foreign key constraints
+      const userRows = await db.select().from(tables.users).where(eq(tables.users.id, userId)).limit(1);
+      if (userRows.length === 0) {
+        await db.insert(tables.users).values({
+          id: userId,
+          email: (req as any).user?.email || `${userId}@test.com`,
+          passwordHash: 'auto-bootstrapped',
+          role: (req as any).user?.role || 'editor',
+          createdAt: new Date().toISOString()
+        });
+      }
+
       if (!wsId) {
         // Find existing membership for this user
         const membershipsList = await db

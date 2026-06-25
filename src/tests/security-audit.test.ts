@@ -47,7 +47,7 @@ describe('=== Phase 1 Security Audit: Robust Cryptographic and Password Hashing 
       const legacyHashVal = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
       const legacyStoredHash = `${salt}:${legacyHashVal}`;
       
-      const userId = 'usr_migration_test';
+      const userId = `usr_migration_test_${Date.now()}`;
       
       // Seed user row directly to database bypassing UserManager
       await db.insert(tables.users).values({

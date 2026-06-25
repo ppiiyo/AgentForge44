@@ -31,6 +31,9 @@ describe('=== Phase 1: Authentication & Authorization Guard Enforcement ===', ()
         connections: []
       });
     
+    if (res.status !== 200) {
+      console.log('Failed project creation response:', res.status, res.text);
+    }
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
@@ -41,6 +44,9 @@ describe('=== Phase 1: Authentication & Authorization Guard Enforcement ===', ()
       .get('/api/graphs/test-project-a')
       .set('Authorization', `Bearer ${tokenUserB}`);
     
+    if (resGet.status !== 403) {
+      console.log('Failed resGet response:', resGet.status, resGet.text);
+    }
     expect(resGet.status).toBe(403);
     expect(resGet.body.error).toContain('Access denied');
 
