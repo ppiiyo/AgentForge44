@@ -6,6 +6,7 @@ import { CodeGenerator } from './codeGenerator.js';
 import { db, tables } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 import { validateBody, GraphSaveSchema } from '../utils/validation.js';
+import { requireRole } from './authRoutes.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -14,14 +15,14 @@ if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
 
-// Helper to check ownership of a project
-async function checkProjectOwnership(projectId: string, userId: string): Promise<{ allowed: boolean; exists: boolean }> {
+// Helper to check ownership of a project under the active workspace
+async function checkProjectOwnership(projectId: string, tenantId: string): Promise<{ allowed: boolean; exists: boolean }> {
   const projectList = await db.select().from(tables.projects).where(eq(tables.projects.id, projectId));
   const project = projectList[0];
   if (!project) {
     return { allowed: true, exists: false };
   }
-  return { allowed: project.userId === userId, exists: true };
+  return { allowed: project.tenantId === tenantId, exists: true };
 }
 
 router.get('/projects', async (req: Request, res: Response) => {
@@ -32,16 +33,16 @@ router.get('/projects', async (req: Request, res: Response) => {
       return;
     }
 
-    // 1. Fetch user projects to filter graphs
-    const userProjects = await db.select().from(tables.projects).where(eq(tables.projects.userId, userId));
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // 1. Fetch workspace projects
+    const userProjects = await db.select().from(tables.projects).where(eq(tables.projects.tenantId, workspaceId));
     const userProjectIds = new Set(userProjects.map(p => p.id));
 
-    // 2. Fetch all active graphs from SQLite / Postgres database
+    // 2. Fetch workspace active graphs from SQLite / Postgres database
     let dbGraphs: any[] = [];
     try {
-      const allGraphs = await db.select().from(tables.graphs);
-      // Filter graphs: must be owned by the user or have no explicit project yet (which we can claim)
-      dbGraphs = allGraphs.filter(g => userProjectIds.has(g.id) || (g.projectId && userProjectIds.has(g.projectId)));
+      dbGraphs = await db.select().from(tables.graphs).where(eq(tables.graphs.tenantId, workspaceId));
     } catch (dbErr: any) {
       console.warn("Database select failed, falling back purely to filesystem:", dbErr.message);
     }
@@ -78,10 +79,10 @@ router.get('/projects', async (req: Request, res: Response) => {
       if (file.endsWith('.json')) {
         const fileId = file.replace('.json', '');
         
-        // Security check: Check if project is already registered by another user
-        const ownership = await checkProjectOwnership(fileId, userId);
+        // Security check: Check if project is already registered by another workspace
+        const ownership = await checkProjectOwnership(fileId, workspaceId);
         if (ownership.exists && !ownership.allowed) {
-          // Belongs to another user, exclude completely!
+          // Belongs to another workspace, exclude completely!
           continue;
         }
 
@@ -106,6 +107,7 @@ router.get('/projects', async (req: Request, res: Response) => {
                 id: fileId,
                 name: content.name || fileId,
                 userId: userId,
+                tenantId: workspaceId,
                 createdAt: record.createdAt,
                 updatedAt: stats.mtime.toISOString()
               });
@@ -122,9 +124,10 @@ router.get('/projects', async (req: Request, res: Response) => {
                   name: record.name,
                   nodes: JSON.stringify(record.nodes),
                   connections: JSON.stringify(record.connections),
+                  tenantId: workspaceId,
                   createdAt: record.createdAt
                 });
-                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" for user "${userId}"`);
+                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" for workspace "${workspaceId}"`);
               }
             } catch (seedErr: any) {
               console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
@@ -151,7 +154,7 @@ router.get('/projects', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
+router.post('/projects', requireRole(['editor', 'owner']), validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -167,8 +170,10 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
     }
     const safeName = resolvedName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_project";
 
-    // Security check: Check if project is owned by another user
-    const ownership = await checkProjectOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if project is owned by another workspace
+    const ownership = await checkProjectOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this project" });
       return;
@@ -180,25 +185,26 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
         id: safeName,
         name: safeName,
         userId: userId,
+        tenantId: workspaceId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
     } else {
       await db.update(tables.projects).set({
         updatedAt: new Date().toISOString()
-      }).where(eq(tables.projects.id, safeName));
+      }).where(and(eq(tables.projects.id, safeName), eq(tables.projects.tenantId, workspaceId)));
     }
 
     // 2. Write metadata configurations to active DB
     try {
-      const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      const existing = await db.select().from(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       if (existing.length > 0) {
         await db.update(tables.graphs).set({
           name: safeName,
           projectId: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
-        }).where(eq(tables.graphs.id, safeName));
+        }).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       } else {
         await db.insert(tables.graphs).values({
           id: safeName,
@@ -206,6 +212,7 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
           name: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || []),
+          tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
       }
@@ -229,7 +236,7 @@ router.post('/projects', validateBody(GraphSaveSchema), async (req: Request, res
   }
 });
 
-router.delete('/projects/:name', async (req: Request, res: Response) => {
+router.delete('/projects/:name', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -240,8 +247,10 @@ router.delete('/projects/:name', async (req: Request, res: Response) => {
     const { name } = req.params;
     const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
-    // Security check: Check if project is owned by another user
-    const ownership = await checkProjectOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if project is owned by another workspace
+    const ownership = await checkProjectOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this project" });
       return;
@@ -249,8 +258,8 @@ router.delete('/projects/:name', async (req: Request, res: Response) => {
 
     // 1. Delete from projects and graphs tables
     try {
-      await db.delete(tables.projects).where(eq(tables.projects.id, safeName));
-      await db.delete(tables.graphs).where(eq(tables.graphs.id, safeName));
+      await db.delete(tables.projects).where(and(eq(tables.projects.id, safeName), eq(tables.projects.tenantId, workspaceId)));
+      await db.delete(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
     } catch (dbErr: any) {
       console.warn("Database deletion failed, proceeding with filesystem removal:", dbErr.message);
     }

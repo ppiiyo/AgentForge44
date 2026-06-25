@@ -40,11 +40,34 @@ export function authMiddleware(req: express.Request, res: express.Response, next
 // Role restriction middleware
 export function requireRole(allowedRoles: string[]) {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const user = (req as any).user;
-    if (!user || !allowedRoles.includes(user.role)) {
+    const workspaceRole = (req as any).workspaceRole;
+    const globalRole = (req as any).user?.role;
+    
+    const activeRole = workspaceRole || globalRole;
+
+    if (!activeRole) {
       res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
       return;
     }
+
+    const rolesPriority: Record<string, number> = {
+      'owner': 3,
+      'admin': 3,
+      'editor': 2,
+      'viewer': 1
+    };
+
+    const activePriority = rolesPriority[activeRole] || 0;
+    const minRequiredPriority = Math.min(...allowedRoles.map(r => rolesPriority[r] || 999));
+
+    const isDirectlyAllowed = allowedRoles.includes(activeRole);
+    const isPriorityAllowed = activePriority >= minRequiredPriority;
+
+    if (!isDirectlyAllowed && !isPriorityAllowed) {
+      res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
+      return;
+    }
+
     next();
   };
 }

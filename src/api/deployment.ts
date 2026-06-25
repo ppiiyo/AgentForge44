@@ -27,10 +27,11 @@ export interface Deployment {
   createdAt: string;
   config: DeploymentConfig;
   logs: string[];
+  tenantId?: string;
 }
 
 export interface CloudProvider {
-  deploy(graphId: string, graphName: string, config: DeploymentConfig): Promise<Deployment>;
+  deploy(graphId: string, graphName: string, config: DeploymentConfig, tenantId?: string): Promise<Deployment>;
   getStatus(deploymentId: string): Promise<'provisioning' | 'active' | 'failed' | 'undeployed'>;
   undeploy(deploymentId: string): Promise<boolean>;
   getLogs(deploymentId: string): Promise<string[]>;
@@ -47,8 +48,9 @@ async function readDeployments(): Promise<Deployment[]> {
       status: r.status as any,
       url: r.url || '',
       createdAt: r.createdAt,
-      config: JSON.parse(r.config),
-      logs: JSON.parse(r.logs || '[]')
+      config: JSON.stringify(r.config).startsWith('{') ? JSON.parse(r.config) : r.config,
+      logs: typeof r.logs === 'string' ? JSON.parse(r.logs || '[]') : r.logs || [],
+      tenantId: r.tenantId
     }));
   } catch (err) {
     console.error('Failed to read deployments from database:', err);
@@ -94,6 +96,7 @@ async function writeDeployments(all: Deployment[]): Promise<void> {
           url: d.url,
           logs: JSON.stringify(d.logs || []),
           config: JSON.stringify(d.config || {}),
+          tenantId: d.tenantId || 'default-workspace',
           createdAt: d.createdAt
         });
       }
@@ -215,7 +218,7 @@ primary_region = "${config.region}"
 class BaseProvider implements CloudProvider {
   constructor(public providerName: 'vercel' | 'railway' | 'fly') {}
 
-  async deploy(graphId: string, graphName: string, config: DeploymentConfig): Promise<Deployment> {
+  async deploy(graphId: string, graphName: string, config: DeploymentConfig, tenantId?: string): Promise<Deployment> {
     const all = await readDeployments();
     const id = `dep-${Date.now()}`;
     
@@ -250,7 +253,8 @@ class BaseProvider implements CloudProvider {
       url,
       createdAt: new Date().toISOString(),
       config,
-      logs
+      logs,
+      tenantId
     };
 
     all.push(newDep);
@@ -343,26 +347,33 @@ export const RailwayProvider = new BaseProvider('railway');
 export const FlyProvider = new BaseProvider('fly');
 
 export const DeploymentManager = {
-  async getDeployments(graphId?: string): Promise<Deployment[]> {
+  async getDeployments(graphId?: string, tenantId?: string): Promise<Deployment[]> {
     const all = await readDeployments();
+    let filtered = all;
     if (graphId) {
-      return all.filter(d => d.graphId === graphId);
+      filtered = filtered.filter(d => d.graphId === graphId);
     }
-    return all;
+    if (tenantId) {
+      filtered = filtered.filter(d => d.tenantId === tenantId);
+    }
+    return filtered;
   },
 
-  async getDeploymentById(id: string): Promise<Deployment | null> {
+  async getDeploymentById(id: string, tenantId?: string): Promise<Deployment | null> {
     const all = await readDeployments();
-    return all.find(d => d.id === id) || null;
+    const found = all.find(d => d.id === id);
+    if (!found) return null;
+    if (tenantId && found.tenantId !== tenantId) return null;
+    return found;
   },
 
-  async startDeployment(graphId: string, graphName: string, provider: 'vercel' | 'railway' | 'fly', config: DeploymentConfig): Promise<Deployment> {
+  async startDeployment(graphId: string, graphName: string, provider: 'vercel' | 'railway' | 'fly', config: DeploymentConfig, tenantId?: string): Promise<Deployment> {
     const serviceMap = {
       vercel: VercelProvider,
       railway: RailwayProvider,
       fly: FlyProvider
     };
-    return await serviceMap[provider].deploy(graphId, graphName, config);
+    return await serviceMap[provider].deploy(graphId, graphName, config, tenantId);
   },
 
   async stopDeployment(id: string): Promise<boolean> {

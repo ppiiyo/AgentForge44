@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
+import { verifyToken } from '../api/userAuth.js';
+import { db, tables } from '../db/index.js';
+import { eq, and } from 'drizzle-orm';
 
 export interface TenantContext {
   tenantId: string;
@@ -13,7 +16,6 @@ export interface TenantContext {
 }
 
 // Memory-based local storage fallback simulator for active tenant usage metrics 
-// (In production, this queries pgvector schema and Redis Cluster rate limit buckets)
 const tenantUsageStore: Record<string, { executionsCount: number; tokensCount: number }> = {};
 
 export const TENANT_PLANS: Record<TenantContext['plan'], TenantContext['quotas']> = {
@@ -46,30 +48,125 @@ export async function enterpriseTenantContext(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  // Extract custom enterprise headers or default to a standard corporate development sandbox
-  const tenantId = (req.headers['x-tenant-id'] as string) || 'tenant-default-development-sandbox';
-  const tenantPlan = (req.headers['x-tenant-plan'] as 'free' | 'pro' | 'enterprise') || 'pro';
-  
-  const quotas = TENANT_PLANS[tenantPlan] || TENANT_PLANS.free;
+  try {
+    // 1. Resolve user ID from req.user or parse JWT from Authorization header
+    let userId = (req as any).user?.id;
+    if (!userId && req.headers.authorization) {
+      const token = req.headers.authorization.replace(/^Bearer\s+/i, '');
+      const decoded = verifyToken(token);
+      if (decoded) {
+        userId = decoded.id;
+        (req as any).user = decoded;
+      }
+    }
 
-  const context: TenantContext = {
-    tenantId,
-    plan: tenantPlan,
-    quotas
-  };
+    // 2. Resolve active workspace ID
+    const wsHeader = (req.headers['x-workspace-id'] || req.headers['x-tenant-id']) as string | undefined;
+    let wsId = wsHeader;
 
-  // Inject context inside the request metadata pipeline
-  (req as any).tenant = context;
+    if (userId) {
+      if (!wsId) {
+        // Find existing membership for this user
+        const membershipsList = await db
+          .select()
+          .from(tables.memberships)
+          .where(eq(tables.memberships.userId, userId))
+          .limit(1);
 
-  // Initialize tenant tracking store if not populated
-  if (!tenantUsageStore[tenantId]) {
-    tenantUsageStore[tenantId] = { executionsCount: 0, tokensCount: 0 };
+        if (membershipsList.length > 0) {
+          wsId = membershipsList[0].workspaceId;
+        } else {
+          wsId = `ws_${userId}`;
+        }
+      }
+
+      // Ensure target workspace actually exists in the workspaces table
+      const wsRows = await db.select().from(tables.workspaces).where(eq(tables.workspaces.id, wsId)).limit(1);
+      if (wsRows.length === 0) {
+        await db.insert(tables.workspaces).values({
+          id: wsId,
+          name: wsId === 'default-workspace' ? 'Default Workspace' : `${userId}'s Workspace`,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Check user membership inside this active workspace
+      const mbrRows = await db
+        .select()
+        .from(tables.memberships)
+        .where(
+          and(
+            eq(tables.memberships.userId, userId),
+            eq(tables.memberships.workspaceId, wsId)
+          )
+        )
+        .limit(1);
+
+      let membership = mbrRows[0];
+      if (!membership) {
+        // Auto-bootstrap only for their personal workspace OR if it's the default-workspace
+        if (wsId === `ws_${userId}` || wsId === 'default-workspace') {
+          const assignedRole = wsId === `ws_${userId}` ? 'owner' : ((req as any).user?.role || 'editor');
+          const isOwnerOrEditor = assignedRole === 'admin' || assignedRole === 'editor' || assignedRole === 'owner';
+          const roleStr = isOwnerOrEditor ? 'owner' : 'viewer';
+
+          await db.insert(tables.memberships).values({
+            id: `mbr_${userId}_${wsId}`,
+            userId,
+            workspaceId: wsId,
+            role: roleStr,
+            createdAt: new Date().toISOString()
+          });
+
+          const newMbrRows = await db
+            .select()
+            .from(tables.memberships)
+            .where(
+              and(
+                eq(tables.memberships.userId, userId),
+                eq(tables.memberships.workspaceId, wsId)
+              )
+            )
+            .limit(1);
+          membership = newMbrRows[0];
+        } else {
+          // For foreign workspaces, deny access immediately if they are not a member!
+          res.status(403).json({ error: 'Access denied: You are not a member of this workspace.' });
+          return;
+        }
+      }
+
+      if (!membership) {
+        res.status(403).json({ error: 'Tenant context resolution failed: missing membership record.' });
+        return;
+      }
+
+      // Store in request context
+      (req as any).workspaceId = wsId;
+      (req as any).workspaceRole = membership.role;
+      (req as any).tenantId = wsId;
+    } else {
+      // Unauthenticated public/anonymous request
+      (req as any).workspaceId = wsId || 'default-workspace';
+      (req as any).workspaceRole = 'viewer';
+      (req as any).tenantId = (req as any).workspaceId;
+    }
+
+    const tenantId = (req as any).workspaceId;
+    const context: TenantContext = {
+      tenantId,
+      plan: 'pro',
+      quotas: TENANT_PLANS.pro
+    };
+
+    (req as any).tenant = context;
+
+    logger.info(`Enterprise Multi-Tenancy - Workspace: ${tenantId}, Role: ${(req as any).workspaceRole}`);
+    next();
+  } catch (err: any) {
+    logger.error('Error in enterpriseTenantContext middleware:', err);
+    res.status(500).json({ error: 'Internal server error in tenant context parsing.' });
   }
-
-  // Set local database simulated transaction isolation values (simulates: SET app.current_tenant_id)
-  logger.info(`Enterprise Multi-Tenancy Local Partition Isolation - Tenant: ${tenantId} (${tenantPlan.toUpperCase()})`);
-
-  next();
 }
 
 /**
@@ -84,7 +181,7 @@ export function enforceTenantQuotas(resourceType: 'executions' | 'tokens', amoun
     }
 
     const { tenantId, plan, quotas } = tenant;
-    const usage = tenantUsageStore[tenantId];
+    const usage = tenantUsageStore[tenantId] || { executionsCount: 0, tokensCount: 0 };
 
     if (resourceType === 'executions') {
       const liveUsage = usage.executionsCount;

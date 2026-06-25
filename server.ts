@@ -68,7 +68,6 @@ app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
 setupSecurity(app);
-app.use('/api', enterpriseTenantContext);
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
@@ -82,6 +81,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeRequestBody);
 
 app.use('/api', unifiedGuardMiddleware);
+app.use('/api', enterpriseTenantContext);
 
 // Endpoint for testing request payload limits
 app.post('/api/test-payload', (req: express.Request, res: express.Response) => {

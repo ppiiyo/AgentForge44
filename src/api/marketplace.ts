@@ -638,7 +638,8 @@ export class MarketplaceManager {
     category: 'agent' | 'tool' | 'template' | 'rag-pipeline',
     graphSnapshot: any,
     tags: string[],
-    authorId: string = "user_developer"
+    authorId: string = "user_developer",
+    tenantId: string = "default-workspace"
   ): Promise<MarketplaceItem> {
     await this.seedIfEmpty();
     
@@ -680,7 +681,8 @@ export class MarketplaceManager {
         author: newItem.authorId,
         downloads: newItem.downloadsCount,
         rating: newItem.rating,
-        reviews: '[]'
+        reviews: '[]',
+        tenantId: tenantId
       });
     } catch (err: any) {
       console.warn(`Failed to insert published item "${newItem.id}":`, err.message);

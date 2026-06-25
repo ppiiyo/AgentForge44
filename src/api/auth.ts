@@ -79,6 +79,9 @@ export class SecretsShield {
   }
 }
 
+import { db, tables } from '../db/index.js';
+import { eq, and } from 'drizzle-orm';
+
 /**
  * 2. Enterprise Workspaces & Role-Based Access Control (RBAC) definitions
  */
@@ -98,10 +101,80 @@ export interface UserSession {
 }
 
 export class RBACManager {
-  private workspaces: Map<string, RBACWorkspace> = new Map();
-  private userRoles: Map<string, { role: UserRole; workspaceId: string }> = new Map();
-
   constructor() {}
+
+  /**
+   * Check if a user has a specific role in a workspace asynchronously
+   */
+  async getUserRole(userId: string, workspaceId: string): Promise<UserRole | null> {
+    try {
+      const list = await db
+        .select()
+        .from(tables.memberships)
+        .where(
+          and(
+            eq(tables.memberships.userId, userId),
+            eq(tables.memberships.workspaceId, workspaceId)
+          )
+        )
+        .limit(1);
+      const membership = list[0];
+      return membership ? (membership.role as UserRole) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Add a member to a workspace
+   */
+  async addMember(userId: string, workspaceId: string, role: UserRole): Promise<void> {
+    const id = `mbr_${userId}_${workspaceId}`;
+    const existing = await db
+      .select()
+      .from(tables.memberships)
+      .where(
+        and(
+          eq(tables.memberships.userId, userId),
+          eq(tables.memberships.workspaceId, workspaceId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(tables.memberships)
+        .set({ role })
+        .where(
+          and(
+            eq(tables.memberships.userId, userId),
+            eq(tables.memberships.workspaceId, workspaceId)
+          )
+        );
+    } else {
+      await db.insert(tables.memberships).values({
+        id,
+        userId,
+        workspaceId,
+        role,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+
+  /**
+   * Remove a member from a workspace
+   */
+  async removeMember(userId: string, workspaceId: string): Promise<void> {
+    await db
+      .delete(tables.memberships)
+      .where(
+        and(
+          eq(tables.memberships.userId, userId),
+          eq(tables.memberships.workspaceId, workspaceId)
+        )
+      );
+  }
 
   /**
    * Validates if active user credentials permit action within resource bounds
@@ -118,6 +191,24 @@ export class RBACManager {
     };
 
     const userAssignedRole = user.role;
+    return rolesPriority[userAssignedRole] >= rolesPriority[requiredRole];
+  }
+
+  /**
+   * Persistent version of permission validation
+   */
+  async canExecuteActionPersistent(userId: string, workspaceId: string, requiredRole: UserRole): Promise<boolean> {
+    const userAssignedRole = await this.getUserRole(userId, workspaceId);
+    if (!userAssignedRole) {
+      return false;
+    }
+
+    const rolesPriority: Record<UserRole, number> = {
+      'owner': 3,
+      'editor': 2,
+      'viewer': 1
+    };
+
     return rolesPriority[userAssignedRole] >= rolesPriority[requiredRole];
   }
 }

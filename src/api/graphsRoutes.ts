@@ -6,7 +6,8 @@ import { VersionManager } from './metricsAndVersions.js';
 import { activeRooms, getPresenceHistory } from './collaboration.js';
 import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 import { db, tables } from '../db/index.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { requireRole } from './authRoutes.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -49,13 +50,13 @@ const PROJECTS_DIR = path.join(process.cwd(), 'projects');
  *         description: Unauthorized.
  */
 // Helper to check ownership of a graph
-async function checkGraphOwnership(graphId: string, userId: string): Promise<{ allowed: boolean; exists: boolean }> {
+async function checkGraphOwnership(graphId: string, tenantId: string): Promise<{ allowed: boolean; exists: boolean }> {
   const projectList = await db.select().from(tables.projects).where(eq(tables.projects.id, graphId));
   const project = projectList[0];
   if (!project) {
     return { allowed: true, exists: false };
   }
-  return { allowed: project.userId === userId, exists: true };
+  return { allowed: project.tenantId === tenantId, exists: true };
 }
 
 /**
@@ -65,7 +66,7 @@ async function checkGraphOwnership(graphId: string, userId: string): Promise<{ a
  * @throws 400 if validation fails
  * @throws 401 if not authenticated
  */
-router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
+router.post('/graphs', requireRole(['editor', 'owner']), validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -77,8 +78,10 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
     const projName = id || name || "untitled_graph";
     const safeName = projName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim() || "untitled_graph";
 
-    // Security check: Check if graph is owned by another user
-    const ownership = await checkGraphOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if graph is owned by another workspace
+    const ownership = await checkGraphOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this graph" });
       return;
@@ -90,6 +93,7 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
         id: safeName,
         name: safeName,
         userId: userId,
+        tenantId: workspaceId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
@@ -97,14 +101,14 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
 
     // 2. Database write with upsert logic
     try {
-      const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      const existing = await db.select().from(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       if (existing.length > 0) {
         await db.update(tables.graphs).set({
           name: safeName,
           projectId: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
-        }).where(eq(tables.graphs.id, safeName));
+        }).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       } else {
         await db.insert(tables.graphs).values({
           id: safeName,
@@ -112,6 +116,7 @@ router.post('/graphs', validateBody(GraphSaveSchema), async (req: Request, res: 
           name: safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || []),
+          tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
       }
@@ -171,8 +176,10 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
-    // Security check: Check if graph is owned by another user
-    const ownership = await checkGraphOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if graph is owned by another workspace
+    const ownership = await checkGraphOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this graph" });
       return;
@@ -180,7 +187,7 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
 
     // 1. Try database read first
     try {
-      const row = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      const row = await db.select().from(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       if (row.length > 0) {
         res.json({
           id: safeName,
@@ -207,9 +214,10 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
           name: content.name || safeName,
           nodes: JSON.stringify(content.nodes || []),
           connections: JSON.stringify(content.connections || []),
+          tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
-        console.log(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database.`);
+        console.log(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database workspace "${workspaceId}".`);
       } catch (migrateErr: any) {
         console.warn(`[Self-Heal] Failed to auto-migrate graph "${safeName}" to SQL database:`, migrateErr.message);
       }
@@ -268,7 +276,7 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
  * @param req.body Updated graph details
  * @returns Updated graph structure
  */
-router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
+router.put('/graphs/:id', requireRole(['editor', 'owner']), validateBody(GraphSaveSchema), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -280,8 +288,10 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
     const { name, nodes, connections } = req.body;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
-    // Security check: Check if graph is owned by another user
-    const ownership = await checkGraphOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if graph is owned by another workspace
+    const ownership = await checkGraphOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this graph" });
       return;
@@ -290,13 +300,13 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
     // 1. Update database record
     let dbUpdated = false;
     try {
-      const existing = await db.select().from(tables.graphs).where(eq(tables.graphs.id, safeName));
+      const existing = await db.select().from(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       if (existing.length > 0) {
         await db.update(tables.graphs).set({
           name: name || safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
-        }).where(eq(tables.graphs.id, safeName));
+        }).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
         dbUpdated = true;
       } else {
         await db.insert(tables.graphs).values({
@@ -304,6 +314,7 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
           name: name || safeName,
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || []),
+          tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
         dbUpdated = true;
@@ -351,7 +362,7 @@ router.put('/graphs/:id', validateBody(GraphSaveSchema), async (req: Request, re
  * @param req.params.id Unique graph identifier
  * @returns Deletion status confirmation
  */
-router.delete('/graphs/:id', async (req: Request, res: Response) => {
+router.delete('/graphs/:id', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
@@ -362,8 +373,10 @@ router.delete('/graphs/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
-    // Security check: Check if graph is owned by another user
-    const ownership = await checkGraphOwnership(safeName, userId);
+    const workspaceId = (req as any).workspaceId || 'default-workspace';
+
+    // Security check: Check if graph is owned by another workspace
+    const ownership = await checkGraphOwnership(safeName, workspaceId);
     if (ownership.exists && !ownership.allowed) {
       res.status(403).json({ error: "Access denied to this graph" });
       return;
@@ -371,7 +384,7 @@ router.delete('/graphs/:id', async (req: Request, res: Response) => {
 
     // 1. Delete database record
     try {
-      await db.delete(tables.graphs).where(eq(tables.graphs.id, safeName));
+      await db.delete(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
     } catch (dbErr: any) {
       console.warn("[Database] DELETE /graphs/:id failed, proceeding with filesystem removal:", dbErr.message);
     }

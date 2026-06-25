@@ -10,6 +10,7 @@ import { logger } from '../utils/logger.js';
 import { slidingWindowRateLimiter } from '../middleware/rateLimit.js';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
 import { generateSecureId } from '../utils/idGenerator.js';
+import { requireRole } from './authRoutes.js';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ const ALLOWED_API_KEYS = new Set(
   process.env.AGENTFORGE_API_KEY ? [process.env.AGENTFORGE_API_KEY] : []
 );
 
-router.post('/execute', validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
+router.post('/execute', requireRole(['editor', 'owner']), validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const { nodes, connections } = req.body;
   try {
     const result = await executePipeline(nodes, connections);
@@ -31,7 +32,7 @@ router.post('/execute', validateBody(PipelineExecuteSchema), async (req: Request
   }
 });
 
-router.post('/run-pipeline', validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
+router.post('/run-pipeline', requireRole(['editor', 'owner']), validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const startTime = Date.now();
   const { nodes, connections, graphId, graphName } = req.body;
   
@@ -103,7 +104,7 @@ router.post('/run-pipeline', validateBody(PipelineExecuteSchema), async (req: Re
   }
 });
 
-router.post('/evals', async (req: Request, res: Response) => {
+router.post('/evals', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   try {
     const { nodes, connections, testCases } = req.body;
     if (!nodes || !connections || !testCases || !Array.isArray(testCases)) {
@@ -118,7 +119,7 @@ router.post('/evals', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/stream-pipeline', async (req: Request, res: Response) => {
+router.post('/stream-pipeline', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   // Setup SSE Headers
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -281,7 +282,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
 // isolated-vm specific nodes runner mapping
 import { getSandbox, releaseSandbox } from '../utils/sandbox.js';
 
-router.post('/execute-node/:runId', async (req: Request, res: Response) => {
+router.post('/execute-node/:runId', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   const { runId } = req.params;
   const { code, inputData } = req.body;
   
@@ -303,7 +304,7 @@ router.post('/execute-node/:runId', async (req: Request, res: Response) => {
   res.json(result);
 });
 
-router.post('/complete-run/:runId', (req: Request, res: Response) => {
+router.post('/complete-run/:runId', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
   releaseSandbox(req.params.runId);
   res.json({ success: true });
 });
