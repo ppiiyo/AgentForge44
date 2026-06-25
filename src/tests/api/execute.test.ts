@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../../../server.js';
+import { signToken } from '../../api/userAuth.js';
 
 // Mock the GoogleGenAI module to run locally in all execution environments
 vi.mock('@google/genai', () => {
@@ -22,6 +23,7 @@ vi.mock('@google/genai', () => {
 });
 
 describe('Pipeline Execution API Suite', () => {
+  const userToken = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
 
   it('should execute a simple flat input-to-prompt graph', async () => {
     const payload = {
@@ -64,6 +66,7 @@ describe('Pipeline Execution API Suite', () => {
 
     const res = await request(app)
       .post('/api/execute')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(payload);
 
     expect(res.status).toBe(200);
@@ -113,6 +116,7 @@ describe('Pipeline Execution API Suite', () => {
 
     const res = await request(app)
       .post('/api/execute')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(payload);
 
     expect(res.status).toBe(200);
@@ -180,6 +184,7 @@ describe('Pipeline Execution API Suite', () => {
 
     const res = await request(app)
       .post('/api/execute')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(payload);
 
     expect(res.status).toBe(200);
@@ -202,6 +207,7 @@ describe('Pipeline Execution API Suite', () => {
 
     const res = await request(app)
       .post('/api/execute')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(corruptedPayload);
 
     expect(res.status).toBe(500);

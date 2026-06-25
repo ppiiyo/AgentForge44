@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../../server.js';
 import { StatefulExecutionEngine } from '../api/execution.js';
 import { FlowNode, FlowConnection } from '../types.js';
+import { signToken } from '../api/userAuth.js';
 
 describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
 
@@ -48,9 +49,12 @@ describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
   });
 
   describe('2. Zod boundary API payload validations', () => {
+    const userToken = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
+
     it('should reject POST /graphs with missing nodes/connections format', async () => {
       const res = await request(app)
         .post('/api/graphs')
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           id: 'invalid-structure',
           nodes: "this should be an array, not a string"
@@ -64,6 +68,7 @@ describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
     it('should reject POST /run-pipeline with malformed node structure', async () => {
       const res = await request(app)
         .post('/api/run-pipeline')
+        .set('Authorization', `Bearer ${userToken}`)
         .send({
           nodes: [
             {

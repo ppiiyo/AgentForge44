@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../../../server.js';
+import { signToken } from '../../api/userAuth.js';
 
 describe('Marketplace API Integration Suite', () => {
   let createdItemId = '';
+  const userToken = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
 
   it('should successfully list active marketplace templates via GET /api/marketplace', async () => {
     const res = await request(app)
@@ -51,6 +53,7 @@ describe('Marketplace API Integration Suite', () => {
 
     const res = await request(app)
       .post('/api/marketplace')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(publishPayload);
 
     expect(res.status).toBe(200);
@@ -72,6 +75,7 @@ describe('Marketplace API Integration Suite', () => {
 
     const res = await request(app)
       .post('/api/marketplace')
+      .set('Authorization', `Bearer ${userToken}`)
       .send(invalidPayload);
 
     expect(res.status).toBe(500);
@@ -103,7 +107,8 @@ describe('Marketplace API Integration Suite', () => {
     expect(createdItemId).toBeDefined();
 
     const res = await request(app)
-      .post(`/api/marketplace/${createdItemId}/download`);
+      .post(`/api/marketplace/${createdItemId}/download`)
+      .set('Authorization', `Bearer ${userToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -120,6 +125,7 @@ describe('Marketplace API Integration Suite', () => {
 
     const res = await request(app)
       .post(`/api/marketplace/${createdItemId}/reviews`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send(reviewPayload);
 
     expect(res.status).toBe(200);
@@ -135,6 +141,7 @@ describe('Marketplace API Integration Suite', () => {
 
     const res = await request(app)
       .post(`/api/marketplace/${createdItemId}/reviews`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send(invalidReview);
 
     expect(res.status).toBe(400);
