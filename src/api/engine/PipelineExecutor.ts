@@ -328,7 +328,10 @@ export class PipelineExecutor {
       // Resolve final consolidated payload text
       let finalResultText = "";
       const outputs = this.nodes.filter(n => n.type === 'output');
-      if (outputs.length > 0) {
+      const completedOutput = outputs.find(n => this.completedNodes.has(n.id) && this.nodeOutputs[n.id]);
+      if (completedOutput) {
+        finalResultText = this.nodeOutputs[completedOutput.id] || "";
+      } else if (outputs.length > 0) {
         finalResultText = this.nodeOutputs[outputs[outputs.length - 1].id] || "";
       } else {
         finalResultText = this.activeValueRef.value || "";

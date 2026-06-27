@@ -566,7 +566,10 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
 
     const outputNodes = this.nodes.filter(n => n.type === 'output');
     let finalResultText = "";
-    if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
+    const completedOutputNode = outputNodes.find(n => completedNodes.has(n.id) && nodeOutputs[n.id]);
+    if (completedOutputNode) {
+      finalResultText = String(nodeOutputs[completedOutputNode.id]);
+    } else if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
       finalResultText = String(nodeOutputs[outputNodes[0].id]);
     } else {
       finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
