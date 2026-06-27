@@ -1,7 +1,8 @@
-import React from 'react';
-import { MetricsDashboard } from '../../components/MetricsDashboard';
+import React, { Suspense } from 'react';
 // @ts-ignore
 import styles from './Dashboard.module.css';
+
+const MetricsDashboard = React.lazy(() => import('../../components/MetricsDashboard').then(m => ({ default: m.MetricsDashboard })));
 
 interface DashboardProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -34,7 +35,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </p>
         </div>
 
-        <MetricsDashboard currentLang={currentLang} activeGraphId={activeGraphId} />
+        <Suspense fallback={
+          <div className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-8 flex flex-col items-center justify-center space-y-3 min-h-[300px]">
+            <div className="w-8 h-8 rounded-full border-2 border-sky-500/30 border-t-sky-500 animate-spin"></div>
+            <span className="text-xs text-slate-400 font-mono">Loading Executive Telemetry...</span>
+          </div>
+        }>
+          <MetricsDashboard currentLang={currentLang} activeGraphId={activeGraphId} />
+        </Suspense>
       </div>
     </div>
   );
