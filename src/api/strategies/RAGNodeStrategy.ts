@@ -18,6 +18,7 @@ export class RAGNodeStrategy implements NodeExecutionStrategy {
     const limit = node.fields.limit !== undefined ? Number(node.fields.limit) : 3;
     let textResult = "";
     let searchResults: any[] = [];
+    let isSimulated = false;
 
     try {
       searchResults = await ragService.search(renderedQuery, limit);
@@ -28,12 +29,16 @@ export class RAGNodeStrategy implements NodeExecutionStrategy {
         textResult = "No matched custom documents in knowledge base vector database.";
       }
     } catch (e: any) {
+      if (process.env.DEMO_MODE !== 'true') {
+        throw new Error(`RAG retrieval failed: ${e.message || String(e)}`);
+      }
       console.warn("RAG query error. Falling back to default library output simulation...", e);
       textResult = `--- SIMULATED EMBEDDING RETRIEVAL ---\n` +
         `Search query vector mapping: 384 dimensional normalized array\n` +
         `Matched Category: Corporate Standard Operating Guidelines\n\n` +
         `Retrieved text content chunks:\n` +
         `"Our advanced pipeline handles secure REST APIs by validating URLs starting with localhost to block SSRF and keeping secret API keys hidden and executed strictly in worker sandbox threads. Development instances run exclusively on port 3000 behind reverse proxy endpoints."`;
+      isSimulated = true;
     }
 
     context.nodeOutputs[node.id] = textResult;
@@ -45,7 +50,8 @@ export class RAGNodeStrategy implements NodeExecutionStrategy {
       status: 'completed',
       input: renderedQuery,
       output: textResult,
-      duration: Date.now() - context.stepStart
+      duration: Date.now() - context.stepStart,
+      simulated: isSimulated
     });
   }
 }

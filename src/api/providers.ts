@@ -22,6 +22,7 @@ export interface LLMResponse {
     id?: string;
   }>;
   raw?: any;
+  simulated?: boolean;
 }
 
 export abstract class LLMProvider {
@@ -121,11 +122,13 @@ export abstract class LLMProvider {
  * Gemini Provider leveraging official modern @google/genai SDK
  */
 export class GeminiProvider extends LLMProvider {
+  private apiKey: string;
   private ai: GoogleGenAI;
   private model: string;
 
   constructor(apiKey: string, model: string = "gemini-3.5-flash") {
     super();
+    this.apiKey = apiKey;
     this.ai = new GoogleGenAI({ apiKey });
     this.model = model;
   }
@@ -133,6 +136,21 @@ export class GeminiProvider extends LLMProvider {
   getName() { return `Gemini (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
+    const isSandbox = !this.apiKey || 
+                      this.apiKey === "sandbox_free_test_gemini" || 
+                      this.apiKey === "your_gemini_api_key_here" || 
+                      this.apiKey === "mock-gemini-key" || 
+                      process.env.DEMO_MODE === "true";
+
+    if (isSandbox && (!this.apiKey || this.apiKey.startsWith("sandbox_") || this.apiKey === "your_gemini_api_key_here" || this.apiKey === "mock-gemini-key" || !process.env.GEMINI_API_KEY)) {
+      const simText = `[Simulated response due to API sandbox limits]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
+      return {
+        text: simText,
+        raw: { simulated: true },
+        simulated: true
+      };
+    }
+
     const aiConfig: any = {
       temperature: config?.temperature ?? 0.7,
       systemInstruction: config?.systemInstruction || undefined,
@@ -163,20 +181,26 @@ export class GeminiProvider extends LLMProvider {
       return {
         text: response.text || "",
         toolCalls,
-        raw: response
+        raw: response,
+        simulated: false
       };
     } catch (err: any) {
       const errMsg = String(err.message || err);
-      if (errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429") || err.status === 429) {
+      const isQuotaError = errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("429") || err.status === 429;
+      
+      if (isQuotaError) {
         if (process.env.STRICT_LLM_ERRORS === 'true') {
           throw err;
         }
-        console.warn(`[AgentForge44] Quota limit reached in providers Gemini model run. Activating simulated fallback mock response...`);
-        const simText = `[Simulated response due to API quota limits (429)]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
-        return {
-          text: simText,
-          raw: { text: simText }
-        };
+        if (process.env.DEMO_MODE === 'true' || isSandbox) {
+          console.warn(`[AgentForge44] Quota limit reached in providers Gemini model run. Activating simulated fallback mock response...`);
+          const simText = `[Simulated response due to API quota limits (429)]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
+          return {
+            text: simText,
+            raw: { simulated: true },
+            simulated: true
+          };
+        }
       }
       throw err;
     }
@@ -199,12 +223,13 @@ export class OpenAIProvider extends LLMProvider {
   getName() { return `OpenAI (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_openai" || this.apiKey === "your_openai_api_key_here";
+    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_openai" || this.apiKey === "your_openai_api_key_here" || process.env.DEMO_MODE === "true";
     if (isSandbox) {
       const sandboxText = `[Simulated OpenAI Output - Sandbox Active]\nSuccessfully processed prompt in simulated OpenAI mode: "${prompt.substring(0, 100)}..."`;
       return {
         text: sandboxText,
-        raw: { simulated: true }
+        raw: { simulated: true },
+        simulated: true
       };
     }
 
@@ -277,15 +302,15 @@ export class AnthropicProvider extends LLMProvider {
   getName() { return `Anthropic (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_anthropic" || this.apiKey === "your_anthropic_api_key_here";
+    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_anthropic" || this.apiKey === "your_anthropic_api_key_here" || process.env.DEMO_MODE === "true";
     if (isSandbox) {
       const sandboxText = `[Simulated Anthropic Output - Sandbox Active]\nProcessed prompt in mock Anthropic Claude mode: "${prompt.substring(0, 100)}..."`;
       return {
         text: sandboxText,
-        raw: { simulated: true }
+        raw: { simulated: true },
+        simulated: true
       };
     }
-
     const payload: any = {
       model: this.model,
       messages: [{ role: "user", content: prompt }],

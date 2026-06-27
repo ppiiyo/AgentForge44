@@ -79,7 +79,8 @@ export function handleSimulatedRequest(data: any) {
       },
       finishReason: "STOP",
       safetyRatings: []
-    }]
+    }],
+    simulated: true
   };
 
   return { response, resolvedModel: `${model} (Simulated)` };
@@ -94,10 +95,14 @@ export async function generateWithRetry(
   delayMs = 1500
 ): Promise<RetryResult> {
   const apiKey = process.env.GEMINI_API_KEY || "";
-  const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here";
+  const isSandbox = apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here" || process.env.DEMO_MODE === "true";
 
-  if (isSandbox) {
+  if (isSandbox && (!apiKey || apiKey.startsWith("sandbox_") || apiKey === "your_gemini_api_key_here" || !process.env.GEMINI_API_KEY)) {
     return generateSimulatedResponse(model, contents);
+  }
+
+  if (!apiKey && process.env.DEMO_MODE !== "true") {
+    throw new Error("[AUTHENTICATION_ERROR] LLM request failed: No Gemini API Key found in environment variables. Please provide your API Key.");
   }
 
   let attemptsLeft = attempts;
@@ -129,7 +134,7 @@ export async function generateWithRetry(
       }
 
       if (!classification.isTransient || attemptsLeft <= 0) {
-        if (classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") {
+        if ((classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") && process.env.DEMO_MODE === "true") {
           console.warn(`[AgentForge44] API Quota or Service Overload fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
           return generateSimulatedResponse(model, contents);
         }

@@ -41,6 +41,8 @@ export class VectorStore {
 
         // Initialize PGVector/SQLite database table schema
         await this.setupDatabaseTable();
+        // Seed default documents for real retrieval fallback
+        await this.seedDefaultDocuments();
       } catch (err: any) {
         logger.error('[PGVectorStore] Failed loading embedding engine', err);
         throw err;
@@ -229,6 +231,37 @@ export class VectorStore {
     }
     if (normA === 0 || normB === 0) return 0;
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  /**
+   * Seeds default knowledge base documents to ensure real semantic retrieval works immediately
+   */
+  public async seedDefaultDocuments(): Promise<void> {
+    try {
+      let count = 0;
+      if (this.isPgActive && pg) {
+        const result = await pg`SELECT COUNT(*)::int as count FROM rag_document_chunks`;
+        count = result[0]?.count || 0;
+      } else if (sqlite) {
+        const row = sqlite.prepare('SELECT COUNT(*) as count FROM rag_document_chunks').get() as { count: number };
+        count = row?.count || 0;
+      }
+
+      if (count === 0) {
+        logger.info('[PGVectorStore] Seeding default knowledge base documents into VectorStore...');
+        await this.indexDocument(
+          "Our advanced pipeline handles secure REST APIs by validating URLs starting with localhost to block SSRF and keeping secret API keys hidden and executed strictly in worker sandbox threads. Development instances run exclusively on port 3000 behind reverse proxy endpoints.",
+          "Corporate Standard Operating Guidelines"
+        );
+        await this.indexDocument(
+          "Multi-agent architecture enables parallel node execution with proper isolation, RBAC tenant separation, and checkpoint/resume state machine transitions using standard relational backends.",
+          "AgentForge Architecture Manual"
+        );
+        logger.info('[PGVectorStore] Default seeding complete.');
+      }
+    } catch (err: any) {
+      logger.warn(`[PGVectorStore] Default document seeding skipped or failed: ${err.message}`);
+    }
   }
 }
 

@@ -154,12 +154,14 @@ export interface StepLog {
   ragChunksCount?: number;
   ragLatency?: number;
   ragTopChunks?: Array<{ id: string; source: string; text: string }>;
+  simulated?: boolean;
 }
 
 export interface PipelineExecutionResult {
   logs: StepLog[];
   finalResult: string;
   totalDuration: number;
+  simulated?: boolean;
 }
 
 export const PREBUILT_TEMPLATES: Workflow[] = [

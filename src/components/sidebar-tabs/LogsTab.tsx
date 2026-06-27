@@ -107,8 +107,13 @@ export const LogsTab: React.FC<LogsTabProps> = ({
                 
                 <div className="bg-slate-950/60 border border-slate-850/50 rounded-xl p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-100 flex items-center gap-1">
+                    <span className="text-xs font-bold text-slate-100 flex items-center gap-2">
                       Step {idx + 1}: {log.nodeTitle}
+                      {log.simulated && (
+                        <span className="text-[9px] font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded">
+                          Simulated
+                        </span>
+                      )}
                     </span>
                     <span className="text-[9px] font-mono text-sky-400 bg-sky-950/30 px-1.5 py-0.5 rounded border border-sky-950">
                       {log.duration}ms
