@@ -295,6 +295,53 @@ export function useAgentApp() {
     localStorage.setItem("agentforge_snapshots", JSON.stringify(filtered));
   };
 
+  const handleDryRunNode = async (nodeId: string) => {
+    if (isDryRunningNode) return;
+    setIsDryRunningNode(nodeId);
+    setDryRunOutput(prev => ({ ...prev, [nodeId]: "Initializing isolated dry-run engine..." }));
+
+    try {
+      const response = await fetch('/api/run-pipeline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nodes: nodes,
+          connections: connections
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to execute dry-run pipeline.");
+      }
+
+      const logs: StepLog[] = data.logs || [];
+      const nodeLog = logs.find(l => l.nodeId === nodeId);
+
+      if (nodeLog) {
+        const outputText = nodeLog.status === 'completed' 
+          ? (nodeLog.output || "Completed with no text output.") 
+          : `Execution failed:\n${nodeLog.output || "Unknown error"}`;
+        setDryRunOutput(prev => ({ ...prev, [nodeId]: outputText }));
+      } else {
+        setDryRunOutput(prev => ({ 
+          ...prev, 
+          [nodeId]: "Node was not executed. Ensure it is connected and input variables are populated correctly." 
+        }));
+      }
+    } catch (err: any) {
+      setDryRunOutput(prev => ({ 
+        ...prev, 
+        [nodeId]: `Dry-run failed:\n${err.message || String(err)}` 
+      }));
+    } finally {
+      setIsDryRunningNode(null);
+    }
+  };
+
   // Execute actual Node Pipeline
   const handleRunPipeline = async () => {
     if (isRunning) return;

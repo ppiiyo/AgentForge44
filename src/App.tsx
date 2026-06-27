@@ -420,6 +420,8 @@ export default function App() {
               handleInstallTemplateFromMarketplace={app.handleInstallTemplateFromMarketplace}
               handleApplyCopilotGraph={app.handleApplyCopilotGraph}
               translations={translations}
+              onHighlightNode={app.setHighlightedNodeId}
+              onSetDryRunOutput={app.setDryRunOutput}
             />
           )}
         </div>

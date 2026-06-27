@@ -77,6 +77,8 @@ interface RightSidebarPanelProps {
   handleInstallTemplateFromMarketplace: (template: any) => void;
   handleApplyCopilotGraph: (nodesList: FlowNode[], connectionsList: FlowConnection[]) => void;
   translations: any;
+  onHighlightNode: (nodeId: string | null) => void;
+  onSetDryRunOutput: (output: Record<string, string>) => void;
 }
 
 export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
@@ -133,6 +135,8 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
   handleInstallTemplateFromMarketplace,
   handleApplyCopilotGraph,
   translations,
+  onHighlightNode,
+  onSetDryRunOutput,
 }) => {
   return (
     <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-30 shadow-2xl md:shadow-none" id="right_sidebar">
@@ -401,7 +405,7 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
               exit={{ opacity: 0 }}
               className="space-y-4"
             >
-              <SyncHubPanel currentLang={currentLang} />
+              <SyncHubPanel currentLang={currentLang} nodes={nodes} connections={connections} />
             </motion.div>
           )}
 
@@ -415,10 +419,8 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
               className="space-y-4"
             >
               <TimeTravelDebugger 
-                nodes={nodes} 
-                setNodes={setNodes} 
-                connections={connections} 
-                setConnections={setConnections} 
+                onHighlightNode={onHighlightNode} 
+                onSetDryRunOutput={onSetDryRunOutput} 
                 currentLang={currentLang} 
               />
             </motion.div>
