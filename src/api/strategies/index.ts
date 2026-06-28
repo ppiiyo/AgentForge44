@@ -10,6 +10,7 @@ import { OutputNodeStrategy } from './OutputNodeStrategy.js';
 import { RAGNodeStrategy } from './RAGNodeStrategy.js';
 import { HumanConfirmationNodeStrategy } from './HumanConfirmationNodeStrategy.js';
 import { PromptOptimizerNodeStrategy } from './PromptOptimizerNodeStrategy.js';
+import { WebhookNodeStrategy } from './WebhookNodeStrategy.js';
 
 export class StrategyFactory {
   private static strategies = new Map<string, NodeExecutionStrategy>([
@@ -18,6 +19,7 @@ export class StrategyFactory {
     ['gemini', new GeminiNodeStrategy()],
     ['reviewer', new ReviewerNodeStrategy()],
     ['tool', new ToolNodeStrategy()],
+    ['webhook', new WebhookNodeStrategy()],
     ['multimodal', new MultimodalNodeStrategy()],
     ['router', new RouterNodeStrategy()],
     ['output', new OutputNodeStrategy()],

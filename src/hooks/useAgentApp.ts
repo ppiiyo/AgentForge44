@@ -211,12 +211,49 @@ export function useAgentApp() {
       key: 'Escape',
       handler: () => {
         setSelectedNodeId(null);
+        useUIStore.getState().setSelectedNodeIds([]);
+      }
+    },
+    {
+      key: 's',
+      ctrl: true,
+      handler: () => {
+        handleSaveProjectToServer(projectNameInput || "default-workspace");
+      }
+    },
+    {
+      key: 'z',
+      ctrl: true,
+      handler: () => {
+        handleUndo();
+      }
+    },
+    {
+      key: 'y',
+      ctrl: true,
+      handler: () => {
+        handleRedo();
+      }
+    },
+    {
+      key: 'd',
+      ctrl: true,
+      handler: () => {
+        const selectedIds = useUIStore.getState().selectedNodeIds;
+        if (selectedIds && selectedIds.length > 0) {
+          handleDuplicateNodes(selectedIds);
+        } else if (selectedNodeId) {
+          handleDuplicateNode(selectedNodeId);
+        }
       }
     },
     {
       key: 'Delete',
       handler: () => {
-        if (selectedNodeId) {
+        const selectedIds = useUIStore.getState().selectedNodeIds;
+        if (selectedIds && selectedIds.length > 0) {
+          handleDeleteNodes(selectedIds);
+        } else if (selectedNodeId) {
           handleDeleteNode(selectedNodeId);
         }
       }
@@ -224,12 +261,15 @@ export function useAgentApp() {
     {
       key: 'Backspace',
       handler: () => {
-        if (selectedNodeId) {
+        const selectedIds = useUIStore.getState().selectedNodeIds;
+        if (selectedIds && selectedIds.length > 0) {
+          handleDeleteNodes(selectedIds);
+        } else if (selectedNodeId) {
           handleDeleteNode(selectedNodeId);
         }
       }
     }
-  ], [selectedNodeId, nodes, connections]);
+  ], [selectedNodeId, nodes, connections, projectNameInput]);
 
   // Helper to record actions before mutating properties (Undo/Redo)
   const recordAction = (customNodes = nodes, customConnections = connections) => {
@@ -564,13 +604,13 @@ export function useAgentApp() {
   const handleAutoAlignNodes = () => {
     recordAction();
     const typeOrder: Record<NodeType, number> = {
-      'input': 0, 'prompt': 1, 'gemini': 2, 'tool': 3, 'router': 4,
+      'input': 0, 'prompt': 1, 'gemini': 2, 'tool': 3, 'webhook': 3, 'router': 4,
       'rag': 5, 'vector-search': 5, 'multimodal': 6, 'reviewer': 7,
       'output': 8, 'human_confirmation': 9, 'prompt_optimizer': 10
     };
 
     const counts: Record<NodeType, number> = {
-      'input': 0, 'prompt': 0, 'gemini': 0, 'tool': 0, 'router': 0,
+      'input': 0, 'prompt': 0, 'gemini': 0, 'tool': 0, 'webhook': 0, 'router': 0,
       'rag': 0, 'vector-search': 0, 'multimodal': 0, 'reviewer': 0,
       'output': 0, 'human_confirmation': 0, 'prompt_optimizer': 0
     };
@@ -606,6 +646,60 @@ export function useAgentApp() {
 
     setNodes(prev => [...prev, clonedNode]);
     setSelectedNodeId(cloneId);
+  };
+
+  const handleDuplicateNodes = (ids: string[]) => {
+    recordAction();
+    const nodesToClone = nodes.filter(n => ids.includes(n.id));
+    if (nodesToClone.length === 0) return;
+
+    const idMapping: Record<string, string> = {};
+    const clonedNodes = nodesToClone.map(nodeToClone => {
+      const cloneId = `node-${nodeToClone.type}-${Date.now().toString().slice(-4)}-${Math.random().toString(36).slice(-3)}`;
+      idMapping[nodeToClone.id] = cloneId;
+      return {
+        ...nodeToClone,
+        id: cloneId,
+        title: `${nodeToClone.title} (Copy)`,
+        x: Math.min(4000, nodeToClone.x + 40),
+        y: Math.min(4000, nodeToClone.y + 45),
+        fields: JSON.parse(JSON.stringify(nodeToClone.fields))
+      } as FlowNode;
+    });
+
+    const clonedConnections: FlowConnection[] = [];
+    connections.forEach(conn => {
+      if (ids.includes(conn.sourceId) && ids.includes(conn.targetId)) {
+        clonedConnections.push({
+          id: `conn-${idMapping[conn.sourceId]}-${idMapping[conn.targetId]}-${Date.now()}`,
+          sourceId: idMapping[conn.sourceId],
+          targetId: idMapping[conn.targetId]
+        });
+      }
+    });
+
+    setNodes(prev => [...prev, ...clonedNodes]);
+    if (clonedConnections.length > 0) {
+      setConnections(prev => [...prev, ...clonedConnections]);
+    }
+
+    const newClonedIds = clonedNodes.map(n => n.id);
+    useUIStore.getState().setSelectedNodeIds(newClonedIds);
+    if (newClonedIds.length === 1) {
+      useUIStore.getState().setSelectedNodeId(newClonedIds[0]);
+    }
+  };
+
+  const handleDeleteNodes = (ids: string[]) => {
+    recordAction();
+    setNodes(prev => prev.filter(n => !ids.includes(n.id)));
+    setConnections(prev => prev.filter(c => !ids.includes(c.sourceId) && !ids.includes(c.targetId)));
+
+    const currentSelectedId = useUIStore.getState().selectedNodeId;
+    if (currentSelectedId && ids.includes(currentSelectedId)) {
+      useUIStore.getState().setSelectedNodeId(null);
+    }
+    useUIStore.getState().setSelectedNodeIds([]);
   };
 
   const handleImportWorkflowJSON = (jsonString: string) => {
@@ -702,6 +796,11 @@ export function useAgentApp() {
         title = customTitle || "External Tool API";
         description = "HTTP request connection controller.";
         initialFields = { url: 'https://api.github.com/zen', method: 'GET', headers: '{}', body: '' };
+        break;
+      case 'webhook':
+        title = customTitle || "Outbound Webhook";
+        description = "Triggers external systems via HTTP POST payloads on pipeline step execution or completion.";
+        initialFields = { url: 'https://httpbin.org/post', method: 'POST', headers: '{"Content-Type": "application/json"}', body: '{"result": "{{lastOutput}}", "event": "pipeline_completion"}', token: 'bearer-token-123' };
         break;
       case 'rag':
       case 'vector-search':

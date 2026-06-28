@@ -19,6 +19,7 @@ import {
   BookOpen, Layers, Trash, Clock, Cpu
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../../../types';
+import { useUIStore } from '../../../store/useUIStore';
 
 interface AgentFlowCanvasProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -125,6 +126,7 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
             {node.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
             {node.type === 'router' && <GitBranch size={11} className="text-sky-450 animate-pulse" />}
             {node.type === 'tool' && <Globe size={11} className="text-rose-455" />}
+            {node.type === 'webhook' && <Globe size={11} className="text-pink-400 animate-pulse" />}
             {node.type === 'rag' && <BookOpen size={11} className="text-teal-455" />}
             {node.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
             {node.type === 'human_confirmation' && <Clock size={11} className="text-rose-400 animate-pulse" />}
@@ -204,9 +206,21 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
             </span>
           )}
           {node.type === 'tool' && (
-            <span className="text-[9px] font-mono text-rose-400 font-bold bg-rose-950/20 px-1.5 py-0.5 rounded border border-rose-900/10 block w-full truncate">
+            <span className="text-[9px] font-mono text-rose-440 font-bold bg-rose-950/20 px-1.5 py-0.5 rounded border border-rose-900/10 block w-full truncate">
               🌐 {node.fields.method || 'GET'} : {node.fields.url ? node.fields.url.replace(/^https?:\/\//i, '').slice(0, 15) : 'None'}
             </span>
+          )}
+          {node.type === 'webhook' && (
+            <div className="space-y-1">
+              <span className="text-[9px] font-mono text-pink-400 font-bold bg-pink-950/20 px-1.5 py-0.5 rounded border border-pink-900/10 block w-full truncate">
+                🔌 POST : {node.fields.url ? node.fields.url.replace(/^https?:\/\//i, '').slice(0, 15) : 'None'}
+              </span>
+              {node.fields.token && (
+                <span className="text-[8px] font-mono text-slate-500 block truncate">
+                  🔑 Token: {node.fields.token.slice(0, 8)}...
+                </span>
+              )}
+            </div>
           )}
           {node.type === 'rag' && (
             <div className="space-y-1">
@@ -270,6 +284,32 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   snapToGrid,
   canvasLocked,
 }) => {
+  const selectedNodeIds = useUIStore((state) => state.selectedNodeIds);
+  const setSelectedNodeIds = useUIStore((state) => state.setSelectedNodeIds);
+  const setSelectedNodeId = useUIStore((state) => state.setSelectedNodeId);
+
+  // Spacebar panning state
+  const [spacePressed, setSpacePressed] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        setSpacePressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setSpacePressed(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
   // Convert our custom node types to ReactFlow compatible nodes
   const reactFlowNodes = useMemo<Node[]>(() => {
     return nodes.map((n) => ({
@@ -280,14 +320,14 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
       selectable: true,
       data: {
         node: n,
-        isSelected: selectedNodeId === n.id,
+        isSelected: selectedNodeIds.includes(n.id) || selectedNodeId === n.id,
         isHighlighted: highlightedNodeId === n.id,
         nodeStatus: nodeExecutionStatuses[n.id] || 'idle',
         onDeleteNode,
         currentLang,
       },
     }));
-  }, [nodes, selectedNodeId, highlightedNodeId, nodeExecutionStatuses, onDeleteNode, currentLang, canvasLocked]);
+  }, [nodes, selectedNodeId, selectedNodeIds, highlightedNodeId, nodeExecutionStatuses, onDeleteNode, currentLang, canvasLocked]);
 
   // Convert our connections to ReactFlow edges
   const reactFlowEdges = useMemo<Edge[]>(() => {
@@ -318,15 +358,36 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
     }
   }, [onConnectNodes]);
 
-  // Handle position changes when nodes are dragged
-  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
-    onChangeNodePosition(node.id, Math.round(node.position.x), Math.round(node.position.y));
+  // Handle position changes when nodes are dragged (supporting multi-node dragging!)
+  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node, draggedNodes: Node[]) => {
+    if (draggedNodes && draggedNodes.length > 1) {
+      const updates = draggedNodes.map(n => ({
+        id: n.id,
+        x: Math.round(n.position.x),
+        y: Math.round(n.position.y)
+      }));
+      // Call with 4th parameter for single state batch updates
+      (onChangeNodePosition as any)(node.id, Math.round(node.position.x), Math.round(node.position.y), updates);
+    } else {
+      onChangeNodePosition(node.id, Math.round(node.position.x), Math.round(node.position.y));
+    }
   }, [onChangeNodePosition]);
 
   // Handle selection event
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     onSelectNode(node.id);
   }, [onSelectNode]);
+
+  // ReactFlow selection sync listener
+  const onSelectionChange = useCallback((params: { nodes: Node[] }) => {
+    const selectedIds = params.nodes.map(n => n.id);
+    setSelectedNodeIds(selectedIds);
+    if (selectedIds.length === 1) {
+      setSelectedNodeId(selectedIds[0]);
+    } else if (selectedIds.length === 0) {
+      setSelectedNodeId(null);
+    }
+  }, [setSelectedNodeIds, setSelectedNodeId]);
 
   return (
     <div className="w-full h-full min-h-0 flex-1 relative animate-[fadeIn_0.5s_ease-out]">
@@ -335,11 +396,15 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
         edges={reactFlowEdges}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
+        onSelectionChange={onSelectionChange}
         onConnect={onConnectCallback}
         nodeTypes={nodeTypes}
         snapToGrid={snapToGrid}
         snapGrid={[20, 20]}
         fitView
+        panOnDrag={spacePressed}
+        selectionOnDrag={!spacePressed}
+        selectionKeyPressed="Shift"
         nodesDraggable={!canvasLocked}
         nodesConnectable={!canvasLocked}
         className="bg-slate-950"
@@ -348,6 +413,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#334155" />
         <Controls className="!bg-slate-850 !border-slate-800 !text-slate-100 [&>button]:!border-slate-800 [&>button]:!bg-slate-900" />
         <MiniMap
+          position="bottom-right"
           nodeColor={(node) => {
             const status = node.data?.nodeStatus;
             if (status === 'running') return '#fbbf24';
@@ -355,7 +421,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
             if (status === 'failed') return '#ef4444';
             return '#334155';
           }}
-          style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
+          style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', right: '16px', bottom: '16px' }}
           maskColor="rgba(0, 0, 0, 0.4)"
         />
       </ReactFlow>

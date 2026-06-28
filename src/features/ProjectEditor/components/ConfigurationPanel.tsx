@@ -474,6 +474,61 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               </div>
             )}
 
+            {/* Webhook parameters config */}
+            {node.type === 'webhook' && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-pink-400 uppercase">Outbound POST URL</label>
+                  <input
+                    type="text"
+                    value={node.fields.url || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'url', e.target.value)}
+                    placeholder="https://api.example.com/webhooks/trigger"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-100 font-mono"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-550 uppercase font-semibold">Authorization Token</label>
+                  <input
+                    type="text"
+                    value={node.fields.token || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'token', e.target.value)}
+                    placeholder="Bearer secret-token-key"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-slate-100 font-mono"
+                  />
+                  <p className="text-[9px] text-slate-500">
+                    Passed automatically in the <code className="text-teal-400 font-mono">Authorization</code> header.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-550 uppercase font-semibold">Custom Headers (JSON)</label>
+                  <textarea
+                    rows={3}
+                    value={node.fields.headers || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'headers', e.target.value)}
+                    placeholder='{"Content-Type": "application/json"}'
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-550 uppercase font-semibold">POST Body Template (JSON)</label>
+                  <textarea
+                    rows={4}
+                    value={node.fields.body || ''}
+                    onChange={(e) => onUpdateNodeField(node.id, 'body', e.target.value)}
+                    placeholder='{"event": "pipeline_step", "nodeId": "{{nodeId}}", "output": "{{lastOutput}}"}'
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 font-mono"
+                  />
+                  <p className="text-[9px] text-slate-500 leading-normal">
+                    Supports dynamic placeholders such as <code className="text-teal-400 font-mono">{"{{lastOutput}}"}</code> or <code className="text-teal-400 font-mono">{"{{nodeId}}"}</code>.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* RAG Knowledge embeddings limit config */}
             {(node.type === 'rag' || node.type === 'vector-search') && (
               <div className="space-y-3.5">

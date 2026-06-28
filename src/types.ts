@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'vector-search' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'vector-search' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer' | 'webhook';
 
 export interface BaseNode {
   id: string;
@@ -123,7 +123,18 @@ export interface PromptOptimizerNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | VectorSearchNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode;
+export interface WebhookNode extends BaseNode {
+  type: 'webhook';
+  fields: {
+    url: string;
+    method: 'POST';
+    headers: string; // Dynamic JSON string mapping
+    body: string; // Outbound POST payload templates
+    token: string; // Dynamic authentication token
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | VectorSearchNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode | WebhookNode;
 
 export interface FlowConnection {
   id: string;

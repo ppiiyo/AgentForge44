@@ -61,6 +61,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
     { type: 'reviewer' as NodeType, label: 'Critique Review', desc: 'Feedback loops system rules', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
     { type: 'router' as NodeType, label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10' },
     { type: 'tool' as NodeType, label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
+    { type: 'webhook' as NodeType, label: 'Outbound Webhook', desc: 'Trigger external HTTP POST callbacks', color: 'hover:border-pink-500/40 hover:bg-pink-950/10' },
     { type: 'rag' as NodeType, label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
     { type: 'vector-search' as NodeType, label: 'PGVector Search', desc: 'Secure PGVector DB RAG lookup', color: 'hover:border-cyan-500/40 hover:bg-cyan-950/10' },
     { type: 'multimodal' as NodeType, label: 'Multimodal (PDF/Audio/Excel)', desc: 'Process documents pipeline', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
@@ -190,6 +191,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                 {tb.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
                 {tb.type === 'router' && <GitBranch size={11} className="text-sky-400" />}
                 {tb.type === 'tool' && <Globe size={11} className="text-rose-400" />}
+                {tb.type === 'webhook' && <Globe size={11} className="text-pink-400 animate-pulse" />}
                 {tb.type === 'rag' && <BookOpen size={11} className="text-teal-400" />}
                 {tb.type === 'vector-search' && <BookOpen size={11} className="text-cyan-400" />}
                 {tb.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
