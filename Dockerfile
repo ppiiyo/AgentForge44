@@ -31,6 +31,7 @@ ENV PORT=3000
 # Copy compiled bundles and static assets from builder container
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/drizzle ./drizzle
 
 # Install only production-level node modules, skipping heavy compilers
 RUN npm ci --omit=dev
