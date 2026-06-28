@@ -1,0 +1,275 @@
+<div align="center">
+
+<img src="https://img.shields.io/badge/AgentForge44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="AgentForge44 Лого" />
+
+# 🌌 AgentForge44
+
+### Визуальный low-code оркестратор отказоустойчивых самокорректирующихся пайплайнов мультиагентных LLM
+
+**Проектируйте сложные цепочки рассуждений на холсте. Запускайте в продакшене через надежный REST API. Наблюдайте за всем в реальном времени.**
+
+<p>
+  <a href="./README.md">🇺🇸 English</a> &nbsp;|&nbsp;
+  <b>🇷🇺 Русский</b> &nbsp;|&nbsp;
+  <a href="./README.zh.md">🇨🇳 中文</a>
+</p>
+
+<p>
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/React_18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
+<img src="https://img.shields.io/badge/Node.js_18+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
+<img src="https://img.shields.io/badge/Express_4/5-000000?style=flat-square&logo=express&logoColor=white" alt="Express" />
+<img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logoColor=black" alt="Drizzle ORM" />
+<img src="https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
+<img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+<img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="Лицензия" />
+</p>
+
+</div>
+
+---
+
+## ✨ Обзор
+
+**AgentForge44** — это промышленная low-code платформа визуального моделирования и оркестрации ИИ-агентов. С ее помощью вы можете создавать сложные цепочки рассуждений моделей, условия ветвления, модули семантического поиска RAG и циклы самокоррекции на интерактивном холсте, а затем разворачивать полученный пайплайн в виде высокодоступного и отказоустойчивого REST API.
+
+Платформа объединяет современные ИИ-провайдеры (**Google Gemini, OpenAI, Anthropic Claude и локальный Ollama**), реализует надежную очередь выполнения и предоставляет передовые инструменты мониторинга (Observability) и безопасности "из коробки".
+
+---
+
+## 🗺️ Содержание
+
+- [Функциональные возможности](#-функциональные-возможности)
+- [Типы узлов](#-типы-узлов)
+- [Архитектура](#-архитектура)
+- [Стек технологий](#-стек-технологий)
+- [Быстрый старт](#-быстрый-старт)
+- [Конфигурация](#-конфигурация)
+- [Использование API](#-использование-api)
+- [Observability (Наблюдаемость)](#-observability-наблюдаемость)
+- [Безопасность](#-безопасность)
+- [Тестирование](#-тестирование)
+- [Развертывание](#-развертывание)
+- [Лицензия](#-лицензия)
+
+---
+
+## 🚀 Функциональные возможности
+
+| Функция | Описание |
+|---|---|
+| 🎨 **Визуальный холст** | Drag-and-drop редактор графов (ReactFlow) с автовыравниванием по сетке (Snap-to-Grid). |
+| 🤖 **Мультипровайдерный LLM** | Единый SDK интерфейс для Gemini, OpenAI, Claude и локального Ollama. |
+| 🔄 **Циклы самокоррекции** | Узлы рецензирования (Reviewer) оценивают выводы и автоматически возвращают граф на доработку при несоответствии критериям. |
+| 🗃️ **Полиморфная БД** | Бесшовное переключение между SQLite для локальных тестов и PostgreSQL для продакшена. |
+| ⚡ **Параллельное выполнение** | Высокопроизводительный топологический шедулер запускает независимые ветви вычислений параллельно. |
+| 📦 **Самовосстанавливающиеся миграции** | Транзакционный автомигратор Drizzle разворачивает структуру таблиц при старте сервиса. |
+| 🛡️ **Защита Enterprise-класса** | Встроенные SSRF-фильтры, безопасное PBKDF2-SHA512 хеширование паролей, маскирование секретов AES-256-GCM. |
+| 🔌 **Устойчивость к сбоям** | Повторные попытки Exponential Backoff с фазовым шумом Jitter, плавные предохранители Circuit Breaker. |
+| 📊 **3D RAG-визуализатор** | Интерактивное отображение кластеров эмбеддингов и семантических связей в трехмерном пространстве. |
+| 👥 **Совместное редактирование** | WebSocket-синхронизация курсоров, активности пользователей и динамических блокировок через Socket.io. |
+| 🔍 **Распределенный мониторинг** | Глубокая интеграция распределенных трассировок OpenTelemetry и метрик Prometheus. |
+| 🕑 **Путешествие во времени** | Git-style система снимков состояний графа со сравнительным Diff-анализом версий. |
+
+---
+
+## 🧩 Типы узлов
+
+| Тип узла | Описание / Предназначение |
+|---|---|
+| `Input` | Точка входа графа. Собирает входящие переменные и рантайм-параметры. |
+| `Prompt` | Проектирует шаблоны промптов с поддержкой Mustache/Handlebars синтаксиса. |
+| `LLM Engine` | Отправляет запросы к моделям с кастомной температурой, системными инструкциями и лимитом токенов. |
+| `Reviewer` | Оценивает ответы вышестоящих узлов и направляет граф по циклу назад при плохом качестве. |
+| `Router` | Выполняет условное ветвление потока на основе регулярных выражений или скрипта. |
+| `RAG / Knowledge` | Семантический поиск и извлечение релевантных фрагментов из базы знаний. |
+| `Tool / Code` | Безопасное выполнение пользовательского JavaScript кода в изолированной песочнице VM. |
+| `Output` | Консолидирует финальные вычисления и формирует структурированный ответ API. |
+
+---
+
+## 🏗️ Архитектура
+
+```mermaid
+flowchart TD
+    subgraph Client ["🖥️ Клиент (React 18 + Vite)"]
+        Canvas[ReactFlow Холст]
+        Presence[Socket.io Курсоры и Присутствие]
+        Dashboard[Интерфейс Мониторинга Recharts]
+    end
+
+    subgraph API ["⚙️ Шлюз API (Node.js + Express)"]
+        Guard[Auth Guard и Валидатор SSRF]
+        Router[REST API Маршруты /api]
+        SocketServer[Сервер Коллаборации Socket.io]
+    end
+
+    subgraph Core ["🧠 Ядро выполнения"]
+        Scheduler[Топологический Планировщик]
+        Exec[PipelineExecutor]
+        Resilience[Circuit Breaker / Стек Репитов]
+        Sandbox[Изолированный Поток-Песочница VM]
+    end
+
+    subgraph Storage ["💾 Хранилище данных"]
+        DB[(SQLite / PostgreSQL через Drizzle)]
+        RAG[(Локальное Векторное Хранилище)]
+    end
+
+    subgraph LLM ["🤖 ИИ-Провайдеры"]
+        GeminiSDK[Google Gemini]
+        OpenAISDK[OpenAI API]
+        ClaudeSDK[Anthropic Claude]
+        OllamaLocal[Локальный Ollama]
+    end
+
+    subgraph Observability ["📊 Телеметрия"]
+        OTel[Трассировка OpenTelemetry]
+        Prom[Метрики Prometheus]
+    end
+
+    Client <-->|WebSocket / REST| API
+    API --> Core
+    Core --> Storage
+    Core --> LLM
+    Core --> Observability
+```
+
+---
+
+## 🛠️ Стек технологий
+
+- **Фронтенд**: React 18+, Vite, Tailwind CSS, Framer Motion, ReactFlow, Lucide Icons, Recharts
+- **Бэкенд**: Node.js, Express, TSX, Winston, Socket.io
+- **Базы данных**: Drizzle ORM, SQLite, PostgreSQL
+- **Интеграция ИИ**: `@google/genai`, `openai`, `@anthropic-ai/sdk`, `ollama`
+- **Телеметрия**: OpenTelemetry SDK + Tracing API, `prom-client` (Prometheus)
+- **Безопасность**: PBKDF2-SHA512 хеширование, шифрование AES-256-GCM, SSRF блокиратор хостов
+
+---
+
+## ⚡ Быстрый старт
+
+### 🐳 Вариант А: Использование Docker Compose (Рекомендуемый)
+Убедитесь, что на вашем компьютере установлен Docker:
+```bash
+# 1. Клонируйте проект
+git clone https://github.com/igraybalalayka/AgentForge44.git
+cd AgentForge44
+
+# 2. Запустите мультиконтейнерную среду
+docker-compose up --build
+```
+Интерфейс будет доступен по адресу: **[http://localhost:3000](http://localhost:3000)**.
+
+### 🖥️ Вариант Б: Локальный запуск
+Требуется установленная **Node.js v18** или новее:
+```bash
+# 1. Установите зависимости
+npm install
+
+# 2. Скопируйте файл конфигурации окружения
+cp .env.example .env
+
+# Генерация обязательных криптографических секретов
+echo "JWT_SECRET=$(openssl rand -base64 48)" >> .env
+echo "ENCRYPTION_MASTER_KEY=$(openssl rand -base64 48)" >> .env
+
+# 3. Запустите fullstack сервер разработки
+npm run dev
+```
+Откройте в браузере: **[http://localhost:3000](http://localhost:3000)**.
+
+> 💡 **Режим Презентационной Песочницы:** Если вы оставите `GEMINI_API_KEY=sandbox_free_test_gemini`, холст будет имитировать качественные ответы языковых моделей без списания баланса и без необходимости ввода реального API ключа.
+
+---
+
+## ⚙️ Конфигурация
+
+Ключевые переменные окружения (задаются в [`.env.example`](./.env.example)):
+
+| Переменная | Обязательна | Описание |
+|---|:---:|---|
+| `JWT_SECRET` | Да | Секрет подписи JWT токенов сессий (минимум 32 символа). |
+| `ENCRYPTION_MASTER_KEY`| Да | Симметричный ключ AES-256-GCM для шифрования API-ключей в БД. |
+| `GEMINI_API_KEY` | Нет | Ключ доступа Google AI Studio (или `sandbox_free_test_gemini`). |
+| `DB_TYPE` | Нет | Движок СУБД: `sqlite` (по умолчанию) или `postgres`. |
+| `DATABASE_URL` | Нет | Строка подключения к СУБД PostgreSQL (если выбран тип postgres). |
+| `SENTRY_DSN` | Нет | Интеграция мониторинга ошибок и логов в Sentry. |
+
+---
+
+## 🔌 Использование API
+
+Интерактивная спецификация Swagger доступна по адресу **`GET /api-docs`**.
+
+### 1. Сохранить/Обновить граф потока (`POST /api/graphs`)
+```bash
+curl -X POST http://localhost:3000/api/graphs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -d '{
+    "id": "translation-validator",
+    "name": "Валидатор Локализации",
+    "nodes": [
+      {
+        "id": "prompt-input",
+        "type": "prompt",
+        "fields": { "text": "Переведи и адаптируй текст: {{input_text}}" }
+      }
+    ],
+    "connections": []
+  }'
+```
+
+### 2. Запустить пайплайн агентов на выполнение (`POST /api/execute`)
+```bash
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graphId": "translation-validator",
+    "inputs": {
+      "input_text": "Good morning, developers!"
+    }
+  }'
+```
+
+---
+
+## 📊 Observability (Наблюдаемость)
+
+- **Прометеус Скрейпер**: Совместимый эндпоинт `GET /metrics` отслеживает общие HTTP-вызовы, время задержки API, расходы токенов и количество вызовов моделей.
+- **Распределенные трейсы OTel**: Сквозная трассировка запросов через сетевые границы позволяет визуализировать задержки шагов графа в Zipkin или Jaeger.
+- **Грациозное завершение (Graceful Shutdown)**: Сервер правильно обрабатывает системные прерывания `SIGTERM` / `SIGINT`, сбрасывая логи, завершая трейсы и плавно закрывая пулы соединений СУБД.
+
+---
+
+## 🛡️ Безопасность
+
+1. **Блокировщик SSRF**: Предотвращает несанкционированное сканирование внутренней сетевой инфраструктуры, блокируя локальные IP-диапазоны (`127.0.0.1`, `10.0.0.0/8`, `192.168.0.0/16`).
+2. **Очистка логов**: Рекурсивно очищает JSON payloads перед выводом в консоль или сохранением, заменяя поля `api_key`, `password`, `jwt_token` на защищенные плейсхолдеры.
+3. **Защита от ReDoS**: Пул валидаторов регулярных выражений блокирует паттерны, вызывающие катастрофическое возвращение (catastrophic backtracking).
+4. **Песочница кода**: Скрипты пользователя в узлах-инструментах (`Tool`) выполняются в жестко ограниченных дочерних Worker-потоках без прямого доступа к файловой системе хоста.
+
+---
+
+## 🧪 Тестирование
+
+```bash
+npm run test           # Запуск юнит и интеграционных тестов Vitest
+npm run test:coverage  # Генерация отчета о покрытии тестами
+npm run test:e2e       # Запуск автоматизации браузера Playwright
+npm run lint           # Проверка синтаксиса и статический анализ ESLint
+```
+
+---
+
+## 📜 Лицензия
+
+Проект распространяется на условиях лицензии **MIT**. См. подробности в файле [LICENSE](./LICENSE).
+
+<div align="center">
+
+**Создано с ❤️ для сообщества разработчиков надежного ИИ.**
+
+</div>
