@@ -10,12 +10,9 @@ const REDIS_URL = process.env.REDIS_URL;
 const QUEUE_NAME = 'pipeline-executions';
 const DLQ_QUEUE_NAME = 'pipeline-executions-dlq';
 
-// Idempotency: tracking active/processing run IDs to avoid double executions
-const activeExecutions = new Set<string>();
-
 // Concurrency tracking for memory fallback
 let activeMemoryJobs = 0;
-const memoryJobQueue: { runId: string; nodes: any[]; connections: any[]; variables: any }[] = [];
+const memoryJobQueue: { runId: string; nodes: any[]; connections: any[]; variables: any; tenantId?: string; graphId?: string }[] = [];
 const MAX_CONCURRENCY = 5;
 
 let queue: Queue | null = null;
@@ -33,17 +30,11 @@ if (REDIS_URL) {
     dlqQueue = new Queue(DLQ_QUEUE_NAME, { connection: connection as any });
 
     worker = new Worker(QUEUE_NAME, async (job) => {
-      const { runId, nodes, connections, variables } = job.data;
+      const { runId, nodes, connections, variables, tenantId, graphId } = job.data;
 
-      if (activeExecutions.has(runId)) {
-        logger.info(`[Queue] Duplicate job filtered (idempotency): ${runId}`);
-        return;
-      }
-
-      activeExecutions.add(runId);
       try {
         logger.info(`[Queue] Processing pipeline run asynchronously: ${runId}`);
-        const result = await processPipelineRun(runId, nodes, connections, variables);
+        const result = await processPipelineRun(runId, nodes, connections, variables, tenantId, graphId);
         return result;
       } catch (err: any) {
         logger.error(`[Queue] Job ${runId} failed: ${err.message}`);
@@ -52,8 +43,6 @@ if (REDIS_URL) {
           await dlqQueue.add('failed-job', { runId, error: err.message, nodes, connections });
         }
         throw err;
-      } finally {
-        activeExecutions.delete(runId);
       }
     }, {
       connection: connection as any,
@@ -77,25 +66,18 @@ async function processNextMemoryJob() {
   const job = memoryJobQueue.shift();
   if (!job) return;
 
-  const { runId, nodes, connections, variables } = job;
-  if (activeExecutions.has(runId)) {
-    logger.info(`[Queue-Memory] Duplicate job filtered (idempotency): ${runId}`);
-    setTimeout(processNextMemoryJob, 50);
-    return;
-  }
+  const { runId, nodes, connections, variables, tenantId, graphId } = job;
 
-  activeExecutions.add(runId);
   activeMemoryJobs++;
 
   try {
     logger.info(`[Queue-Memory] Processing pipeline run asynchronously: ${runId}`);
-    await processPipelineRun(runId, nodes, connections, variables);
+    await processPipelineRun(runId, nodes, connections, variables, tenantId, graphId);
   } catch (err: any) {
     logger.error(`[Queue-Memory] Job ${runId} failed: ${err.message}`);
     // Simulate dead letter log
     logger.warn(`[Queue-Memory] Job ${runId} moved to DLQ: ${err.message}`);
   } finally {
-    activeExecutions.delete(runId);
     activeMemoryJobs--;
     setTimeout(processNextMemoryJob, 50);
   }
@@ -104,7 +86,14 @@ async function processNextMemoryJob() {
 /**
  * Execute actual Pipeline via PipelineExecutor
  */
-async function processPipelineRun(runId: string, nodes: any[], connections: any[], variables: any) {
+async function processPipelineRun(
+  runId: string,
+  nodes: any[],
+  connections: any[],
+  variables: any,
+  tenantId?: string,
+  graphId?: string
+) {
   const apiKey = process.env.GEMINI_API_KEY || "";
   const ai = new GoogleGenAI({
     apiKey: apiKey,
@@ -115,7 +104,7 @@ async function processPipelineRun(runId: string, nodes: any[], connections: any[
     }
   });
 
-  const executor = new PipelineExecutor(nodes, connections, ai, apiKey, runId);
+  const executor = new PipelineExecutor(nodes, connections, ai, apiKey, runId, tenantId, graphId);
   const result = await executor.execute();
   return result;
 }
@@ -127,7 +116,9 @@ export async function enqueuePipelineRun(
   runId: string,
   nodes: any[],
   connections: any[],
-  variables: any = {}
+  variables: any = {},
+  tenantId: string = 'default-workspace',
+  graphId: string = 'canvas-workspace'
 ): Promise<void> {
   // Ensure we register the initial state in our DB as 'pending'
   try {
@@ -135,7 +126,7 @@ export async function enqueuePipelineRun(
     if (existing.length === 0) {
       await db.insert(tables.pipelineRuns).values({
         id: runId,
-        graphId: 'canvas-workspace',
+        graphId,
         status: 'pending',
         nodeOutputs: '{}',
         completedNodes: '[]',
@@ -145,7 +136,7 @@ export async function enqueuePipelineRun(
         iterationsCount: '{}',
         logs: '[]',
         variables: JSON.stringify(variables),
-        tenantId: 'default-workspace',
+        tenantId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
@@ -156,7 +147,7 @@ export async function enqueuePipelineRun(
 
   if (queue) {
     try {
-      await queue.add('execute', { runId, nodes, connections, variables }, { jobId: runId });
+      await queue.add('execute', { runId, nodes, connections, variables, tenantId, graphId }, { jobId: runId });
       logger.info(`[Queue] Job successfully added to Redis BullMQ: ${runId}`);
       return;
     } catch (err: any) {
@@ -165,7 +156,7 @@ export async function enqueuePipelineRun(
   }
 
   // Fallback memory queue
-  memoryJobQueue.push({ runId, nodes, connections, variables });
+  memoryJobQueue.push({ runId, nodes, connections, variables, tenantId, graphId });
   logger.info(`[Queue] Job successfully added to in-memory queue: ${runId}`);
   setTimeout(processNextMemoryJob, 0);
 }

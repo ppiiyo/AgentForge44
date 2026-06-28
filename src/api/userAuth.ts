@@ -25,12 +25,19 @@ export function verifyToken(token: string): any {
     const [header, payload, signature] = token.split('.');
     if (!header || !payload || !signature) return null;
     
+    const decodedHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
+    if (decodedHeader.alg !== 'HS256') return null;
+    
     const expectedSignature = crypto
       .createHmac('sha256', SECRETS.JWT_SECRET)
       .update(`${header}.${payload}`)
       .digest('base64url');
       
-    if (signature !== expectedSignature) return null;
+    const sigBuffer = Buffer.from(signature, 'base64url');
+    const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
+    
+    if (sigBuffer.length !== expectedBuffer.length) return null;
+    if (!crypto.timingSafeEqual(sigBuffer, expectedBuffer)) return null;
     
     const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
     if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
@@ -91,8 +98,8 @@ export function verifyPassword(password: string, storedHash: string): boolean {
       return crypto.timingSafeEqual(h1, h2);
     }
 
-    // fallback for plain text if any
-    return password === storedHash;
+    // no plain text fallback supported
+    return false;
   } catch {
     return false;
   }

@@ -204,7 +204,9 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
     }
 
     const runId = generateSecureId('run');
-    await enqueuePipelineRun(runId, nodes, connections, inputs || {});
+    const tenantId = (req as any).tenantId || 'default-workspace';
+    const graphId = req.body.graphId || 'canvas-workspace';
+    await enqueuePipelineRun(runId, nodes, connections, inputs || {}, tenantId, graphId);
 
     res.status(202).json({
       success: true,
@@ -291,7 +293,9 @@ router.post('/runs/:id/resume', async (req: Request, res: Response) => {
       updatedAt: new Date().toISOString()
     }).where(eq(tables.pipelineRuns.id, runId));
 
-    await enqueuePipelineRun(runId, nodes, connections, JSON.parse(data.variables || '{}'));
+    const tenantId = data.tenantId || 'default-workspace';
+    const graphId = data.graphId || 'canvas-workspace';
+    await enqueuePipelineRun(runId, nodes, connections, JSON.parse(data.variables || '{}'), tenantId, graphId);
 
     res.json({
       success: true,

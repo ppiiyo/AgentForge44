@@ -27,7 +27,9 @@ export class PipelineExecutor {
     private connections: FlowConnection[],
     private ai: GoogleGenAI,
     private apiKey: string,
-    private runId?: string
+    private runId?: string,
+    private tenantId: string = 'default-workspace',
+    private graphId: string = 'canvas-workspace'
   ) {}
 
   /**
@@ -91,7 +93,7 @@ export class PipelineExecutor {
       } else {
         await db.insert(tables.pipelineRuns).values({
           id: this.runId,
-          graphId: 'canvas-workspace',
+          graphId: this.graphId,
           status,
           nodeOutputs: JSON.stringify(this.nodeOutputs),
           completedNodes: JSON.stringify(Array.from(this.completedNodes)),
@@ -102,7 +104,7 @@ export class PipelineExecutor {
           logs: JSON.stringify(this.logs),
           variables: JSON.stringify(this.globalVariables),
           error: error || null,
-          tenantId: 'default-workspace',
+          tenantId: this.tenantId,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });

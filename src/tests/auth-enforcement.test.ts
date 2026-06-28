@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../../server.js';
-import { signToken } from '../api/userAuth.js';
+import { signToken, verifyToken } from '../api/userAuth.js';
 
 describe('=== Phase 1: Authentication & Authorization Guard Enforcement ===', () => {
   const tokenUserA = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
@@ -97,5 +97,44 @@ describe('=== Phase 1: Authentication & Authorization Guard Enforcement ===', ()
       .delete('/api/projects/test-project-a')
       .set('Authorization', `Bearer ${tokenUserA}`);
     expect(resDel.status).toBe(200);
+  });
+
+  describe('JWT Verification Hardening & Timing Attack Safeguards', () => {
+    it('should reject a JWT with alg set to none', () => {
+      // Create a spoofed header with alg: none
+      const headerObj = { alg: 'none', typ: 'JWT' };
+      const payloadObj = { id: 'spoofed-user', email: 'spoofed@test.com', role: 'editor', exp: Math.floor(Date.now() / 1000) + 3600 };
+      
+      const headerB64 = Buffer.from(JSON.stringify(headerObj)).toString('base64url');
+      const payloadB64 = Buffer.from(JSON.stringify(payloadObj)).toString('base64url');
+      // Signature of an alg: none token is empty/none
+      const token = `${headerB64}.${payloadB64}.`;
+      
+      const decoded = verifyToken(token);
+      expect(decoded).toBeNull();
+    });
+
+    it('should reject a JWT with an invalid/tampered signature', () => {
+      const headerObj = { alg: 'HS256', typ: 'JWT' };
+      const payloadObj = { id: 'legit-user', email: 'legit@test.com', role: 'editor', exp: Math.floor(Date.now() / 1000) + 3600 };
+      
+      const headerB64 = Buffer.from(JSON.stringify(headerObj)).toString('base64url');
+      const payloadB64 = Buffer.from(JSON.stringify(payloadObj)).toString('base64url');
+      const tamperedSignature = 'this_is_a_tampered_and_malicious_signature_trying_to_bypass_controls';
+      const token = `${headerB64}.${payloadB64}.${tamperedSignature}`;
+      
+      const decoded = verifyToken(token);
+      expect(decoded).toBeNull();
+    });
+
+    it('should successfully verify a valid JWT signed with HS256', () => {
+      const payload = { id: 'user-a', email: 'user-a@test.com', role: 'editor' };
+      const token = signToken(payload);
+      
+      const decoded = verifyToken(token);
+      expect(decoded).not.toBeNull();
+      expect(decoded.id).toBe('user-a');
+      expect(decoded.email).toBe('user-a@test.com');
+    });
   });
 });
