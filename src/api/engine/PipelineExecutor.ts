@@ -124,7 +124,14 @@ export class PipelineExecutor {
     try {
       if (this.runId) {
         // If resuming, load the checkpoint
-        await this.loadFromCheckpoint(this.runId);
+        const loaded = await this.loadFromCheckpoint(this.runId);
+        if (loaded && this.completedNodes.size > 0) {
+          const completedList = Array.from(this.completedNodes);
+          const lastCompletedId = completedList[completedList.length - 1];
+          if (lastCompletedId && this.nodeOutputs[lastCompletedId] !== undefined) {
+            this.activeValueRef.value = this.nodeOutputs[lastCompletedId];
+          }
+        }
       }
 
       // Find start nodes (input nodes)
@@ -258,11 +265,6 @@ export class PipelineExecutor {
           this.activeValueRef.value = this.nodeOutputs[lastEligibleNode.id];
         }
 
-        // 4. Update checkpoints during active execution
-        if (this.runId) {
-          await this.saveCheckpoint('running');
-        }
-
         // 4. Update graph traversal progress and trigger downstream transitions
         for (const completedNode of eligibleNodes) {
           this.completedNodes.add(completedNode.id);
@@ -324,6 +326,11 @@ export class PipelineExecutor {
             const targets = this.connections.filter(c => c.sourceId === completedNode.id);
             targets.forEach(t => this.activatedNodes.add(t.targetId));
           }
+        }
+
+        // Save checkpoint after successfully completing this parallel batch and activating downstream nodes
+        if (this.runId) {
+          await this.saveCheckpoint('running');
         }
       }
 
