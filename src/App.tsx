@@ -10,6 +10,11 @@ import { RightSidebarPanel } from './components/RightSidebarPanel';
 import { ImportExportModal } from './components/ImportExportModal';
 import posthog from 'posthog-js';
 
+// Dynamically lazy-loaded sub-modules for bundle splitting optimization
+const Marketplace = React.lazy(() => import('./components/Marketplace').then(m => ({ default: m.Marketplace })));
+const MetricsDashboard = React.lazy(() => import('./components/MetricsDashboard').then(m => ({ default: m.MetricsDashboard })));
+const CloudDeployer = React.lazy(() => import('./components/CloudDeployer').then(m => ({ default: m.CloudDeployer })));
+
 // Multi-language localization dictionaries
 const translationsStatic = {
   en: {
@@ -366,63 +371,69 @@ export default function App() {
 
           {/* Right Tabbed Panel: Logs / Code / Statistics */}
           {app.currentView === 'editor' && !app.showcaseMode && !app.rightSidebarCollapsed && (
-            <RightSidebarPanel
-              currentLang={app.currentLang}
-              activeTab={app.activeTab}
-              setActiveTab={app.setActiveTab}
-              setRightSidebarCollapsed={app.setRightSidebarCollapsed}
-              nodes={app.nodes}
-              connections={app.connections}
-              projectNameInput={app.projectNameInput}
-              setNodes={app.setNodes}
-              setConnections={app.setConnections}
-              setProjectNameInput={app.setProjectNameInput}
-              runLogs={app.runLogs}
-              errorText={app.errorText}
-              handleAutoSelfHealAndRun={app.handleAutoSelfHealAndRun}
-              totalDuration={app.totalDuration}
-              finalResult={app.finalResult}
-              copiedText={app.copiedText}
-              setCopiedText={app.setCopiedText}
-              isEvaluating={app.isEvaluating}
-              evalReport={app.evalReport}
-              evalTestCases={app.evalTestCases}
-              setEvalTestCases={app.setEvalTestCases}
-              handleRunEvaluationSuite={app.handleRunEvaluationSuite}
-              ragSource={app.ragSource}
-              setRagSource={app.setRagSource}
-              ragText={app.ragText}
-              setRagText={app.setRagText}
-              handleIndexDocument={app.handleIndexDocument}
-              isRAGIndexing={app.isRAGIndexing}
-              ragIndexStatus={app.ragIndexStatus}
-              ragSearchQuery={app.ragSearchQuery}
-              handleRAGSearch={app.handleRAGSearch}
-              ragSearchResults={app.ragSearchResults}
-              codeDisplayType={app.codeDisplayType}
-              setCodeDisplayType={app.setCodeDisplayType}
-              codeTab={app.codeTab}
-              setCodeTab={app.setCodeTab}
-              loadingServerGeneratedCode={app.loadingServerGeneratedCode}
-              serverGeneratedCode={app.serverGeneratedCode}
-              generateCopieableCode={app.generateCopieableCode}
-              handleCopyCode={app.handleCopyCode}
-              simDocQual={app.simDocQual}
-              setSimDocQual={app.setSimDocQual}
-              simUIAesthetic={app.simUIAesthetic}
-              setSimUIAesthetic={app.setSimUIAesthetic}
-              simAgentPower={app.simAgentPower}
-              setSimAgentPower={app.setSimAgentPower}
-              simMarketingPush={app.simMarketingPush}
-              setSimMarketingPush={app.setSimMarketingPush}
-              calculateViralityScore={app.calculateViralityScore}
-              getViralityLabel={app.getViralityLabel}
-              handleInstallTemplateFromMarketplace={app.handleInstallTemplateFromMarketplace}
-              handleApplyCopilotGraph={app.handleApplyCopilotGraph}
-              translations={translations}
-              onHighlightNode={app.setHighlightedNodeId}
-              onSetDryRunOutput={app.setDryRunOutput}
-            />
+            <React.Suspense fallback={
+              <div className="w-80 border-l border-slate-850 bg-slate-900 flex flex-col h-full items-center justify-center p-6 text-slate-400">
+                <span className="text-xs animate-pulse">Loading Panel Modules...</span>
+              </div>
+            }>
+              <RightSidebarPanel
+                currentLang={app.currentLang}
+                activeTab={app.activeTab}
+                setActiveTab={app.setActiveTab}
+                setRightSidebarCollapsed={app.setRightSidebarCollapsed}
+                nodes={app.nodes}
+                connections={app.connections}
+                projectNameInput={app.projectNameInput}
+                setNodes={app.setNodes}
+                setConnections={app.setConnections}
+                setProjectNameInput={app.setProjectNameInput}
+                runLogs={app.runLogs}
+                errorText={app.errorText}
+                handleAutoSelfHealAndRun={app.handleAutoSelfHealAndRun}
+                totalDuration={app.totalDuration}
+                finalResult={app.finalResult}
+                copiedText={app.copiedText}
+                setCopiedText={app.setCopiedText}
+                isEvaluating={app.isEvaluating}
+                evalReport={app.evalReport}
+                evalTestCases={app.evalTestCases}
+                setEvalTestCases={app.setEvalTestCases}
+                handleRunEvaluationSuite={app.handleRunEvaluationSuite}
+                ragSource={app.ragSource}
+                setRagSource={app.setRagSource}
+                ragText={app.ragText}
+                setRagText={app.setRagText}
+                handleIndexDocument={app.handleIndexDocument}
+                isRAGIndexing={app.isRAGIndexing}
+                ragIndexStatus={app.ragIndexStatus}
+                ragSearchQuery={app.ragSearchQuery}
+                handleRAGSearch={app.handleRAGSearch}
+                ragSearchResults={app.ragSearchResults}
+                codeDisplayType={app.codeDisplayType}
+                setCodeDisplayType={app.setCodeDisplayType}
+                codeTab={app.codeTab}
+                setCodeTab={app.setCodeTab}
+                loadingServerGeneratedCode={app.loadingServerGeneratedCode}
+                serverGeneratedCode={app.serverGeneratedCode}
+                generateCopieableCode={app.generateCopieableCode}
+                handleCopyCode={app.handleCopyCode}
+                simDocQual={app.simDocQual}
+                setSimDocQual={app.setSimDocQual}
+                simUIAesthetic={app.simUIAesthetic}
+                setSimUIAesthetic={app.setSimUIAesthetic}
+                simAgentPower={app.simAgentPower}
+                setSimAgentPower={app.setSimAgentPower}
+                simMarketingPush={app.simMarketingPush}
+                setSimMarketingPush={app.setSimMarketingPush}
+                calculateViralityScore={app.calculateViralityScore}
+                getViralityLabel={app.getViralityLabel}
+                handleInstallTemplateFromMarketplace={app.handleInstallTemplateFromMarketplace}
+                handleApplyCopilotGraph={app.handleApplyCopilotGraph}
+                translations={translations}
+                onHighlightNode={app.setHighlightedNodeId}
+                onSetDryRunOutput={app.setDryRunOutput}
+              />
+            </React.Suspense>
           )}
         </div>
 

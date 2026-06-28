@@ -10,6 +10,9 @@ import {
 import { useCollaboration } from './useCollaboration';
 import { useHotkeys } from './useHotkeys';
 import { usePipelineExecution } from './usePipelineExecution';
+import { useEditorStore } from '../store/useEditorStore';
+import { useUIStore } from '../store/useUIStore';
+import { usePipelineStore } from '../store/usePipelineStore';
 
 // Import translations just for default snapshot names
 const translationsLocal = {
@@ -35,16 +38,15 @@ export function useAgentApp() {
     return PREBUILT_TEMPLATES[0] || null;
   });
 
-  // Coordinator core arrays
-  const [nodes, setNodes] = useState<FlowNode[]>(() => {
-    return PREBUILT_TEMPLATES[0]?.nodes || [];
-  });
-  const [connections, setConnections] = useState<FlowConnection[]>(() => {
-    return PREBUILT_TEMPLATES[0]?.connections || [];
-  });
+  // Coordinator core arrays (re-routed to Zustand stores)
+  const nodes = useEditorStore((state) => state.nodes);
+  const setNodes = useEditorStore((state) => state.setNodes);
+  const connections = useEditorStore((state) => state.connections);
+  const setConnections = useEditorStore((state) => state.setConnections);
 
   // Focus & Drag interactions
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNodeId = useUIStore((state) => state.selectedNodeId);
+  const setSelectedNodeId = useUIStore((state) => state.setSelectedNodeId);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
@@ -70,20 +72,28 @@ export function useAgentApp() {
   const [past, setPast] = useState<Array<{ nodes: FlowNode[], connections: FlowConnection[] }>>([]);
   const [future, setFuture] = useState<Array<{ nodes: FlowNode[], connections: FlowConnection[] }>>([]);
 
-  // Local backups / snap snapshots
-  const [savedSnapshots, setSavedSnapshots] = useState<any[]>(() => {
+  // Local backups / snap snapshots (re-routed to Zustand store)
+  const savedSnapshots = usePipelineStore((state) => state.savedSnapshots);
+  const setSavedSnapshots = usePipelineStore((state) => state.setSavedSnapshots);
+
+  // Load saved snapshots on mount, and save on change
+  useEffect(() => {
     if (typeof localStorage !== 'undefined') {
       const stored = localStorage.getItem("agentforge_snapshots");
       if (stored) {
         try {
-          return JSON.parse(stored);
-        } catch (_) {
-          return [];
-        }
+          const parsed = JSON.parse(stored);
+          setSavedSnapshots(parsed);
+        } catch (_) {}
       }
     }
-    return [];
-  });
+  }, []);
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem("agentforge_snapshots", JSON.stringify(savedSnapshots));
+    }
+  }, [savedSnapshots]);
 
   // Execution Trace Progress Signals
   const [nodeExecutionStatuses, setNodeExecutionStatuses] = useState<Record<string, 'idle' | 'running' | 'completed' | 'failed'>>({});
@@ -95,8 +105,10 @@ export function useAgentApp() {
   const [serverProjects, setServerProjects] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState<boolean>(false);
   const [savingProject, setSavingProject] = useState<boolean>(false);
-  const [projectNameInput, setProjectNameInput] = useState<string>("default-workspace");
-  const [currentSavedProjectName, setCurrentSavedProjectName] = useState<string | null>(null);
+  const projectNameInput = usePipelineStore((state) => state.projectNameInput);
+  const setProjectNameInput = usePipelineStore((state) => state.setProjectNameInput);
+  const currentSavedProjectName = usePipelineStore((state) => state.currentSavedProjectName);
+  const setCurrentSavedProjectName = usePipelineStore((state) => state.setCurrentSavedProjectName);
 
   // Sub-tabs configurations
   const [codeDisplayType, setCodeDisplayType] = useState<'compiled' | 'client'>('compiled');
@@ -472,7 +484,7 @@ export function useAgentApp() {
   // Node editing actions
   const handleUpdateNodeField = (nodeId: string, fieldKey: string, value: any) => {
     recordAction();
-    setNodes(prev => prev.map(n => {
+    setNodes((prev: FlowNode[]) => prev.map(n => {
       if (n.id === nodeId) {
         return {
           ...n,
@@ -480,17 +492,17 @@ export function useAgentApp() {
             ...n.fields,
             [fieldKey]: value
           }
-        };
+        } as FlowNode;
       }
       return n;
-    }));
+    }) as FlowNode[]);
     broadcastNodeSettingsUpdated(nodeId, { [fieldKey]: value });
   };
 
   const handleUpdateVariable = (nodeId: string, index: number, fieldKey: string, value: any) => {
     recordAction();
     let updatedVars: any[] = [];
-    setNodes(prev => prev.map(n => {
+    setNodes((prev: FlowNode[]) => prev.map(n => {
       if (n.id === nodeId && n.type === 'input') {
         const nextVars = [...(n.fields.variables || [])];
         nextVars[index] = { ...nextVars[index], [fieldKey]: value };
@@ -501,10 +513,10 @@ export function useAgentApp() {
             ...n.fields,
             variables: nextVars
           }
-        };
+        } as FlowNode;
       }
       return n;
-    }));
+    }) as FlowNode[]);
     broadcastNodeSettingsUpdated(nodeId, { variables: updatedVars });
   };
 
