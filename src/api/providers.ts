@@ -139,10 +139,9 @@ export class GeminiProvider extends LLMProvider {
     const isSandbox = !this.apiKey || 
                       this.apiKey === "sandbox_free_test_gemini" || 
                       this.apiKey === "your_gemini_api_key_here" || 
-                      this.apiKey === "mock-gemini-key" || 
                       process.env.DEMO_MODE === "true";
 
-    if (isSandbox && (!this.apiKey || this.apiKey.startsWith("sandbox_") || this.apiKey === "your_gemini_api_key_here" || this.apiKey === "mock-gemini-key" || !process.env.GEMINI_API_KEY)) {
+    if (isSandbox && (!this.apiKey || this.apiKey.startsWith("sandbox_") || this.apiKey === "your_gemini_api_key_here" || !process.env.GEMINI_API_KEY)) {
       const simText = `[Simulated response due to API sandbox limits]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
       return {
         text: simText,
