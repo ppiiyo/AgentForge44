@@ -6,11 +6,15 @@ import {
   Sliders, 
   ChevronLeft, 
   ChevronRight, 
-  Presentation 
+  Presentation,
+  CheckSquare,
+  Command,
+  X
 } from 'lucide-react';
 import { Toolbox } from './components/Toolbox';
 import { AgentFlowCanvas } from './components/AgentFlowCanvas';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
+import { CommandPalette } from './components/CommandPalette';
 import { FlowNode, FlowConnection } from '../../types';
 
 interface ProjectEditorProps {
@@ -122,6 +126,102 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   userId,
   locks
 }) => {
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
+  const [validationReport, setValidationReport] = React.useState<{ errors: string[]; warnings: string[] } | null>(null);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleTieredLayout = () => {
+    const inputs = nodes.filter(n => n.type === 'input');
+    const outputs = nodes.filter(n => n.type === 'output');
+    const others = nodes.filter(n => n.type !== 'input' && n.type !== 'output');
+
+    setNodes(prev => {
+      return prev.map(node => {
+        if (node.type === 'input') {
+          const idx = inputs.findIndex(n => n.id === node.id);
+          return { ...node, x: 50, y: 120 + idx * 180 };
+        } else if (node.type === 'output') {
+          const idx = outputs.findIndex(n => n.id === node.id);
+          return { ...node, x: 880, y: 120 + idx * 180 };
+        } else {
+          const idx = others.findIndex(n => n.id === node.id);
+          const col = idx % 2;
+          const row = Math.floor(idx / 2);
+          return { ...node, x: 320 + col * 270, y: 100 + row * 180 };
+        }
+      });
+    });
+  };
+
+  const handleValidateFlow = () => {
+    const errList: string[] = [];
+    const warnList: string[] = [];
+
+    const connectedIds = new Set<string>();
+    connections.forEach(c => {
+      connectedIds.add(c.sourceId);
+      connectedIds.add(c.targetId);
+    });
+
+    nodes.forEach(node => {
+      if (nodes.length > 1 && !connectedIds.has(node.id)) {
+        warnList.push(`Node "${node.title || node.id}" is completely disconnected from the rest of the flow network.`);
+      }
+
+      if (node.type === 'gemini') {
+        if (!node.fields?.systemInstruction?.trim()) {
+          warnList.push(`Gemini Agent Node "${node.title}" has empty System Instructions.`);
+        }
+      }
+      if (node.type === 'prompt' && !node.fields?.template?.trim()) {
+        warnList.push(`Prompt Template Node "${node.title}" has empty Prompt Template text.`);
+      }
+      if (node.type === 'reviewer' && !node.fields?.criteria?.trim()) {
+        warnList.push(`Reviewer Agent Node "${node.title}" has no Review Criteria defined.`);
+      }
+      if (node.type === 'webhook' && !node.fields?.url?.trim()) {
+        errList.push(`Webhook Node "${node.title}" is missing the Outbound Endpoint URL.`);
+      }
+
+      const fieldsText = [
+        node.fields?.template || '',
+        node.fields?.systemInstruction || '',
+        node.fields?.body || '',
+        node.fields?.headers || '',
+        node.fields?.url || ''
+      ].join(' ');
+
+      const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
+      const referenced = [...new Set(matches.map(m => m[1]))];
+      const excluded = ['nodeId', 'lastOutput', 'nodeTitle'];
+
+      referenced.forEach(v => {
+        if (excluded.includes(v)) return;
+        const isDefined = nodes.some(n => {
+          if (n.type === 'input' && n.fields?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
+          if (n.id === v) return true;
+          if (n.title?.toLowerCase() === v.toLowerCase()) return true;
+          return false;
+        });
+
+        if (!isDefined && nodes.length > 1) {
+          warnList.push(`Node "${node.title}" references variable "${v}" which is not defined by any input node on the active canvas.`);
+        }
+      });
+    });
+
+    setValidationReport({ errors: errList, warnings: warnList });
+  };
   return (
     <div className="flex-1 flex flex-row overflow-hidden relative" id="project_editor_wrapper">
       {/* Left Side: Builder Toolbox & Node Editor */}
@@ -170,8 +270,16 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           onSelectNode={setSelectedNodeId}
           onDeleteNode={handleDeleteNode}
           onConnectNodes={handleConnectNodes}
-          onChangeNodePosition={(nodeId, x, y) => {
-            setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, x, y } : n));
+          onChangeNodePosition={(nodeId, x, y, updates?: Array<{ id: string; x: number; y: number }>) => {
+            if (updates && updates.length > 0) {
+              const updatesMap = new Map(updates.map(u => [u.id, u]));
+              setNodes(prev => prev.map(n => {
+                const u = updatesMap.get(n.id);
+                return u ? { ...n, x: u.x, y: u.y } : n;
+              }));
+            } else {
+              setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, x, y } : n));
+            }
           }}
           canvasZoom={canvasZoom}
           snapToGrid={snapToGrid}
@@ -216,10 +324,42 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
             id="btn_auto_align_grid"
             onClick={handleAutoAlignNodes} 
             className="text-sky-450 hover:text-sky-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-sky-500/10 border border-sky-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
-            title="Automatically arrange nodes sequentially on the grid"
+            title="Automatically arrange nodes sequentially by type"
           >
             <LayoutGrid size={13} className="text-sky-400" />
-            <span>{translations[currentLang]?.autoAlign || 'Auto-Align'}</span>
+            <span>Type Grid</span>
+          </button>
+
+          <button 
+            id="btn_tiered_layout"
+            onClick={handleTieredLayout} 
+            className="text-indigo-450 hover:text-indigo-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-indigo-500/10 border border-indigo-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+            title="Organize nodes strictly into Input -> Processing -> Output tiers"
+          >
+            <LayoutGrid size={13} className="text-indigo-400" />
+            <span>Tiered Layout</span>
+          </button>
+
+          <button 
+            id="btn_validate_flow"
+            onClick={handleValidateFlow} 
+            className="text-amber-450 hover:text-amber-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-amber-500/10 border border-amber-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0 animate-pulse"
+            title="Check flow graph for disconnected agents or invalid dynamic variables"
+          >
+            <CheckSquare size={13} className="text-amber-400" />
+            <span>Validate Flow</span>
+          </button>
+
+          <span className="text-slate-800">|</span>
+
+          <button 
+            id="btn_open_shortcuts_palette"
+            onClick={() => setIsCommandPaletteOpen(true)} 
+            className="text-teal-450 hover:text-teal-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-teal-500/10 border border-teal-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+            title="Show shortcut legend or trigger command palette (Ctrl+K)"
+          >
+            <Command size={13} className="text-teal-400" />
+            <span>Shortcuts (Ctrl+K)</span>
           </button>
 
           <span className="text-slate-800">|</span>
@@ -304,6 +444,96 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           </button>
         </div>
       </main>
+
+      {/* Dynamic Command Palette overlay (Cmd/Ctrl + K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        nodes={nodes}
+        onSelectNode={setSelectedNodeId}
+        onAutoAlign={handleAutoAlignNodes}
+        onTieredLayout={handleTieredLayout}
+        onValidateFlow={handleValidateFlow}
+        onSaveProject={() => onSaveProjectToServer(projectNameInput || 'untitled')}
+        onRunPipeline={() => {
+          // Trigger run pipeline
+          const runBtn = document.getElementById('btn_run_pipeline_header');
+          if (runBtn) runBtn.click();
+        }}
+        currentLang={currentLang}
+      />
+
+      {/* Beautiful glassmorphism float-panel reporting validation status */}
+      {validationReport && (
+        <div className="absolute top-16 right-6 w-96 bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl p-5 z-40 backdrop-blur-md max-h-[70vh] flex flex-col animate-[scaleUp_0.15s_ease-out]" id="validation_report_hud">
+          <div className="flex items-center justify-between border-b border-slate-850 pb-3 mb-3">
+            <div className="flex items-center space-x-2">
+              <span className={`h-2.5 w-2.5 rounded-full ${validationReport.errors.length > 0 ? 'bg-rose-500 animate-ping' : validationReport.warnings.length > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}></span>
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-100">Flow Validation Report</h4>
+            </div>
+            <button 
+              onClick={() => setValidationReport(null)}
+              className="text-slate-500 hover:text-slate-200 cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
+            {validationReport.errors.length === 0 && validationReport.warnings.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-xs font-bold text-emerald-400 mb-1">✅ 0 Errors & Warnings Found</p>
+                <p className="text-[10.5px] text-slate-500">Your graph architecture has pristine logical alignment!</p>
+              </div>
+            ) : (
+              <>
+                {validationReport.errors.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-rose-400">Critical Errors ({validationReport.errors.length})</p>
+                    {validationReport.errors.map((e, idx) => (
+                      <div key={idx} className="bg-rose-950/25 border border-rose-900/30 p-2.5 rounded-xl text-[10.5px] text-rose-300 leading-relaxed font-semibold flex items-start gap-2">
+                        <span className="text-rose-500 shrink-0 font-bold">•</span>
+                        <span>{e}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {validationReport.warnings.length > 0 && (
+                  <div className="space-y-1.5 pt-2">
+                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">Warnings & Tips ({validationReport.warnings.length})</p>
+                    {validationReport.warnings.map((w, idx) => (
+                      <div key={idx} className="bg-amber-955/40 border border-amber-900/30 p-2.5 rounded-xl text-[10.5px] text-amber-300 leading-relaxed font-semibold flex items-start gap-2">
+                        <span className="text-amber-500 shrink-0 font-bold">•</span>
+                        <span>{w}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="border-t border-slate-850 pt-3 mt-3 flex items-center justify-between">
+            <button
+              onClick={() => {
+                handleTieredLayout();
+                setTimeout(() => handleValidateFlow(), 500);
+              }}
+              className="text-[10px] font-extrabold text-sky-400 hover:text-sky-300 flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              <LayoutGrid size={12} />
+              <span>Fix with Tiered Layout</span>
+            </button>
+            <button
+              onClick={() => setValidationReport(null)}
+              className="text-[10.5px] font-bold px-3 py-1 bg-slate-800 text-slate-200 hover:bg-slate-750 rounded-lg cursor-pointer transition-all"
+            >
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Node Specific Properties & Configuration HUD */}
       {!showcaseMode && !rightSidebarCollapsed && selectedNodeId && (

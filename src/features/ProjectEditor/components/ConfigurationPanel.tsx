@@ -273,6 +273,20 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               />
             </div>
 
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Workflow Stage Label Tag</label>
+              <select
+                value={node.fields.tag || 'none'}
+                onChange={(e) => onUpdateNodeField(node.id, 'tag', e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500/50 focus:border-sky-500/50 cursor-pointer font-semibold"
+              >
+                <option value="none">None (Standard Card)</option>
+                <option value="drafting">✍️ Drafting (Blue)</option>
+                <option value="refining">⚡ Refining (Yellow)</option>
+                <option value="finalizer">✅ Finalizer (Green)</option>
+              </select>
+            </div>
+
             {/* Render node-specific forms */}
             {node.type === 'input' && (
               <div className="space-y-3">

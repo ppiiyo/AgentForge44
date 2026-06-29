@@ -412,6 +412,78 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
               duration: Date.now() - stepStart
             });
 
+          } else if (node.type === 'webhook') {
+            const urlRaw = node.fields.url || "";
+            const headersRaw = node.fields.headers || "{}";
+            const bodyRaw = node.fields.body || "";
+            const tokenRaw = node.fields.token || "";
+
+            let url = urlRaw;
+            let body = bodyRaw;
+            let headersStr = headersRaw;
+            let token = tokenRaw;
+
+            const substitute = (text: string) => {
+              let out = text;
+              const sourceObj = { ...globalVariables, lastOutput: typeof localValue === 'string' ? localValue : JSON.stringify(localValue) };
+              Object.entries(sourceObj).forEach(([k, v]) => {
+                const r1 = new RegExp(`\\{${k}\\}`, 'g');
+                out = out.replace(r1, String(v));
+                const r2 = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+                out = out.replace(r2, String(v));
+              });
+              return out;
+            };
+
+            url = substitute(url);
+            body = substitute(body);
+            headersStr = substitute(headersStr);
+            token = substitute(token);
+
+            let headers: Record<string, string> = { "Content-Type": "application/json" };
+            try {
+              if (headersStr.trim().startsWith("{")) {
+                headers = { ...headers, ...safeJsonParse(headersStr) };
+              }
+            } catch (jsonErr: any) {
+              console.warn("Failed to parse dynamic Webhook headers as JSON object:", jsonErr.message);
+            }
+
+            if (token) {
+              headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+            }
+
+            const fetchOptions: any = { method: "POST", headers };
+            if (body) {
+              fetchOptions.body = body;
+            }
+
+            let responseText = "";
+            let responseStatus = 200;
+            try {
+              await validateUrl(url);
+              const fetchRes = await fetch(url, fetchOptions);
+              responseStatus = fetchRes.status;
+              responseText = await fetchRes.text();
+            } catch (err: any) {
+              if (err.message && err.message.startsWith("SSRF attempt blocked:")) {
+                throw err;
+              }
+              throw new Error(`Webhook node trigger failed: ${err.message || String(err)}`);
+            }
+
+            nodeOutputs[node.id] = responseText;
+            activeValue = responseText;
+
+            stepLogs.push({
+              nodeId: node.id,
+              nodeTitle: `${node.title} (Webhook POST ${responseStatus})`,
+              status: 'completed',
+              input: `URL: ${url}\nAuth: ${token ? 'Bearer active token' : 'None'}\nPayload: ${body || 'None'}`,
+              output: responseText,
+              duration: Date.now() - stepStart
+            });
+
           } else if (node.type === 'rag') {
             const limit = Number(node.fields.limit) || 3;
             let searchQueryRaw = node.fields.searchQuery || "";

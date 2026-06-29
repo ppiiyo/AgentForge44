@@ -32,7 +32,7 @@ interface AgentFlowCanvasProps {
   onSelectNode: (nodeId: string) => void;
   onDeleteNode: (nodeId: string) => void;
   onConnectNodes: (sourceId: string, targetId: string) => void;
-  onChangeNodePosition: (nodeId: string, x: number, y: number) => void;
+  onChangeNodePosition: (nodeId: string, x: number, y: number, updates?: Array<{ id: string; x: number; y: number }>) => void;
   canvasZoom: number;
   snapToGrid: boolean;
   canvasLocked: boolean;
@@ -163,9 +163,24 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
 
       {/* Description & dynamic stats/info */}
       <div className="p-3 flex-1 flex flex-col justify-between bg-slate-900/60 rounded-b-2xl">
-        <p className="text-[11px] text-slate-400 font-medium leading-relaxed mb-2 line-clamp-3">
-          {node.description}
-        </p>
+        <div>
+          {node.fields?.tag && node.fields.tag !== 'none' && (
+            <div className="mb-2">
+              <span className={`inline-block text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
+                node.fields.tag === 'drafting' ? 'bg-blue-950/80 text-blue-400 border border-blue-900/40' :
+                node.fields.tag === 'refining' ? 'bg-amber-950/80 text-amber-500 border border-amber-900/40' :
+                node.fields.tag === 'finalizer' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-900/40' :
+                'bg-slate-850 text-slate-400 border border-slate-800'
+              }`}>
+                {node.fields.tag === 'drafting' ? '✍️ ' : node.fields.tag === 'refining' ? '⚡ ' : '✅ '}
+                {node.fields.tag}
+              </span>
+            </div>
+          )}
+          <p className="text-[11px] text-slate-400 font-medium leading-relaxed mb-2 line-clamp-3">
+            {node.description}
+          </p>
+        </div>
 
         <div className="space-y-1 pt-2 border-t border-slate-800/60">
           {node.type === 'input' && (
@@ -404,7 +419,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
         fitView
         panOnDrag={spacePressed}
         selectionOnDrag={!spacePressed}
-        selectionKeyPressed="Shift"
+        selectionKeyCode="Shift"
         nodesDraggable={!canvasLocked}
         nodesConnectable={!canvasLocked}
         className="bg-slate-950"

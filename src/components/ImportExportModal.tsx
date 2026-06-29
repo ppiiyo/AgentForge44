@@ -131,28 +131,61 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
                   <div className="flex flex-col gap-2 font-sans">
                     {/* Standard file selector upload trigger */}
-                    <label className="w-full bg-slate-900 border border-slate-800 hover:border-teal-900/60 p-5 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer group transition-all duration-300">
-                      <Upload size={22} className="text-teal-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10.5px] font-bold text-slate-400 group-hover:text-teal-300">Select Exported .JSON File</span>
-                      <input 
-                        type="file" 
-                        accept=".json"
-                        className="hidden" 
-                        onChange={(e) => {
-                          const uploadedFile = e.target.files?.[0];
-                          if (!uploadedFile) return;
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            const resultString = event.target?.result as string;
-                            if (resultString) {
-                              setJsonStringInput(resultString);
-                              handleImportWorkflowJSON(resultString);
-                            }
-                          };
-                          reader.readAsText(uploadedFile);
-                        }}
-                      />
-                    </label>
+                    {(() => {
+                      const [isDragging, setIsDragging] = React.useState(false);
+
+                      const handleDrop = (e: React.DragEvent) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        const uploadedFile = e.dataTransfer.files?.[0];
+                        if (!uploadedFile) return;
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const resultString = event.target?.result as string;
+                          if (resultString) {
+                            setJsonStringInput(resultString);
+                            handleImportWorkflowJSON(resultString);
+                          }
+                        };
+                        reader.readAsText(uploadedFile);
+                      };
+
+                      return (
+                        <label 
+                          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                          onDragLeave={() => setIsDragging(false)}
+                          onDrop={handleDrop}
+                          className={`w-full bg-slate-900 border p-5 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer group transition-all duration-300 ${
+                            isDragging 
+                              ? 'border-teal-500 bg-teal-500/15 scale-105 ring-2 ring-teal-500/30' 
+                              : 'border-slate-800 hover:border-teal-900/60'
+                          }`}
+                        >
+                          <Upload size={22} className={`transition-transform duration-300 ${isDragging ? 'text-teal-300 scale-110 animate-bounce' : 'text-teal-400 group-hover:scale-110'}`} />
+                          <span className={`text-[10.5px] font-bold transition-colors ${isDragging ? 'text-teal-200' : 'text-slate-400 group-hover:text-teal-300'}`}>
+                            {isDragging ? 'Drop File Here Now!' : 'Select or Drop Exported .JSON'}
+                          </span>
+                          <input 
+                            type="file" 
+                            accept=".json"
+                            className="hidden" 
+                            onChange={(e) => {
+                              const uploadedFile = e.target.files?.[0];
+                              if (!uploadedFile) return;
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                const resultString = event.target?.result as string;
+                                if (resultString) {
+                                  setJsonStringInput(resultString);
+                                  handleImportWorkflowJSON(resultString);
+                                }
+                              };
+                              reader.readAsText(uploadedFile);
+                            }}
+                          />
+                        </label>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
