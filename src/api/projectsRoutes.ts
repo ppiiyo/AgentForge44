@@ -7,6 +7,7 @@ import { db, tables } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 import { requireRole } from './authRoutes.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -127,10 +128,10 @@ router.get('/projects', async (req: Request, res: Response) => {
                   tenantId: workspaceId,
                   createdAt: record.createdAt
                 });
-                console.log(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" for workspace "${workspaceId}"`);
+                logger.info(`[Self-Heal] Auto-seeded filesystem graph "${record.id}" for workspace "${workspaceId}"`);
               }
             } catch (seedErr: any) {
-              console.warn(`[Self-Heal] Auto-seeding failed for "${record.id}":`, seedErr.message);
+              logger.warn(`[Self-Heal] Auto-seeding failed for "${record.id}": ${seedErr.message}`);
             }
 
             projectsList.push({
@@ -220,15 +221,19 @@ router.post('/projects', requireRole(['editor', 'owner']), validateBody(GraphSav
       console.warn("Database storage failed, falling back only to filesystem write:", dbErr.message);
     }
 
-    // 3. Dual-Write to disk layout for persistent backup
-    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
-    const payload = {
-      name: safeName,
-      nodes: nodes || [],
-      connections: connections || [],
-      savedAt: new Date().toISOString()
-    };
-    await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+    // 3. Dual-Write to disk layout for persistent backup (non-blocking for stateless/ephemeral runtimes)
+    try {
+      const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+      const payload = {
+        name: safeName,
+        nodes: nodes || [],
+        connections: connections || [],
+        savedAt: new Date().toISOString()
+      };
+      await fsPromises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+    } catch (fsErr: any) {
+      console.warn(`[Stateless FS] Failed to write local filesystem backup for "${safeName}":`, fsErr.message);
+    }
 
     res.json({ success: true, name: safeName, message: "Project saved successfully!" });
   } catch (err: any) {
@@ -264,14 +269,17 @@ router.delete('/projects/:name', requireRole(['editor', 'owner']), async (req: R
       console.warn("Database deletion failed, proceeding with filesystem removal:", dbErr.message);
     }
 
-    // 2. Delete file
-    const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
-    if (fs.existsSync(filePath)) {
-      await fsPromises.unlink(filePath);
-      res.json({ success: true, message: `Project ${safeName} has been deleted.` });
-    } else {
-      res.json({ success: true, message: `Completed deletion operations for ${safeName}.` });
+    // 2. Delete file (non-blocking for stateless/ephemeral runtimes)
+    try {
+      const filePath = path.join(PROJECTS_DIR, `${safeName}.json`);
+      if (fs.existsSync(filePath)) {
+        await fsPromises.unlink(filePath);
+      }
+    } catch (fsErr: any) {
+      console.warn(`[Stateless FS] Failed to unlink local filesystem backup for "${safeName}":`, fsErr.message);
     }
+
+    res.json({ success: true, message: `Project ${safeName} has been deleted successfully.` });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

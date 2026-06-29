@@ -8,6 +8,7 @@ import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 import { db, tables } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 import { requireRole } from './authRoutes.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 const PROJECTS_DIR = path.join(process.cwd(), 'projects');
@@ -217,9 +218,9 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
           tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
-        console.log(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database workspace "${workspaceId}".`);
+        logger.info(`[Self-Heal] Successfully migrated requested graph "${safeName}" to SQL database workspace "${workspaceId}".`);
       } catch (migrateErr: any) {
-        console.warn(`[Self-Heal] Failed to auto-migrate graph "${safeName}" to SQL database:`, migrateErr.message);
+        logger.warn(`[Self-Heal] Failed to auto-migrate graph "${safeName}" to SQL database: ${migrateErr.message}`);
       }
 
       res.json({

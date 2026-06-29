@@ -136,5 +136,33 @@ describe('=== Phase 1: Authentication & Authorization Guard Enforcement ===', ()
       expect(decoded.id).toBe('user-a');
       expect(decoded.email).toBe('user-a@test.com');
     });
+
+    it('should revoke a token upon calling logout, blocking subsequent authenticated requests', async () => {
+      const payload = { id: 'user-logout-test', email: 'logout-test@test.com', role: 'editor' };
+      const token = signToken(payload);
+
+      // Verify the token works initially
+      const decodedBefore = verifyToken(token);
+      expect(decodedBefore).not.toBeNull();
+
+      // Make a dummy request to /api/auth/me to verify it allows entry
+      const resMeBefore = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resMeBefore.status).toBe(200);
+
+      // Call logout with the token
+      const resLogout = await request(app)
+        .post('/api/auth/logout')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resLogout.status).toBe(200);
+
+      // Subsequent requests with the token should be blocked with 401
+      const resMeAfter = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resMeAfter.status).toBe(401);
+      expect(resMeAfter.body.error).toContain('revoked');
+    });
   });
 });

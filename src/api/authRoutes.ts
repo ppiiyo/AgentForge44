@@ -28,7 +28,7 @@ export function authMiddleware(req: express.Request, res: express.Response, next
     const apiKeyBuffer = Buffer.from(API_KEY);
     if (tokenBuffer.length === apiKeyBuffer.length) {
       if (crypto.timingSafeEqual(tokenBuffer, apiKeyBuffer)) {
-        (req as any).user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
+        req.user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
         next();
         return;
       }
@@ -42,7 +42,23 @@ export function authMiddleware(req: express.Request, res: express.Response, next
     return;
   }
 
-  (req as any).user = decoded;
+  if (decoded.jti) {
+    cache.get(`blacklist:jti:${decoded.jti}`).then((blacklisted) => {
+      if (blacklisted) {
+        res.status(401).json({ success: false, error: 'Unauthorized: Token has been revoked' });
+        return;
+      }
+      req.user = decoded;
+      next();
+    }).catch((err) => {
+      logger.error('Error checking token blacklist:', err);
+      req.user = decoded;
+      next();
+    });
+    return;
+  }
+
+  req.user = decoded;
   next();
 }
 
@@ -50,12 +66,12 @@ export function authMiddleware(req: express.Request, res: express.Response, next
 export function requireRole(allowedRoles: string[]) {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Service-account bypass
-    if ((req as any).user?.role === 'admin') {
+    if (req.user?.role === 'admin') {
       next();
       return;
     }
 
-    const workspaceRole = (req as any).workspaceRole;
+    const workspaceRole = req.workspaceRole;
 
     if (!workspaceRole) {
       res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
@@ -81,7 +97,7 @@ const USER_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const USER_LIMIT_MAX = 100; // Max 100 requests per user per minute
 
 export async function userRateLimiter(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
-  const user = (req as any).user;
+  const user = req.user;
   let clientIp = req.ip;
   if (!clientIp && req.headers['x-forwarded-for']) {
     const forwardedFor = req.headers['x-forwarded-for'];
@@ -142,7 +158,25 @@ router.post('/auth/login', async (req: express.Request, res: express.Response) =
   }
 });
 
-router.post('/auth/logout', (req: express.Request, res: express.Response) => {
+router.post('/auth/logout', async (req: express.Request, res: express.Response) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (token) {
+      const decoded = verifyToken(token);
+      if (decoded && decoded.jti) {
+        const now = Math.floor(Date.now() / 1000);
+        const exp = decoded.exp || (now + 86400);
+        const ttlSeconds = Math.max(1, exp - now);
+        try {
+          await cache.set(`blacklist:jti:${decoded.jti}`, 'true', ttlSeconds);
+          logger.info(`Token JTI ${decoded.jti} revoked on logout. TTL: ${ttlSeconds}s`);
+        } catch (err: any) {
+          logger.error('Failed to blacklist JTI in Redis:', err);
+        }
+      }
+    }
+  }
   res.json({ success: true, message: 'Logged out successfully' });
 });
 

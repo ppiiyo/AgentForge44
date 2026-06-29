@@ -16,7 +16,7 @@
 
 <p>
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-<img src="https://img.shields.io/badge/React_18-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
+<img src="https://img.shields.io/badge/React_18%2F19-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React 18/19" />
 <img src="https://img.shields.io/badge/Node.js_18+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
 <img src="https://img.shields.io/badge/Express_4/5-000000?style=flat-square&logo=express&logoColor=white" alt="Express" />
 <img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat-square&logoColor=black" alt="Drizzle ORM" />
@@ -203,7 +203,28 @@ Key environment variables available (defined in [`.env.example`](./.env.example)
 
 Detailed OpenAPI specifications are available at **`GET /api-docs`**.
 
-### 1. Save or Update Workflow Graph (`POST /api/graphs`)
+### 1. User Registration (`POST /api/auth/register`)
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@agentforge.ai",
+    "password": "SecurePassword123!",
+    "role": "editor"
+  }'
+```
+
+### 2. User Login (`POST /api/auth/login`)
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "developer@agentforge.ai",
+    "password": "SecurePassword123!"
+  }'
+```
+
+### 3. Save or Update Workflow Graph (`POST /api/graphs`)
 ```bash
 curl -X POST http://localhost:3000/api/graphs \
   -H "Content-Type: application/json" \
@@ -222,16 +243,23 @@ curl -X POST http://localhost:3000/api/graphs \
   }'
 ```
 
-### 2. Execute Orchestrated Pipeline (`POST /api/execute`)
+### 4. Execute Orchestrated Pipeline (`POST /api/execute`)
 ```bash
 curl -X POST http://localhost:3000/api/execute \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
   -d '{
     "graphId": "translation-validator",
     "inputs": {
       "input_text": "Good morning, developers!"
     }
   }'
+```
+
+### 5. User Logout & Session Revocation (`POST /api/auth/logout`)
+```bash
+curl -X POST http://localhost:3000/api/auth/logout \
+  -H "Authorization: Bearer <JWT_TOKEN>"
 ```
 
 ---
@@ -250,6 +278,10 @@ curl -X POST http://localhost:3000/api/execute \
 2. **Secret Cleanser**: Recursively scrubs payloads before saving execution logs, masking sensitive keys (e.g. `api_key`, `jwt_token`) into secure placeholder flags.
 3. **ReDoS Defense**: Hardened regular expression validators block catastrophic backtracking scenarios inside Router rule sets.
 4. **Isolated VM Sandbox**: External scripts inside Tool nodes are executed in strict CPU/Memory isolated thread boundaries, completely detached from the host filesystem.
+5. **Timing-Safe Key Auditing**: Utilizes constant-time buffer comparisons (`crypto.timingSafeEqual`) for master API-key checks to completely mitigate side-channel timing analysis attacks.
+6. **Strict Role Priority Guard**: Hardened Express hierarchical role verification, enforcing rigid permission hierarchies and preventing role-escalation bypasses.
+7. **Stateless Token Revocation (JTI Blacklist)**: Standard JWT token handling with JTI (JWT ID) checking against a centralized Redis cache blacklist, ensuring instantaneous token revocation on user logout.
+8. **Stateless Cloud-Native Projects**: Decoupled filesystem directory write blockages, making the core database the absolute single source of truth for seamless elastic scaling.
 
 ---
 

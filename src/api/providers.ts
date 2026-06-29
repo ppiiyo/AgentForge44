@@ -5,6 +5,7 @@ import { logger } from "../utils/logger.js";
 import { traceSpan } from "../services/tracing.js";
 import { llmCallCounter, llmCallDuration } from "../services/metrics.js";
 import { retryWithBackoff } from "../utils/retry.js";
+import { DEFAULT_MODELS, PROVIDER_MODELS } from "../config/models.js";
 
 export interface LLMCallConfig {
   temperature?: number;
@@ -126,9 +127,17 @@ export class GeminiProvider extends LLMProvider {
   private ai: GoogleGenAI;
   private model: string;
 
-  constructor(apiKey: string, model: string = "gemini-3.5-flash") {
+  constructor(apiKey: string, model: string = DEFAULT_MODELS.gemini) {
     super();
     this.apiKey = apiKey;
+    
+    // Ensure the model is in the allowed registry or fall back gracefully
+    const allowed = PROVIDER_MODELS.gemini.allowed;
+    if (!allowed.includes(model)) {
+      logger.warn(`Model "${model}" not recognized by Gemini provider registry. Falling back to default "${DEFAULT_MODELS.gemini}".`);
+      model = DEFAULT_MODELS.gemini;
+    }
+
     this.ai = new GoogleGenAI({ apiKey });
     this.model = model;
   }
@@ -218,9 +227,17 @@ export class OpenAIProvider extends LLMProvider {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string, model: string = "gpt-4o-mini") {
+  constructor(apiKey: string, model: string = DEFAULT_MODELS.openai) {
     super();
     this.apiKey = apiKey;
+
+    // Ensure the model is in the allowed registry or fall back gracefully
+    const allowed = PROVIDER_MODELS.openai.allowed;
+    if (!allowed.includes(model)) {
+      logger.warn(`Model "${model}" not recognized by OpenAI provider registry. Falling back to default "${DEFAULT_MODELS.openai}".`);
+      model = DEFAULT_MODELS.openai;
+    }
+
     this.model = model;
   }
 
@@ -306,9 +323,17 @@ export class AnthropicProvider extends LLMProvider {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string, model: string = "claude-3-5-sonnet-latest") {
+  constructor(apiKey: string, model: string = DEFAULT_MODELS.anthropic) {
     super();
     this.apiKey = apiKey;
+
+    // Ensure the model is in the allowed registry or fall back gracefully
+    const allowed = PROVIDER_MODELS.anthropic.allowed;
+    if (!allowed.includes(model)) {
+      logger.warn(`Model "${model}" not recognized by Anthropic provider registry. Falling back to default "${DEFAULT_MODELS.anthropic}".`);
+      model = DEFAULT_MODELS.anthropic;
+    }
+
     this.model = model;
   }
 
@@ -376,9 +401,17 @@ export class OllamaProvider extends LLMProvider {
   private host: string;
   private model: string;
 
-  constructor(host: string = "http://localhost:11434", model: string = "llama3") {
+  constructor(host: string = "http://localhost:11434", model: string = DEFAULT_MODELS.ollama) {
     super();
     this.host = host;
+
+    // Ensure the model is in the allowed registry or fall back gracefully
+    const allowed = PROVIDER_MODELS.ollama.allowed;
+    if (!allowed.includes(model)) {
+      logger.warn(`Model "${model}" not recognized by Ollama provider registry. Falling back to default "${DEFAULT_MODELS.ollama}".`);
+      model = DEFAULT_MODELS.ollama;
+    }
+
     this.model = model;
   }
 
