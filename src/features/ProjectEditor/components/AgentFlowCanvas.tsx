@@ -21,6 +21,38 @@ import {
 import { FlowNode, FlowConnection } from '../../../types';
 import { useUIStore } from '../../../store/useUIStore';
 
+// Helper functions to check if a line segment intersects a bounding box
+function intersectSegments(
+  px1: number, py1: number, px2: number, py2: number,
+  qx1: number, qy1: number, qx2: number, qy2: number
+): boolean {
+  const det = (px2 - px1) * (qy2 - qy1) - (py2 - py1) * (qx2 - qx1);
+  if (det === 0) return false; // Parallel
+
+  const lambda = ((qy2 - qy1) * (qx2 - px1) + (qx1 - qx2) * (qy2 - py1)) / det;
+  const gamma = ((py1 - py2) * (qx2 - px1) + (px2 - px1) * (qy2 - py1)) / det;
+
+  return (0 <= lambda && lambda <= 1) && (0 <= gamma && gamma <= 1);
+}
+
+function checkLineBoxIntersection(
+  x1: number, y1: number,
+  x2: number, y2: number,
+  rx: number, ry: number, rw: number, rh: number
+): boolean {
+  // Check if either endpoint is inside the box
+  if (x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) return true;
+  if (x2 >= rx && x2 <= rx + rw && y2 >= ry && y2 <= ry + rh) return true;
+
+  // Check line segment intersection with the 4 boundaries of the box
+  const left = intersectSegments(x1, y1, x2, y2, rx, ry, rx, ry + rh);
+  const right = intersectSegments(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh);
+  const top = intersectSegments(x1, y1, x2, y2, rx, ry, rx + rw, ry);
+  const bottom = intersectSegments(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh);
+
+  return left || right || top || bottom;
+}
+
 interface AgentFlowCanvasProps {
   currentLang: 'en' | 'ru' | 'zh';
   nodes: FlowNode[];
@@ -346,25 +378,54 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
 
   // Convert our connections to ReactFlow edges
   const reactFlowEdges = useMemo<Edge[]>(() => {
-    return connections.map((c) => ({
-      id: c.id,
-      source: c.sourceId,
-      target: c.targetId,
-      sourceHandle: 'output',
-      targetHandle: 'input',
-      animated: isRunning,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        width: 14,
-        height: 14,
-        color: isRunning ? '#10b981' : '#475569',
-      },
-      style: { 
-        stroke: isRunning ? '#10b981' : '#475569', 
-        strokeWidth: 2,
-      },
-    }));
-  }, [connections, isRunning]);
+    return connections.map((c) => {
+      const sourceNode = nodes.find(n => n.id === c.sourceId);
+      const targetNode = nodes.find(n => n.id === c.targetId);
+
+      let edgeType: 'bezier' | 'smoothstep' | 'straight' = 'bezier';
+
+      if (sourceNode && targetNode) {
+        // Approximate visual boundaries of our cards: width ~240px, height ~160px
+        const cardWidth = 240;
+        const cardHeight = 165;
+
+        // Check if a line from source center to target center intersects with any other node's box
+        const hasOverlap = nodes.some(n => {
+          if (n.id === c.sourceId || n.id === c.targetId) return false;
+          return checkLineBoxIntersection(
+            sourceNode.x + cardWidth / 2, sourceNode.y + cardHeight / 2,
+            targetNode.x + cardWidth / 2, targetNode.y + cardHeight / 2,
+            n.x, n.y, cardWidth, cardHeight
+          );
+        });
+
+        if (hasOverlap) {
+          edgeType = 'smoothstep';
+        }
+      }
+
+      return {
+        id: c.id,
+        source: c.sourceId,
+        target: c.targetId,
+        type: edgeType,
+        sourceHandle: 'output',
+        targetHandle: 'input',
+        animated: isRunning,
+        pathOptions: edgeType === 'smoothstep' ? { borderRadius: 16, offset: 35 } : undefined,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 14,
+          height: 14,
+          color: isRunning ? '#10b981' : '#475569',
+        },
+        style: { 
+          stroke: isRunning ? '#10b981' : '#475569', 
+          strokeWidth: 2,
+        },
+      };
+    });
+  }, [connections, nodes, isRunning]);
 
   // Handle connection events
   const onConnectCallback = useCallback((params: Connection) => {

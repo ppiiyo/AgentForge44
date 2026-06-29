@@ -110,6 +110,44 @@ export function useAgentApp() {
   const currentSavedProjectName = usePipelineStore((state) => state.currentSavedProjectName);
   const setCurrentSavedProjectName = usePipelineStore((state) => state.setCurrentSavedProjectName);
 
+  // Debounced auto-save effect
+  const isFirstMount = useRef(true);
+  const [autoSavingStatus, setAutoSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
+    setAutoSavingStatus('saving');
+    const handler = setTimeout(async () => {
+      try {
+        const name = projectNameInput || 'untitled';
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, nodes, connections })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentSavedProjectName(data.name);
+          setAutoSavingStatus('saved');
+          setTimeout(() => {
+            setAutoSavingStatus(prev => prev === 'saved' ? 'idle' : prev);
+          }, 2500);
+        } else {
+          setAutoSavingStatus('failed');
+        }
+      } catch (err) {
+        console.error("Auto-saving failed:", err);
+        setAutoSavingStatus('failed');
+      }
+    }, 2000);
+
+    return () => clearTimeout(handler);
+  }, [nodes, connections]);
+
   // Sub-tabs configurations
   const [codeDisplayType, setCodeDisplayType] = useState<'compiled' | 'client'>('compiled');
   const [currentView, setCurrentView] = useState<'editor' | 'dashboard' | 'settings'>('editor');
@@ -1208,6 +1246,7 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
     serverProjects, setServerProjects,
     loadingProjects, setLoadingProjects,
     savingProject, setSavingProject,
+    autoSavingStatus, setAutoSavingStatus,
     projectNameInput, setProjectNameInput,
     currentSavedProjectName, setCurrentSavedProjectName,
     codeDisplayType, setCodeDisplayType,

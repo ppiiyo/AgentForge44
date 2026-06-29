@@ -244,6 +244,7 @@ export default function App() {
           onProjectNameInputChange={app.setProjectNameInput}
           onSaveProject={() => app.handleSaveProjectToServer(app.projectNameInput)}
           savingProject={app.savingProject}
+          autoSavingStatus={app.autoSavingStatus}
           onRunPipeline={app.handleRunPipeline}
           isRunning={app.isRunning}
           onAutoAlign={app.handleAutoAlignNodes}

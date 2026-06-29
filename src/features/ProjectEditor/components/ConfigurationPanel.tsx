@@ -216,6 +216,14 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             </div>
           </div>
 
+          <div className="bg-slate-950/40 border border-slate-850 p-2.5 rounded-xl text-[10px] text-slate-400 leading-relaxed mb-1 animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-1.5 font-bold text-sky-400 mb-1">
+              <Info size={11} className="shrink-0" />
+              <span>{currentLang === 'ru' ? "Справка по Блоку" : currentLang === 'zh' ? "快速使用手册" : "Quick Guide"}</span>
+            </div>
+            <p className="font-semibold text-slate-300 leading-snug">{node.description}</p>
+          </div>
+
           <div className={`space-y-3.5 ${isLockedByOther ? 'pointer-events-none opacity-40' : ''}`}>
             {/* Isolated Dry Run Sandbox Trigger */}
             <div className="bg-slate-950/40 border border-slate-850 p-2.5 rounded-xl space-y-2">

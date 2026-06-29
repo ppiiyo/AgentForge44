@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Sparkles, Play, Database, Workflow, Check, Layers, RefreshCw, RefreshCcw, 
-  HelpCircle, Settings, Download, Upload, Globe, LayoutGrid
+  HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
 
@@ -13,6 +13,7 @@ interface AppHeaderProps {
   onProjectNameInputChange: (val: string) => void;
   onSaveProject: () => void;
   savingProject: boolean;
+  autoSavingStatus?: 'idle' | 'saving' | 'saved' | 'failed';
   onRunPipeline: () => void;
   isRunning: boolean;
   onAutoAlign: () => void;
@@ -29,6 +30,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onProjectNameInputChange,
   onSaveProject,
   savingProject,
+  autoSavingStatus = 'idle',
   onRunPipeline,
   isRunning,
   onAutoAlign,
@@ -82,6 +84,35 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
       {/* Project controls and triggers */}
       <div className="flex items-center space-x-2.5">
+        {autoSavingStatus && autoSavingStatus !== 'idle' && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950/40 rounded-xl border border-slate-855 text-[10px] font-bold font-mono transition-all animate-[fadeIn_0.3s_ease-out]">
+            {autoSavingStatus === 'saving' && (
+              <>
+                <RefreshCw size={11} className="text-sky-400 animate-spin" />
+                <span className="text-sky-400 animate-pulse">
+                  {currentLang === 'ru' ? "Автосохранение..." : currentLang === 'zh' ? "自动保存中..." : "Auto-saving..."}
+                </span>
+              </>
+            )}
+            {autoSavingStatus === 'saved' && (
+              <>
+                <Check size={11} className="text-emerald-400" />
+                <span className="text-emerald-400">
+                  {currentLang === 'ru' ? "Сохранено" : currentLang === 'zh' ? "保存完毕" : "Changes saved"}
+                </span>
+              </>
+            )}
+            {autoSavingStatus === 'failed' && (
+              <>
+                <X size={11} className="text-rose-450" />
+                <span className="text-rose-450">
+                  {currentLang === 'ru' ? "Ошибка" : currentLang === 'zh' ? "保存失败" : "Save failed"}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="hidden md:flex items-center space-x-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-850">
           <input
             type="text"
