@@ -1,7 +1,63 @@
 import dns from 'dns';
 import { promisify } from 'util';
 
-const dnsLookup = promisify(dns.lookup);
+const dnsCache = new Map<string, { ip: string; expiresAt: number }>();
+
+function cacheIp(hostname: string, ip: string, ttlMs: number = 60000): void {
+  dnsCache.set(hostname.toLowerCase(), {
+    ip,
+    expiresAt: Date.now() + ttlMs
+  });
+}
+
+function getCachedIp(hostname: string): string | null {
+  const entry = dnsCache.get(hostname.toLowerCase());
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    dnsCache.delete(hostname.toLowerCase());
+    return null;
+  }
+  return entry.ip;
+}
+
+const originalLookup = dns.lookup;
+const dnsLookup = promisify(originalLookup);
+
+// @ts-ignore
+dns.lookup = function(hostname, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  
+  if (typeof hostname === 'string') {
+    const cachedIp = getCachedIp(hostname);
+    if (cachedIp) {
+      const family = cachedIp.includes(':') ? 6 : 4;
+      if (options && (options as any).all) {
+        return callback(null, [{ address: cachedIp, family }], family);
+      }
+      return callback(null, cachedIp, family);
+    }
+  }
+  
+  return originalLookup(hostname, options, callback);
+};
+
+const originalPromisesLookup = dns.promises.lookup;
+dns.promises.lookup = async function(hostname: string, options?: any): Promise<any> {
+  if (typeof hostname === 'string') {
+    const cachedIp = getCachedIp(hostname);
+    if (cachedIp) {
+      const family = cachedIp.includes(':') ? 6 : 4;
+      if (options && options.all) {
+        return [{ address: cachedIp, family }];
+      }
+      return { address: cachedIp, family };
+    }
+  }
+  return originalPromisesLookup(hostname, options);
+} as any;
 
 /**
  * Checks if an IP address belongs to blocklisted private ranges.
@@ -42,6 +98,9 @@ export function isPrivateIP(ip: string): boolean {
 
     // Class A Private (10.0.0.0/8)
     if (o1 === 10) return true;
+
+    // CGNAT (100.64.0.0/10)
+    if (o1 === 100 && o2 >= 64 && o2 <= 127) return true;
 
     // Class B Private (172.16.0.0/12)
     if (o1 === 172 && o2 >= 16 && o2 <= 31) return true;
@@ -147,6 +206,8 @@ export async function validateURLForSSRF(urlInput: string): Promise<boolean> {
           return false; // Resolves to a private IP -> SSRF detected!
         }
       }
+      // Pin IP address to prevent TOCTOU / DNS Rebinding
+      cacheIp(host, lookupResult[0].address);
     } catch {
       // If we can't resolve the hostname, block it for safety or let it fail
       if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
@@ -220,6 +281,8 @@ export async function validateUrl(url: string): Promise<void> {
           throw new Error(`SSRF attempt blocked: ${url}`);
         }
       }
+      // Pin IP address to prevent TOCTOU / DNS Rebinding
+      cacheIp(host, lookupResult[0].address);
     }
   } catch (err: any) {
     if (err.message && err.message.startsWith('SSRF attempt blocked:')) {

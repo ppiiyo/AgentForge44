@@ -85,7 +85,7 @@ import { eq, and } from 'drizzle-orm';
 /**
  * 2. Enterprise Workspaces & Role-Based Access Control (RBAC) definitions
  */
-export type UserRole = 'owner' | 'editor' | 'viewer';
+export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
 export interface RBACWorkspace {
   id: string;
@@ -186,6 +186,7 @@ export class RBACManager {
 
     const rolesPriority: Record<UserRole, number> = {
       'owner': 3,
+      'admin': 3,
       'editor': 2,
       'viewer': 1
     };
@@ -205,6 +206,7 @@ export class RBACManager {
 
     const rolesPriority: Record<UserRole, number> = {
       'owner': 3,
+      'admin': 3,
       'editor': 2,
       'viewer': 1
     };

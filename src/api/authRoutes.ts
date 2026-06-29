@@ -79,7 +79,12 @@ const USER_LIMIT_MAX = 100; // Max 100 requests per user per minute
 
 export function userRateLimiter(req: express.Request, res: express.Response, next: express.NextFunction): void {
   const user = (req as any).user;
-  const key = user ? user.id : (req.ip || 'unknown');
+  let clientIp = req.ip;
+  if (!clientIp && req.headers['x-forwarded-for']) {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    clientIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim();
+  }
+  const key = user ? user.id : (clientIp || 'unknown');
   
   const now = Date.now();
   const limit = userRateLimits[key];

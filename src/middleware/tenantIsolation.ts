@@ -60,6 +60,8 @@ export async function enterpriseTenantContext(
       }
     }
 
+    const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+
     // 2. Resolve active workspace ID
     const wsHeader = (req.headers['x-workspace-id'] || req.headers['x-tenant-id']) as string | undefined;
     let wsId = wsHeader;
@@ -68,13 +70,23 @@ export async function enterpriseTenantContext(
       // Ensure the user exists in the database to satisfy foreign key constraints
       const userRows = await db.select().from(tables.users).where(eq(tables.users.id, userId)).limit(1);
       if (userRows.length === 0) {
-        await db.insert(tables.users).values({
-          id: userId,
-          email: (req as any).user?.email || `${userId}@test.com`,
-          passwordHash: 'auto-bootstrapped',
-          role: (req as any).user?.role || 'editor',
-          createdAt: new Date().toISOString()
-        });
+        if (isTestEnv) {
+          await db.insert(tables.users).values({
+            id: userId,
+            email: (req as any).user?.email || `${userId}@test.com`,
+            passwordHash: 'auto-bootstrapped',
+            role: (req as any).user?.role || 'editor',
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          res.status(401).json({ success: false, error: 'Unauthorized: User does not exist.' });
+          return;
+        }
+      } else {
+        // Always override role from database to prevent JWT-based privilege escalation
+        if ((req as any).user) {
+          (req as any).user.role = userRows[0].role;
+        }
       }
 
       if (!wsId) {
