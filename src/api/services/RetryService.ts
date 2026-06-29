@@ -95,7 +95,15 @@ export async function generateWithRetry(
   delayMs = 1500
 ): Promise<RetryResult> {
   const apiKey = process.env.GEMINI_API_KEY || "";
-  const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here" || process.env.DEMO_MODE === "true";
+  const isExplicitSandbox = apiKey && apiKey.startsWith("sandbox_");
+  const isPlaceholderKey = apiKey === "your_gemini_api_key_here";
+  const isDemoMode = process.env.DEMO_MODE === "true";
+
+  const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey;
+
+  if (!apiKey && !isDemoMode) {
+    throw new Error('GEMINI_API_KEY is not configured');
+  }
 
   if (isSandbox) {
     return generateSimulatedResponse(model, contents);

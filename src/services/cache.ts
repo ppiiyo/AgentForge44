@@ -97,8 +97,72 @@ export class CacheService {
     memoryCache.delete(key);
   }
 
+  async incr(key: string, ttlSeconds?: number): Promise<number> {
+    if (this.redis && this.isRedisConnected) {
+      try {
+        const val = await this.redis.incr(key);
+        if (ttlSeconds !== undefined && val === 1) {
+          await this.redis.expire(key, ttlSeconds);
+        }
+        return val;
+      } catch (err: any) {
+        logger.warn(`[Redis] 'incr' failed: ${err.message}. Fallback to memory.`);
+      }
+    }
+
+    const entry = memoryCache.get(key);
+    const now = Date.now();
+    let val = 1;
+    let expiresAt = now + (ttlSeconds ? ttlSeconds * 1000 : 3600 * 1000);
+    if (entry && now < entry.expiresAt) {
+      val = parseInt(entry.val, 10) + 1;
+      expiresAt = entry.expiresAt;
+    }
+    memoryCache.set(key, {
+      val: String(val),
+      expiresAt
+    });
+    return val;
+  }
+
+  async incrBy(key: string, amount: number, ttlSeconds?: number): Promise<number> {
+    if (this.redis && this.isRedisConnected) {
+      try {
+        const val = await this.redis.incrby(key, amount);
+        if (ttlSeconds !== undefined && val === amount) {
+          await this.redis.expire(key, ttlSeconds);
+        }
+        return val;
+      } catch (err: any) {
+        logger.warn(`[Redis] 'incrby' failed: ${err.message}. Fallback to memory.`);
+      }
+    }
+
+    const entry = memoryCache.get(key);
+    const now = Date.now();
+    let val = amount;
+    let expiresAt = now + (ttlSeconds ? ttlSeconds * 1000 : 3600 * 1000);
+    if (entry && now < entry.expiresAt) {
+      val = parseInt(entry.val, 10) + amount;
+      expiresAt = entry.expiresAt;
+    }
+    memoryCache.set(key, {
+      val: String(val),
+      expiresAt
+    });
+    return val;
+  }
+
   clearLocalCache() {
     memoryCache.clear();
+  }
+
+  getRedisClient(): Redis | null {
+    return this.redis;
+  }
+
+  getIsRedisConnected(): boolean {
+    return this.isRedisConnected;
   }
 }
 

@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { verifyToken } from '../api/userAuth.js';
 import { db, tables } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
+import { cache } from '../services/cache.js';
 
 export interface TenantContext {
   tenantId: string;
@@ -15,9 +16,7 @@ export interface TenantContext {
   };
 }
 
-// Memory-based local storage fallback simulator for active tenant usage metrics 
-const tenantUsageStore: Record<string, { executionsCount: number; tokensCount: number }> = {};
-
+// Static billing configurations for multi-tenant tiers
 export const TENANT_PLANS: Record<TenantContext['plan'], TenantContext['quotas']> = {
   free: {
     maxWorkflows: 3,
@@ -197,7 +196,7 @@ export async function enterpriseTenantContext(
  * Enforces dynamic resource and execution limits based on subscriber tiers
  */
 export function enforceTenantQuotas(resourceType: 'executions' | 'tokens', amount: number = 1) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const tenant = (req as any).tenant as TenantContext;
     if (!tenant) {
       next();
@@ -205,36 +204,30 @@ export function enforceTenantQuotas(resourceType: 'executions' | 'tokens', amoun
     }
 
     const { tenantId, plan, quotas } = tenant;
-    const usage = tenantUsageStore[tenantId] || { executionsCount: 0, tokensCount: 0 };
+    const key = `quota:tenant:${tenantId}:${resourceType}`;
 
-    if (resourceType === 'executions') {
-      const liveUsage = usage.executionsCount;
-      const limit = quotas.maxExecutions;
-      if (liveUsage + amount > limit) {
-        logger.warn(`Tenant resource quota exceeded: ${tenantId}`, { resourceType, limit, current: liveUsage });
+    try {
+      const currentUsageStr = await cache.get(key);
+      const currentUsage = currentUsageStr ? parseInt(currentUsageStr, 10) : 0;
+      const limit = resourceType === 'executions' ? quotas.maxExecutions : quotas.maxLLMTokens;
+
+      if (currentUsage + amount > limit) {
+        logger.warn(`Tenant resource quota exceeded: ${tenantId}`, { resourceType, limit, current: currentUsage });
         res.status(429).json({
           success: false,
-          error: 'Multi-Tenant Quota Exceeded',
-          message: `Your current ${plan.toUpperCase()} tier allows up to ${limit} executions. Please upgrade to Enterprise.`
+          error: resourceType === 'executions' ? 'Multi-Tenant Quota Exceeded' : 'Token Quota Exceeded',
+          message: resourceType === 'executions'
+            ? `Your current ${plan.toUpperCase()} tier allows up to ${limit} executions. Please upgrade to Enterprise.`
+            : `Your current ${plan.toUpperCase()} tier allows up to ${limit} LLM tokens. Please contact support to increase your allocation.`
         });
         return;
       }
-      usage.executionsCount += amount;
-    } else if (resourceType === 'tokens') {
-      const liveUsage = usage.tokensCount;
-      const limit = quotas.maxLLMTokens;
-      if (liveUsage + amount > limit) {
-        logger.warn(`Tenant resource quota exceeded: ${tenantId}`, { resourceType, limit, current: liveUsage });
-        res.status(429).json({
-          success: false,
-          error: 'Token Quota Exceeded',
-          message: `Your current ${plan.toUpperCase()} tier allows up to ${limit} LLM tokens. Please contact support to increase your allocation.`
-        });
-        return;
-      }
-      usage.tokensCount += amount;
+
+      await cache.incrBy(key, amount, 30 * 24 * 3600); // 30-day window
+      next();
+    } catch (err: any) {
+      logger.error('Error in enforceTenantQuotas:', err);
+      next();
     }
-
-    next();
   };
 }

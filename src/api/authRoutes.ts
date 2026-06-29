@@ -1,6 +1,9 @@
 import express from 'express';
+import crypto from 'crypto';
 import { UserManager, signToken, verifyToken } from './userAuth.js';
 import { logger } from '../utils/logger.js';
+import { rolesPriority } from './rbac.js';
+import { cache } from '../services/cache.js';
 
 const router = express.Router();
 
@@ -20,10 +23,16 @@ export function authMiddleware(req: express.Request, res: express.Response, next
 
   // 1. Check if token is the API Master Key
   const API_KEY = process.env.AGENTFORGE_API_KEY;
-  if (API_KEY && token === API_KEY) {
-    (req as any).user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
-    next();
-    return;
+  if (API_KEY) {
+    const tokenBuffer = Buffer.from(token);
+    const apiKeyBuffer = Buffer.from(API_KEY);
+    if (tokenBuffer.length === apiKeyBuffer.length) {
+      if (crypto.timingSafeEqual(tokenBuffer, apiKeyBuffer)) {
+        (req as any).user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
+        next();
+        return;
+      }
+    }
   }
 
   // 2. Validate JWT Token
@@ -40,28 +49,24 @@ export function authMiddleware(req: express.Request, res: express.Response, next
 // Role restriction middleware
 export function requireRole(allowedRoles: string[]) {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const workspaceRole = (req as any).workspaceRole;
-    const globalRole = (req as any).user?.role;
-    
-    const activeRole = workspaceRole || globalRole;
+    // Service-account bypass
+    if ((req as any).user?.role === 'admin') {
+      next();
+      return;
+    }
 
-    if (!activeRole) {
+    const workspaceRole = (req as any).workspaceRole;
+
+    if (!workspaceRole) {
       res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
       return;
     }
 
-    const rolesPriority: Record<string, number> = {
-      'owner': 3,
-      'admin': 3,
-      'editor': 2,
-      'viewer': 1
-    };
+    const activePriority = rolesPriority[workspaceRole as any] || 0;
+    const requiredPriority = Math.max(...allowedRoles.map(r => rolesPriority[r as any] || 0));
 
-    const activePriority = rolesPriority[activeRole] || 0;
-    const minRequiredPriority = Math.min(...allowedRoles.map(r => rolesPriority[r] || 999));
-
-    const isDirectlyAllowed = allowedRoles.includes(activeRole);
-    const isPriorityAllowed = activePriority >= minRequiredPriority;
+    const isDirectlyAllowed = allowedRoles.includes(workspaceRole);
+    const isPriorityAllowed = activePriority >= requiredPriority;
 
     if (!isDirectlyAllowed && !isPriorityAllowed) {
       res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
@@ -72,39 +77,29 @@ export function requireRole(allowedRoles: string[]) {
   };
 }
 
-// User Rate limiting map
-const userRateLimits: Record<string, { count: number; resetAt: number }> = {};
 const USER_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const USER_LIMIT_MAX = 100; // Max 100 requests per user per minute
 
-export function userRateLimiter(req: express.Request, res: express.Response, next: express.NextFunction): void {
+export async function userRateLimiter(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
   const user = (req as any).user;
   let clientIp = req.ip;
   if (!clientIp && req.headers['x-forwarded-for']) {
     const forwardedFor = req.headers['x-forwarded-for'];
     clientIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim();
   }
-  const key = user ? user.id : (clientIp || 'unknown');
+  const key = `ratelimit:user:${user ? user.id : (clientIp || 'unknown')}`;
   
-  const now = Date.now();
-  const limit = userRateLimits[key];
-
-  if (!limit || now > limit.resetAt) {
-    userRateLimits[key] = {
-      count: 1,
-      resetAt: now + USER_LIMIT_WINDOW
-    };
+  try {
+    const currentCount = await cache.incr(key, USER_LIMIT_WINDOW / 1000);
+    if (currentCount > USER_LIMIT_MAX) {
+      res.status(429).json({ error: 'Too many requests. Please try again later.' });
+      return;
+    }
     next();
-    return;
+  } catch (err: any) {
+    logger.error('Error in userRateLimiter:', err);
+    next();
   }
-
-  limit.count++;
-  if (limit.count > USER_LIMIT_MAX) {
-    res.status(429).json({ error: 'Too many requests. Please try again later.' });
-    return;
-  }
-
-  next();
 }
 
 /**

@@ -96,7 +96,7 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
 
   describe('Require Role tests', () => {
     it('should return 403 if req.user lacks permissions', () => {
-      const req = { user: { id: 'u1', role: 'viewer' } } as any;
+      const req = { workspaceRole: 'viewer' } as any;
       const res = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn(),
@@ -111,9 +111,35 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should call next if role is allowed', () => {
-      const req = { user: { id: 'u1', role: 'editor' } } as any;
+    it('should bypass and set admin if AGENTFORGE_API_KEY matches', () => {
+      const req = { headers: { authorization: 'Bearer fake_secret_token' } } as any;
       const res = {} as any;
+      const next = vi.fn();
+
+      // Temporarily set key
+      const oldKey = process.env.AGENTFORGE_API_KEY;
+      process.env.AGENTFORGE_API_KEY = 'fake_secret_token';
+
+      authMiddleware(req, res, next);
+
+      expect(req.user).toEqual({ id: 'admin', email: 'admin@agentforge.ai', role: 'admin' });
+      expect(next).toHaveBeenCalled();
+
+      // Now verify requireRole permits this admin user bypassing workspaceRole
+      const middleware = requireRole(['admin', 'editor']);
+      const nextRole = vi.fn();
+      middleware(req, res, nextRole);
+      expect(nextRole).toHaveBeenCalled();
+
+      process.env.AGENTFORGE_API_KEY = oldKey;
+    });
+
+    it('should call next if workspaceRole is allowed', () => {
+      const req = { workspaceRole: 'editor' } as any;
+      const res = {
+        status: vi.fn().mockReturnThis(),
+        json: vi.fn()
+      } as any;
       const next = vi.fn();
 
       const middleware = requireRole(['admin', 'editor']);

@@ -136,12 +136,17 @@ export class GeminiProvider extends LLMProvider {
   getName() { return `Gemini (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    const isSandbox = !this.apiKey || 
-                      this.apiKey === "sandbox_free_test_gemini" || 
-                      this.apiKey === "your_gemini_api_key_here" || 
-                      process.env.DEMO_MODE === "true";
+    const isExplicitSandbox = this.apiKey && this.apiKey.startsWith("sandbox_");
+    const isPlaceholderKey = this.apiKey === "your_gemini_api_key_here";
+    const isDemoMode = process.env.DEMO_MODE === "true";
 
-    if (isSandbox && (!this.apiKey || this.apiKey.startsWith("sandbox_") || this.apiKey === "your_gemini_api_key_here" || !process.env.GEMINI_API_KEY)) {
+    const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey;
+
+    if (!this.apiKey && !isDemoMode) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    if (isSandbox && (!this.apiKey || this.apiKey.startsWith("sandbox_") || this.apiKey === "your_gemini_api_key_here" || !process.env.GEMINI_API_KEY || isDemoMode)) {
       const simText = `[Simulated response due to API sandbox limits]\nProcessed prompt text successfully: "${prompt.substring(0, 100)}..." using local simulation layer.`;
       return {
         text: simText,
@@ -222,7 +227,16 @@ export class OpenAIProvider extends LLMProvider {
   getName() { return `OpenAI (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_openai" || this.apiKey === "your_openai_api_key_here" || process.env.DEMO_MODE === "true";
+    const isExplicitSandbox = this.apiKey && this.apiKey.startsWith("sandbox_");
+    const isPlaceholderKey = this.apiKey === "your_openai_api_key_here";
+    const isDemoMode = process.env.DEMO_MODE === "true";
+
+    const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey;
+
+    if (!this.apiKey && !isDemoMode) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
     if (isSandbox) {
       const sandboxText = `[Simulated OpenAI Output - Sandbox Active]\nSuccessfully processed prompt in simulated OpenAI mode: "${prompt.substring(0, 100)}..."`;
       return {
@@ -301,7 +315,16 @@ export class AnthropicProvider extends LLMProvider {
   getName() { return `Anthropic (${this.model})`; }
 
   async _generate(prompt: string, config?: LLMCallConfig): Promise<LLMResponse> {
-    const isSandbox = !this.apiKey || this.apiKey === "sandbox_free_test_anthropic" || this.apiKey === "your_anthropic_api_key_here" || process.env.DEMO_MODE === "true";
+    const isExplicitSandbox = this.apiKey && this.apiKey.startsWith("sandbox_");
+    const isPlaceholderKey = this.apiKey === "your_anthropic_api_key_here";
+    const isDemoMode = process.env.DEMO_MODE === "true";
+
+    const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey;
+
+    if (!this.apiKey && !isDemoMode) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
+    }
+
     if (isSandbox) {
       const sandboxText = `[Simulated Anthropic Output - Sandbox Active]\nProcessed prompt in mock Anthropic Claude mode: "${prompt.substring(0, 100)}..."`;
       return {

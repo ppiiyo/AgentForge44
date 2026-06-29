@@ -36,7 +36,7 @@ describe('Task 2.5 Honest Modes Simulation Suite', () => {
     const provider = new GeminiProvider("real-production-gemini-key", "gemini-3.5-flash");
 
     // Expect it to bubble the error up rather than return a fake simulated string
-    await expect(provider.generate("test prompt")).rejects.toThrow(/429/);
+    await expect(provider.generate("test prompt production 429")).rejects.toThrow(/429/);
   });
 
   it('should return simulated: true and simulated text when in DEMO_MODE upon 429 error', async () => {
@@ -47,18 +47,27 @@ describe('Task 2.5 Honest Modes Simulation Suite', () => {
 
     const provider = new GeminiProvider("real-production-gemini-key", "gemini-3.5-flash");
 
-    const result = await provider.generate("test prompt");
+    const result = await provider.generate("test prompt demo 429");
     expect(result.simulated).toBe(true);
     expect(result.text).toContain("Simulated response");
   });
 
-  it('should return simulated: true and simulated text when using sandbox key', async () => {
+  it('should throw an error when apiKey is empty and DEMO_MODE is false', async () => {
     process.env.GEMINI_API_KEY = "";
     process.env.DEMO_MODE = "false";
 
     const provider = new GeminiProvider("", "gemini-3.5-flash");
 
-    const result = await provider.generate("test prompt");
+    await expect(provider.generate("test prompt empty key")).rejects.toThrow('GEMINI_API_KEY is not configured');
+  });
+
+  it('should return simulated: true and simulated text when using an explicit sandbox key', async () => {
+    process.env.GEMINI_API_KEY = "sandbox_free_test_gemini";
+    process.env.DEMO_MODE = "false";
+
+    const provider = new GeminiProvider("sandbox_free_test_gemini", "gemini-3.5-flash");
+
+    const result = await provider.generate("test prompt explicit sandbox");
     expect(result.simulated).toBe(true);
     expect(result.text).toContain("Simulated response");
   });

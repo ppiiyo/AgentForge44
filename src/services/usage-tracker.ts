@@ -1,5 +1,6 @@
 import { db, tables } from '../db/index.js';
 import { eq, sql } from 'drizzle-orm';
+import { cache } from './cache.js';
 
 // --- SLIDING WINDOW MEMORY DECK ---
 const WINDOW_MS = 60 * 1000; // 1 minute
@@ -11,8 +12,39 @@ const slidingWindowLogs = new Map<string, number[]>();
  * Checks sliding window rate limit for an identifier (IP, userId, or apiKey).
  * Returns true if allowed, false if rate limited.
  */
-export function checkSlidingWindow(key: string, limit: number = MAX_REQUESTS, durationMs: number = WINDOW_MS): boolean {
+export async function checkSlidingWindow(key: string, limit: number = MAX_REQUESTS, durationMs: number = WINDOW_MS): Promise<boolean> {
   const now = Date.now();
+  const client = cache.getRedisClient();
+  const isRedisConnected = cache.getIsRedisConnected();
+
+  if (client && isRedisConnected) {
+    try {
+      const redisKey = `sliding:${key}`;
+      const minScore = now - durationMs;
+      
+      const pipeline = client.pipeline();
+      pipeline.zremrangebyscore(redisKey, '-inf', minScore);
+      pipeline.zcard(redisKey);
+      pipeline.zadd(redisKey, now, String(now));
+      pipeline.expire(redisKey, Math.ceil(durationMs / 1000));
+      
+      const results = await pipeline.exec();
+      if (!results) {
+        return false;
+      }
+      
+      // results[1][1] holds the zcard result before zadd runs or in pipeline sequence
+      const cardResult = results[1][1] as number;
+      if (cardResult >= limit) {
+        await client.zrem(redisKey, String(now));
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      console.error(`[Usage Tracker] Redis sliding window failed: ${err.message}. Falling back to memory.`);
+    }
+  }
+
   if (!slidingWindowLogs.has(key)) {
     slidingWindowLogs.set(key, [now]);
     return true;

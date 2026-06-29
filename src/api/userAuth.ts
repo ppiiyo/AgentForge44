@@ -1,49 +1,20 @@
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import { generateSecureId } from '../utils/idGenerator.js';
 import { SECRETS } from '../config/secrets.js';
 
 export function signToken(payload: any, expiresIn: number = 86400): string {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const exp = Math.floor(Date.now() / 1000) + expiresIn;
-  const fullPayload = { ...payload, exp };
-  
-  const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
-  const base64Payload = Buffer.from(JSON.stringify(fullPayload)).toString('base64url');
-  
-  const signature = crypto
-    .createHmac('sha256', SECRETS.JWT_SECRET)
-    .update(`${base64Header}.${base64Payload}`)
-    .digest('base64url');
-    
-  return `${base64Header}.${base64Payload}.${signature}`;
+  // jsonwebtoken expects the expiration to be expressed as a string or number of seconds/ms
+  // If payload already has 'exp', jsonwebtoken might warn or fail, so we strip any manually injected 'exp' or 'iat' first.
+  const { exp, iat, ...safePayload } = payload;
+  return jwt.sign(safePayload, SECRETS.JWT_SECRET, { expiresIn });
 }
 
 export function verifyToken(token: string): any {
   try {
-    const [header, payload, signature] = token.split('.');
-    if (!header || !payload || !signature) return null;
-    
-    const decodedHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
-    if (decodedHeader.alg !== 'HS256') return null;
-    
-    const expectedSignature = crypto
-      .createHmac('sha256', SECRETS.JWT_SECRET)
-      .update(`${header}.${payload}`)
-      .digest('base64url');
-      
-    const sigBuffer = Buffer.from(signature, 'base64url');
-    const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
-    
-    if (sigBuffer.length !== expectedBuffer.length) return null;
-    if (!crypto.timingSafeEqual(sigBuffer, expectedBuffer)) return null;
-    
-    const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
-      return null; // Expired
-    }
-    return decodedPayload;
+    return jwt.verify(token, SECRETS.JWT_SECRET);
   } catch {
     return null;
   }

@@ -133,41 +133,41 @@ describe('=== Phase 1: Security Hardening Suite ===', () => {
   });
 
   describe('4. Rate Limiting slidingWindow Sub-suite (5+ Tests)', () => {
-    it('1. should allow multiple requests within default threshold bounds', () => {
+    it('1. should allow multiple requests within default threshold bounds', async () => {
       const key = `user-id-${Date.now()}`;
-      expect(checkSlidingWindow(key, 5, 1000)).toBe(true);
-      expect(checkSlidingWindow(key, 5, 1000)).toBe(true);
+      expect(await checkSlidingWindow(key, 5, 1000)).toBe(true);
+      expect(await checkSlidingWindow(key, 5, 1000)).toBe(true);
     });
 
-    it('2. should reject when sliding limit threshold is explicitly reached', () => {
+    it('2. should reject when sliding limit threshold is explicitly reached', async () => {
       const key = `client-ip-${Date.now()}`;
-      expect(checkSlidingWindow(key, 2, 1000)).toBe(true);
-      expect(checkSlidingWindow(key, 2, 1000)).toBe(true);
-      expect(checkSlidingWindow(key, 2, 1000)).toBe(false); // 3rd must fail
+      expect(await checkSlidingWindow(key, 2, 1000)).toBe(true);
+      expect(await checkSlidingWindow(key, 2, 1000)).toBe(true);
+      expect(await checkSlidingWindow(key, 2, 1000)).toBe(false); // 3rd must fail
     });
 
-    it('3. should maintain isolated count contexts for distinct resource keys', () => {
+    it('3. should maintain isolated count contexts for distinct resource keys', async () => {
       const keyA = `resource-a-${Date.now()}`;
       const keyB = `resource-b-${Date.now()}`;
-      expect(checkSlidingWindow(keyA, 1, 1000)).toBe(true);
-      expect(checkSlidingWindow(keyB, 1, 1000)).toBe(true);
+      expect(await checkSlidingWindow(keyA, 1, 1000)).toBe(true);
+      expect(await checkSlidingWindow(keyB, 1, 1000)).toBe(true);
     });
 
-    it('4. should reset sliding counter index logically after time window has elapsed', () => {
+    it('4. should reset sliding counter index logically after time window has elapsed', async () => {
       vi.useFakeTimers();
       const key = `temp-ip-${Date.now()}`;
-      expect(checkSlidingWindow(key, 1, 1000)).toBe(true); // first request
-      expect(checkSlidingWindow(key, 1, 1000)).toBe(false); // rejected (limit 1)
+      expect(await checkSlidingWindow(key, 1, 1000)).toBe(true); // first request
+      expect(await checkSlidingWindow(key, 1, 1000)).toBe(false); // rejected (limit 1)
       
       vi.advanceTimersByTime(1001); // advance beyond 1s
-      expect(checkSlidingWindow(key, 1, 1000)).toBe(true); // allowed again!
+      expect(await checkSlidingWindow(key, 1, 1000)).toBe(true); // allowed again!
       vi.useRealTimers();
     });
 
-    it('5. should support customizable sliding duration windows dynamically in parameters', () => {
+    it('5. should support customizable sliding duration windows dynamically in parameters', async () => {
       const key = `dynamic-dur-${Date.now()}`;
-      expect(checkSlidingWindow(key, 1, 5000)).toBe(true);
-      expect(checkSlidingWindow(key, 1, 5000)).toBe(false);
+      expect(await checkSlidingWindow(key, 1, 5000)).toBe(true);
+      expect(await checkSlidingWindow(key, 1, 5000)).toBe(false);
     });
   });
 
