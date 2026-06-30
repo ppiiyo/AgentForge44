@@ -342,21 +342,106 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
             )}
 
             {/* Prompt template field configuration */}
-            {node.type === 'prompt' && (
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Formula / Template Context</label>
-                <textarea
-                  rows={6}
-                  value={node.fields.template || ''}
-                  onChange={(e) => onUpdateNodeField(node.id, 'template', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 font-mono focus:outline-none"
-                  placeholder="e.g. Generate a report for {topic} targeting {audience}..."
-                />
-                <p className="text-[9px] text-slate-500 leading-tight">
-                  Wrap custom pipeline variables inside curly brackets <code className="text-teal-400 font-mono">{`{variable_key}`}</code> to inject inputs dynamically.
-                </p>
-              </div>
-            )}
+            {node.type === 'prompt' && (() => {
+              const templateText = node.fields.template || '';
+              // Simple extraction of variables
+              const regex = /\{+([a-zA-Z0-9_.-]+)\}+/g;
+              const detectedVars = new Set<string>();
+              let match;
+              while ((match = regex.exec(templateText)) !== null) {
+                if (match[1]) {
+                  detectedVars.add(match[1]);
+                }
+              }
+              const variablesList = Array.from(detectedVars);
+              const varValues = node.fields.variable_values || {};
+
+              const handleAutoFillVariables = () => {
+                const updatedValues = { ...varValues };
+                variablesList.forEach(v => {
+                  if (!updatedValues[v]) {
+                    updatedValues[v] = `mock_${v}`;
+                  }
+                });
+                onUpdateNodeField(node.id, 'variable_values', updatedValues);
+              };
+
+              return (
+                <div className="space-y-3.5">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Formula / Template Context</label>
+                    <textarea
+                      rows={5}
+                      value={templateText}
+                      onChange={(e) => onUpdateNodeField(node.id, 'template', e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 font-mono focus:outline-none focus:border-sky-500/50"
+                      placeholder="e.g. Generate a report for {topic} targeting {audience}..."
+                    />
+                    <p className="text-[9px] text-slate-500 leading-tight">
+                      Wrap custom pipeline variables inside curly brackets <code className="text-teal-400 font-mono">{`{variable_key}`}</code> to inject inputs dynamically.
+                    </p>
+                  </div>
+
+                  {/* Reactive Prompt Variables Mapping Board */}
+                  <div className="bg-slate-950/65 border border-slate-850 p-3 rounded-xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                        <Sparkles size={11} className="text-amber-400 animate-pulse" />
+                        Prompt Variables Map
+                      </span>
+                      {variablesList.length > 0 && (
+                        <button
+                          onClick={handleAutoFillVariables}
+                          className="text-[9px] font-extrabold text-teal-400 hover:text-teal-300 bg-teal-950/40 hover:bg-teal-950/60 border border-teal-900/30 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                          title="Auto-fill placeholders for empty variables"
+                        >
+                          Auto-Fill
+                        </button>
+                      )}
+                    </div>
+
+                    {variablesList.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {variablesList.map(v => {
+                          const val = varValues[v] || '';
+                          const isWarning = !val.trim();
+                          return (
+                            <div key={v} className="space-y-1">
+                              <div className="flex justify-between items-center text-[10px] font-mono">
+                                <span className="text-slate-400 font-bold">{v}</span>
+                                {isWarning && (
+                                  <span className="text-[8.5px] text-rose-455 font-bold bg-rose-950/30 border border-rose-950/50 px-1 rounded animate-pulse">
+                                    Empty parameter
+                                  </span>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={(e) => {
+                                  onUpdateNodeField(node.id, 'variable_values', {
+                                    ...varValues,
+                                    [v]: e.target.value
+                                  });
+                                }}
+                                placeholder={`Enter value for ${v}...`}
+                                className={`w-full bg-slate-950 border rounded-lg px-2 py-1 text-[11px] text-slate-100 font-medium focus:outline-none focus:border-sky-500/50 ${
+                                  isWarning ? 'border-rose-950/40 bg-rose-950/5' : 'border-slate-800'
+                                }`}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-505 italic text-center py-1">
+                        No dynamic variables found in template.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Gemini node settings */}
             {/* Gemini node settings with resilient failover & search grounding */}

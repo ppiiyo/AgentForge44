@@ -393,9 +393,32 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
       if (n.type === 'gemini' && !n.fields?.systemInstruction?.trim()) {
         missingRequired = true;
         errorMsg = currentLang === 'ru' ? 'Пустые инструкции системы' : currentLang === 'zh' ? '系统指令为空' : 'System instructions empty';
-      } else if (n.type === 'prompt' && !n.fields?.template?.trim()) {
-        missingRequired = true;
-        errorMsg = currentLang === 'ru' ? 'Шаблон промпта пуст' : currentLang === 'zh' ? '提示词模板为空' : 'Prompt template empty';
+      } else if (n.type === 'prompt') {
+        if (!n.fields?.template?.trim()) {
+          missingRequired = true;
+          errorMsg = currentLang === 'ru' ? 'Шаблон промпта пуст' : currentLang === 'zh' ? '提示词模板为空' : 'Prompt template empty';
+        } else {
+          const templateText = n.fields.template;
+          const regex = /\{+([a-zA-Z0-9_.-]+)\}+/g;
+          const detectedVars = new Set<string>();
+          let match;
+          while ((match = regex.exec(templateText)) !== null) {
+            if (match[1]) {
+              detectedVars.add(match[1]);
+            }
+          }
+          const variablesList = Array.from(detectedVars);
+          const varValues = n.fields.variable_values || {};
+          const unmapped = variablesList.filter(v => !varValues[v]?.trim());
+          if (unmapped.length > 0) {
+            missingRequired = true;
+            errorMsg = currentLang === 'ru' 
+              ? `Незаполненные переменные: ${unmapped.join(', ')}` 
+              : currentLang === 'zh' 
+                ? `未映射的模板变量: ${unmapped.join(', ')}` 
+                : `Unmapped variables: ${unmapped.join(', ')}`;
+          }
+        }
       } else if (n.type === 'reviewer' && !n.fields?.criteria?.trim()) {
         missingRequired = true;
         errorMsg = currentLang === 'ru' ? 'Критерии оценки пусты' : currentLang === 'zh' ? '评审标准为空' : 'Review criteria empty';
