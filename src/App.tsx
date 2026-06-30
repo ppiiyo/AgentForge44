@@ -337,6 +337,11 @@ export default function App() {
               handleAutoAlignNodes={app.handleAutoAlignNodes}
               userId={app.userId || "local-user"}
               locks={app.locks}
+              handleUndo={app.handleUndo}
+              handleRedo={app.handleRedo}
+              canUndo={app.canUndo}
+              canRedo={app.canRedo}
+              recordAction={app.recordAction}
             />
           ) : app.currentView === 'dashboard' ? (
             <Dashboard

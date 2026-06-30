@@ -2,7 +2,8 @@ import React, { Suspense } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   RefreshCw, Sparkles, Network, Terminal, ShoppingBag, Globe, 
-  TrendingUp, History, ChevronRight, BookOpen, Code, X 
+  TrendingUp, History, ChevronRight, BookOpen, Code, X,
+  FileText, Copy, Download, Check
 } from 'lucide-react';
 
 import { FlowNode, FlowConnection, StepLog } from '../types';
@@ -24,7 +25,7 @@ const CloudDeployer = React.lazy(() => import('./CloudDeployer').then(m => ({ de
 
 interface RightSidebarPanelProps {
   currentLang: 'en' | 'ru' | 'zh';
-  activeTab: 'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy' | 'copilot' | 'sync' | 'debug';
+  activeTab: 'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy' | 'copilot' | 'sync' | 'debug' | 'doc';
   setActiveTab: (tab: any) => void;
   setRightSidebarCollapsed: (collapsed: boolean) => void;
   nodes: FlowNode[];
@@ -138,6 +139,70 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
   onHighlightNode,
   onSetDryRunOutput,
 }) => {
+  const [docCopied, setDocCopied] = React.useState(false);
+
+  const generateREADME = () => {
+    let md = `# 🤖 AgentForge44 Pipeline README: ${projectNameInput || 'Untitled Workspace'}\n\n`;
+    md += `This workflow pipeline contains **${nodes.length} agent nodes** and **${connections.length} communication connections**. It was dynamically documented using the AgentForge44 Auto-Documenter.\n\n`;
+
+    md += `## 📊 Flow Topology Overview\n\n`;
+    if (connections.length === 0) {
+      md += `*No active connections configured. Connect node handles to map pipeline logic flows.*\n\n`;
+    } else {
+      md += `\`\`\`mermaid\ngraph LR\n`;
+      connections.forEach(c => {
+        const sourceNode = nodes.find(n => n.id === c.sourceId);
+        const targetNode = nodes.find(n => n.id === c.targetId);
+        if (sourceNode && targetNode) {
+          md += `  ${sourceNode.id}["🧠 ${sourceNode.title} (${sourceNode.type.toUpperCase()})"] --> ${targetNode.id}["🧠 ${targetNode.title} (${targetNode.type.toUpperCase()})"]\n`;
+        }
+      });
+      md += `\`\`\`\n\n`;
+    }
+
+    md += `## ⚙️ Node Configuration & AI Directives\n\n`;
+    nodes.forEach((n, idx) => {
+      md += `### ${idx + 1}. ${n.title} (\`${n.type.toUpperCase()}\`)\n`;
+      md += `**Id**: \`${n.id}\`  \n`;
+      md += `**Description**: *${n.description || 'No description provided.'}*\n\n`;
+      
+      md += `#### 🔧 Parameters Map\n`;
+      md += `\`\`\`json\n${JSON.stringify(n.fields || {}, null, 2)}\n\`\`\`\n\n`;
+
+      if (n.fields?.systemInstruction?.trim()) {
+        md += `**System Instructions / AI Directives**:\n> ${n.fields.systemInstruction.trim().replace(/\n/g, '\n> ')}\n\n`;
+      }
+      if (n.fields?.template?.trim()) {
+        md += `**Prompt Template**:\n\`\`\`text\n${n.fields.template.trim()}\n\`\`\`\n\n`;
+      }
+      if (n.fields?.criteria?.trim()) {
+        md += `**Review Critique Criteria**:\n> ${n.fields.criteria.trim()}\n\n`;
+      }
+      md += `---\n\n`;
+    });
+
+    md += `*Documented with ❤️ by AgentForge44 Auto-Documenter.*`;
+    return md;
+  };
+
+  const handleCopyReadme = () => {
+    const readmeText = generateREADME();
+    navigator.clipboard.writeText(readmeText);
+    setDocCopied(true);
+    setTimeout(() => setDocCopied(false), 2000);
+  };
+
+  const handleDownloadReadme = () => {
+    const readmeText = generateREADME();
+    const dataStr = "data:text/markdown;charset=utf-8," + encodeURIComponent(readmeText);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "README.md");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   return (
     <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-30 shadow-2xl md:shadow-none" id="right_sidebar">
       
@@ -154,7 +219,8 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
           { id: 'versions', label: currentLang === 'ru' ? '⏳ Бэкапы' : currentLang === 'zh' ? '⏳ 备份历史' : '⏳ Backups', icon: History },
           { id: 'evals', label: currentLang === 'ru' ? '🎯 Тесты' : currentLang === 'zh' ? '🎯 基准测试' : '🎯 Benchmark', icon: ChevronRight },
           { id: 'rag', label: currentLang === 'ru' ? '📚 Библиотека' : currentLang === 'zh' ? '📚 知识库' : '📚 Library', icon: BookOpen },
-          { id: 'code', label: currentLang === 'ru' ? '💻 Код' : currentLang === 'zh' ? '💻 源码' : '💻 Code', icon: Code }
+          { id: 'code', label: currentLang === 'ru' ? '💻 Код' : currentLang === 'zh' ? '💻 源码' : '💻 Code', icon: Code },
+          { id: 'doc', label: currentLang === 'ru' ? '📝 Док' : currentLang === 'zh' ? '📝 说明文档' : '📝 README', icon: FileText }
         ].map(tab => (
           <button
             id={`tab-btn-${tab.id}`}
@@ -423,6 +489,56 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
                 onSetDryRunOutput={onSetDryRunOutput} 
                 currentLang={currentLang} 
               />
+            </motion.div>
+          )}
+
+          {/* Tab: Auto-Documenter generated markdown README.md output */}
+          {activeTab === 'doc' && (
+            <motion.div 
+              key="doc-tab"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4 flex flex-col h-full min-h-0"
+            >
+              <div className="border border-slate-800 rounded-2xl p-4 bg-slate-900/60 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider">
+                      {currentLang === 'ru' ? '📝 Авто-Документатор' : currentLang === 'zh' ? '📝 智能工作流说明文档' : '📝 Auto-Documenter'}
+                    </h3>
+                    <p className="text-[10.5px] text-slate-500 mt-1 leading-normal">
+                      {currentLang === 'ru' 
+                        ? 'Автоматически генерирует файл README.md для текущего холста, включая все узлы, настройки и системные промпты.' 
+                        : currentLang === 'zh' 
+                          ? '智能一键生成完整 README.md 工作流设计说明书，涵盖全部节点参数、指令框架及关系图。' 
+                          : 'Dynamically structures a professional README.md summarizing all pipeline agents, configurations, and topology.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5 pt-1">
+                  <button
+                    onClick={handleCopyReadme}
+                    className="flex-1 bg-sky-500/10 hover:bg-sky-500/15 text-sky-400 border border-sky-500/20 rounded-xl py-2 px-3 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    {docCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    <span>{docCopied ? 'Copied!' : (currentLang === 'ru' ? 'Копировать' : currentLang === 'zh' ? '复制文档' : 'Copy README')}</span>
+                  </button>
+
+                  <button
+                    onClick={handleDownloadReadme}
+                    className="flex-1 bg-teal-500/10 hover:bg-teal-500/15 text-teal-400 border border-teal-500/20 rounded-xl py-2 px-3 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Download size={12} />
+                    <span>{currentLang === 'ru' ? 'Скачать .md' : currentLang === 'zh' ? '下载文档' : 'Download .md'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-[220px] bg-slate-950/60 border border-slate-850 rounded-2xl p-3.5 overflow-auto font-mono text-[10.5px] leading-relaxed text-slate-300 select-text whitespace-pre-wrap">
+                {generateREADME()}
+              </div>
             </motion.div>
           )}
 

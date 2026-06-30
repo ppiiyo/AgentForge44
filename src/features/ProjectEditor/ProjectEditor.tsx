@@ -9,7 +9,11 @@ import {
   Presentation,
   CheckSquare,
   Command,
-  X
+  X,
+  Undo2,
+  Redo2,
+  Map,
+  Palette
 } from 'lucide-react';
 import { Toolbox } from './components/Toolbox';
 import { AgentFlowCanvas } from './components/AgentFlowCanvas';
@@ -75,6 +79,13 @@ interface ProjectEditorProps {
   // Collaboration 
   userId: string;
   locks: any;
+
+  // History & Undo/Redo props
+  handleUndo?: () => void;
+  handleRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  recordAction?: (customNodes?: FlowNode[], customConnections?: FlowConnection[]) => void;
 }
 
 export const ProjectEditor: React.FC<ProjectEditorProps> = ({
@@ -124,10 +135,48 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   setDryRunOutput,
   handleAutoAlignNodes,
   userId,
-  locks
+  locks,
+  handleUndo,
+  handleRedo,
+  canUndo,
+  canRedo,
+  recordAction
 }) => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
   const [validationReport, setValidationReport] = React.useState<{ errors: string[]; warnings: string[] } | null>(null);
+
+  const [currentTheme, setCurrentTheme] = React.useState<'cosmic' | 'monotropic' | 'indigo'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem("agentforge_theme");
+      if (saved === 'cosmic' || saved === 'monotropic' || saved === 'indigo') return saved;
+    }
+    return 'cosmic';
+  });
+
+  const handleSetTheme = (theme: 'cosmic' | 'monotropic' | 'indigo') => {
+    setCurrentTheme(theme);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem("agentforge_theme", theme);
+    }
+  };
+
+  const [showMiniMap, setShowMiniMap] = React.useState<boolean>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem("agentforge_show_minimap");
+      return saved !== 'false';
+    }
+    return true;
+  });
+
+  const handleToggleMiniMap = () => {
+    setShowMiniMap(prev => {
+      const next = !prev;
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem("agentforge_show_minimap", String(next));
+      }
+      return next;
+    });
+  };
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -250,7 +299,13 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       {/* Center Canvas Grid & Dynamic Flow Vectors */}
       <main 
-        className="flex-1 bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] relative select-none flex flex-col overflow-hidden min-w-0 min-h-0" 
+        className={`flex-1 relative select-none flex flex-col overflow-hidden min-w-0 min-h-0 transition-colors duration-500 ${
+          currentTheme === 'monotropic' 
+            ? 'bg-black bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px]' 
+            : currentTheme === 'indigo' 
+              ? 'bg-[#0c0a21] bg-[radial-gradient(#4f46e5_1.2px,transparent_1.2px)] [background-size:28px_28px]' 
+              : 'bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]'
+        }`}
         id="canvas_stage"
       >
         {/* Legend indicator */}
@@ -271,6 +326,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           onDeleteNode={handleDeleteNode}
           onConnectNodes={handleConnectNodes}
           onChangeNodePosition={(nodeId, x, y, updates?: Array<{ id: string; x: number; y: number }>) => {
+            if (recordAction) recordAction();
             if (updates && updates.length > 0) {
               const updatesMap = new Map(updates.map(u => [u.id, u]));
               setNodes(prev => prev.map(n => {
@@ -284,6 +340,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           canvasZoom={canvasZoom}
           snapToGrid={snapToGrid}
           canvasLocked={canvasLocked}
+          showMiniMap={showMiniMap}
         />
 
         {/* Canvas Premium Controls Float Board */}
@@ -348,6 +405,58 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           >
             <CheckSquare size={13} className="text-amber-400" />
             <span>Validate Flow</span>
+          </button>
+
+          <span className="text-slate-800">|</span>
+
+          {/* Undo/Redo history control block */}
+          <div className="flex items-center space-x-1">
+            <button
+              id="btn_undo"
+              disabled={!canUndo}
+              onClick={handleUndo}
+              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold ${
+                canUndo 
+                  ? 'bg-slate-950/40 border-slate-800 text-slate-300 hover:text-slate-100 hover:bg-slate-850' 
+                  : 'border-slate-900 text-slate-700 cursor-not-allowed opacity-40 bg-slate-950/20'
+              }`}
+              title="Undo change (Ctrl+Z)"
+            >
+              <Undo2 size={13} />
+              <span>Undo</span>
+            </button>
+            
+            <button
+              id="btn_redo"
+              disabled={!canRedo}
+              onClick={handleRedo}
+              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold ${
+                canRedo 
+                  ? 'bg-slate-950/40 border-slate-800 text-slate-300 hover:text-slate-100 hover:bg-slate-850' 
+                  : 'border-slate-900 text-slate-700 cursor-not-allowed opacity-40 bg-slate-950/20'
+              }`}
+              title="Redo change (Ctrl+Y)"
+            >
+              <Redo2 size={13} />
+              <span>Redo</span>
+            </button>
+          </div>
+
+          <span className="text-slate-800">|</span>
+
+          {/* Mini-map show/hide button */}
+          <button
+            id="btn_toggle_minimap"
+            onClick={handleToggleMiniMap}
+            className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold shrink-0 ${
+              showMiniMap 
+                ? 'bg-sky-950/40 text-sky-400 border-sky-900/30' 
+                : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+            }`}
+            title="Toggle canvas navigation mini-map"
+          >
+            <Map size={13} />
+            <span>Mini-map</span>
           </button>
 
           <span className="text-slate-800">|</span>
@@ -460,6 +569,9 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           const runBtn = document.getElementById('btn_run_pipeline_header');
           if (runBtn) runBtn.click();
         }}
+        onSaveSnapshot={onSaveSnapshot}
+        onCreateNode={onCreateNode}
+        onSetTheme={handleSetTheme}
         currentLang={currentLang}
       />
 

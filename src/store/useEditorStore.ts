@@ -13,16 +13,56 @@ export interface EditorState {
   updateNodeFields: (nodeId: string, fields: Record<string, any>) => void;
 }
 
-export const useEditorStore = create<EditorState>()((set, get) => ({
-  nodes: PREBUILT_TEMPLATES[0]?.nodes || [],
-  connections: PREBUILT_TEMPLATES[0]?.connections || [],
+const loadLocalNodes = (): FlowNode[] => {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem("agentforge_autosave_nodes");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (_) {}
+    }
+  }
+  return PREBUILT_TEMPLATES[0]?.nodes || [];
+};
 
-  setNodes: (nodes) => set((state) => ({
-    nodes: typeof nodes === 'function' ? nodes(state.nodes) : nodes
-  })),
-  setConnections: (connections) => set((state) => ({
-    connections: typeof connections === 'function' ? connections(state.connections) : connections
-  })),
+const loadLocalConnections = (): FlowConnection[] => {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem("agentforge_autosave_connections");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (_) {}
+    }
+  }
+  return PREBUILT_TEMPLATES[0]?.connections || [];
+};
+
+const saveLocalNodes = (nodes: FlowNode[]) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem("agentforge_autosave_nodes", JSON.stringify(nodes));
+  }
+};
+
+const saveLocalConnections = (connections: FlowConnection[]) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem("agentforge_autosave_connections", JSON.stringify(connections));
+  }
+};
+
+export const useEditorStore = create<EditorState>()((set, get) => ({
+  nodes: loadLocalNodes(),
+  connections: loadLocalConnections(),
+
+  setNodes: (nodes) => set((state) => {
+    const nextNodes = typeof nodes === 'function' ? nodes(state.nodes) : nodes;
+    saveLocalNodes(nextNodes);
+    return { nodes: nextNodes };
+  }),
+  setConnections: (connections) => set((state) => {
+    const nextConnections = typeof connections === 'function' ? connections(state.connections) : connections;
+    saveLocalConnections(nextConnections);
+    return { connections: nextConnections };
+  }),
 
   addNode: (type) => {
     const id = `node-${type}-${Date.now().toString().slice(-4)}`;
@@ -152,3 +192,9 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     set({ nodes });
   }
 }));
+
+// Auto-save nodes and connections to localStorage whenever the store state changes
+useEditorStore.subscribe((state) => {
+  saveLocalNodes(state.nodes);
+  saveLocalConnections(state.connections);
+});

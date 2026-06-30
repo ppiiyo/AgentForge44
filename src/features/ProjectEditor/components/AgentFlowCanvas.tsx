@@ -68,6 +68,7 @@ interface AgentFlowCanvasProps {
   canvasZoom: number;
   snapToGrid: boolean;
   canvasLocked: boolean;
+  showMiniMap?: boolean;
 }
 
 // Custom Node wrapper for ReactFlow that renders our exact exquisite AgentForge44 cards!
@@ -78,7 +79,8 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
     isHighlighted, 
     nodeStatus, 
     onDeleteNode,
-    currentLang
+    currentLang,
+    validationIssue
   } = data;
 
   let borderStyle = 'border-slate-800 hover:border-slate-700 bg-slate-900';
@@ -86,6 +88,12 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
     borderStyle = 'border-amber-500 shadow-2xl shadow-amber-500/40 bg-slate-900 ring-2 ring-amber-500 animate-[pulse_2s_infinite]';
   } else if (isSelected) {
     borderStyle = 'border-sky-500 shadow-2xl shadow-sky-500/10 bg-slate-900 ring-1 ring-sky-500/30';
+  } else if (nodeStatus === 'idle' && validationIssue) {
+    if (validationIssue === 'orphaned') {
+      borderStyle = 'border-amber-500/80 bg-slate-900 border-dashed ring-2 ring-amber-500/10 shadow-lg shadow-amber-500/5';
+    } else {
+      borderStyle = 'border-rose-500/80 bg-slate-900 border-dashed ring-2 ring-rose-500/10 shadow-lg shadow-rose-500/5';
+    }
   }
 
   if (nodeStatus === 'running') {
@@ -308,6 +316,17 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
           )}
         </div>
       </div>
+
+      {validationIssue && (
+        <div className={`text-[9.5px] font-bold px-2.5 py-1.5 border-t rounded-b-2xl flex items-center gap-1.5 shrink-0 ${
+          validationIssue === 'orphaned' 
+            ? 'bg-amber-950/70 text-amber-300 border-amber-900/30' 
+            : 'bg-rose-950/70 text-rose-300 border-rose-900/30'
+        }`}>
+          <span className="shrink-0">{validationIssue === 'orphaned' ? '⚠️' : '❌'}</span>
+          <span className="truncate flex-1 font-medium">{data.validationMessage}</span>
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -330,6 +349,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   onChangeNodePosition,
   snapToGrid,
   canvasLocked,
+  showMiniMap = true,
 }) => {
   const selectedNodeIds = useUIStore((state) => state.selectedNodeIds);
   const setSelectedNodeIds = useUIStore((state) => state.setSelectedNodeIds);
@@ -359,22 +379,55 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
 
   // Convert our custom node types to ReactFlow compatible nodes
   const reactFlowNodes = useMemo<Node[]>(() => {
-    return nodes.map((n) => ({
-      id: n.id,
-      type: 'agent',
-      position: { x: n.x, y: n.y },
-      draggable: !canvasLocked,
-      selectable: true,
-      data: {
-        node: n,
-        isSelected: selectedNodeIds.includes(n.id) || selectedNodeId === n.id,
-        isHighlighted: highlightedNodeId === n.id,
-        nodeStatus: nodeExecutionStatuses[n.id] || 'idle',
-        onDeleteNode,
-        currentLang,
-      },
-    }));
-  }, [nodes, selectedNodeId, selectedNodeIds, highlightedNodeId, nodeExecutionStatuses, onDeleteNode, currentLang, canvasLocked]);
+    const connectedIds = new Set<string>();
+    connections.forEach(c => {
+      connectedIds.add(c.sourceId);
+      connectedIds.add(c.targetId);
+    });
+
+    return nodes.map((n) => {
+      const isOrphaned = nodes.length > 1 && !connectedIds.has(n.id);
+      let missingRequired = false;
+      let errorMsg = '';
+
+      if (n.type === 'gemini' && !n.fields?.systemInstruction?.trim()) {
+        missingRequired = true;
+        errorMsg = currentLang === 'ru' ? 'Пустые инструкции системы' : currentLang === 'zh' ? '系统指令为空' : 'System instructions empty';
+      } else if (n.type === 'prompt' && !n.fields?.template?.trim()) {
+        missingRequired = true;
+        errorMsg = currentLang === 'ru' ? 'Шаблон промпта пуст' : currentLang === 'zh' ? '提示词模板为空' : 'Prompt template empty';
+      } else if (n.type === 'reviewer' && !n.fields?.criteria?.trim()) {
+        missingRequired = true;
+        errorMsg = currentLang === 'ru' ? 'Критерии оценки пусты' : currentLang === 'zh' ? '评审标准为空' : 'Review criteria empty';
+      } else if (n.type === 'webhook' && !n.fields?.url?.trim()) {
+        missingRequired = true;
+        errorMsg = currentLang === 'ru' ? 'Отсутствует URL вебхука' : currentLang === 'zh' ? '未指定 Webhook URL' : 'Webhook URL missing';
+      } else if (n.type === 'tool' && !n.fields?.url?.trim()) {
+        missingRequired = true;
+        errorMsg = currentLang === 'ru' ? 'Отсутствует URL API' : currentLang === 'zh' ? '未指定 API URL' : 'API Endpoint URL missing';
+      }
+
+      return {
+        id: n.id,
+        type: 'agent',
+        position: { x: n.x, y: n.y },
+        draggable: !canvasLocked,
+        selectable: true,
+        data: {
+          node: n,
+          isSelected: selectedNodeIds.includes(n.id) || selectedNodeId === n.id,
+          isHighlighted: highlightedNodeId === n.id,
+          nodeStatus: nodeExecutionStatuses[n.id] || 'idle',
+          onDeleteNode,
+          currentLang,
+          validationIssue: isOrphaned ? 'orphaned' : missingRequired ? 'missing_fields' : null,
+          validationMessage: isOrphaned 
+            ? (currentLang === 'ru' ? 'Изолированный узел' : currentLang === 'zh' ? '孤立节点：未连接' : 'Orphaned Node: disconnected')
+            : errorMsg,
+        },
+      };
+    });
+  }, [nodes, connections, selectedNodeId, selectedNodeIds, highlightedNodeId, nodeExecutionStatuses, onDeleteNode, currentLang, canvasLocked]);
 
   // Convert our connections to ReactFlow edges
   const reactFlowEdges = useMemo<Edge[]>(() => {
@@ -488,18 +541,20 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#334155" />
         <Controls className="!bg-slate-850 !border-slate-800 !text-slate-100 [&>button]:!border-slate-800 [&>button]:!bg-slate-900" />
-        <MiniMap
-          position="bottom-right"
-          nodeColor={(node) => {
-            const status = node.data?.nodeStatus;
-            if (status === 'running') return '#fbbf24';
-            if (status === 'completed') return '#10b981';
-            if (status === 'failed') return '#ef4444';
-            return '#334155';
-          }}
-          style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', right: '16px', bottom: '16px' }}
-          maskColor="rgba(0, 0, 0, 0.4)"
-        />
+        {showMiniMap && (
+          <MiniMap
+            position="bottom-right"
+            nodeColor={(node) => {
+              const status = node.data?.nodeStatus;
+              if (status === 'running') return '#fbbf24';
+              if (status === 'completed') return '#10b981';
+              if (status === 'failed') return '#ef4444';
+              return '#334155';
+            }}
+            style={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', right: '16px', bottom: '16px' }}
+            maskColor="rgba(0, 0, 0, 0.4)"
+          />
+        )}
       </ReactFlow>
     </div>
   );

@@ -13,7 +13,10 @@ import {
   CheckSquare,
   Globe,
   Save,
-  HelpCircle
+  HelpCircle,
+  Palette,
+  PlusCircle,
+  Camera
 } from 'lucide-react';
 import { FlowNode } from '../../../types';
 
@@ -27,6 +30,9 @@ interface CommandPaletteProps {
   onValidateFlow: () => void;
   onSaveProject: () => void;
   onRunPipeline: () => void;
+  onSaveSnapshot?: () => void;
+  onCreateNode?: (type: any) => void;
+  onSetTheme?: (theme: 'cosmic' | 'monotropic' | 'indigo') => void;
   currentLang: 'en' | 'ru' | 'zh';
 }
 
@@ -40,6 +46,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onValidateFlow,
   onSaveProject,
   onRunPipeline,
+  onSaveSnapshot,
+  onCreateNode,
+  onSetTheme,
   currentLang
 }) => {
   const [search, setSearch] = useState('');
@@ -69,7 +78,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     list.push({
       id: 'run-pipeline',
       title: currentLang === 'ru' ? '🚀 Запустить конвейер потока' : currentLang === 'zh' ? '🚀 运行工作流管道' : '🚀 Run Flow Pipeline',
-      subtitle: 'Execute all connected active node workflows',
+      subtitle: 'Execute all connected active node workflows (Ctrl+Enter)',
       category: 'Actions',
       icon: <Play size={14} className="text-emerald-400" />,
       action: onRunPipeline
@@ -83,6 +92,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       icon: <CheckSquare size={14} className="text-amber-400" />,
       action: onValidateFlow
     });
+
+    if (onSaveSnapshot) {
+      list.push({
+        id: 'save-snapshot',
+        title: currentLang === 'ru' ? '📸 Сделать снимок' : currentLang === 'zh' ? '📸 创建画布快照' : '📸 Save Snapshot',
+        subtitle: 'Save a localized checkpoint state of the current canvas (Ctrl+S)',
+        category: 'Actions',
+        icon: <Camera size={14} className="text-purple-400" />,
+        action: onSaveSnapshot
+      });
+    }
 
     list.push({
       id: 'auto-align-grid',
@@ -111,6 +131,58 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       action: onSaveProject
     });
 
+    if (onSetTheme) {
+      list.push({
+        id: 'theme-cosmic',
+        title: '🎨 Theme: Cosmic Slate',
+        subtitle: 'Switch workspace to the default deep slate space scheme',
+        category: 'Actions',
+        icon: <Palette size={14} className="text-blue-450" />,
+        action: () => onSetTheme('cosmic')
+      });
+      list.push({
+        id: 'theme-monotropic',
+        title: '🎨 Theme: Monotropic Night',
+        subtitle: 'Switch workspace to pure high-contrast flat pitch black style',
+        category: 'Actions',
+        icon: <Palette size={14} className="text-slate-350" />,
+        action: () => onSetTheme('monotropic')
+      });
+      list.push({
+        id: 'theme-indigo',
+        title: '🎨 Theme: Luminous Indigo',
+        subtitle: 'Switch workspace to glowing vibrant purple neon cosmos style',
+        category: 'Actions',
+        icon: <Palette size={14} className="text-indigo-455" />,
+        action: () => onSetTheme('indigo')
+      });
+    }
+
+    // Node Creation commands inside Actions category for easy accessibility
+    if (onCreateNode) {
+      const nodeTypesToCreate = [
+        { type: 'input', label: 'Input Variables Node', desc: 'Capture template payload parameters', color: 'text-blue-400', icon: <Database size={13} /> },
+        { type: 'prompt', label: 'Prompt Template Node', desc: 'Interpolate custom formatted prompt templates', color: 'text-purple-450', icon: <Terminal size={13} /> },
+        { type: 'gemini', label: 'Gemini LLM Unit Node', desc: 'Inference powered by Google Gemini API', color: 'text-teal-400', icon: <Sparkles size={13} /> },
+        { type: 'reviewer', label: 'Critique & Review Node', desc: 'Construct critique feedback evaluation loops', color: 'text-amber-450', icon: <CheckSquare size={13} /> },
+        { type: 'output', label: 'Final Output Display Node', desc: 'Render and display completed results', color: 'text-indigo-400', icon: <Save size={13} /> },
+        { type: 'tool', label: 'External Tool API Node', desc: 'Connect REST API endpoints via HTTP', color: 'text-rose-450', icon: <Globe size={13} /> },
+        { type: 'webhook', label: 'Webhook Link Node', desc: 'Connect downstream third-party triggers', color: 'text-pink-400', icon: <Globe size={13} /> },
+        { type: 'rag', label: 'RAG Search Retriever Node', desc: 'Query vector knowledge base document libraries', color: 'text-teal-500', icon: <PlusCircle size={13} /> },
+      ];
+
+      nodeTypesToCreate.forEach(nt => {
+        list.push({
+          id: `create-${nt.type}`,
+          title: `➕ Create Node: ${nt.label}`,
+          subtitle: nt.desc,
+          category: 'Actions',
+          icon: <span className={nt.color}>{nt.icon}</span>,
+          action: () => onCreateNode(nt.type)
+        });
+      });
+    }
+
     // Nodes Category
     nodes.forEach(node => {
       let nodeIcon = <Terminal size={14} className="text-purple-400" />;
@@ -131,15 +203,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     // Shortcuts Category (informative)
     const shortcuts = [
-      { keys: ['Ctrl', 'S'], desc: 'Save workspace layout to backend' },
-      { keys: ['Ctrl', 'Z'], desc: 'Undo last node adjustment' },
-      { keys: ['Ctrl', 'Y'], desc: 'Redo last node adjustment' },
+      { keys: ['Ctrl', 'S'], desc: 'Save workspace local checkpoint state' },
+      { keys: ['Ctrl', 'Enter'], desc: 'Execute active node pipeline trace' },
+      { keys: ['Ctrl', 'Z'], desc: 'Undo last node connection or movement' },
+      { keys: ['Ctrl', 'Y'], desc: 'Redo last node connection or movement' },
       { keys: ['Ctrl', 'D'], desc: 'Duplicate highlighted node' },
       { keys: ['Space', 'Drag'], desc: 'Pan canvas freely' },
       { keys: ['Shift', 'Drag'], desc: 'Drag-to-select multiple cards' },
       { keys: ['Shift', 'Click'], desc: 'Multi-select individual nodes' },
       { keys: ['Delete'], desc: 'Remove all selected node cards' },
-      { keys: ['Escape'], desc: 'Clear active coordinate selections' }
+      { keys: ['Escape'], desc: 'Clear active selections' }
     ];
 
     shortcuts.forEach((sc, i) => {

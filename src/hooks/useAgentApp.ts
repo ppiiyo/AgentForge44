@@ -160,7 +160,7 @@ export function useAgentApp() {
   const [runLogs, setRunLogs] = useState<StepLog[]>([]);
   const [finalResult, setFinalResult] = useState<string>("");
   const [totalDuration, setTotalDuration] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy' | 'copilot' | 'sync' | 'debug'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'code' | 'virality' | 'evals' | 'rag' | 'metrics' | 'versions' | 'market' | 'deploy' | 'copilot' | 'sync' | 'debug' | 'doc'>('logs');
   const [codeTab, setCodeTab] = useState<'typescript' | 'python' | 'curl'>('typescript');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -256,7 +256,7 @@ export function useAgentApp() {
       key: 's',
       ctrl: true,
       handler: () => {
-        handleSaveProjectToServer(projectNameInput || "default-workspace");
+        handleSaveSnapshot();
       }
     },
     {
@@ -1282,7 +1282,10 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
     dragStartPos,
     nodeStartPos,
     userId, userName, userColor, connected, onlineUsers, cursors, locks, notifications, updateUserName, broadcastCursorMoved, broadcastNodeLock,
+    recordAction,
     handleUndo, handleRedo,
+    canUndo: past.length > 0,
+    canRedo: future.length > 0,
     handleSaveSnapshot, handleRestoreSnapshot, handleDeleteSnapshot,
     handleDryRunNode, handleRunPipeline, handleAutoSelfHealAndRun,
     handleRunEvaluationSuite, handleIndexDocument, handleRAGSearch,
