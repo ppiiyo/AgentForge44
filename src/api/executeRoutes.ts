@@ -229,6 +229,37 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
   }
 });
 
+router.get('/runs', async (req: Request, res: Response) => {
+  try {
+    const runs = await db.select().from(tables.pipelineRuns);
+    res.json(runs.map(run => {
+      let logsArr = [];
+      try { logsArr = JSON.parse(run.logs || '[]'); } catch (_) {}
+      return {
+        id: run.id,
+        graphId: run.graphId,
+        status: run.status,
+        stepCount: run.stepCount,
+        error: run.error,
+        createdAt: run.createdAt,
+        updatedAt: run.updatedAt,
+        logsCount: logsArr.length
+      };
+    }).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/runs', async (req: Request, res: Response) => {
+  try {
+    await db.delete(tables.pipelineRuns);
+    res.json({ success: true, message: "All pipeline runs cleared successfully." });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/runs/:id', async (req: Request, res: Response) => {
   try {
     const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, req.params.id)).limit(1);

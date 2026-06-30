@@ -485,6 +485,8 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
               className="space-y-4"
             >
               <TimeTravelDebugger 
+                nodes={nodes}
+                connections={connections}
                 onHighlightNode={onHighlightNode} 
                 onSetDryRunOutput={onSetDryRunOutput} 
                 currentLang={currentLang} 
