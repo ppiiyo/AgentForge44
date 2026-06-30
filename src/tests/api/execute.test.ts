@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../../../server.js';
 import { signToken } from '../../api/userAuth.js';
@@ -24,6 +24,16 @@ vi.mock('@google/genai', () => {
 
 describe('Pipeline Execution API Suite', () => {
   const userToken = signToken({ id: 'user-a', email: 'user-a@test.com', role: 'editor' });
+  let oldKey: string | undefined;
+
+  beforeEach(() => {
+    oldKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = 'sandbox_test';
+  });
+
+  afterEach(() => {
+    process.env.GEMINI_API_KEY = oldKey;
+  });
 
   it('should execute a simple flat input-to-prompt graph', async () => {
     const payload = {
