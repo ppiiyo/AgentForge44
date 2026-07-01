@@ -1,3 +1,4 @@
+/* global __ENV */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Trend, Rate } from 'k6/metrics';
@@ -105,7 +106,7 @@ export default function () {
       try {
         const body = JSON.parse(r.body);
         return body && Array.isArray(body.logs);
-      } catch (e) {
+      } catch {
         return false;
       }
     },
@@ -113,7 +114,7 @@ export default function () {
       try {
         const body = JSON.parse(r.body);
         return body && typeof body.finalResult === 'string';
-      } catch (e) {
+      } catch {
         return false;
       }
     }
@@ -127,7 +128,7 @@ export default function () {
       if (body.totalDuration) {
         pipelineDurationTrend.add(body.totalDuration);
       }
-    } catch (e) {
+    } catch {
       // JSON Parsing failed
     }
   }
