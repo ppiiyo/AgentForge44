@@ -5,8 +5,8 @@ import { logger } from '../utils/logger.js';
 
 const router = Router();
 
-function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY || "";
+function getGeminiClient(customApiKey?: string): GoogleGenAI {
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || "";
   return new GoogleGenAI({
     apiKey: apiKey,
     httpOptions: {
@@ -181,13 +181,14 @@ function getSimulatedGraphForPrompt(prompt: string) {
  */
 router.post('/copilot/architect', async (req, res) => {
   const { prompt } = req.body;
+  const customGeminiApiKey = req.headers['x-gemini-api-key'] as string || undefined;
   if (!prompt || typeof prompt !== 'string') {
     res.status(400).json({ error: 'Missing architect description prompt' });
     return;
   }
 
   try {
-    const ai = getGeminiClient();
+    const ai = getGeminiClient(customGeminiApiKey);
     
     const systemInstruction = `
 You are the AgentForge AI Copilot Architect. Your task is to generate complete, operational visual agent flows (graphs) based on user descriptions.
@@ -252,13 +253,14 @@ Strict Rules:
  */
 router.post('/copilot/optimize', async (req, res) => {
   const { nodes, connections } = req.body;
+  const customGeminiApiKey = req.headers['x-gemini-api-key'] as string || undefined;
   if (!nodes || !connections) {
     res.status(400).json({ error: 'Missing nodes or connections context for optimization' });
     return;
   }
 
   try {
-    const ai = getGeminiClient();
+    const ai = getGeminiClient(customGeminiApiKey);
 
     const systemInstruction = `
 You are the AgentForge Self-Optimizer. Your task is to analyze an existing flow graph of nodes and connections, point out architectural weaknesses (cost, latency, security, logic cycles), formulate optimization points, and return a corrected, optimal output.

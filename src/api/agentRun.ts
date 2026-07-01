@@ -16,9 +16,10 @@ export { classifyLLMError };
  */
 export async function executePipeline(
   nodes: FlowNode[],
-  connections: FlowConnection[]
+  connections: FlowConnection[],
+  customGeminiApiKey?: string
 ): Promise<PipelineExecutionResult> {
-  const apiKey = process.env.GEMINI_API_KEY || "";
+  const apiKey = customGeminiApiKey || process.env.GEMINI_API_KEY || "";
   const ai = new GoogleGenAI({
     apiKey: apiKey,
     httpOptions: {

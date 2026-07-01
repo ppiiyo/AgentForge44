@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { validateApiKeys } from './utils/validateApiKeys';
 import { useTranslation } from 'react-i18next';
 import { useAgentApp } from './hooks/useAgentApp';
 import { AppHeader } from './components/AppHeader';
@@ -227,6 +229,16 @@ export default function App() {
 
   const app = useAgentApp();
 
+  const [apiKeysMissing, setApiKeysMissing] = useState(false);
+
+  useEffect(() => {
+    const checkKeys = async () => {
+      const res = await validateApiKeys();
+      setApiKeysMissing(res.geminiMissing);
+    };
+    checkKeys();
+  }, [app.currentView]);
+
   return (
     <ErrorBoundary>
       <div className="h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
@@ -285,6 +297,29 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Warning banner for missing API keys */}
+        {apiKeysMissing && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2.5 flex items-center justify-between text-xs text-amber-200 z-20 shrink-0 animate-in slide-in-from-top duration-300" id="missing-api-keys-banner">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="text-amber-400 shrink-0" size={16} />
+              <span>
+                <strong>{app.currentLang === 'ru' ? 'Внимание:' : app.currentLang === 'zh' ? '警告:' : 'Warning:'}</strong>{' '}
+                {app.currentLang === 'ru'
+                  ? 'Ключ Google Gemini API не настроен. Для работы Gemini-нод и механизма самодиагностики укажите ключ в настройках.'
+                  : app.currentLang === 'zh'
+                    ? '未检测到您的 Google Gemini API 密钥。部分关键节点和自纠错循环将不可用，请前往设置页面。'
+                    : 'Google Gemini API Key is missing. Gemini nodes and self-correction loop features will be disabled until configured.'}
+              </span>
+            </div>
+            <button
+              onClick={() => app.setCurrentView('settings')}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-wider transition-colors cursor-pointer shrink-0 ml-4"
+            >
+              {app.currentLang === 'ru' ? 'Настроить' : app.currentLang === 'zh' ? '去配置' : 'Configure Now'}
+            </button>
+          </div>
+        )}
 
         {/* Main Studio Console Layout */}
         <div className="flex-1 flex flex-row overflow-hidden relative" id="app_main">

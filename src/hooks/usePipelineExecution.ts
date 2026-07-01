@@ -81,6 +81,9 @@ export function usePipelineExecution({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-gemini-api-key': localStorage.getItem('agentforge_gemini_api_key') || '',
+          'x-openai-api-key': localStorage.getItem('agentforge_openai_api_key') || '',
+          'x-anthropic-api-key': localStorage.getItem('agentforge_anthropic_api_key') || '',
         },
         body: JSON.stringify({
           nodes: nodes,
@@ -139,6 +142,9 @@ export function usePipelineExecution({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-gemini-api-key': localStorage.getItem('agentforge_gemini_api_key') || '',
+          'x-openai-api-key': localStorage.getItem('agentforge_openai_api_key') || '',
+          'x-anthropic-api-key': localStorage.getItem('agentforge_anthropic_api_key') || '',
         },
         body: JSON.stringify({
           nodes: nodes,
@@ -205,6 +211,9 @@ export function usePipelineExecution({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-gemini-api-key': localStorage.getItem('agentforge_gemini_api_key') || '',
+          'x-openai-api-key': localStorage.getItem('agentforge_openai_api_key') || '',
+          'x-anthropic-api-key': localStorage.getItem('agentforge_anthropic_api_key') || '',
         },
         body: JSON.stringify({
           nodes: updatedNodes,

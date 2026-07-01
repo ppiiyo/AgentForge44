@@ -27,8 +27,9 @@ const ALLOWED_API_KEYS = new Set(
 
 router.post('/execute', requireRole(['editor', 'owner']), validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const { nodes, connections } = req.body;
+  const customGeminiApiKey = req.headers['x-gemini-api-key'] as string || undefined;
   try {
-    const result = await executePipeline(nodes, connections);
+    const result = await executePipeline(nodes, connections, customGeminiApiKey);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Execution error" });
@@ -38,6 +39,7 @@ router.post('/execute', requireRole(['editor', 'owner']), validateBody(PipelineE
 router.post('/run-pipeline', requireRole(['editor', 'owner']), validateBody(PipelineExecuteSchema), async (req: Request, res: Response) => {
   const startTime = Date.now();
   const { nodes, connections, graphId, graphName } = req.body;
+  const customGeminiApiKey = req.headers['x-gemini-api-key'] as string || undefined;
   
   const gId = graphId || 'canvas-workspace';
   const gName = graphName || 'Workspace Canvas';
@@ -51,7 +53,7 @@ router.post('/run-pipeline', requireRole(['editor', 'owner']), validateBody(Pipe
       timestamp: new Date()
     });
 
-    const result = await executePipeline(nodes, connections);
+    const result = await executePipeline(nodes, connections, customGeminiApiKey);
     
     // Log successfully finished metrics workflow in telemetry store
     await MetricsCollector.logExecution(
@@ -415,6 +417,14 @@ router.post('/execute-node/:runId', requireRole(['editor', 'owner']), async (req
 router.post('/complete-run/:runId', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
   releaseSandbox(req.params.runId);
   res.json({ success: true });
+});
+
+router.get('/config/status', (req: Request, res: Response) => {
+  res.json({
+    geminiConfigured: !!process.env.GEMINI_API_KEY,
+    openaiConfigured: !!process.env.OPENAI_API_KEY,
+    anthropicConfigured: !!process.env.ANTHROPIC_API_KEY
+  });
 });
 
 export default router;
