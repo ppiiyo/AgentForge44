@@ -1,1621 +1,5 @@
 [
   {
-    "id": "pres_1782850693289_5ms6x",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-53",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.289Z"
-  },
-  {
-    "id": "pres_1782850693290_uqw9i",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-53",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.290Z"
-  },
-  {
-    "id": "pres_1782850693291_jzstg",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-54",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.291Z"
-  },
-  {
-    "id": "pres_1782850693293_gl6yc",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-54",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.293Z"
-  },
-  {
-    "id": "pres_1782850693294_rj47z",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-55",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.294Z"
-  },
-  {
-    "id": "pres_1782850693295_mw7hl",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-55",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.295Z"
-  },
-  {
-    "id": "pres_1782850693296_8k8nf",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-56",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.296Z"
-  },
-  {
-    "id": "pres_1782850693297_mc9f0",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-56",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.297Z"
-  },
-  {
-    "id": "pres_1782850693298_yvonx",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-57",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.298Z"
-  },
-  {
-    "id": "pres_1782850693299_81val",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-57",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.299Z"
-  },
-  {
-    "id": "pres_1782850693301_zqawo",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-58",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.301Z"
-  },
-  {
-    "id": "pres_1782850693302_c1tbm",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-58",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.302Z"
-  },
-  {
-    "id": "pres_1782850693303_auyb1",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-59",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.303Z"
-  },
-  {
-    "id": "pres_1782850693304_l9nga",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-59",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.304Z"
-  },
-  {
-    "id": "pres_1782850693306_tb2c0",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-60",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.306Z"
-  },
-  {
-    "id": "pres_1782850693307_667op",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-60",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.307Z"
-  },
-  {
-    "id": "pres_1782850693308_e6gko",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-61",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.308Z"
-  },
-  {
-    "id": "pres_1782850693309_1mscd",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-61",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.309Z"
-  },
-  {
-    "id": "pres_1782850693310_5jrw9",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-62",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.310Z"
-  },
-  {
-    "id": "pres_1782850693311_ow66o",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-62",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.311Z"
-  },
-  {
-    "id": "pres_1782850693312_l76uk",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-63",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.312Z"
-  },
-  {
-    "id": "pres_1782850693313_zvs4l",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-63",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.313Z"
-  },
-  {
-    "id": "pres_1782850693314_vdqqx",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-64",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.314Z"
-  },
-  {
-    "id": "pres_1782850693317_3zai3",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-64",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.317Z"
-  },
-  {
-    "id": "pres_1782850693318_nanky",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-65",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.318Z"
-  },
-  {
-    "id": "pres_1782850693319_cs01k",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-65",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.319Z"
-  },
-  {
-    "id": "pres_1782850693320_3qw55",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-66",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.320Z"
-  },
-  {
-    "id": "pres_1782850693321_6o388",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-66",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.321Z"
-  },
-  {
-    "id": "pres_1782850693322_2mihd",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-67",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.322Z"
-  },
-  {
-    "id": "pres_1782850693323_v5oc5",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-67",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.323Z"
-  },
-  {
-    "id": "pres_1782850693324_m8xn7",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-68",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.324Z"
-  },
-  {
-    "id": "pres_1782850693325_60n2y",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-68",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.325Z"
-  },
-  {
-    "id": "pres_1782850693327_3ke2e",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-69",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.327Z"
-  },
-  {
-    "id": "pres_1782850693328_5ka6z",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-69",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.328Z"
-  },
-  {
-    "id": "pres_1782850693329_nfo1j",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-70",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.329Z"
-  },
-  {
-    "id": "pres_1782850693330_hbcn5",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-70",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.330Z"
-  },
-  {
-    "id": "pres_1782850693331_njgvg",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-71",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.331Z"
-  },
-  {
-    "id": "pres_1782850693332_3xy41",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-71",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.332Z"
-  },
-  {
-    "id": "pres_1782850693333_j8lh1",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-72",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.333Z"
-  },
-  {
-    "id": "pres_1782850693334_vru0n",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-72",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.334Z"
-  },
-  {
-    "id": "pres_1782850693335_o0ayq",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-73",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.335Z"
-  },
-  {
-    "id": "pres_1782850693336_41nus",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-73",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.336Z"
-  },
-  {
-    "id": "pres_1782850693337_z2ik4",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-74",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.337Z"
-  },
-  {
-    "id": "pres_1782850693338_crak4",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-74",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.338Z"
-  },
-  {
-    "id": "pres_1782850693339_n431a",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-75",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.339Z"
-  },
-  {
-    "id": "pres_1782850693340_a7xzr",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-75",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.340Z"
-  },
-  {
-    "id": "pres_1782850693341_erc5d",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-76",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.341Z"
-  },
-  {
-    "id": "pres_1782850693342_56vyz",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-76",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.342Z"
-  },
-  {
-    "id": "pres_1782850693343_o6hfe",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-77",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.343Z"
-  },
-  {
-    "id": "pres_1782850693344_5e9ww",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-77",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.344Z"
-  },
-  {
-    "id": "pres_1782850693345_fsiqf",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-78",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.345Z"
-  },
-  {
-    "id": "pres_1782850693346_pesnc",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-78",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.346Z"
-  },
-  {
-    "id": "pres_1782850693347_a2sae",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-79",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.347Z"
-  },
-  {
-    "id": "pres_1782850693348_ck6rx",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-79",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.348Z"
-  },
-  {
-    "id": "pres_1782850693349_tfoz5",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-80",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.349Z"
-  },
-  {
-    "id": "pres_1782850693350_6alry",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-80",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.350Z"
-  },
-  {
-    "id": "pres_1782850693351_1oqid",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-81",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.351Z"
-  },
-  {
-    "id": "pres_1782850693352_bgsdh",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-81",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.352Z"
-  },
-  {
-    "id": "pres_1782850693353_rh5rs",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-82",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.353Z"
-  },
-  {
-    "id": "pres_1782850693354_va9oy",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-82",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.354Z"
-  },
-  {
-    "id": "pres_1782850693355_1qj2m",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-83",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.355Z"
-  },
-  {
-    "id": "pres_1782850693356_qn471",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-83",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.356Z"
-  },
-  {
-    "id": "pres_1782850693357_4f3io",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-84",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.357Z"
-  },
-  {
-    "id": "pres_1782850693358_53okz",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-84",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.358Z"
-  },
-  {
-    "id": "pres_1782850693359_p7ey3",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-85",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.359Z"
-  },
-  {
-    "id": "pres_1782850693362_rq5jw",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-85",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.362Z"
-  },
-  {
-    "id": "pres_1782850693363_765tt",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-86",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.363Z"
-  },
-  {
-    "id": "pres_1782850693364_p05af",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-86",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.364Z"
-  },
-  {
-    "id": "pres_1782850693366_ee8i3",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-87",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.366Z"
-  },
-  {
-    "id": "pres_1782850693367_8uqkw",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-87",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.367Z"
-  },
-  {
-    "id": "pres_1782850693368_g7rj5",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-88",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.368Z"
-  },
-  {
-    "id": "pres_1782850693369_yw96n",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-88",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.369Z"
-  },
-  {
-    "id": "pres_1782850693370_zrb9s",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-89",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.370Z"
-  },
-  {
-    "id": "pres_1782850693371_r83y7",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-89",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.371Z"
-  },
-  {
-    "id": "pres_1782850693373_5ge23",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-90",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.373Z"
-  },
-  {
-    "id": "pres_1782850693374_c2od4",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-90",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.374Z"
-  },
-  {
-    "id": "pres_1782850693374_scw1t",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-91",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.374Z"
-  },
-  {
-    "id": "pres_1782850693376_k8bqm",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-91",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.376Z"
-  },
-  {
-    "id": "pres_1782850693376_0iopy",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-92",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.376Z"
-  },
-  {
-    "id": "pres_1782850693378_rr0oy",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-92",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.378Z"
-  },
-  {
-    "id": "pres_1782850693379_mbqmi",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-93",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.379Z"
-  },
-  {
-    "id": "pres_1782850693382_em3ju",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-93",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.382Z"
-  },
-  {
-    "id": "pres_1782850693383_2i5aj",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-94",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.383Z"
-  },
-  {
-    "id": "pres_1782850693384_hmfkr",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-94",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.384Z"
-  },
-  {
-    "id": "pres_1782850693385_51rf5",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-95",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.385Z"
-  },
-  {
-    "id": "pres_1782850693386_zs3vl",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-95",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.386Z"
-  },
-  {
-    "id": "pres_1782850693389_l2wc5",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-96",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.389Z"
-  },
-  {
-    "id": "pres_1782850693390_d01me",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-96",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.390Z"
-  },
-  {
-    "id": "pres_1782850693392_yk4jt",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-97",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.392Z"
-  },
-  {
-    "id": "pres_1782850693393_3i6r6",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-97",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.393Z"
-  },
-  {
-    "id": "pres_1782850693394_54808",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-98",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.394Z"
-  },
-  {
-    "id": "pres_1782850693395_p9gnw",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-98",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.395Z"
-  },
-  {
-    "id": "pres_1782850693396_lqhnl",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-99",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:13.396Z"
-  },
-  {
-    "id": "pres_1782850693398_yqekq",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-99",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:13.398Z"
-  },
-  {
-    "id": "pres_1782850733278_ponn8",
-    "graphId": "graph-x",
-    "userId": "user-alpha",
-    "userName": "Alpha Agent",
-    "action": "joined",
-    "timestamp": "2026-06-30T20:18:53.279Z"
-  },
-  {
-    "id": "pres_1782850733281_hn0r7",
-    "graphId": "graph-x",
-    "userId": "user-alpha",
-    "userName": "Alpha Agent",
-    "action": "left",
-    "timestamp": "2026-06-30T20:18:53.281Z"
-  },
-  {
-    "id": "pres_1782931675121_fpm02",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-0",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.121Z"
-  },
-  {
-    "id": "pres_1782931675123_djz0s",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-0",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.123Z"
-  },
-  {
-    "id": "pres_1782931675124_zps89",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-1",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.124Z"
-  },
-  {
-    "id": "pres_1782931675125_001ol",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-1",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.125Z"
-  },
-  {
-    "id": "pres_1782931675126_58qkn",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-2",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.126Z"
-  },
-  {
-    "id": "pres_1782931675127_v6x4l",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-2",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.127Z"
-  },
-  {
-    "id": "pres_1782931675128_4qnw8",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-3",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.128Z"
-  },
-  {
-    "id": "pres_1782931675129_nwa55",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-3",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.129Z"
-  },
-  {
-    "id": "pres_1782931675130_19txh",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-4",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.130Z"
-  },
-  {
-    "id": "pres_1782931675131_y7v2p",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-4",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.131Z"
-  },
-  {
-    "id": "pres_1782931675132_fc1u9",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-5",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.132Z"
-  },
-  {
-    "id": "pres_1782931675133_hqivq",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-5",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.133Z"
-  },
-  {
-    "id": "pres_1782931675134_chwcw",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-6",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.134Z"
-  },
-  {
-    "id": "pres_1782931675138_py5e7",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-6",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.138Z"
-  },
-  {
-    "id": "pres_1782931675139_nihqs",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-7",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.139Z"
-  },
-  {
-    "id": "pres_1782931675140_p661b",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-7",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.140Z"
-  },
-  {
-    "id": "pres_1782931675141_ttmja",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-8",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.142Z"
-  },
-  {
-    "id": "pres_1782931675143_1d5lj",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-8",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.143Z"
-  },
-  {
-    "id": "pres_1782931675143_hd6jd",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-9",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.143Z"
-  },
-  {
-    "id": "pres_1782931675144_72nq3",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-9",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.144Z"
-  },
-  {
-    "id": "pres_1782931675146_ng8w1",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-10",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.146Z"
-  },
-  {
-    "id": "pres_1782931675147_sqydo",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-10",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.147Z"
-  },
-  {
-    "id": "pres_1782931675148_izuve",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-11",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.148Z"
-  },
-  {
-    "id": "pres_1782931675149_0b4oi",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-11",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.149Z"
-  },
-  {
-    "id": "pres_1782931675150_spsr6",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-12",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.150Z"
-  },
-  {
-    "id": "pres_1782931675152_9td6u",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-12",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.152Z"
-  },
-  {
-    "id": "pres_1782931675153_gvuv4",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-13",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.153Z"
-  },
-  {
-    "id": "pres_1782931675154_td07u",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-13",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.154Z"
-  },
-  {
-    "id": "pres_1782931675155_8ata3",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-14",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.155Z"
-  },
-  {
-    "id": "pres_1782931675156_dao51",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-14",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.156Z"
-  },
-  {
-    "id": "pres_1782931675157_i4rzd",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-15",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.157Z"
-  },
-  {
-    "id": "pres_1782931675158_03del",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-15",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.158Z"
-  },
-  {
-    "id": "pres_1782931675159_ov6o9",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-16",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.159Z"
-  },
-  {
-    "id": "pres_1782931675160_0qf4c",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-16",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.160Z"
-  },
-  {
-    "id": "pres_1782931675161_3amwj",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-17",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.161Z"
-  },
-  {
-    "id": "pres_1782931675162_urz8b",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-17",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.162Z"
-  },
-  {
-    "id": "pres_1782931675163_bzx8o",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-18",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.163Z"
-  },
-  {
-    "id": "pres_1782931675164_scanu",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-18",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.164Z"
-  },
-  {
-    "id": "pres_1782931675165_lq6py",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-19",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.165Z"
-  },
-  {
-    "id": "pres_1782931675165_2ba8e",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-19",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.165Z"
-  },
-  {
-    "id": "pres_1782931675166_kooex",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-20",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.166Z"
-  },
-  {
-    "id": "pres_1782931675167_oqoys",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-20",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.167Z"
-  },
-  {
-    "id": "pres_1782931675168_uemb0",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-21",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.168Z"
-  },
-  {
-    "id": "pres_1782931675169_lvbw8",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-21",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.169Z"
-  },
-  {
-    "id": "pres_1782931675170_y7dua",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-22",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.170Z"
-  },
-  {
-    "id": "pres_1782931675171_r4ns5",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-22",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.171Z"
-  },
-  {
-    "id": "pres_1782931675173_tsoyk",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-23",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.173Z"
-  },
-  {
-    "id": "pres_1782931675174_t88uv",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-23",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.174Z"
-  },
-  {
-    "id": "pres_1782931675179_g52h9",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-24",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.179Z"
-  },
-  {
-    "id": "pres_1782931675180_bfm4g",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-24",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.180Z"
-  },
-  {
-    "id": "pres_1782931675180_3autd",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-25",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.180Z"
-  },
-  {
-    "id": "pres_1782931675182_aphmw",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-25",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.182Z"
-  },
-  {
-    "id": "pres_1782931675183_6v217",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-26",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.183Z"
-  },
-  {
-    "id": "pres_1782931675184_lvb77",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-26",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.184Z"
-  },
-  {
-    "id": "pres_1782931675185_332w4",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-27",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.185Z"
-  },
-  {
-    "id": "pres_1782931675186_2s6br",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-27",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.186Z"
-  },
-  {
-    "id": "pres_1782931675187_0v7fe",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-28",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.187Z"
-  },
-  {
-    "id": "pres_1782931675188_rnzw8",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-28",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.188Z"
-  },
-  {
-    "id": "pres_1782931675189_j8d3i",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-29",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.189Z"
-  },
-  {
-    "id": "pres_1782931675190_irs1y",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-29",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.190Z"
-  },
-  {
-    "id": "pres_1782931675191_bgnc1",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-30",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.191Z"
-  },
-  {
-    "id": "pres_1782931675192_mrdzt",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-30",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.192Z"
-  },
-  {
-    "id": "pres_1782931675193_6n4t4",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-31",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.193Z"
-  },
-  {
-    "id": "pres_1782931675194_inql3",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-31",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.194Z"
-  },
-  {
-    "id": "pres_1782931675196_aacex",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-32",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.196Z"
-  },
-  {
-    "id": "pres_1782931675197_e1bay",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-32",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.197Z"
-  },
-  {
-    "id": "pres_1782931675198_uqxq8",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-33",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.198Z"
-  },
-  {
-    "id": "pres_1782931675199_6ucw0",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-33",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.199Z"
-  },
-  {
-    "id": "pres_1782931675200_fz3qr",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-34",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.200Z"
-  },
-  {
-    "id": "pres_1782931675200_5nvah",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-34",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.200Z"
-  },
-  {
-    "id": "pres_1782931675201_hpff6",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-35",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.201Z"
-  },
-  {
-    "id": "pres_1782931675202_8nf63",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-35",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.202Z"
-  },
-  {
-    "id": "pres_1782931675203_h45ca",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-36",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.203Z"
-  },
-  {
-    "id": "pres_1782931675204_mp1sa",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-36",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.204Z"
-  },
-  {
-    "id": "pres_1782931675205_h6thh",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-37",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.205Z"
-  },
-  {
-    "id": "pres_1782931675206_03gdt",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-37",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.206Z"
-  },
-  {
-    "id": "pres_1782931675207_nyjvd",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-38",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.207Z"
-  },
-  {
-    "id": "pres_1782931675208_8r5qe",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-38",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.208Z"
-  },
-  {
-    "id": "pres_1782931675209_173ab",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-39",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.209Z"
-  },
-  {
-    "id": "pres_1782931675210_ii440",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-39",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.210Z"
-  },
-  {
-    "id": "pres_1782931675211_6vrip",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-40",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.211Z"
-  },
-  {
-    "id": "pres_1782931675212_vq1x1",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-40",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.212Z"
-  },
-  {
-    "id": "pres_1782931675213_95g1o",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-41",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.213Z"
-  },
-  {
-    "id": "pres_1782931675214_2672n",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-41",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.214Z"
-  },
-  {
-    "id": "pres_1782931675214_nv7z4",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-42",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.214Z"
-  },
-  {
-    "id": "pres_1782931675216_r4lb6",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-42",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.216Z"
-  },
-  {
-    "id": "pres_1782931675217_adj07",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-43",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.217Z"
-  },
-  {
-    "id": "pres_1782931675218_dqvaj",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-43",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.218Z"
-  },
-  {
-    "id": "pres_1782931675219_k6x9w",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-44",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.219Z"
-  },
-  {
-    "id": "pres_1782931675219_x7jl5",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-44",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.219Z"
-  },
-  {
-    "id": "pres_1782931675222_ygabo",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-45",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.222Z"
-  },
-  {
-    "id": "pres_1782931675223_41pm6",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-45",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.223Z"
-  },
-  {
-    "id": "pres_1782931675224_3b2eu",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-46",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.224Z"
-  },
-  {
-    "id": "pres_1782931675225_3uvme",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-46",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.225Z"
-  },
-  {
-    "id": "pres_1782931675225_qjygo",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-47",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.225Z"
-  },
-  {
-    "id": "pres_1782931675226_ob55i",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-47",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.226Z"
-  },
-  {
-    "id": "pres_1782931675227_rtky8",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-48",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.227Z"
-  },
-  {
-    "id": "pres_1782931675228_vd2wc",
-    "graphId": "leak-test-graph-3",
-    "userId": "user-48",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.228Z"
-  },
-  {
-    "id": "pres_1782931675229_5aiqx",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-49",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.229Z"
-  },
-  {
-    "id": "pres_1782931675230_jdrkf",
-    "graphId": "leak-test-graph-4",
-    "userId": "user-49",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.230Z"
-  },
-  {
-    "id": "pres_1782931675231_mf4zn",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-50",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.231Z"
-  },
-  {
-    "id": "pres_1782931675232_gbygb",
-    "graphId": "leak-test-graph-0",
-    "userId": "user-50",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.232Z"
-  },
-  {
-    "id": "pres_1782931675233_jcils",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-51",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.233Z"
-  },
-  {
-    "id": "pres_1782931675234_jv5qu",
-    "graphId": "leak-test-graph-1",
-    "userId": "user-51",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.234Z"
-  },
-  {
-    "id": "pres_1782931675235_s84za",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-52",
-    "userName": "AI Client",
-    "action": "joined",
-    "timestamp": "2026-07-01T18:47:55.235Z"
-  },
-  {
-    "id": "pres_1782931675236_k0k8t",
-    "graphId": "leak-test-graph-2",
-    "userId": "user-52",
-    "userName": "AI Client",
-    "action": "left",
-    "timestamp": "2026-07-01T18:47:55.236Z"
-  },
-  {
     "id": "pres_1782931675237_kkl9w",
     "graphId": "leak-test-graph-3",
     "userId": "user-53",
@@ -3998,5 +2382,1621 @@
     "userName": "Alpha Agent",
     "action": "left",
     "timestamp": "2026-07-01T18:51:37.786Z"
+  },
+  {
+    "id": "pres_1782934432439_gmuqi",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-0",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.439Z"
+  },
+  {
+    "id": "pres_1782934432441_7hwu1",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-0",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.441Z"
+  },
+  {
+    "id": "pres_1782934432443_cg2bd",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-1",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.443Z"
+  },
+  {
+    "id": "pres_1782934432444_0uez5",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-1",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.444Z"
+  },
+  {
+    "id": "pres_1782934432445_qyfqo",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-2",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.445Z"
+  },
+  {
+    "id": "pres_1782934432446_y60e7",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-2",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.446Z"
+  },
+  {
+    "id": "pres_1782934432447_hiby7",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-3",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.447Z"
+  },
+  {
+    "id": "pres_1782934432448_372vq",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-3",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.448Z"
+  },
+  {
+    "id": "pres_1782934432449_6vzy6",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-4",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.449Z"
+  },
+  {
+    "id": "pres_1782934432451_aj5fa",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-4",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.451Z"
+  },
+  {
+    "id": "pres_1782934432456_e2dtt",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-5",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.456Z"
+  },
+  {
+    "id": "pres_1782934432457_cs56h",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-5",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.457Z"
+  },
+  {
+    "id": "pres_1782934432458_nnsgs",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-6",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.458Z"
+  },
+  {
+    "id": "pres_1782934432459_pb8y8",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-6",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.459Z"
+  },
+  {
+    "id": "pres_1782934432461_0xfiw",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-7",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.461Z"
+  },
+  {
+    "id": "pres_1782934432462_5jvpv",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-7",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.462Z"
+  },
+  {
+    "id": "pres_1782934432464_i6z54",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-8",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.464Z"
+  },
+  {
+    "id": "pres_1782934432465_k00k3",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-8",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.465Z"
+  },
+  {
+    "id": "pres_1782934432466_l2mct",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-9",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.466Z"
+  },
+  {
+    "id": "pres_1782934432468_wrgnn",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-9",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.468Z"
+  },
+  {
+    "id": "pres_1782934432469_2ig8w",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-10",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.469Z"
+  },
+  {
+    "id": "pres_1782934432470_8ahan",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-10",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.470Z"
+  },
+  {
+    "id": "pres_1782934432472_xcto1",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-11",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.472Z"
+  },
+  {
+    "id": "pres_1782934432473_ib2yg",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-11",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.473Z"
+  },
+  {
+    "id": "pres_1782934432476_if71z",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-12",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.476Z"
+  },
+  {
+    "id": "pres_1782934432477_b7bum",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-12",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.477Z"
+  },
+  {
+    "id": "pres_1782934432479_0h7nx",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-13",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.479Z"
+  },
+  {
+    "id": "pres_1782934432480_6t578",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-13",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.480Z"
+  },
+  {
+    "id": "pres_1782934432481_7917c",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-14",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.481Z"
+  },
+  {
+    "id": "pres_1782934432482_7bpbw",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-14",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.482Z"
+  },
+  {
+    "id": "pres_1782934432484_z5k53",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-15",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.484Z"
+  },
+  {
+    "id": "pres_1782934432485_tv9zs",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-15",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.485Z"
+  },
+  {
+    "id": "pres_1782934432486_hi2ez",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-16",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.486Z"
+  },
+  {
+    "id": "pres_1782934432487_ommzf",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-16",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.487Z"
+  },
+  {
+    "id": "pres_1782934432489_g55gt",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-17",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.489Z"
+  },
+  {
+    "id": "pres_1782934432490_vmdu2",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-17",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.490Z"
+  },
+  {
+    "id": "pres_1782934432491_4c403",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-18",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.491Z"
+  },
+  {
+    "id": "pres_1782934432492_xdtv5",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-18",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.492Z"
+  },
+  {
+    "id": "pres_1782934432493_owz4l",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-19",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.493Z"
+  },
+  {
+    "id": "pres_1782934432494_lullc",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-19",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.494Z"
+  },
+  {
+    "id": "pres_1782934432496_ytauc",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-20",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.496Z"
+  },
+  {
+    "id": "pres_1782934432497_vl1mc",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-20",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.497Z"
+  },
+  {
+    "id": "pres_1782934432498_qx9pq",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-21",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.498Z"
+  },
+  {
+    "id": "pres_1782934432500_6dedt",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-21",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.500Z"
+  },
+  {
+    "id": "pres_1782934432501_tm8xt",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-22",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.501Z"
+  },
+  {
+    "id": "pres_1782934432508_a9xww",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-22",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.508Z"
+  },
+  {
+    "id": "pres_1782934432509_to8xq",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-23",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.509Z"
+  },
+  {
+    "id": "pres_1782934432510_vky5l",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-23",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.510Z"
+  },
+  {
+    "id": "pres_1782934432511_ma6fi",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-24",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.511Z"
+  },
+  {
+    "id": "pres_1782934432512_ky6ll",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-24",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.512Z"
+  },
+  {
+    "id": "pres_1782934432513_yzqye",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-25",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.513Z"
+  },
+  {
+    "id": "pres_1782934432514_9hvqd",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-25",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.514Z"
+  },
+  {
+    "id": "pres_1782934432515_p7szd",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-26",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.515Z"
+  },
+  {
+    "id": "pres_1782934432516_yqvv9",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-26",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.516Z"
+  },
+  {
+    "id": "pres_1782934432517_71enw",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-27",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.517Z"
+  },
+  {
+    "id": "pres_1782934432518_kyvow",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-27",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.518Z"
+  },
+  {
+    "id": "pres_1782934432520_8drlt",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-28",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.520Z"
+  },
+  {
+    "id": "pres_1782934432521_6vm7h",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-28",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.521Z"
+  },
+  {
+    "id": "pres_1782934432523_5zuoj",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-29",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.523Z"
+  },
+  {
+    "id": "pres_1782934432524_0t3pd",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-29",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.524Z"
+  },
+  {
+    "id": "pres_1782934432525_pr595",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-30",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.525Z"
+  },
+  {
+    "id": "pres_1782934432526_eolg1",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-30",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.526Z"
+  },
+  {
+    "id": "pres_1782934432528_08alw",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-31",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.528Z"
+  },
+  {
+    "id": "pres_1782934432529_1ezut",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-31",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.529Z"
+  },
+  {
+    "id": "pres_1782934432530_5ffiw",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-32",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.530Z"
+  },
+  {
+    "id": "pres_1782934432531_w76fc",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-32",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.531Z"
+  },
+  {
+    "id": "pres_1782934432532_o2vpm",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-33",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.532Z"
+  },
+  {
+    "id": "pres_1782934432533_ewaxr",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-33",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.533Z"
+  },
+  {
+    "id": "pres_1782934432535_u5wkw",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-34",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.535Z"
+  },
+  {
+    "id": "pres_1782934432536_w77bi",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-34",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.536Z"
+  },
+  {
+    "id": "pres_1782934432537_kh6po",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-35",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.537Z"
+  },
+  {
+    "id": "pres_1782934432539_hwisq",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-35",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.539Z"
+  },
+  {
+    "id": "pres_1782934432540_cjcfa",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-36",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.540Z"
+  },
+  {
+    "id": "pres_1782934432541_w3c8y",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-36",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.541Z"
+  },
+  {
+    "id": "pres_1782934432543_ix3hf",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-37",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.543Z"
+  },
+  {
+    "id": "pres_1782934432544_c1h9o",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-37",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.544Z"
+  },
+  {
+    "id": "pres_1782934432545_x94hi",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-38",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.545Z"
+  },
+  {
+    "id": "pres_1782934432546_wtezk",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-38",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.546Z"
+  },
+  {
+    "id": "pres_1782934432547_xyqha",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-39",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.547Z"
+  },
+  {
+    "id": "pres_1782934432548_za975",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-39",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.548Z"
+  },
+  {
+    "id": "pres_1782934432549_nj3sr",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-40",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.549Z"
+  },
+  {
+    "id": "pres_1782934432551_ou9f5",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-40",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.551Z"
+  },
+  {
+    "id": "pres_1782934432552_4q50x",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-41",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.552Z"
+  },
+  {
+    "id": "pres_1782934432553_r599y",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-41",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.553Z"
+  },
+  {
+    "id": "pres_1782934432555_p0ddk",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-42",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.555Z"
+  },
+  {
+    "id": "pres_1782934432556_4ybep",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-42",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.556Z"
+  },
+  {
+    "id": "pres_1782934432559_5ibsf",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-43",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.559Z"
+  },
+  {
+    "id": "pres_1782934432560_hwtu2",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-43",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.560Z"
+  },
+  {
+    "id": "pres_1782934432561_b3t0m",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-44",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.561Z"
+  },
+  {
+    "id": "pres_1782934432562_mlz74",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-44",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.562Z"
+  },
+  {
+    "id": "pres_1782934432563_1mvou",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-45",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.563Z"
+  },
+  {
+    "id": "pres_1782934432564_qhsil",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-45",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.564Z"
+  },
+  {
+    "id": "pres_1782934432566_i62cb",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-46",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.566Z"
+  },
+  {
+    "id": "pres_1782934432567_spm7g",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-46",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.567Z"
+  },
+  {
+    "id": "pres_1782934432569_62t7i",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-47",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.569Z"
+  },
+  {
+    "id": "pres_1782934432570_klmkj",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-47",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.570Z"
+  },
+  {
+    "id": "pres_1782934432571_zvs8n",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-48",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.571Z"
+  },
+  {
+    "id": "pres_1782934432573_qsl6j",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-48",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.573Z"
+  },
+  {
+    "id": "pres_1782934432574_zke4q",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-49",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.574Z"
+  },
+  {
+    "id": "pres_1782934432575_2em4g",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-49",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.575Z"
+  },
+  {
+    "id": "pres_1782934432576_e03gk",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-50",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.576Z"
+  },
+  {
+    "id": "pres_1782934432578_4wc98",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-50",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.578Z"
+  },
+  {
+    "id": "pres_1782934432579_n8ixc",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-51",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.579Z"
+  },
+  {
+    "id": "pres_1782934432580_oi2nd",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-51",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.580Z"
+  },
+  {
+    "id": "pres_1782934432582_sts5i",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-52",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.582Z"
+  },
+  {
+    "id": "pres_1782934432583_2f9g1",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-52",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.583Z"
+  },
+  {
+    "id": "pres_1782934432584_m1jv7",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-53",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.584Z"
+  },
+  {
+    "id": "pres_1782934432586_zcv3o",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-53",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.586Z"
+  },
+  {
+    "id": "pres_1782934432587_8ppo1",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-54",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.587Z"
+  },
+  {
+    "id": "pres_1782934432588_c5bh5",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-54",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.588Z"
+  },
+  {
+    "id": "pres_1782934432589_7zpy8",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-55",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.589Z"
+  },
+  {
+    "id": "pres_1782934432592_8tgj3",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-55",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.592Z"
+  },
+  {
+    "id": "pres_1782934432593_47y1x",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-56",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.593Z"
+  },
+  {
+    "id": "pres_1782934432594_3x0pd",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-56",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.594Z"
+  },
+  {
+    "id": "pres_1782934432596_3fl3o",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-57",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.596Z"
+  },
+  {
+    "id": "pres_1782934432598_fe0lp",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-57",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.598Z"
+  },
+  {
+    "id": "pres_1782934432599_3g60s",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-58",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.599Z"
+  },
+  {
+    "id": "pres_1782934432600_htcmw",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-58",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.600Z"
+  },
+  {
+    "id": "pres_1782934432602_2k7eg",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-59",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.602Z"
+  },
+  {
+    "id": "pres_1782934432603_ayli7",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-59",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.603Z"
+  },
+  {
+    "id": "pres_1782934432604_8q2gk",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-60",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.604Z"
+  },
+  {
+    "id": "pres_1782934432605_a9lgp",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-60",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.605Z"
+  },
+  {
+    "id": "pres_1782934432606_xiaw7",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-61",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.606Z"
+  },
+  {
+    "id": "pres_1782934432608_bsmbg",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-61",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.608Z"
+  },
+  {
+    "id": "pres_1782934432609_hunfq",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-62",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.609Z"
+  },
+  {
+    "id": "pres_1782934432610_6p96g",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-62",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.610Z"
+  },
+  {
+    "id": "pres_1782934432612_6vmi8",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-63",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.612Z"
+  },
+  {
+    "id": "pres_1782934432613_obet5",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-63",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.613Z"
+  },
+  {
+    "id": "pres_1782934432624_3dv91",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-64",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.624Z"
+  },
+  {
+    "id": "pres_1782934432626_kl7rh",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-64",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.626Z"
+  },
+  {
+    "id": "pres_1782934432627_shex4",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-65",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.627Z"
+  },
+  {
+    "id": "pres_1782934432628_6riv1",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-65",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.628Z"
+  },
+  {
+    "id": "pres_1782934432629_6j0fa",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-66",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.629Z"
+  },
+  {
+    "id": "pres_1782934432631_io16n",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-66",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.631Z"
+  },
+  {
+    "id": "pres_1782934432632_jev76",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-67",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.632Z"
+  },
+  {
+    "id": "pres_1782934432633_3vxsy",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-67",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.633Z"
+  },
+  {
+    "id": "pres_1782934432635_z2wtp",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-68",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.635Z"
+  },
+  {
+    "id": "pres_1782934432641_anepk",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-68",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.642Z"
+  },
+  {
+    "id": "pres_1782934432643_oaxc4",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-69",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.643Z"
+  },
+  {
+    "id": "pres_1782934432644_1iz4y",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-69",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.644Z"
+  },
+  {
+    "id": "pres_1782934432645_6yytd",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-70",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.645Z"
+  },
+  {
+    "id": "pres_1782934432646_40qdz",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-70",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.646Z"
+  },
+  {
+    "id": "pres_1782934432648_ie6lg",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-71",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.648Z"
+  },
+  {
+    "id": "pres_1782934432649_lezq6",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-71",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.649Z"
+  },
+  {
+    "id": "pres_1782934432650_0nlei",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-72",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.650Z"
+  },
+  {
+    "id": "pres_1782934432652_q0yqf",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-72",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.652Z"
+  },
+  {
+    "id": "pres_1782934432653_l615x",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-73",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.653Z"
+  },
+  {
+    "id": "pres_1782934432654_lrdam",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-73",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.654Z"
+  },
+  {
+    "id": "pres_1782934432655_8z4yd",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-74",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.655Z"
+  },
+  {
+    "id": "pres_1782934432656_43dnz",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-74",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.656Z"
+  },
+  {
+    "id": "pres_1782934432657_mfczh",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-75",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.657Z"
+  },
+  {
+    "id": "pres_1782934432659_kmgxw",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-75",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.659Z"
+  },
+  {
+    "id": "pres_1782934432668_st5x7",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-76",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.668Z"
+  },
+  {
+    "id": "pres_1782934432670_br47w",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-76",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.670Z"
+  },
+  {
+    "id": "pres_1782934432672_nyn0d",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-77",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.672Z"
+  },
+  {
+    "id": "pres_1782934432674_28i82",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-77",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.674Z"
+  },
+  {
+    "id": "pres_1782934432675_eer8u",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-78",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.675Z"
+  },
+  {
+    "id": "pres_1782934432676_c14rr",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-78",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.676Z"
+  },
+  {
+    "id": "pres_1782934432677_nelyd",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-79",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.677Z"
+  },
+  {
+    "id": "pres_1782934432678_p7o4q",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-79",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.678Z"
+  },
+  {
+    "id": "pres_1782934432680_5hp3q",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-80",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.680Z"
+  },
+  {
+    "id": "pres_1782934432681_zcgmo",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-80",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.681Z"
+  },
+  {
+    "id": "pres_1782934432682_mqxw6",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-81",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.682Z"
+  },
+  {
+    "id": "pres_1782934432683_brzoy",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-81",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.683Z"
+  },
+  {
+    "id": "pres_1782934432684_bcnwv",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-82",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.684Z"
+  },
+  {
+    "id": "pres_1782934432689_th7jr",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-82",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.689Z"
+  },
+  {
+    "id": "pres_1782934432691_xr4wa",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-83",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.691Z"
+  },
+  {
+    "id": "pres_1782934432692_wiwoi",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-83",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.692Z"
+  },
+  {
+    "id": "pres_1782934432693_pjr55",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-84",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.693Z"
+  },
+  {
+    "id": "pres_1782934432694_ssx5m",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-84",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.694Z"
+  },
+  {
+    "id": "pres_1782934432697_mnvv6",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-85",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.697Z"
+  },
+  {
+    "id": "pres_1782934432698_1510g",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-85",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.698Z"
+  },
+  {
+    "id": "pres_1782934432699_w6kbr",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-86",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.699Z"
+  },
+  {
+    "id": "pres_1782934432700_vdhjf",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-86",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.700Z"
+  },
+  {
+    "id": "pres_1782934432702_jb9tf",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-87",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.702Z"
+  },
+  {
+    "id": "pres_1782934432703_76gva",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-87",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.703Z"
+  },
+  {
+    "id": "pres_1782934432704_8h6v7",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-88",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.704Z"
+  },
+  {
+    "id": "pres_1782934432706_ghknx",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-88",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.706Z"
+  },
+  {
+    "id": "pres_1782934432707_112sn",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-89",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.707Z"
+  },
+  {
+    "id": "pres_1782934432708_j4exg",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-89",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.708Z"
+  },
+  {
+    "id": "pres_1782934432709_0xkay",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-90",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.709Z"
+  },
+  {
+    "id": "pres_1782934432710_oy6vy",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-90",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.710Z"
+  },
+  {
+    "id": "pres_1782934432711_8wc35",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-91",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.711Z"
+  },
+  {
+    "id": "pres_1782934432712_56u8f",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-91",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.712Z"
+  },
+  {
+    "id": "pres_1782934432713_cfq9w",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-92",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.713Z"
+  },
+  {
+    "id": "pres_1782934432715_jnfso",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-92",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.715Z"
+  },
+  {
+    "id": "pres_1782934432716_kx3f9",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-93",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.716Z"
+  },
+  {
+    "id": "pres_1782934432717_3fecd",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-93",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.717Z"
+  },
+  {
+    "id": "pres_1782934432718_emtbm",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-94",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.718Z"
+  },
+  {
+    "id": "pres_1782934432720_d74zy",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-94",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.720Z"
+  },
+  {
+    "id": "pres_1782934432721_ak1it",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-95",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.721Z"
+  },
+  {
+    "id": "pres_1782934432722_u9f3d",
+    "graphId": "leak-test-graph-0",
+    "userId": "user-95",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.722Z"
+  },
+  {
+    "id": "pres_1782934432723_zrtdw",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-96",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.723Z"
+  },
+  {
+    "id": "pres_1782934432724_opisj",
+    "graphId": "leak-test-graph-1",
+    "userId": "user-96",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.724Z"
+  },
+  {
+    "id": "pres_1782934432725_e6p6q",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-97",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.725Z"
+  },
+  {
+    "id": "pres_1782934432726_s9ys6",
+    "graphId": "leak-test-graph-2",
+    "userId": "user-97",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.726Z"
+  },
+  {
+    "id": "pres_1782934432727_99g6l",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-98",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.727Z"
+  },
+  {
+    "id": "pres_1782934432728_zl0l6",
+    "graphId": "leak-test-graph-3",
+    "userId": "user-98",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.728Z"
+  },
+  {
+    "id": "pres_1782934432729_2j0sd",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-99",
+    "userName": "AI Client",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:33:52.729Z"
+  },
+  {
+    "id": "pres_1782934432730_lvxlm",
+    "graphId": "leak-test-graph-4",
+    "userId": "user-99",
+    "userName": "AI Client",
+    "action": "left",
+    "timestamp": "2026-07-01T19:33:52.730Z"
+  },
+  {
+    "id": "pres_1782934471960_8pydv",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "joined",
+    "timestamp": "2026-07-01T19:34:31.960Z"
+  },
+  {
+    "id": "pres_1782934471963_mh1ik",
+    "graphId": "graph-x",
+    "userId": "user-alpha",
+    "userName": "Alpha Agent",
+    "action": "left",
+    "timestamp": "2026-07-01T19:34:31.963Z"
   }
 ]
