@@ -2,6 +2,7 @@ import { pg, sqlite } from '../../db/index.js';
 import { pipeline, env } from '@xenova/transformers';
 import path from 'path';
 import { logger } from '../../utils/logger.js';
+import { VectorStoreAdapter, PineconeAdapter, WeaviateAdapter, QdrantAdapter, VectorStoreConfig } from './VectorStoreAdapters.js';
 
 // Setup Xenova transformers cache paths
 env.cacheDir = path.join(process.cwd(), '.models');
@@ -18,6 +19,7 @@ export class VectorStore {
   private static embedder: any = null;
   private static initPromise: Promise<void> | null = null;
   private isPgActive: boolean = false;
+  private adapter: VectorStoreAdapter | null = null;
 
   constructor() {
     this.isPgActive = process.env.DB_TYPE === 'postgres';
@@ -38,6 +40,30 @@ export class VectorStore {
           'Xenova/all-MiniLM-L6-v2'
         );
         logger.info('[PGVectorStore] Model loaded successfully.');
+
+        // Initialize active adapter if VECTOR_STORE_PROVIDER is configured
+        const provider = (process.env.VECTOR_STORE_PROVIDER || 'local').toLowerCase();
+        if (provider !== 'local') {
+          const config: VectorStoreConfig = {
+            provider: provider as any,
+            apiKey: process.env.VECTOR_STORE_API_KEY,
+            environment: process.env.VECTOR_STORE_ENV,
+            indexName: process.env.VECTOR_STORE_INDEX,
+            endpoint: process.env.VECTOR_STORE_ENDPOINT
+          };
+
+          if (provider === 'pinecone') {
+            this.adapter = new PineconeAdapter();
+          } else if (provider === 'weaviate') {
+            this.adapter = new WeaviateAdapter();
+          } else if (provider === 'qdrant') {
+            this.adapter = new QdrantAdapter();
+          }
+
+          if (this.adapter) {
+            await this.adapter.connect(config);
+          }
+        }
 
         // Initialize PGVector/SQLite database table schema
         await this.setupDatabaseTable();
@@ -153,6 +179,14 @@ export class VectorStore {
         stmt.run(chunkId, sourceName, chunkText, JSON.stringify(embedding), createdAt);
       }
 
+      if (this.adapter) {
+        try {
+          await this.adapter.upsert(chunkId, embedding, chunkText, sourceName);
+        } catch (err: any) {
+          logger.warn(`[VectorStore] Adapter upsert failed: ${err.message}. Saving locally.`);
+        }
+      }
+
       insertedIds.push(chunkId);
     }
 
@@ -166,6 +200,17 @@ export class VectorStore {
   public async query(queryText: string, limit = 5): Promise<Array<{ text: string; source: string; score: number }>> {
     await this.ensureInitialized();
     const queryEmbedding = await this.generateEmbedding(queryText);
+
+    if (this.adapter) {
+      try {
+        const adapterResults = await this.adapter.query(queryEmbedding, limit);
+        if (adapterResults && adapterResults.length > 0) {
+          return adapterResults;
+        }
+      } catch (err: any) {
+        logger.warn(`[VectorStore] Adapter query failed: ${err.message}. Falling back to local store.`);
+      }
+    }
 
     if (this.isPgActive && pg) {
       const embeddingString = `[${queryEmbedding.join(',')}]`;
