@@ -150,6 +150,8 @@ flowchart TD
 
 ## ⚡ Quick Start
 
+> 📖 **Important Note for Getting Started:** We have prepared a comprehensive step-by-step guide on how to obtain API keys (Google Gemini, OpenAI, Claude, Ollama, Pinecone, Tavily), generate required cryptographic keys, and launch the platform. Read it here: **[DETAILED KEY CONFIGURATION & SETUP GUIDE](./INSTRUCTIONS.md)**.
+
 ### 🐳 Method A: Docker Compose (Recommended)
 Make sure you have Docker installed on your host system:
 ```bash
