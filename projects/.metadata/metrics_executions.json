@@ -1,134 +1,5 @@
 [
   {
-    "id": "6316567f-a4ff-47e1-bd2d-aeb31117d4da",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-17T16:37:26.848Z",
-    "finishedAt": "2026-06-17T16:37:26.915Z",
-    "status": "success",
-    "totalTokens": 24,
-    "totalCostUsd": 0.000134,
-    "totalLatencyMs": 67,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_gly5fx926",
-        "executionId": "6316567f-a4ff-47e1-bd2d-aeb31117d4da",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_m79yq8v42",
-        "executionId": "6316567f-a4ff-47e1-bd2d-aeb31117d4da",
-        "nodeId": "tool-1",
-        "nodeType": "tool",
-        "tokensUsed": 22,
-        "costUsd": 0.000122,
-        "latencyMs": 63,
-        "inputPreview": "URL: https://api.weather.com/v1/forecast\nBody: None",
-        "outputPreview": "{\"message\":\"Successfully fetched\"}"
-      }
-    ]
-  },
-  {
-    "id": "f3affae7-d613-448a-a2ce-3cec0a25c8bc",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-17T16:37:26.923Z",
-    "finishedAt": "2026-06-17T16:37:26.940Z",
-    "status": "success",
-    "totalTokens": 50,
-    "totalCostUsd": 0.000229,
-    "totalLatencyMs": 17,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_7kphecatg",
-        "executionId": "f3affae7-d613-448a-a2ce-3cec0a25c8bc",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 28,
-        "costUsd": 0.000122,
-        "latencyMs": 1,
-        "inputPreview": "[\n  {\n    \"key\": \"username\",\n    \"value\": \"alice44\",\n    \"label\": \"username\"\n  }\n]",
-        "outputPreview": "{\n  \"username\": \"alice44\"\n}"
-      },
-      {
-        "id": "node_exec_9ofdovmse",
-        "executionId": "f3affae7-d613-448a-a2ce-3cec0a25c8bc",
-        "nodeId": "tool-1",
-        "nodeType": "tool",
-        "tokensUsed": 22,
-        "costUsd": 0.000107,
-        "latencyMs": 16,
-        "inputPreview": "URL: https://api.example.com/users\nBody: {\"name\": \"alice44\"}",
-        "outputPreview": "User Created Successfully"
-      }
-    ]
-  },
-  {
-    "id": "5043b40c-72eb-44f7-be0c-808c50aafc70",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-17T16:37:26.944Z",
-    "finishedAt": "2026-06-17T16:37:26.977Z",
-    "status": "failed",
-    "totalTokens": 0,
-    "totalCostUsd": 0,
-    "totalLatencyMs": 33,
-    "errorMessage": "HTTP Tool node failed: Network offline",
-    "nodeExecutions": []
-  },
-  {
-    "id": "60e8a6c5-b586-46f5-8de9-fa79172ae760",
-    "graphId": "test-graph",
-    "graphName": "Test Graph Name",
-    "startedAt": "2026-06-17T16:37:29.103Z",
-    "finishedAt": "2026-06-17T16:37:29.107Z",
-    "status": "success",
-    "totalTokens": 51,
-    "totalCostUsd": 0.000271,
-    "totalLatencyMs": 4,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_z5ictzzxb",
-        "executionId": "60e8a6c5-b586-46f5-8de9-fa79172ae760",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 31,
-        "costUsd": 0.000145,
-        "latencyMs": 1,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
-      },
-      {
-        "id": "node_exec_p20u8vujm",
-        "executionId": "60e8a6c5-b586-46f5-8de9-fa79172ae760",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Test trace ID system",
-        "outputPreview": "Test trace ID system"
-      },
-      {
-        "id": "node_exec_pxkhm4zle",
-        "executionId": "60e8a6c5-b586-46f5-8de9-fa79172ae760",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Test trace ID system"
-      }
-    ]
-  },
-  {
     "id": "b99c6180-818e-4299-a916-4f0a93a97257",
     "graphId": "metrics-test-graph",
     "graphName": "Metrics Test Graph",
@@ -21964,5 +21835,123 @@
     "totalLatencyMs": 10,
     "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
     "nodeExecutions": []
+  },
+  {
+    "id": "ecb18eca-2f35-46b6-b712-bc785d14232f",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-01T17:58:16.058Z",
+    "finishedAt": "2026-07-01T17:58:16.067Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 9,
+    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
+    "nodeExecutions": []
+  },
+  {
+    "id": "9f75570c-0d63-49eb-8d4e-598782b382d8",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-01T17:59:25.812Z",
+    "finishedAt": "2026-07-01T17:59:25.820Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 8,
+    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
+    "nodeExecutions": []
+  },
+  {
+    "id": "2a9f8e5f-c6f6-43f6-a8f5-e57c3034bde7",
+    "graphId": "test-graph",
+    "graphName": "Test Graph Name",
+    "startedAt": "2026-07-01T18:19:24.974Z",
+    "finishedAt": "2026-07-01T18:19:24.977Z",
+    "status": "success",
+    "totalTokens": 51,
+    "totalCostUsd": 0.000271,
+    "totalLatencyMs": 3,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_ft7g0vdjo",
+        "executionId": "2a9f8e5f-c6f6-43f6-a8f5-e57c3034bde7",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 31,
+        "costUsd": 0.000145,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
+        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
+      },
+      {
+        "id": "node_exec_va6f1uqyb",
+        "executionId": "2a9f8e5f-c6f6-43f6-a8f5-e57c3034bde7",
+        "nodeId": "step-prompt",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Test trace ID system",
+        "outputPreview": "Test trace ID system"
+      },
+      {
+        "id": "node_exec_lf0p9hjrt",
+        "executionId": "2a9f8e5f-c6f6-43f6-a8f5-e57c3034bde7",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Test trace ID system"
+      }
+    ]
+  },
+  {
+    "id": "aec22f62-9034-4026-9ea3-a20239b47ff8",
+    "graphId": "metrics-test-graph",
+    "graphName": "Metrics Test Graph",
+    "startedAt": "2026-07-01T18:19:25.002Z",
+    "finishedAt": "2026-07-01T18:19:25.003Z",
+    "status": "success",
+    "totalTokens": 51,
+    "totalCostUsd": 0.000271,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_prjmensg3",
+        "executionId": "aec22f62-9034-4026-9ea3-a20239b47ff8",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 31,
+        "costUsd": 0.000145,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
+        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
+      },
+      {
+        "id": "node_exec_2nlo6x6r0",
+        "executionId": "aec22f62-9034-4026-9ea3-a20239b47ff8",
+        "nodeId": "step-prompt",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Test trace ID system",
+        "outputPreview": "Test trace ID system"
+      },
+      {
+        "id": "node_exec_at5z8jcop",
+        "executionId": "aec22f62-9034-4026-9ea3-a20239b47ff8",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Test trace ID system"
+      }
+    ]
   }
 ]

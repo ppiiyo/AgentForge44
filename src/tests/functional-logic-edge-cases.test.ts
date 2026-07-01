@@ -1,11 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../../server.js';
 import { StatefulExecutionEngine } from '../api/execution.js';
 import { FlowNode, FlowConnection } from '../types.js';
 import { signToken } from '../api/userAuth.js';
+import { runSchemaMigrations } from '../api/migrate.js';
+import { adapter } from '../db/index.js';
 
 describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
+
+  beforeAll(async () => {
+    // Ensure all tables exist before executing the suite
+    await runSchemaMigrations(adapter);
+  });
 
   describe('1. Infinite Loop and global steps limit (max_steps)', () => {
     it('should abort cleanly when execution steps exceed the 50 steps threshold', async () => {
