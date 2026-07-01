@@ -6,6 +6,8 @@ import { traceSpan } from "../services/tracing.js";
 import { llmCallCounter, llmCallDuration } from "../services/metrics.js";
 import { retryWithBackoff } from "../utils/retry.js";
 import { DEFAULT_MODELS, PROVIDER_MODELS } from "../config/models.js";
+import { circuitBreakerRegistry } from "../services/circuitBreaker.js";
+import { chaosEngine } from "../services/chaosEngine.js";
 
 export interface LLMCallConfig {
   temperature?: number;
@@ -63,31 +65,38 @@ export abstract class LLMProvider {
     let status = "success";
     let response: LLMResponse;
 
+    const breaker = circuitBreakerRegistry.getBreaker(this.getName());
+
     try {
-      response = await traceSpan("llm_generate", {
-        provider: this.getName(),
-        model: (this as any).model || "unknown",
-        prompt_length: (prompt || "").length
-      }, () => retryWithBackoff(() => this._generate(prompt, config), {
-        retries: (process.env.NODE_ENV === 'test' || process.env.VITEST || process.env.VITEST === 'true') ? 0 : 3,
-        delay: 50, // Lower initial delay for fast transient recoveries
-        factor: 2,
-        maxDelay: 5000,
-        shouldRetry: (err: any) => {
-          const errMsg = String(err.message || err).toLowerCase();
-          if (errMsg.includes("budget exceeded") || (err.status === 429 && errMsg.includes("budget"))) {
-            return false;
+      response = await breaker.execute(async () => {
+        // Chaos Engineering check inside the Circuit Breaker context
+        await chaosEngine.checkLlmChaos(this.getName());
+
+        return traceSpan("llm_generate", {
+          provider: this.getName(),
+          model: (this as any).model || "unknown",
+          prompt_length: (prompt || "").length
+        }, () => retryWithBackoff(() => this._generate(prompt, config), {
+          retries: (process.env.NODE_ENV === 'test' || process.env.VITEST || process.env.VITEST === 'true') ? 0 : 3,
+          delay: 50, // Lower initial delay for fast transient recoveries
+          factor: 2,
+          maxDelay: 5000,
+          shouldRetry: (err: any) => {
+            const errMsg = String(err.message || err).toLowerCase();
+            if (errMsg.includes("budget exceeded") || (err.status === 429 && errMsg.includes("budget"))) {
+              return false;
+            }
+            if (err.status === 400 || err.status === 401 || err.status === 403) {
+              return false;
+            }
+            // Also inspect error messages mirroring 400 Bad Request, 401 Unauthorized or 403 Forbidden
+            if (errMsg.includes("400") || errMsg.includes("401") || errMsg.includes("403")) {
+              return false;
+            }
+            return true;
           }
-          if (err.status === 400 || err.status === 401 || err.status === 403) {
-            return false;
-          }
-          // Also inspect error messages mirroring 400 Bad Request, 401 Unauthorized or 403 Forbidden
-          if (errMsg.includes("400") || errMsg.includes("401") || errMsg.includes("403")) {
-            return false;
-          }
-          return true;
-        }
-      }));
+        }));
+      });
     } catch (err: any) {
       status = "error";
       throw err;

@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from '../../types.js';
 import { StrategyFactory } from '../../api/strategies/index.js';
 import { logger } from '../logger.js';
+import { chaosEngine } from '../chaosEngine.js';
 
 export interface ExecutorOptions {
   concurrencyLimit?: number;
@@ -185,6 +186,9 @@ export class PipelineExecutor {
     }
 
     try {
+      // Chaos Engineering check for node hangs or simulated timeouts
+      await chaosEngine.checkNodeChaos(node.id, node.title);
+
       const strategy = StrategyFactory.get(node.type);
       const context = {
         ai: this.ai,

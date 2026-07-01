@@ -103,10 +103,42 @@ export class CircuitBreaker extends EventEmitter {
 
   getStats() {
     return {
+      name: this.options.name,
       state: this.state,
       failureCount: this.failureCount,
       successCount: this.successCount,
-      lastFailureTime: this.lastFailureTime
+      lastFailureTime: this.lastFailureTime,
+      resetTimeout: this.options.resetTimeout,
+      failureThreshold: this.options.failureThreshold
     };
   }
 }
+
+export class CircuitBreakerRegistry {
+  private breakers: Map<string, CircuitBreaker> = new Map();
+
+  getBreaker(name: string, options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
+    // Standardize naming (e.g. "Gemini" from "Gemini (gemini-3.5-flash)")
+    const cleanName = name.split(' ')[0];
+    if (!this.breakers.has(cleanName)) {
+      this.breakers.set(cleanName, new CircuitBreaker({
+        name: cleanName,
+        failureThreshold: options?.failureThreshold ?? 3, // Highly sensitive for demonstration/testing
+        resetTimeout: options?.resetTimeout ?? 10000,     // 10s timeout to retry
+        monitoringPeriod: options?.monitoringPeriod ?? 30000,
+      }));
+    }
+    return this.breakers.get(cleanName)!;
+  }
+
+  getAllBreakers(): CircuitBreaker[] {
+    // Ensure standard breakers are initialized
+    this.getBreaker('Gemini');
+    this.getBreaker('OpenAI');
+    this.getBreaker('Anthropic');
+    this.getBreaker('Ollama');
+    return Array.from(this.breakers.values());
+  }
+}
+
+export const circuitBreakerRegistry = new CircuitBreakerRegistry();

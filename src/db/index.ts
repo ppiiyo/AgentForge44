@@ -6,17 +6,83 @@ import { SqliteDatabaseAdapter, PostgresDatabaseAdapter } from './adapters.js';
 import * as sqliteSchema from './schema.js';
 import * as pgSchema from './postgres-schema.js';
 import { traceSpan } from '../services/tracing.js';
+import { chaosEngine } from '../services/chaosEngine.js';
 
 // Resolve adapter cleanly using the centralized database factory
 export const adapter = createDatabaseConnection();
 const dbType = adapter.type;
 
-export const db = adapter.db;
+const rawDb = adapter.db;
 
-// Hook db.execute for automated SQL/Database query tracing
-if (db && typeof db.execute === 'function') {
-  const originalExecute = db.execute;
-  db.execute = function(this: any, ...args: any[]) {
+function wrapQueryBuilder(qb: any): any {
+  if (!qb || typeof qb !== 'object') return qb;
+  return new Proxy(qb, {
+    get(target, prop, receiver) {
+      const val = Reflect.get(target, prop, receiver);
+      if (prop === 'then' && typeof val === 'function') {
+        return async function(onfulfilled: any, onrejected: any) {
+          try {
+            await chaosEngine.simulateDbAccess();
+            return val.call(target, onfulfilled, onrejected);
+          } catch (err) {
+            if (onrejected) return onrejected(err);
+            throw err;
+          }
+        };
+      }
+      if (typeof val === 'function') {
+        return function(this: any, ...args: any[]) {
+          const res = val.apply(this, args);
+          if (res && typeof res === 'object') {
+            return wrapQueryBuilder(res);
+          }
+          return res;
+        };
+      }
+      return val;
+    }
+  });
+}
+
+// Create a wrapper for Drizzle database instance to support Chaos Engineering
+export const db = new Proxy(rawDb, {
+  get(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value === 'function' && ['select', 'insert', 'update', 'delete', 'execute', 'selectDistinct'].includes(prop as string)) {
+      return function(this: any, ...args: any[]) {
+        if (chaosEngine.getConfig().dbFailureActive) {
+          throw new Error('ChaosEngine: Simulated database connection outage.');
+        }
+
+        const queryBuilder = value.apply(this, args);
+
+        if (queryBuilder && typeof queryBuilder.then === 'function') {
+          const originalThen = queryBuilder.then;
+          queryBuilder.then = async function(onfulfilled: any, onrejected: any) {
+            try {
+              await chaosEngine.simulateDbAccess();
+              return originalThen.call(this, onfulfilled, onrejected);
+            } catch (err) {
+              if (onrejected) return onrejected(err);
+              throw err;
+            }
+          };
+          return queryBuilder;
+        } else if (queryBuilder && typeof queryBuilder === 'object') {
+          return wrapQueryBuilder(queryBuilder);
+        }
+
+        return queryBuilder;
+      };
+    }
+    return value;
+  }
+});
+
+// Hook rawDb.execute for automated SQL/Database query tracing
+if (rawDb && typeof rawDb.execute === 'function') {
+  const originalExecute = rawDb.execute;
+  rawDb.execute = function(this: any, ...args: any[]) {
     const rawSql = args[0] && typeof args[0] === 'string' ? args[0] : (args[0]?.sql || 'db-query');
     return traceSpan('db_query', {
       dialect: dbType,

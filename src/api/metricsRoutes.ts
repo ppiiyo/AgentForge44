@@ -1,8 +1,49 @@
 import { Router, Request, Response } from 'express';
 import { MetricsCollector } from './metricsAndVersions.js';
 import { register } from '../services/metrics.js';
+import { circuitBreakerRegistry } from '../services/circuitBreaker.js';
+import { chaosEngine } from '../services/chaosEngine.js';
 
 const router = Router();
+
+// Retrieve all circuit breakers and their real-time states
+router.get('/resilience/circuit-breakers', (req: Request, res: Response) => {
+  try {
+    const breakers = circuitBreakerRegistry.getAllBreakers();
+    res.json(breakers.map(b => b.getStats()));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Retrieve active Chaos Engineering configurations
+router.get('/resilience/chaos-config', (req: Request, res: Response) => {
+  try {
+    res.json(chaosEngine.getConfig());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update active Chaos Engineering configurations
+router.post('/resilience/chaos-config', (req: Request, res: Response) => {
+  try {
+    chaosEngine.updateConfig(req.body);
+    res.json({ success: true, config: chaosEngine.getConfig() });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reset Chaos Engineering to pristine state
+router.post('/resilience/chaos-reset', (req: Request, res: Response) => {
+  try {
+    chaosEngine.reset();
+    res.json({ success: true, config: chaosEngine.getConfig() });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get('/metrics', async (req: Request, res: Response) => {
   try {
