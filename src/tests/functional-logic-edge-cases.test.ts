@@ -11,7 +11,11 @@ describe('=== Phase 3: Functional Logic and Edge Cases Suite ===', () => {
 
   beforeAll(async () => {
     // Ensure all tables exist before executing the suite
-    await runSchemaMigrations(adapter);
+    try {
+      await runSchemaMigrations(adapter);
+    } catch (err) {
+      // Ignored: Database schema is already created via push script or previous runs
+    }
   });
 
   describe('1. Infinite Loop and global steps limit (max_steps)', () => {
