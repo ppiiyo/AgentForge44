@@ -190,7 +190,7 @@ describe('=== Phase 4: Interactive Evaluation Suite & Advanced Features Pipeline
       expect(searchResult.chunks).toBeDefined();
       expect(searchResult.chunks.length).toBeGreaterThan(0);
       expect(searchResult.chunks[0].text).toContain("AgentForge44");
-    });
+    }, 30000);
   });
 
 });

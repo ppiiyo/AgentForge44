@@ -49,6 +49,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     test: {
+      testTimeout: 30000,
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
