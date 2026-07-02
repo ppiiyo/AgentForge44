@@ -1,10 +1,16 @@
 # --- Stage 1: Build Executor Worker ---
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
 
 # Install build dependencies
-RUN apk add --no-cache python3 make g++ gcc libc-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    gcc \
+    libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm config set python /usr/bin/python3
@@ -18,7 +24,7 @@ RUN npx drizzle-kit generate && \
     npx esbuild src/queue/worker-entry.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/worker.cjs
 
 # --- Stage 2: Production Worker Container ---
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
