@@ -1,0 +1,41 @@
+# --- Stage 1: Build Executor Worker ---
+FROM node:20-alpine AS builder
+
+WORKDIR /usr/src/app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ gcc libc-dev
+
+COPY package*.json ./
+RUN npm config set python /usr/bin/python3
+RUN npm ci
+
+COPY . .
+
+# Generate migrations, Swagger documentation, and bundle the worker with esbuild
+RUN npx drizzle-kit generate && \
+    npx drizzle-kit generate --config=drizzle-postgres.config.ts && \
+    npx esbuild src/queue/worker-entry.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/worker.cjs
+
+# --- Stage 2: Production Worker Container ---
+FROM node:20-alpine AS runner
+
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+
+# Copy compiled bundles, manifests, and migrations
+COPY --from=builder /usr/src/app/dist/worker.cjs ./dist/worker.cjs
+COPY --from=builder /usr/src/app/dist/worker.cjs.map ./dist/worker.cjs.map
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/drizzle ./drizzle
+
+# Install only production-level node modules
+RUN npm ci --omit=dev
+
+# Create storage directory for local project configurations
+RUN mkdir -p projects && chown -R node:node /usr/src/app
+
+USER node
+
+# Start the standalone queue executor worker
+CMD ["node", "dist/worker.cjs"]

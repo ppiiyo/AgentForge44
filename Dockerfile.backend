@@ -1,0 +1,44 @@
+# --- Stage 1: Build Backend Bundle ---
+FROM node:20-alpine AS builder
+
+WORKDIR /usr/src/app
+
+# Install build tools required for native dependency compilation
+RUN apk add --no-cache python3 make g++ gcc libc-dev
+
+COPY package*.json ./
+RUN npm config set python /usr/bin/python3
+RUN npm ci
+
+COPY . .
+
+# Generate migrations, Swagger documentation, and bundle the Express server with esbuild
+RUN npx drizzle-kit generate && \
+    npx drizzle-kit generate --config=drizzle-postgres.config.ts && \
+    npx tsx scripts/generate-swagger.ts && \
+    npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
+
+# --- Stage 2: Production Backend Container ---
+FROM node:20-alpine AS runner
+
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy compiled bundles, manifests, and migrations
+COPY --from=builder /usr/src/app/dist/server.cjs ./dist/server.cjs
+COPY --from=builder /usr/src/app/dist/server.cjs.map ./dist/server.cjs.map
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/drizzle ./drizzle
+COPY --from=builder /usr/src/app/swagger.json ./swagger.json
+
+# Install only production-level node modules
+RUN npm ci --omit=dev
+
+# Create storage directories
+RUN mkdir -p projects && chown -R node:node /usr/src/app
+
+USER node
+EXPOSE 3000
+
+CMD ["node", "dist/server.cjs"]
