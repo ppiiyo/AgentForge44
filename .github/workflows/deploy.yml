@@ -1,0 +1,84 @@
+name: Deploy and Docker Build CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  docker-ci:
+    name: Build and Test Dockerized Services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Verify Docker Compose Configuration
+        run: docker compose config
+
+      - name: Build Frontend Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: false
+          tags: agentforge-frontend:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Build Backend Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: false
+          tags: agentforge-backend:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Build Executor Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.executor
+          push: false
+          tags: agentforge-executor:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Start Database and Redis Dependency containers
+        run: |
+          docker compose up -d agentforge-db agentforge-redis
+          echo "Waiting for services to initialize..."
+          sleep 10
+          docker compose ps
+
+      - name: Run Integration Tests inside Compose Environment
+        run: |
+          # Build and run tests within the backend container connected to database & redis
+          docker compose run --rm agentforge-backend npm run test
+
+      - name: Shutdown Compose Services
+        if: always()
+        run: docker compose down -v
+
+      - name: Move Build Cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache

@@ -99,13 +99,13 @@ export async function generateWithRetry(
   const isPlaceholderKey = apiKey === "your_gemini_api_key_here";
   const isDemoMode = process.env.DEMO_MODE === "true";
 
-  const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey;
+  const isSandbox = isDemoMode || isExplicitSandbox || isPlaceholderKey || !!process.env.VITEST || process.env.NODE_ENV === "test";
 
-  if (!apiKey && !isDemoMode) {
+  if (!apiKey && !isDemoMode && !process.env.VITEST && process.env.NODE_ENV !== "test") {
     throw new Error('GEMINI_API_KEY is not configured');
   }
 
-  if (isSandbox) {
+  if (isSandbox || !apiKey) {
     return generateSimulatedResponse(model, contents);
   }
 

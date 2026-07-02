@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
-  AlertCircle, Sparkles, RefreshCcw, Workflow, BookOpen, ExternalLink, Check, Copy 
+  AlertCircle, Sparkles, RefreshCcw, Workflow, BookOpen, ExternalLink, Check, Copy,
+  Search, Filter, X
 } from 'lucide-react';
 import { StepLog } from '../../types';
 
@@ -28,6 +29,64 @@ export const LogsTab: React.FC<LogsTabProps> = ({
   handleAutoSelfHealAndRun,
   setCopiedText,
 }) => {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'completed' | 'failed' | 'simulated'>('all');
+  const [minDuration, setMinDuration] = React.useState<number>(0);
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
+
+  // Filter logs dynamically
+  const filteredLogs = React.useMemo(() => {
+    return runLogs.filter((log) => {
+      // 1. Status/Simulated Filter
+      if (statusFilter === 'completed' && log.status !== 'completed') return false;
+      if (statusFilter === 'failed' && log.status !== 'failed') return false;
+      if (statusFilter === 'simulated' && !log.simulated) return false;
+
+      // 2. Minimum Duration Filter
+      if (minDuration > 0 && (log.duration || 0) < minDuration) return false;
+
+      // 3. Text Query Search (title, inputs, outputs, nodeId)
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const titleMatch = log.nodeTitle.toLowerCase().includes(q);
+        const inputMatch = log.input ? log.input.toLowerCase().includes(q) : false;
+        const outputMatch = log.output ? log.output.toLowerCase().includes(q) : false;
+        const ragMatch = log.ragQuery ? log.ragQuery.toLowerCase().includes(q) : false;
+        const idMatch = log.nodeId.toLowerCase().includes(q);
+
+        return titleMatch || inputMatch || outputMatch || ragMatch || idMatch;
+      }
+
+      return true;
+    });
+  }, [runLogs, statusFilter, minDuration, searchQuery]);
+
+  // Escape special regex characters
+  const escapeRegExp = (string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
+
+  // Helper to highlight matching text queries inside pre/code blocks safely
+  const highlightText = (text: string | undefined, query: string) => {
+    if (!text) return '';
+    if (!query.trim()) return text;
+
+    const parts = text.split(new RegExp(`(${escapeRegExp(query)})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={i} className="bg-sky-500/35 text-sky-200 rounded px-0.5 border-b border-sky-400/50">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {errorText && (
@@ -84,6 +143,118 @@ export const LogsTab: React.FC<LogsTabProps> = ({
 
       {runLogs.length > 0 && (
         <div className="space-y-4">
+          {/* Search & Filtering Panel */}
+          <div className="bg-slate-900/85 border border-slate-800 p-3.5 rounded-xl space-y-3 shadow-md">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder={currentLang === 'ru' ? "Поиск по логам, шагам, входам..." : currentLang === 'zh' ? "搜索日志、输入、输出..." : "Search steps, inputs, outputs..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-8 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className={`px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  showAdvanced || minDuration > 0
+                    ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-305'
+                }`}
+              >
+                <Filter size={12} />
+                <span>{currentLang === 'ru' ? 'Фильтры' : currentLang === 'zh' ? '筛选' : 'Filters'}</span>
+                {minDuration > 0 && <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>}
+              </button>
+            </div>
+
+            {/* Quick Status / Categories Selector */}
+            <div className="flex flex-wrap gap-1.5 text-[10.5px]">
+              {(['all', 'completed', 'failed', 'simulated'] as const).map((filter) => {
+                const count = runLogs.filter((log) => {
+                  if (filter === 'all') return true;
+                  if (filter === 'completed') return log.status === 'completed';
+                  if (filter === 'failed') return log.status === 'failed';
+                  if (filter === 'simulated') return log.simulated;
+                  return true;
+                }).length;
+
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setStatusFilter(filter)}
+                    className={`px-2.5 py-1 rounded-md font-bold border transition-all cursor-pointer ${
+                      statusFilter === filter
+                        ? 'bg-sky-500/10 border-sky-500/30 text-sky-400'
+                        : 'bg-slate-950 border-slate-850 text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    <span className="capitalize">
+                      {filter === 'all' 
+                        ? (currentLang === 'ru' ? 'Все' : currentLang === 'zh' ? '全部' : 'All')
+                        : filter === 'completed'
+                        ? (currentLang === 'ru' ? 'Завершено' : currentLang === 'zh' ? '已完成' : 'Completed')
+                        : filter === 'failed'
+                        ? (currentLang === 'ru' ? 'Ошибка' : currentLang === 'zh' ? '失败' : 'Failed')
+                        : (currentLang === 'ru' ? 'Симуляция' : currentLang === 'zh' ? '模拟' : 'Simulated')}
+                    </span>
+                    <span className="ml-1.5 px-1 py-0.2 bg-slate-900 rounded text-[9px] text-slate-400">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Collapsible Advanced Filters (Duration Slider) */}
+            {showAdvanced && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="pt-2.5 border-t border-slate-850 space-y-2 text-xs"
+              >
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-slate-400 text-[10.5px]">
+                    <span className="font-medium">
+                      {currentLang === 'ru' ? 'Минимальная длительность:' : currentLang === 'zh' ? '最小执行时间:' : 'Min Duration:'}
+                    </span>
+                    <span className="font-mono text-sky-400 font-bold">{minDuration} ms</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="0"
+                      max="10000"
+                      step="100"
+                      value={minDuration}
+                      onChange={(e) => setMinDuration(Number(e.target.value))}
+                      className="flex-1 h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                    />
+                    {minDuration > 0 && (
+                      <button
+                        onClick={() => setMinDuration(0)}
+                        className="text-[10px] text-slate-500 hover:text-slate-300 underline font-bold"
+                      >
+                        {currentLang === 'ru' ? 'Сброс' : currentLang === 'zh' ? '重置' : 'Reset'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
           {/* Success Summary Header Status Card */}
           <div className="bg-emerald-950/25 border border-emerald-900/45 p-4 rounded-2xl flex items-center justify-between">
             <div>
@@ -100,149 +271,169 @@ export const LogsTab: React.FC<LogsTabProps> = ({
 
           {/* Step Cards Progress Map */}
           <div className="relative border-l-2 border-slate-800 ml-3 pl-5 space-y-5">
-            {runLogs.map((log, idx) => (
-              <div key={idx} className="relative">
-                {/* Visual Timeline Marker Node */}
-                <span className="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full border bg-slate-900 flex items-center justify-center border-sky-400 shadow shadow-sky-400/50"></span>
-                
-                <div className="bg-slate-950/60 border border-slate-850/50 rounded-xl p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-100 flex items-center gap-2">
-                      Step {idx + 1}: {log.nodeTitle}
-                      {log.simulated && (
-                        <span className="text-[9px] font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded">
-                          Simulated
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-[9px] font-mono text-sky-400 bg-sky-950/30 px-1.5 py-0.5 rounded border border-sky-950">
-                      {log.duration}ms
-                    </span>
-                  </div>
-
-                  {log.input && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-extrabold text-slate-500 uppercase">Input block</span>
-                      <pre className="text-[10.5px] font-mono bg-slate-900/60 border border-slate-850 text-slate-400 p-2 rounded-lg max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                        {log.input}
-                      </pre>
-                    </div>
-                  )}
-
-                  {log.output && (
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-extrabold text-slate-500 uppercase">Output block</span>
-                      <pre className="text-[10.5px] font-mono bg-slate-900 border border-slate-850 text-slate-200 p-2.5 rounded-lg max-h-52 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                        {log.output}
-                      </pre>
-                    </div>
-                  )}
-
-                  {/* RAG Vector Search Inspector details */}
-                  {log.ragQuery !== undefined && (
-                    <div className="space-y-2 bg-teal-950/20 border border-teal-900/30 p-3.5 rounded-xl mt-2 space-y-2 font-mono">
-                      <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-teal-950/70">
-                        <span className="text-teal-400 font-extrabold uppercase flex items-center gap-1">
-                          <BookOpen size={12} className="animate-pulse" />
-                          {currentLang === 'ru' ? 'Инспектор поиска RAG' : currentLang === 'zh' ? 'RAG 深度矢量搜索检索器' : 'RAG Vector Search Inspector'}
-                        </span>
-                        <span className="text-slate-505 text-[9px]">{log.ragLatency} ms</span>
-                      </div>
-                      <div className="text-[10px] space-y-1">
-                        <span className="text-slate-505 block uppercase font-bold text-[8.5px]">Vector DB Query Query</span>
-                        <div className="bg-slate-950 px-2 py-1.5 rounded border border-slate-900 text-teal-300 font-bold truncate">
-                          {log.ragQuery}
-                        </div>
-                      </div>
-                      <div className="text-[10px] space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500 block uppercase font-bold text-[8.5px]">Top Relevant Chunks ({log.ragChunksCount} found)</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {(log.ragTopChunks || []).map((chunk: any, ci: number) => (
-                            <div key={ci} className="bg-slate-900/50 p-2 rounded border border-slate-850 space-y-1">
-                              <div className="flex items-center justify-between text-[8px] text-slate-500 border-b border-slate-850/45 pb-0.5 mb-1.5 font-bold">
-                                <span className="text-teal-400/80 font-black">Rank #{ci + 1} Match</span>
-                                <span>Source: {chunk.source || 'Wiki'}</span>
-                              </div>
-                              <p className="text-[10px] text-slate-300 leading-relaxed max-h-16 overflow-y-auto whitespace-pre-wrap">{chunk.text}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Search Grounding citations renderer */}
-                  {log.groundingSources && (
-                    <div className="space-y-1 bg-slate-900/30 border border-emerald-950 p-2 rounded-lg mt-2">
-                      <span className="text-[9.5px] font-extrabold text-emerald-400 uppercase tracking-wider block">Grounded Web Citations:</span>
-                      <div className="space-y-1 max-h-24 overflow-y-auto">
-                        {log.groundingSources.map((g, gi) => (
-                          <a 
-                            key={gi} 
-                            href={g.uri} 
-                            target="_blank" 
-                            rel="noreferrer" 
-                            className="text-[10px] text-sky-400 flex items-center gap-1 hover:underline truncate"
-                            id={`grounding-link-${gi}`}
-                          >
-                            <ExternalLink size={10} /> {g.title}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Sandboxed VM Sandbox Telemetry visualizations */}
-                  {(() => {
-                    try {
-                      if (log.output && log.output.trim().startsWith('{')) {
-                        const parsed = JSON.parse(log.output);
-                        if (parsed.telemetry) {
-                          const tel = parsed.telemetry;
-                          return (
-                            <div className="bg-slate-900 border border-amber-900/40 p-3.5 rounded-xl mt-2.5 space-y-2 font-mono">
-                              <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-amber-955/60">
-                                <span className="text-amber-400 font-extrabold uppercase flex items-center gap-1">
-                                  <AlertCircle size={12} className="animate-pulse text-amber-500" />
-                                  Isolated VM Sandbox Telemetry
-                                </span>
-                                <span className="text-slate-505 text-[9px]">ID: {parsed.sandboxId || 'sandbox-x7'}</span>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-305">
-                                <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
-                                  <span className="text-slate-505 block text-[8px] uppercase font-bold">Virtual CPU Load</span>
-                                  <span className="text-amber-400 font-bold text-[11px]">{tel.cpuLoad || '0.15%'}</span>
-                                </div>
-                                <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
-                                  <span className="text-slate-505 block text-[8px] uppercase font-bold">Virtual RAM footprint</span>
-                                  <span className="text-amber-400 font-bold text-[11px]">{tel.memoryUsed || '14.2 MB'}</span>
-                                </div>
-                              </div>
-
-                              <div className="text-[10px] bg-slate-950/70 p-2 rounded border border-slate-900 space-y-1">
-                                <span className="text-slate-505 block text-[8px] uppercase font-bold">Environment Isolation Shield</span>
-                                <p className="text-[9.5px] leading-relaxed text-slate-305">{tel.isolationLevel}</p>
-                              </div>
-
-                              <div className="flex items-center justify-between text-[9px] pt-1 text-slate-505">
-                                <span className="flex items-center gap-1 text-emerald-400 font-extrabold">
-                                  <Check size={11} /> Secrets Shield Active
-                                </span>
-                                <span>Limit: {tel.executionTimeoutMs}ms</span>
-                              </div>
-                            </div>
-                          );
-                        }
-                      }
-                    } catch (_) {}
-                    return null;
-                  })()}
-                </div>
+            {filteredLogs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 text-slate-500 bg-slate-950/20 rounded-xl border border-dashed border-slate-850">
+                <Workflow size={24} className="text-slate-700 mb-2" />
+                <p className="text-xs font-bold text-slate-400">
+                  {currentLang === 'ru' ? 'Шаги не найдены' : currentLang === 'zh' ? '未找到匹配的日志' : 'No matching logs found'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-1 max-w-xs leading-relaxed">
+                  {currentLang === 'ru' ? 'Попробуйте изменить параметры поискового запроса или настройки фильтрации.' : currentLang === 'zh' ? '请尝试调整搜索字词或筛选器。' : 'Try adjusting your search query or filters to locate specific execution outputs.'}
+                </p>
               </div>
-            ))}
+            ) : (
+              filteredLogs.map((log) => {
+                // Find original index inside complete runLogs array to keep step numbers constant
+                const originalIndex = runLogs.findIndex((l) => l.nodeId === log.nodeId);
+                const stepNum = originalIndex !== -1 ? originalIndex + 1 : 1;
+
+                return (
+                  <div key={log.nodeId} className="relative">
+                    {/* Visual Timeline Marker Node */}
+                    <span className="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full border bg-slate-900 flex items-center justify-center border-sky-400 shadow shadow-sky-400/50"></span>
+                    
+                    <div className="bg-slate-950/60 border border-slate-850/50 rounded-xl p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-100 flex items-center gap-2">
+                          Step {stepNum}: {highlightText(log.nodeTitle, searchQuery)}
+                          {log.simulated && (
+                            <span className="text-[9px] font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded">
+                              Simulated
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[9px] font-mono text-sky-400 bg-sky-950/30 px-1.5 py-0.5 rounded border border-sky-950">
+                          {log.duration}ms
+                        </span>
+                      </div>
+
+                      {log.input && (
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-extrabold text-slate-500 uppercase">Input block</span>
+                          <pre className="text-[10.5px] font-mono bg-slate-900/60 border border-slate-850 text-slate-400 p-2 rounded-lg max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                            {highlightText(log.input, searchQuery)}
+                          </pre>
+                        </div>
+                      )}
+
+                      {log.output && (
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-extrabold text-slate-500 uppercase">Output block</span>
+                          <pre className="text-[10.5px] font-mono bg-slate-900 border border-slate-850 text-slate-200 p-2.5 rounded-lg max-h-52 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                            {highlightText(log.output, searchQuery)}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* RAG Vector Search Inspector details */}
+                      {log.ragQuery !== undefined && (
+                        <div className="space-y-2 bg-teal-950/20 border border-teal-900/30 p-3.5 rounded-xl mt-2 space-y-2 font-mono">
+                          <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-teal-950/70">
+                            <span className="text-teal-400 font-extrabold uppercase flex items-center gap-1">
+                              <BookOpen size={12} className="animate-pulse" />
+                              {currentLang === 'ru' ? 'Инспектор поиска RAG' : currentLang === 'zh' ? 'RAG 深度矢量搜索检索器' : 'RAG Vector Search Inspector'}
+                            </span>
+                            <span className="text-slate-505 text-[9px]">{log.ragLatency} ms</span>
+                          </div>
+                          <div className="text-[10px] space-y-1">
+                            <span className="text-slate-505 block uppercase font-bold text-[8.5px]">Vector DB Query Query</span>
+                            <div className="bg-slate-950 px-2 py-1.5 rounded border border-slate-900 text-teal-300 font-bold truncate">
+                              {highlightText(log.ragQuery, searchQuery)}
+                            </div>
+                          </div>
+                          <div className="text-[10px] space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 block uppercase font-bold text-[8.5px]">Top Relevant Chunks ({log.ragChunksCount} found)</span>
+                            </div>
+                            <div className="space-y-1.5">
+                              {(log.ragTopChunks || []).map((chunk: any, ci: number) => (
+                                <div key={ci} className="bg-slate-900/50 p-2 rounded border border-slate-850 space-y-1">
+                                  <div className="flex items-center justify-between text-[8px] text-slate-500 border-b border-slate-850/45 pb-0.5 mb-1.5 font-bold">
+                                    <span className="text-teal-400/80 font-black">Rank #{ci + 1} Match</span>
+                                    <span>Source: {chunk.source || 'Wiki'}</span>
+                                  </div>
+                                  <p className="text-[10px] text-slate-300 leading-relaxed max-h-16 overflow-y-auto whitespace-pre-wrap">
+                                    {highlightText(chunk.text, searchQuery)}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Search Grounding citations renderer */}
+                      {log.groundingSources && (
+                        <div className="space-y-1 bg-slate-900/30 border border-emerald-955 p-2 rounded-lg mt-2">
+                          <span className="text-[9.5px] font-extrabold text-emerald-400 uppercase tracking-wider block">Grounded Web Citations:</span>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {log.groundingSources.map((g, gi) => (
+                              <a 
+                                key={gi} 
+                                href={g.uri} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="text-[10px] text-sky-400 flex items-center gap-1 hover:underline truncate"
+                                id={`grounding-link-${gi}`}
+                              >
+                                <ExternalLink size={10} /> {g.title}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sandboxed VM Sandbox Telemetry visualizations */}
+                      {(() => {
+                        try {
+                          if (log.output && log.output.trim().startsWith('{')) {
+                            const parsed = JSON.parse(log.output);
+                            if (parsed.telemetry) {
+                              const tel = parsed.telemetry;
+                              return (
+                                <div className="bg-slate-900 border border-amber-900/40 p-3.5 rounded-xl mt-2.5 space-y-2 font-mono">
+                                  <div className="flex items-center justify-between text-[10px] pb-1.5 border-b border-amber-955/60">
+                                    <span className="text-amber-400 font-extrabold uppercase flex items-center gap-1">
+                                      <AlertCircle size={12} className="animate-pulse text-amber-500" />
+                                      Isolated VM Sandbox Telemetry
+                                    </span>
+                                    <span className="text-slate-505 text-[9px]">ID: {parsed.sandboxId || 'sandbox-x7'}</span>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-305">
+                                    <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
+                                      <span className="text-slate-505 block text-[8px] uppercase font-bold">Virtual CPU Load</span>
+                                      <span className="text-amber-400 font-bold text-[11px]">{tel.cpuLoad || '0.15%'}</span>
+                                    </div>
+                                    <div className="bg-slate-950/70 p-2 rounded border border-slate-900 space-y-0.5">
+                                      <span className="text-slate-505 block text-[8px] uppercase font-bold">Virtual RAM footprint</span>
+                                      <span className="text-amber-400 font-bold text-[11px]">{tel.memoryUsed || '14.2 MB'}</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-[10px] bg-slate-950/70 p-2 rounded border border-slate-900 space-y-1">
+                                    <span className="text-slate-505 block text-[8px] uppercase font-bold">Environment Isolation Shield</span>
+                                    <p className="text-[9.5px] leading-relaxed text-slate-305">{tel.isolationLevel}</p>
+                                  </div>
+
+                                  <div className="flex items-center justify-between text-[9px] pt-1 text-slate-505">
+                                    <span className="flex items-center gap-1 text-emerald-400 font-extrabold">
+                                      <Check size={11} /> Secrets Shield Active
+                                    </span>
+                                    <span>Limit: {tel.executionTimeoutMs}ms</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                          }
+                        } catch (_) {}
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Display Main Pipeline Results as summary card */}
