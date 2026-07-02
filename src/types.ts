@@ -150,6 +150,8 @@ export interface Workflow {
   stars: string; // Virality indicator badge
   nodes: FlowNode[];
   connections: FlowConnection[];
+  logo?: string;
+  complexity?: string;
 }
 
 export interface StepLog {

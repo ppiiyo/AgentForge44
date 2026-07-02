@@ -13,17 +13,17 @@ const logger = winston.createLogger({
   ]
 });
 
-// Setup dummy defaults ONLY for testing environment to prevent test failures
-const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+// Setup dummy defaults ONLY for testing and non-production environments to prevent startup and test failures
+const isDevelopmentOrTest = process.env.NODE_ENV !== 'production' || process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
-if (isTestEnv) {
+if (isDevelopmentOrTest) {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    logger.warn('JWT_SECRET is missing or too short for test. Using test fallback key.');
-    process.env.JWT_SECRET = 'test_fallback_jwt_secret_with_more_than_32_characters_for_security_agentforge_2026';
+    logger.warn('JWT_SECRET is missing or too short. Using non-production fallback key.');
+    process.env.JWT_SECRET = 'development_fallback_jwt_secret_with_more_than_32_characters_for_security_agentforge_2026';
   }
   if (!process.env.ENCRYPTION_MASTER_KEY || process.env.ENCRYPTION_MASTER_KEY.length < 32) {
-    logger.warn('ENCRYPTION_MASTER_KEY is missing or too short for test. Using test fallback key.');
-    process.env.ENCRYPTION_MASTER_KEY = 'test_fallback_encryption_master_key_with_32_chars_or_more_agentforge_2026';
+    logger.warn('ENCRYPTION_MASTER_KEY is missing or too short. Using non-production fallback key.');
+    process.env.ENCRYPTION_MASTER_KEY = 'development_fallback_encryption_master_key_with_32_chars_or_more_agentforge_2026';
   }
 }
 

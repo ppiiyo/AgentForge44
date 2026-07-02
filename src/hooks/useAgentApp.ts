@@ -549,7 +549,7 @@ export function useAgentApp() {
     setActiveWorkflow({
       id: `server-proj-${proj.name}`,
       name: proj.name,
-      desc: `Loaded from server-side projects directory storage.`,
+      description: `Loaded from server-side projects directory storage.`,
       logo: "📂",
       stars: "Local Saved",
       category: "User Workspaces",
@@ -774,7 +774,7 @@ export function useAgentApp() {
       setActiveWorkflow({
         id: `imported-${Date.now()}`,
         name: parsed.name || "Custom Import Workspace",
-        desc: parsed.description || "Uploaded node topology structure",
+        description: parsed.description || "Uploaded node topology structure",
         logo: "📂",
         stars: "Upload ⭐",
         category: "User Layout",

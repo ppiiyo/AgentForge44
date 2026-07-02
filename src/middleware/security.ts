@@ -15,21 +15,27 @@ export function setupSecurity(app: Express) {
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     const nonce = res.locals.nonce;
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const scriptSrcDirectives = [
+      "'self'",
+      "'unsafe-inline'", // Kept for Vite client runtime hydration compatibility
+      "'unsafe-eval'",   // Kept for isolated-vm or Vite local bundling
+      "https://app.posthog.com",
+      "https://*.sentry.io",
+      "https://cdn.jsdelivr.net",
+      "https://unpkg.com"
+    ];
+
+    if (isProd) {
+      scriptSrcDirectives.push(`'nonce-${nonce}'`);
+    }
 
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: [
-            "'self'",
-            "'unsafe-inline'", // Kept for Vite client runtime hydration compatibility
-            "'unsafe-eval'",   // Kept for isolated-vm or Vite local bundling
-            `'nonce-${nonce}'`,
-            "https://app.posthog.com",
-            "https://*.sentry.io",
-            "https://cdn.jsdelivr.net",
-            "https://unpkg.com"
-          ],
+          scriptSrc: scriptSrcDirectives,
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           imgSrc: ["'self'", "data:", "https:", "blob:"],
           connectSrc: [
@@ -59,7 +65,8 @@ export function setupSecurity(app: Express) {
         preload: true
       },
       noSniff: true,
-      xssFilter: true
+      xssFilter: true,
+      frameguard: false // allow iframe framing for AI Studio
     })(req, res, next);
   });
 }

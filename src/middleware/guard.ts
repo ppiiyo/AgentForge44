@@ -12,7 +12,8 @@ const PUBLIC_PATHS_ALLOWLIST = [
   '/api/health',
   '/api/marketplace',
   '/api/marketplace/featured',
-  '/api/test-payload'
+  '/api/test-payload',
+  '/api/config/status'
 ];
 
 export function unifiedGuardMiddleware(req: Request, res: Response, next: NextFunction): void {
