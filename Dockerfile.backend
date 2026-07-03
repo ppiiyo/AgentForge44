@@ -3,7 +3,11 @@ FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
 
-# Install build tools required for native dependency compilation
+# Define build-time environment variables
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+# Install build tools required for native dependency compilation (only when necessary for compilation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
@@ -12,8 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-RUN npm config set python /usr/bin/python3
+# Copy only package.json and package-lock.json before running install to prevent unnecessary cache invalidation
+COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
@@ -34,7 +38,7 @@ ENV PORT=3000
 # Copy compiled bundles, manifests, and migrations
 COPY --from=builder /usr/src/app/dist/server.cjs ./dist/server.cjs
 COPY --from=builder /usr/src/app/dist/server.cjs.map ./dist/server.cjs.map
-COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
 COPY --from=builder /usr/src/app/drizzle ./drizzle
 COPY --from=builder /usr/src/app/swagger.json ./swagger.json
 

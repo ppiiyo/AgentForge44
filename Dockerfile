@@ -10,7 +10,7 @@ RUN apk add --no-cache python3 make g++ gcc libc-dev
 COPY package*.json ./
 
 # Configure npm to utilize Python 3 for node-gyp compilation
-RUN npm config set python /usr/bin/python3
+ENV PYTHON=/usr/bin/python3
 
 # Install all workspace dependencies
 RUN npm ci
