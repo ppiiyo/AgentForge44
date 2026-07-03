@@ -3,6 +3,21 @@ import { promisify } from 'util';
 
 const dnsCache = new Map<string, { ip: string; expiresAt: number }>();
 
+// Proactive cache pruning to prevent memory leaks from high-volume lookup traffic in production
+if (typeof global !== 'undefined') {
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of dnsCache.entries()) {
+      if (now > entry.expiresAt) {
+        dnsCache.delete(key);
+      }
+    }
+  }, 300000); // Run every 5 minutes
+  if (cleanupInterval.unref) {
+    cleanupInterval.unref(); // Ensure we don't hold the Node event loop open
+  }
+}
+
 function cacheIp(hostname: string, ip: string, ttlMs: number = 60000): void {
   dnsCache.set(hostname.toLowerCase(), {
     ip,

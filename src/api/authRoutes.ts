@@ -4,6 +4,7 @@ import { UserManager, signToken, verifyToken } from './userAuth.js';
 import { logger } from '../utils/logger.js';
 import { rolesPriority } from './rbac.js';
 import { cache } from '../services/cache.js';
+import { db, tables } from '../db/index.js';
 
 const router = express.Router();
 
@@ -129,7 +130,29 @@ router.post('/auth/register', async (req: express.Request, res: express.Response
       return;
     }
 
-    const assignedRole = role && ['admin', 'editor', 'viewer', 'api_user'].includes(role) ? role : 'viewer';
+    let assignedRole = 'viewer';
+    const requestedRole = role && ['admin', 'editor', 'viewer', 'api_user'].includes(role) ? role : 'viewer';
+    
+    if (requestedRole === 'admin') {
+      // Check if there are any existing registered users
+      const existingUsers = await db.select().from(tables.users).limit(1);
+      
+      // Check if the request is authorized via master key
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : '';
+      const API_KEY = process.env.AGENTFORGE_API_KEY;
+      const isMasterKey = API_KEY && token === API_KEY;
+
+      if (existingUsers.length === 0 || isMasterKey) {
+        assignedRole = 'admin';
+      } else {
+        res.status(403).json({ success: false, error: 'Forbidden: Admin role registration is not allowed' });
+        return;
+      }
+    } else {
+      assignedRole = requestedRole;
+    }
+
     const user = await UserManager.register(email, password, assignedRole);
     const token = signToken(user);
 
