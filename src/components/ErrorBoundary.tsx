@@ -16,10 +16,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   // Explicit declarations to reconcile strict type definitions
   public props!: Readonly<ErrorBoundaryProps> & Readonly<{ children?: React.ReactNode }>;
   public state: ErrorBoundaryState;
-  public setState!: (
-    state: Partial<ErrorBoundaryState> | ((prevState: Readonly<ErrorBoundaryState>) => Partial<ErrorBoundaryState> | null) | null,
-    callback?: () => void
-  ) => void;
 
   constructor(props: ErrorBoundaryProps) {
     super(props);

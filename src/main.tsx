@@ -11,35 +11,68 @@ import { PostHogProvider } from 'posthog-js/react';
 // Auto-authentication logic & fetch interceptor
 const originalFetch = window.fetch;
 
-window.fetch = async function(input, init) {
+/* eslint-disable no-undef */
+const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit) {
   const token = localStorage.getItem('agentforge_auth_token');
-  const url = typeof input === 'string' ? input : (input as Request).url;
+  
+  // Resolve the URL string safely
+  let url = '';
+  if (typeof input === 'string') {
+    url = input;
+  } else if (input instanceof URL) {
+    url = input.toString();
+  } else if (input && typeof input === 'object' && 'url' in input) {
+    url = (input as any).url || '';
+  }
 
   // Intercept requests targeting /api/
-  if (url.includes('/api/') && token) {
-    init = init || {};
-    init.headers = init.headers || {};
-    
-    if (init.headers instanceof Headers) {
-      if (!init.headers.has('Authorization')) {
-        init.headers.set('Authorization', `Bearer ${token}`);
-      }
-    } else if (Array.isArray(init.headers)) {
-      const hasAuth = init.headers.some(h => h[0].toLowerCase() === 'authorization');
-      if (!hasAuth) {
-        init.headers.push(['Authorization', `Bearer ${token}`]);
+  if (url && url.includes('/api/') && token) {
+    // If input is a Request object, create a new Request to avoid mutating readonly properties
+    if (input && typeof input === 'object' && 'clone' in input) {
+      try {
+        const req = input as Request;
+        if (!req.headers.has('Authorization')) {
+          const newHeaders = new Headers(req.headers);
+          newHeaders.set('Authorization', `Bearer ${token}`);
+          const newRequest = new Request(req, { headers: newHeaders });
+          return originalFetch(newRequest, init);
+        }
+      } catch (e) {
+        console.warn('Failed to intercept Request object headers:', e);
       }
     } else {
-      // It's a plain object
-      const hasAuth = Object.keys(init.headers).some(k => k.toLowerCase() === 'authorization');
-      if (!hasAuth) {
-        (init.headers as any)['Authorization'] = `Bearer ${token}`;
+      // input is a string or URL, so copy/modify init safely
+      try {
+        const newInit = { ...init };
+        const headers = new Headers(newInit.headers || {});
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${token}`);
+          newInit.headers = headers;
+        }
+        return originalFetch(input, newInit);
+      } catch (e) {
+        console.warn('Failed to intercept fetch init headers:', e);
       }
     }
   }
 
   return originalFetch(input, init);
 };
+
+try {
+  Object.defineProperty(window, 'fetch', {
+    value: secureFetch,
+    writable: true,
+    configurable: true
+  });
+} catch (err) {
+  console.warn('Failed to redefine window.fetch with defineProperty:', err);
+  try {
+    (window as any).fetch = secureFetch;
+  } catch (err2) {
+    console.error('Failed to intercept fetch completely:', err2);
+  }
+}
 
 // Async authentication bootstrap
 async function bootstrapAuth() {

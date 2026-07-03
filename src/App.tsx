@@ -351,7 +351,7 @@ export default function App() {
               onCreateNode={app.handleCreateNode}
               savedSnapshots={app.savedSnapshots}
               onRestoreSnapshot={app.handleRestoreSnapshot}
-              onDeleteSnapshot={app.handleDeleteSnapshot}
+              onDeleteSnapshot={(id) => app.handleDeleteSnapshot(id, {} as any)}
               onSaveSnapshot={app.handleSaveSnapshot}
               projectNameInput={app.projectNameInput}
               onProjectNameInputChange={app.setProjectNameInput}

@@ -14,7 +14,7 @@ const logger = winston.createLogger({
 });
 
 // Setup dummy defaults ONLY for testing and non-production environments to prevent startup and test failures
-const isDevelopmentOrTest = process.env.NODE_ENV !== 'production' || process.env.NODE_ENV === 'test' || !!process.env.VITEST;
+const isDevelopmentOrTest = process.env.NODE_ENV !== 'production' || !!process.env.VITEST;
 
 if (isDevelopmentOrTest) {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {

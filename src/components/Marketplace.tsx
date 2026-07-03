@@ -542,7 +542,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         <div className="flex justify-between items-start gap-2">
                           <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase inline-block border ${
                             item.category === 'agent' ? 'bg-indigo-950/60 text-indigo-400 border-indigo-900/40' :
-                            item.category === 'toy' ? 'bg-amber-950/60 text-amber-400 border-amber-900/40' :
+                            item.category === 'tool' ? 'bg-amber-950/60 text-amber-400 border-amber-900/40' :
                             item.category === 'rag-pipeline' ? 'bg-teal-950/60 text-teal-400 border-teal-900/40' :
                             'bg-sky-950/60 text-sky-400 border-sky-900/40'
                           }`}>
@@ -729,7 +729,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                     </h5>
 
                     {reviews.length === 0 ? (
-                      <p className="text-xs text-slate-505 italic text-center py-6">{text.noData || text.noReviews}</p>
+                      <p className="text-xs text-slate-505 italic text-center py-6">{text.noReviews}</p>
                     ) : (
                       <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                         {reviews.map((rev) => (

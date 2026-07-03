@@ -102,17 +102,26 @@ router.get('/projects', async (req: Request, res: Response) => {
               connections: content.connections || []
             };
 
-            // Auto-create project ownership in database
+            // Auto-create project ownership in database with race-condition safety
             if (!ownership.exists) {
-              await db.insert(tables.projects).values({
-                id: fileId,
-                name: content.name || fileId,
-                userId: userId,
-                tenantId: workspaceId,
-                createdAt: record.createdAt,
-                updatedAt: stats.mtime.toISOString()
-              });
-              userProjectIds.add(fileId);
+              try {
+                const existingProj = await db.select().from(tables.projects).where(eq(tables.projects.id, fileId));
+                if (existingProj.length === 0) {
+                  await db.insert(tables.projects).values({
+                    id: fileId,
+                    name: content.name || fileId,
+                    userId: userId,
+                    tenantId: workspaceId,
+                    createdAt: record.createdAt,
+                    updatedAt: stats.mtime.toISOString()
+                  });
+                }
+                userProjectIds.add(fileId);
+              } catch (projErr: any) {
+                logger.warn(`[Self-Heal] Project auto-creation skipped or already exists for "${fileId}": ${projErr.message}`);
+                // Ensure it is marked in the set if it exists or was handled
+                userProjectIds.add(fileId);
+              }
             }
 
             // Non-blocking auto-seeding into database

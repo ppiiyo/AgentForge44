@@ -169,14 +169,15 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
       md += `#### 🔧 Parameters Map\n`;
       md += `\`\`\`json\n${JSON.stringify(n.fields || {}, null, 2)}\n\`\`\`\n\n`;
 
-      if (n.fields?.systemInstruction?.trim()) {
-        md += `**System Instructions / AI Directives**:\n> ${n.fields.systemInstruction.trim().replace(/\n/g, '\n> ')}\n\n`;
+      const fields = n.fields as any;
+      if (fields?.systemInstruction?.trim()) {
+        md += `**System Instructions / AI Directives**:\n> ${fields.systemInstruction.trim().replace(/\n/g, '\n> ')}\n\n`;
       }
-      if (n.fields?.template?.trim()) {
-        md += `**Prompt Template**:\n\`\`\`text\n${n.fields.template.trim()}\n\`\`\`\n\n`;
+      if (fields?.template?.trim()) {
+        md += `**Prompt Template**:\n\`\`\`text\n${fields.template.trim()}\n\`\`\`\n\n`;
       }
-      if (n.fields?.criteria?.trim()) {
-        md += `**Review Critique Criteria**:\n> ${n.fields.criteria.trim()}\n\n`;
+      if (fields?.criteria?.trim()) {
+        md += `**Review Critique Criteria**:\n> ${fields.criteria.trim()}\n\n`;
       }
       md += `---\n\n`;
     });

@@ -90,7 +90,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   setDryRunOutput,
   onClose
 }) => {
-  const node = nodes.find(n => n.id === selectedNodeId);
+  const node = nodes.find(n => n.id === selectedNodeId) as any;
   const activeLock = node ? locks[node.id] : null;
   const isLockedByOther = activeLock && activeLock.userId !== userId;
 
@@ -112,7 +112,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const handleAddVariable = (nodeId: string) => {
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId) {
-        const currentVars = n.fields.variables || [];
+        const currentVars = (n.fields as any).variables || [];
         return {
           ...n,
           fields: {
@@ -122,13 +122,13 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         };
       }
       return n;
-    }));
+    }) as FlowNode[]);
   };
 
   const handleRemoveVariable = (nodeId: string, key: string) => {
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId) {
-        const currentVars = n.fields.variables || [];
+        const currentVars = (n.fields as any).variables || [];
         return {
           ...n,
           fields: {
@@ -138,13 +138,13 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         };
       }
       return n;
-    }));
+    }) as FlowNode[]);
   };
 
   const handleUpdateVariable = (nodeId: string, key: string, field: 'key' | 'value', value: string) => {
     setNodes(prev => prev.map(n => {
       if (n.id === nodeId) {
-        const currentVars = n.fields.variables || [];
+        const currentVars = (n.fields as any).variables || [];
         return {
           ...n,
           fields: {
@@ -154,7 +154,7 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
         };
       }
       return n;
-    }));
+    }) as FlowNode[]);
   };
 
   return (

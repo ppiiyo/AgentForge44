@@ -12,7 +12,7 @@ import {
   X,
   Undo2,
   Redo2,
-  Map,
+  Map as MapIcon,
   Palette
 } from 'lucide-react';
 import { Toolbox } from './components/Toolbox';
@@ -69,7 +69,7 @@ interface ProjectEditorProps {
   handleDeleteNode: (id: string) => void;
   handleConnectNodes: (sourceId: string, targetId: string) => void;
   handleUpdateNodeField: (nodeId: string, fieldKey: string, value: any) => void;
-  handleDuplicateNode: (node: FlowNode) => void;
+  handleDuplicateNode: (nodeId: string) => void;
   handleDryRunNode: (nodeId: string) => void;
   isDryRunningNode: string | null;
   dryRunOutput: Record<string, string>;
@@ -227,27 +227,28 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
         warnList.push(`Node "${node.title || node.id}" is completely disconnected from the rest of the flow network.`);
       }
 
+      const f = node.fields as any;
       if (node.type === 'gemini') {
-        if (!node.fields?.systemInstruction?.trim()) {
+        if (!f?.systemInstruction?.trim()) {
           warnList.push(`Gemini Agent Node "${node.title}" has empty System Instructions.`);
         }
       }
-      if (node.type === 'prompt' && !node.fields?.template?.trim()) {
+      if (node.type === 'prompt' && !f?.template?.trim()) {
         warnList.push(`Prompt Template Node "${node.title}" has empty Prompt Template text.`);
       }
-      if (node.type === 'reviewer' && !node.fields?.criteria?.trim()) {
+      if (node.type === 'reviewer' && !f?.criteria?.trim()) {
         warnList.push(`Reviewer Agent Node "${node.title}" has no Review Criteria defined.`);
       }
-      if (node.type === 'webhook' && !node.fields?.url?.trim()) {
+      if (node.type === 'webhook' && !f?.url?.trim()) {
         errList.push(`Webhook Node "${node.title}" is missing the Outbound Endpoint URL.`);
       }
 
       const fieldsText = [
-        node.fields?.template || '',
-        node.fields?.systemInstruction || '',
-        node.fields?.body || '',
-        node.fields?.headers || '',
-        node.fields?.url || ''
+        f?.template || '',
+        f?.systemInstruction || '',
+        f?.body || '',
+        f?.headers || '',
+        f?.url || ''
       ].join(' ');
 
       const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
@@ -257,7 +258,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
       referenced.forEach(v => {
         if (excluded.includes(v)) return;
         const isDefined = nodes.some(n => {
-          if (n.type === 'input' && n.fields?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
+          if (n.type === 'input' && (n.fields as any)?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
           if (n.id === v) return true;
           if (n.title?.toLowerCase() === v.toLowerCase()) return true;
           return false;
@@ -455,7 +456,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
             }`}
             title="Toggle canvas navigation mini-map"
           >
-            <Map size={13} />
+            <MapIcon size={13} />
             <span>Mini-map</span>
           </button>
 
