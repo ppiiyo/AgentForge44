@@ -1,618 +1,5 @@
 [
   {
-    "id": "f7fdd6ba-a7b5-4003-90f3-14a0a75c1e29",
-    "graphId": "metrics-test-graph",
-    "graphName": "Metrics Test Graph",
-    "startedAt": "2026-06-18T21:57:55.253Z",
-    "finishedAt": "2026-06-18T21:57:55.254Z",
-    "status": "success",
-    "totalTokens": 51,
-    "totalCostUsd": 0.000271,
-    "totalLatencyMs": 1,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_9mt8favit",
-        "executionId": "f7fdd6ba-a7b5-4003-90f3-14a0a75c1e29",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 31,
-        "costUsd": 0.000145,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
-      },
-      {
-        "id": "node_exec_42ule0dy7",
-        "executionId": "f7fdd6ba-a7b5-4003-90f3-14a0a75c1e29",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Test trace ID system",
-        "outputPreview": "Test trace ID system"
-      },
-      {
-        "id": "node_exec_wb5tdfv0i",
-        "executionId": "f7fdd6ba-a7b5-4003-90f3-14a0a75c1e29",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Test trace ID system"
-      }
-    ]
-  },
-  {
-    "id": "e8e4316d-a413-47ab-a9ff-53a82a26de21",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:11:56.270Z",
-    "finishedAt": "2026-06-18T22:11:56.273Z",
-    "status": "success",
-    "totalTokens": 49,
-    "totalCostUsd": 0.000265,
-    "totalLatencyMs": 3,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_b4r92jphk",
-        "executionId": "e8e4316d-a413-47ab-a9ff-53a82a26de21",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 34,
-        "costUsd": 0.00016,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Express Web API Integ\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Express Web API Integ\"\n}"
-      },
-      {
-        "id": "node_exec_askgkvl80",
-        "executionId": "e8e4316d-a413-47ab-a9ff-53a82a26de21",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 15,
-        "costUsd": 0.000105,
-        "latencyMs": 1,
-        "inputPreview": "Welcome to {subject}!",
-        "outputPreview": "Welcome to Express Web API Integ!"
-      }
-    ]
-  },
-  {
-    "id": "4200bab9-51cc-4552-9055-d7ff0f48381b",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:11:56.809Z",
-    "finishedAt": "2026-06-18T22:11:56.813Z",
-    "status": "failed",
-    "totalTokens": 0,
-    "totalCostUsd": 0,
-    "totalLatencyMs": 4,
-    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
-    "nodeExecutions": []
-  },
-  {
-    "id": "a78f4182-5059-4494-9894-ebc8656aae50",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:12.180Z",
-    "finishedAt": "2026-06-18T22:12:12.245Z",
-    "status": "success",
-    "totalTokens": 24,
-    "totalCostUsd": 0.000134,
-    "totalLatencyMs": 65,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_5dldlkwiz",
-        "executionId": "a78f4182-5059-4494-9894-ebc8656aae50",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_drh4g88sc",
-        "executionId": "a78f4182-5059-4494-9894-ebc8656aae50",
-        "nodeId": "tool-1",
-        "nodeType": "tool",
-        "tokensUsed": 22,
-        "costUsd": 0.000122,
-        "latencyMs": 61,
-        "inputPreview": "URL: https://api.weather.com/v1/forecast\nBody: None",
-        "outputPreview": "{\"message\":\"Successfully fetched\"}"
-      }
-    ]
-  },
-  {
-    "id": "0714a695-083b-4639-be2f-36a261414033",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:12.251Z",
-    "finishedAt": "2026-06-18T22:12:12.259Z",
-    "status": "success",
-    "totalTokens": 50,
-    "totalCostUsd": 0.000229,
-    "totalLatencyMs": 8,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_ds4t8pzqq",
-        "executionId": "0714a695-083b-4639-be2f-36a261414033",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 28,
-        "costUsd": 0.000122,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"username\",\n    \"value\": \"alice44\",\n    \"label\": \"username\"\n  }\n]",
-        "outputPreview": "{\n  \"username\": \"alice44\"\n}"
-      },
-      {
-        "id": "node_exec_okrhf34v3",
-        "executionId": "0714a695-083b-4639-be2f-36a261414033",
-        "nodeId": "tool-1",
-        "nodeType": "tool",
-        "tokensUsed": 22,
-        "costUsd": 0.000107,
-        "latencyMs": 6,
-        "inputPreview": "URL: https://api.example.com/users\nBody: {\"name\": \"alice44\"}",
-        "outputPreview": "User Created Successfully"
-      }
-    ]
-  },
-  {
-    "id": "ded87ace-b65a-4e11-b0e0-fe3c67bda29b",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:12.262Z",
-    "finishedAt": "2026-06-18T22:12:12.271Z",
-    "status": "failed",
-    "totalTokens": 0,
-    "totalCostUsd": 0,
-    "totalLatencyMs": 9,
-    "errorMessage": "HTTP Tool node failed: Network offline",
-    "nodeExecutions": []
-  },
-  {
-    "id": "7c3d172c-fcc7-4687-9b31-b1485385a5bb",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:19.457Z",
-    "finishedAt": "2026-06-18T22:12:19.465Z",
-    "status": "failed",
-    "totalTokens": 0,
-    "totalCostUsd": 0,
-    "totalLatencyMs": 8,
-    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
-    "nodeExecutions": []
-  },
-  {
-    "id": "2b17eda5-0e24-47e6-a1ec-bdaa781dfce6",
-    "graphId": "test-graph",
-    "graphName": "Test Graph Name",
-    "startedAt": "2026-06-18T22:12:29.396Z",
-    "finishedAt": "2026-06-18T22:12:29.400Z",
-    "status": "success",
-    "totalTokens": 51,
-    "totalCostUsd": 0.000271,
-    "totalLatencyMs": 4,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_jbfx8p0ax",
-        "executionId": "2b17eda5-0e24-47e6-a1ec-bdaa781dfce6",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 31,
-        "costUsd": 0.000145,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
-      },
-      {
-        "id": "node_exec_iet4emzc8",
-        "executionId": "2b17eda5-0e24-47e6-a1ec-bdaa781dfce6",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Test trace ID system",
-        "outputPreview": "Test trace ID system"
-      },
-      {
-        "id": "node_exec_d7oksb2fh",
-        "executionId": "2b17eda5-0e24-47e6-a1ec-bdaa781dfce6",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Test trace ID system"
-      }
-    ]
-  },
-  {
-    "id": "1cf97e75-031c-4c47-a37f-7c671249286e",
-    "graphId": "metrics-test-graph",
-    "graphName": "Metrics Test Graph",
-    "startedAt": "2026-06-18T22:12:29.405Z",
-    "finishedAt": "2026-06-18T22:12:29.405Z",
-    "status": "success",
-    "totalTokens": 51,
-    "totalCostUsd": 0.000271,
-    "totalLatencyMs": 0,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_v4o2pqt3y",
-        "executionId": "1cf97e75-031c-4c47-a37f-7c671249286e",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 31,
-        "costUsd": 0.000145,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
-      },
-      {
-        "id": "node_exec_359yp477i",
-        "executionId": "1cf97e75-031c-4c47-a37f-7c671249286e",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Test trace ID system",
-        "outputPreview": "Test trace ID system"
-      },
-      {
-        "id": "node_exec_t85hrjndk",
-        "executionId": "1cf97e75-031c-4c47-a37f-7c671249286e",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 10,
-        "costUsd": 0.000063,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Test trace ID system"
-      }
-    ]
-  },
-  {
-    "id": "2b0e7eec-31d6-4fda-9480-c156008fb35f",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:32.027Z",
-    "finishedAt": "2026-06-18T22:12:32.031Z",
-    "status": "success",
-    "totalTokens": 67,
-    "totalCostUsd": 0.000369,
-    "totalLatencyMs": 4,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_qrjo82tbj",
-        "executionId": "2b0e7eec-31d6-4fda-9480-c156008fb35f",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 28,
-        "costUsd": 0.000077,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"input_text\",\n    \"val\": \"Welcome to Paris, the city of light!\",\n    \"label\": \"Text\"\n  }\n]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_n9j6876jm",
-        "executionId": "2b0e7eec-31d6-4fda-9480-c156008fb35f",
-        "nodeId": "prompt-1",
-        "nodeType": "prompt",
-        "tokensUsed": 8,
-        "costUsd": 0.00005,
-        "latencyMs": 0,
-        "inputPreview": "Welcome to Paris",
-        "outputPreview": "Welcome to Paris"
-      },
-      {
-        "id": "node_exec_6nsud5ce6",
-        "executionId": "2b0e7eec-31d6-4fda-9480-c156008fb35f",
-        "nodeId": "router-1",
-        "nodeType": "router",
-        "tokensUsed": 22,
-        "costUsd": 0.00019,
-        "latencyMs": 0,
-        "inputPreview": "Welcome to Paris",
-        "outputPreview": "Routed to node: target-paris based on condition match: Matched Condition"
-      },
-      {
-        "id": "node_exec_m12whhxpq",
-        "executionId": "2b0e7eec-31d6-4fda-9480-c156008fb35f",
-        "nodeId": "target-paris",
-        "nodeType": "target",
-        "tokensUsed": 9,
-        "costUsd": 0.000052,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Welcome to Paris"
-      }
-    ]
-  },
-  {
-    "id": "8615e583-ebd0-4cd5-8658-bd0cf41eff93",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:32.036Z",
-    "finishedAt": "2026-06-18T22:12:32.041Z",
-    "status": "success",
-    "totalTokens": 53,
-    "totalCostUsd": 0.000379,
-    "totalLatencyMs": 5,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_59vsvimpq",
-        "executionId": "8615e583-ebd0-4cd5-8658-bd0cf41eff93",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_s9ulia1tb",
-        "executionId": "8615e583-ebd0-4cd5-8658-bd0cf41eff93",
-        "nodeId": "prompt-1",
-        "nodeType": "prompt",
-        "tokensUsed": 14,
-        "costUsd": 0.000087,
-        "latencyMs": 0,
-        "inputPreview": "My order code is AGENT-4482.",
-        "outputPreview": "My order code is AGENT-4482."
-      },
-      {
-        "id": "node_exec_a9vylrybr",
-        "executionId": "8615e583-ebd0-4cd5-8658-bd0cf41eff93",
-        "nodeId": "router-1",
-        "nodeType": "router",
-        "tokensUsed": 25,
-        "costUsd": 0.000198,
-        "latencyMs": 0,
-        "inputPreview": "My order code is AGENT-4482.",
-        "outputPreview": "Routed to node: target-regex based on condition match: Matched Condition"
-      },
-      {
-        "id": "node_exec_ea93h6ahd",
-        "executionId": "8615e583-ebd0-4cd5-8658-bd0cf41eff93",
-        "nodeId": "target-regex",
-        "nodeType": "target",
-        "tokensUsed": 12,
-        "costUsd": 0.000082,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "My order code is AGENT-4482."
-      }
-    ]
-  },
-  {
-    "id": "5c5a4dbe-f6aa-4fa8-ad3e-a9d58b530bcc",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:32.044Z",
-    "finishedAt": "2026-06-18T22:12:32.044Z",
-    "status": "success",
-    "totalTokens": 85,
-    "totalCostUsd": 0.000581,
-    "totalLatencyMs": 0,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_qw85ssocb",
-        "executionId": "5c5a4dbe-f6aa-4fa8-ad3e-a9d58b530bcc",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_wywf5wxqp",
-        "executionId": "5c5a4dbe-f6aa-4fa8-ad3e-a9d58b530bcc",
-        "nodeId": "prompt-1",
-        "nodeType": "prompt",
-        "tokensUsed": 30,
-        "costUsd": 0.000188,
-        "latencyMs": 0,
-        "inputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}",
-        "outputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}"
-      },
-      {
-        "id": "node_exec_6t1cno4f3",
-        "executionId": "5c5a4dbe-f6aa-4fa8-ad3e-a9d58b530bcc",
-        "nodeId": "router-1",
-        "nodeType": "router",
-        "tokensUsed": 33,
-        "costUsd": 0.000218,
-        "latencyMs": 0,
-        "inputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}",
-        "outputPreview": "Routed to node: target-role based on condition match: Matched Condition"
-      },
-      {
-        "id": "node_exec_alm2j0nrw",
-        "executionId": "5c5a4dbe-f6aa-4fa8-ad3e-a9d58b530bcc",
-        "nodeId": "target-role",
-        "nodeType": "target",
-        "tokensUsed": 20,
-        "costUsd": 0.000163,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}"
-      }
-    ]
-  },
-  {
-    "id": "8265971b-f571-4e14-9d4d-399972719124",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:32.047Z",
-    "finishedAt": "2026-06-18T22:12:32.047Z",
-    "status": "success",
-    "totalTokens": 53,
-    "totalCostUsd": 0.000379,
-    "totalLatencyMs": 0,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_ba1iygvdi",
-        "executionId": "8265971b-f571-4e14-9d4d-399972719124",
-        "nodeId": "input-1",
-        "nodeType": "input",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_0rggk3ynb",
-        "executionId": "8265971b-f571-4e14-9d4d-399972719124",
-        "nodeId": "prompt-1",
-        "nodeType": "prompt",
-        "tokensUsed": 14,
-        "costUsd": 0.000087,
-        "latencyMs": 0,
-        "inputPreview": "Just plain unmatching words.",
-        "outputPreview": "Just plain unmatching words."
-      },
-      {
-        "id": "node_exec_zu6y8un94",
-        "executionId": "8265971b-f571-4e14-9d4d-399972719124",
-        "nodeId": "router-1",
-        "nodeType": "router",
-        "tokensUsed": 25,
-        "costUsd": 0.000198,
-        "latencyMs": 0,
-        "inputPreview": "Just plain unmatching words.",
-        "outputPreview": "Routed to node: target-default based on condition match: Default Target"
-      },
-      {
-        "id": "node_exec_a028uzm92",
-        "executionId": "8265971b-f571-4e14-9d4d-399972719124",
-        "nodeId": "target-default",
-        "nodeType": "target",
-        "tokensUsed": 12,
-        "costUsd": 0.000082,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Just plain unmatching words."
-      }
-    ]
-  },
-  {
-    "id": "16df5a78-6038-45bd-a1f2-736022113d5a",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:34.579Z",
-    "finishedAt": "2026-06-18T22:12:34.583Z",
-    "status": "success",
-    "totalTokens": 89,
-    "totalCostUsd": 0.000568,
-    "totalLatencyMs": 4,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_8utx7eycp",
-        "executionId": "16df5a78-6038-45bd-a1f2-736022113d5a",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 37,
-        "costUsd": 0.000182,
-        "latencyMs": 0,
-        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Dynamic Agent Architectures\",\n    \"label\": \"Subject\"\n  }\n]",
-        "outputPreview": "{\n  \"subject\": \"Dynamic Agent Architectures\"\n}"
-      },
-      {
-        "id": "node_exec_eokhm17p0",
-        "executionId": "16df5a78-6038-45bd-a1f2-736022113d5a",
-        "nodeId": "step-prompt",
-        "nodeType": "step",
-        "tokensUsed": 30,
-        "costUsd": 0.000203,
-        "latencyMs": 0,
-        "inputPreview": "Analyze details of {subject}. Respond with facts.",
-        "outputPreview": "Analyze details of Dynamic Agent Architectures. Respond with facts."
-      },
-      {
-        "id": "node_exec_5kg3vyw38",
-        "executionId": "16df5a78-6038-45bd-a1f2-736022113d5a",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 22,
-        "costUsd": 0.000183,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "Analyze details of Dynamic Agent Architectures. Respond with facts."
-      }
-    ]
-  },
-  {
-    "id": "09db0d5c-ab3b-4b98-a8cb-938daf62b5ac",
-    "graphId": "canvas-workspace",
-    "graphName": "Workspace Canvas",
-    "startedAt": "2026-06-18T22:12:34.588Z",
-    "finishedAt": "2026-06-18T22:12:34.589Z",
-    "status": "success",
-    "totalTokens": 72,
-    "totalCostUsd": 0.000478,
-    "totalLatencyMs": 1,
-    "nodeExecutions": [
-      {
-        "id": "node_exec_hg4dl0h77",
-        "executionId": "09db0d5c-ab3b-4b98-a8cb-938daf62b5ac",
-        "nodeId": "step-input",
-        "nodeType": "step",
-        "tokensUsed": 2,
-        "costUsd": 0.000012,
-        "latencyMs": 0,
-        "inputPreview": "[]",
-        "outputPreview": "{}"
-      },
-      {
-        "id": "node_exec_1dc26fhcz",
-        "executionId": "09db0d5c-ab3b-4b98-a8cb-938daf62b5ac",
-        "nodeId": "branch-a",
-        "nodeType": "branch",
-        "tokensUsed": 26,
-        "costUsd": 0.000162,
-        "latencyMs": 0,
-        "inputPreview": "{\"branch\": \"A\", \"metadata\": {\"status\": \"success\"}}",
-        "outputPreview": "{\"branch\": \"A\", \"metadata\": {\"status\": \"success\"}}"
-      },
-      {
-        "id": "node_exec_h0a4eddx8",
-        "executionId": "09db0d5c-ab3b-4b98-a8cb-938daf62b5ac",
-        "nodeId": "branch-b",
-        "nodeType": "branch",
-        "tokensUsed": 26,
-        "costUsd": 0.000162,
-        "latencyMs": 0,
-        "inputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}",
-        "outputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}"
-      },
-      {
-        "id": "node_exec_0vzg8uxkt",
-        "executionId": "09db0d5c-ab3b-4b98-a8cb-938daf62b5ac",
-        "nodeId": "step-output",
-        "nodeType": "step",
-        "tokensUsed": 18,
-        "costUsd": 0.000142,
-        "latencyMs": 0,
-        "inputPreview": "Graph Termination",
-        "outputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}"
-      }
-    ]
-  },
-  {
     "id": "0bc984ab-a49a-4739-bdfd-ae8a347da001",
     "graphId": "canvas-workspace",
     "graphName": "Workspace Canvas",
@@ -22241,6 +21628,729 @@
       {
         "id": "node_exec_zirl0gask",
         "executionId": "5552c2c5-98ac-4c39-a92c-956e8a1cb3b9",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Test trace ID system"
+      }
+    ]
+  },
+  {
+    "id": "exec_1783078093830_dqzs3",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:27:50.999Z",
+    "finishedAt": "2026-07-03T11:28:13.830Z",
+    "status": "success",
+    "totalTokens": 3757,
+    "totalCostUsd": 0.018191,
+    "totalLatencyMs": 22831,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_ymt02g3c2",
+        "executionId": "exec_1783078093830_dqzs3",
+        "nodeId": "node-input",
+        "nodeType": "node",
+        "tokensUsed": 100,
+        "costUsd": 0.000512,
+        "latencyMs": 1,
+        "inputPreview": "[\n  {\n    \"key\": \"language\",\n    \"value\": \"TypeScript & React\",\n    \"label\": \"Target Language\"\n  },\n  {\n    \"key\": \"task\",\n    \"value\": \"Write a performance-optimized useDebounce Hook supporting immed",
+        "outputPreview": "{\n  \"language\": \"TypeScript & React\",\n  \"task\": \"Write a performance-optimized useDebounce Hook supporting immediate execution option.\"\n}"
+      },
+      {
+        "id": "node_exec_reee45cly",
+        "executionId": "exec_1783078093830_dqzs3",
+        "nodeId": "node-prompt",
+        "nodeType": "node",
+        "tokensUsed": 152,
+        "costUsd": 0.001032,
+        "latencyMs": 9,
+        "inputPreview": "Task: Write an outstanding implementation of a {task} in {language}.\n\nRequirements:\n- Must include clean TypeScript types.\n- Provide exhaustive comments explaining choices.\n- Return ONLY valid product",
+        "outputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript &amp; React.\n\nRequirements:\n- Must include clean Type"
+      },
+      {
+        "id": "node_exec_4otll7noq",
+        "executionId": "exec_1783078093830_dqzs3",
+        "nodeId": "node-gemini",
+        "nodeType": "node",
+        "tokensUsed": 1696,
+        "costUsd": 0.000489,
+        "latencyMs": 14774,
+        "inputPreview": "Task: Write an outstanding implementation of a Write a performance-optimized useDebounce Hook supporting immediate execution option. in TypeScript &amp; React.\n\nRequirements:\n- Must include clean Type",
+        "outputPreview": "```typescript\nimport { useCallback, useEffect, useRef } from 'react';\n\n/**\n * Configuration options for the debounced function.\n */\nexport interface UseDebounceOptions {\n  /**\n   * If true, the functi"
+      },
+      {
+        "id": "node_exec_ph8x191b7",
+        "executionId": "exec_1783078093830_dqzs3",
+        "nodeId": "node-reviewer",
+        "nodeType": "node",
+        "tokensUsed": 193,
+        "costUsd": 0.00005,
+        "latencyMs": 8037,
+        "inputPreview": "Criteria: Check if code contains comprehensive typescript declarations, is free of external libraries, and handles reactive parameter cleanup.",
+        "outputPreview": "Passed audit successfully with score 100!\n\nThe implementation is exceptional and fully satisfies all criteria. 1) It features comprehensive TypeScript declarations, including generic parameter typing "
+      },
+      {
+        "id": "node_exec_2zvosj5yu",
+        "executionId": "exec_1783078093830_dqzs3",
+        "nodeId": "node-output",
+        "nodeType": "node",
+        "tokensUsed": 1616,
+        "costUsd": 0.016108,
+        "latencyMs": 0,
+        "inputPreview": "Pipeline Stream Completed",
+        "outputPreview": "```typescript\nimport { useCallback, useEffect, useRef } from 'react';\n\n/**\n * Configuration options for the debounced function.\n */\nexport interface UseDebounceOptions {\n  /**\n   * If true, the functi"
+      }
+    ]
+  },
+  {
+    "id": "bcef306c-7416-4403-b958-b6ae9242e7d4",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:01.186Z",
+    "finishedAt": "2026-07-03T11:37:01.191Z",
+    "status": "success",
+    "totalTokens": 67,
+    "totalCostUsd": 0.000369,
+    "totalLatencyMs": 5,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_zhyxt5bfo",
+        "executionId": "bcef306c-7416-4403-b958-b6ae9242e7d4",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 28,
+        "costUsd": 0.000077,
+        "latencyMs": 1,
+        "inputPreview": "[\n  {\n    \"key\": \"input_text\",\n    \"val\": \"Welcome to Paris, the city of light!\",\n    \"label\": \"Text\"\n  }\n]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_ze21nvjnp",
+        "executionId": "bcef306c-7416-4403-b958-b6ae9242e7d4",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 8,
+        "costUsd": 0.00005,
+        "latencyMs": 0,
+        "inputPreview": "Welcome to Paris",
+        "outputPreview": "Welcome to Paris"
+      },
+      {
+        "id": "node_exec_z4a6u4ztd",
+        "executionId": "bcef306c-7416-4403-b958-b6ae9242e7d4",
+        "nodeId": "router-1",
+        "nodeType": "router",
+        "tokensUsed": 22,
+        "costUsd": 0.00019,
+        "latencyMs": 0,
+        "inputPreview": "Welcome to Paris",
+        "outputPreview": "Routed to node: target-paris based on condition match: Matched Condition"
+      },
+      {
+        "id": "node_exec_35n5bx5ic",
+        "executionId": "bcef306c-7416-4403-b958-b6ae9242e7d4",
+        "nodeId": "target-paris",
+        "nodeType": "target",
+        "tokensUsed": 9,
+        "costUsd": 0.000052,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Welcome to Paris"
+      }
+    ]
+  },
+  {
+    "id": "674a5b2a-c706-49ae-8bfe-d4b73a48141c",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:01.219Z",
+    "finishedAt": "2026-07-03T11:37:01.225Z",
+    "status": "success",
+    "totalTokens": 53,
+    "totalCostUsd": 0.000379,
+    "totalLatencyMs": 6,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_m75j18udx",
+        "executionId": "674a5b2a-c706-49ae-8bfe-d4b73a48141c",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_37gy3ydrp",
+        "executionId": "674a5b2a-c706-49ae-8bfe-d4b73a48141c",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 14,
+        "costUsd": 0.000087,
+        "latencyMs": 0,
+        "inputPreview": "My order code is AGENT-4482.",
+        "outputPreview": "My order code is AGENT-4482."
+      },
+      {
+        "id": "node_exec_8jrmm6fjr",
+        "executionId": "674a5b2a-c706-49ae-8bfe-d4b73a48141c",
+        "nodeId": "router-1",
+        "nodeType": "router",
+        "tokensUsed": 25,
+        "costUsd": 0.000198,
+        "latencyMs": 0,
+        "inputPreview": "My order code is AGENT-4482.",
+        "outputPreview": "Routed to node: target-regex based on condition match: Matched Condition"
+      },
+      {
+        "id": "node_exec_ekwjizw8t",
+        "executionId": "674a5b2a-c706-49ae-8bfe-d4b73a48141c",
+        "nodeId": "target-regex",
+        "nodeType": "target",
+        "tokensUsed": 12,
+        "costUsd": 0.000082,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "My order code is AGENT-4482."
+      }
+    ]
+  },
+  {
+    "id": "c192492a-fa77-4a18-8284-5c91ba012137",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:01.245Z",
+    "finishedAt": "2026-07-03T11:37:01.246Z",
+    "status": "success",
+    "totalTokens": 85,
+    "totalCostUsd": 0.000581,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_a3r1bsn65",
+        "executionId": "c192492a-fa77-4a18-8284-5c91ba012137",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_lmh3nwqte",
+        "executionId": "c192492a-fa77-4a18-8284-5c91ba012137",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 30,
+        "costUsd": 0.000188,
+        "latencyMs": 0,
+        "inputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}",
+        "outputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}"
+      },
+      {
+        "id": "node_exec_rb0oq8p3l",
+        "executionId": "c192492a-fa77-4a18-8284-5c91ba012137",
+        "nodeId": "router-1",
+        "nodeType": "router",
+        "tokensUsed": 33,
+        "costUsd": 0.000218,
+        "latencyMs": 0,
+        "inputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}",
+        "outputPreview": "Routed to node: target-role based on condition match: Matched Condition"
+      },
+      {
+        "id": "node_exec_bms7r6zss",
+        "executionId": "c192492a-fa77-4a18-8284-5c91ba012137",
+        "nodeId": "target-role",
+        "nodeType": "target",
+        "tokensUsed": 20,
+        "costUsd": 0.000163,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "{\"user\": {\"verified\": true, \"profile\": {\"role\": \"admin\"}}}"
+      }
+    ]
+  },
+  {
+    "id": "05d10f6e-cde1-4775-864f-9c4e4e20fc36",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:01.265Z",
+    "finishedAt": "2026-07-03T11:37:01.266Z",
+    "status": "success",
+    "totalTokens": 53,
+    "totalCostUsd": 0.000379,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_0c5125fv7",
+        "executionId": "05d10f6e-cde1-4775-864f-9c4e4e20fc36",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_8yzuthool",
+        "executionId": "05d10f6e-cde1-4775-864f-9c4e4e20fc36",
+        "nodeId": "prompt-1",
+        "nodeType": "prompt",
+        "tokensUsed": 14,
+        "costUsd": 0.000087,
+        "latencyMs": 0,
+        "inputPreview": "Just plain unmatching words.",
+        "outputPreview": "Just plain unmatching words."
+      },
+      {
+        "id": "node_exec_dosk7apnn",
+        "executionId": "05d10f6e-cde1-4775-864f-9c4e4e20fc36",
+        "nodeId": "router-1",
+        "nodeType": "router",
+        "tokensUsed": 25,
+        "costUsd": 0.000198,
+        "latencyMs": 0,
+        "inputPreview": "Just plain unmatching words.",
+        "outputPreview": "Routed to node: target-default based on condition match: Default Target"
+      },
+      {
+        "id": "node_exec_zcjx992q4",
+        "executionId": "05d10f6e-cde1-4775-864f-9c4e4e20fc36",
+        "nodeId": "target-default",
+        "nodeType": "target",
+        "tokensUsed": 12,
+        "costUsd": 0.000082,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Just plain unmatching words."
+      }
+    ]
+  },
+  {
+    "id": "4b6cf110-22a2-4a2f-8d76-64e96b4185cc",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:14.037Z",
+    "finishedAt": "2026-07-03T11:37:14.040Z",
+    "status": "success",
+    "totalTokens": 89,
+    "totalCostUsd": 0.000568,
+    "totalLatencyMs": 3,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_ni1jq26ml",
+        "executionId": "4b6cf110-22a2-4a2f-8d76-64e96b4185cc",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 37,
+        "costUsd": 0.000182,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Dynamic Agent Architectures\",\n    \"label\": \"Subject\"\n  }\n]",
+        "outputPreview": "{\n  \"subject\": \"Dynamic Agent Architectures\"\n}"
+      },
+      {
+        "id": "node_exec_y2m6o8cet",
+        "executionId": "4b6cf110-22a2-4a2f-8d76-64e96b4185cc",
+        "nodeId": "step-prompt",
+        "nodeType": "step",
+        "tokensUsed": 30,
+        "costUsd": 0.000203,
+        "latencyMs": 0,
+        "inputPreview": "Analyze details of {subject}. Respond with facts.",
+        "outputPreview": "Analyze details of Dynamic Agent Architectures. Respond with facts."
+      },
+      {
+        "id": "node_exec_60i563x6b",
+        "executionId": "4b6cf110-22a2-4a2f-8d76-64e96b4185cc",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 22,
+        "costUsd": 0.000183,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Analyze details of Dynamic Agent Architectures. Respond with facts."
+      }
+    ]
+  },
+  {
+    "id": "fd381879-64cd-486d-8fac-125caf333979",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:14.073Z",
+    "finishedAt": "2026-07-03T11:37:14.074Z",
+    "status": "success",
+    "totalTokens": 72,
+    "totalCostUsd": 0.000478,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_mx4f01754",
+        "executionId": "fd381879-64cd-486d-8fac-125caf333979",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_uz8uga73x",
+        "executionId": "fd381879-64cd-486d-8fac-125caf333979",
+        "nodeId": "branch-a",
+        "nodeType": "branch",
+        "tokensUsed": 26,
+        "costUsd": 0.000162,
+        "latencyMs": 0,
+        "inputPreview": "{\"branch\": \"A\", \"metadata\": {\"status\": \"success\"}}",
+        "outputPreview": "{\"branch\": \"A\", \"metadata\": {\"status\": \"success\"}}"
+      },
+      {
+        "id": "node_exec_rimmdl2f4",
+        "executionId": "fd381879-64cd-486d-8fac-125caf333979",
+        "nodeId": "branch-b",
+        "nodeType": "branch",
+        "tokensUsed": 26,
+        "costUsd": 0.000162,
+        "latencyMs": 0,
+        "inputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}",
+        "outputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}"
+      },
+      {
+        "id": "node_exec_o87j9ugke",
+        "executionId": "fd381879-64cd-486d-8fac-125caf333979",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 18,
+        "costUsd": 0.000142,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "{\"branch\": \"B\", \"metadata\": {\"status\": \"success\"}}"
+      }
+    ]
+  },
+  {
+    "id": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:14.104Z",
+    "finishedAt": "2026-07-03T11:37:14.105Z",
+    "status": "success",
+    "totalTokens": 24,
+    "totalCostUsd": 0.00013,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_61f5v4no9",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "input",
+        "nodeType": "input",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_0yzbmsppv",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n1",
+        "nodeType": "n1",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "1",
+        "outputPreview": "1"
+      },
+      {
+        "id": "node_exec_imecvewb3",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n2",
+        "nodeType": "n2",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "2",
+        "outputPreview": "2"
+      },
+      {
+        "id": "node_exec_bkzpw4otl",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n3",
+        "nodeType": "n3",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "3",
+        "outputPreview": "3"
+      },
+      {
+        "id": "node_exec_4xwv92jj7",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n4",
+        "nodeType": "n4",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "4",
+        "outputPreview": "4"
+      },
+      {
+        "id": "node_exec_gqwtwciqz",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n5",
+        "nodeType": "n5",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "5",
+        "outputPreview": "5"
+      },
+      {
+        "id": "node_exec_ee4u7lp6r",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n6",
+        "nodeType": "n6",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "6",
+        "outputPreview": "6"
+      },
+      {
+        "id": "node_exec_itfyr5tff",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n7",
+        "nodeType": "n7",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "7",
+        "outputPreview": "7"
+      },
+      {
+        "id": "node_exec_srzw6ldtf",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "n8",
+        "nodeType": "n8",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "8",
+        "outputPreview": "8"
+      },
+      {
+        "id": "node_exec_tgxtxb30k",
+        "executionId": "700bf238-fd49-4bc1-ae76-7c4dbf8e3c47",
+        "nodeId": "output",
+        "nodeType": "output",
+        "tokensUsed": 6,
+        "costUsd": 0.000022,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "8"
+      }
+    ]
+  },
+  {
+    "id": "85e5c9ed-97e1-4eb8-9e84-582627f00a29",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:14.122Z",
+    "finishedAt": "2026-07-03T11:37:14.131Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 9,
+    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
+    "nodeExecutions": []
+  },
+  {
+    "id": "810e9e05-50da-4142-9091-12140cf8c2c1",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:54.941Z",
+    "finishedAt": "2026-07-03T11:37:54.992Z",
+    "status": "success",
+    "totalTokens": 24,
+    "totalCostUsd": 0.000134,
+    "totalLatencyMs": 51,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_vnoax8fic",
+        "executionId": "810e9e05-50da-4142-9091-12140cf8c2c1",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 2,
+        "costUsd": 0.000012,
+        "latencyMs": 0,
+        "inputPreview": "[]",
+        "outputPreview": "{}"
+      },
+      {
+        "id": "node_exec_uu9sova2t",
+        "executionId": "810e9e05-50da-4142-9091-12140cf8c2c1",
+        "nodeId": "tool-1",
+        "nodeType": "tool",
+        "tokensUsed": 22,
+        "costUsd": 0.000122,
+        "latencyMs": 48,
+        "inputPreview": "URL: https://api.weather.com/v1/forecast\nBody: None",
+        "outputPreview": "{\"message\":\"Successfully fetched\"}"
+      }
+    ]
+  },
+  {
+    "id": "22e58fa8-76e8-4c36-8c69-7f87c8343c49",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:55.019Z",
+    "finishedAt": "2026-07-03T11:37:55.036Z",
+    "status": "success",
+    "totalTokens": 50,
+    "totalCostUsd": 0.000229,
+    "totalLatencyMs": 17,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_3u9rc9hyq",
+        "executionId": "22e58fa8-76e8-4c36-8c69-7f87c8343c49",
+        "nodeId": "input-1",
+        "nodeType": "input",
+        "tokensUsed": 28,
+        "costUsd": 0.000122,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"username\",\n    \"value\": \"alice44\",\n    \"label\": \"username\"\n  }\n]",
+        "outputPreview": "{\n  \"username\": \"alice44\"\n}"
+      },
+      {
+        "id": "node_exec_1ootgy5cp",
+        "executionId": "22e58fa8-76e8-4c36-8c69-7f87c8343c49",
+        "nodeId": "tool-1",
+        "nodeType": "tool",
+        "tokensUsed": 22,
+        "costUsd": 0.000107,
+        "latencyMs": 16,
+        "inputPreview": "URL: https://api.example.com/users\nBody: {\"name\": \"alice44\"}",
+        "outputPreview": "User Created Successfully"
+      }
+    ]
+  },
+  {
+    "id": "a0af347c-1c71-4011-a389-1b7298de9f3f",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:37:55.056Z",
+    "finishedAt": "2026-07-03T11:37:55.089Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 33,
+    "errorMessage": "HTTP Tool node failed: Network offline",
+    "nodeExecutions": []
+  },
+  {
+    "id": "67c13ded-42f3-46b0-833f-e7582fd85aa5",
+    "graphId": "canvas-workspace",
+    "graphName": "Workspace Canvas",
+    "startedAt": "2026-07-03T11:38:00.721Z",
+    "finishedAt": "2026-07-03T11:38:00.732Z",
+    "status": "failed",
+    "totalTokens": 0,
+    "totalCostUsd": 0,
+    "totalLatencyMs": 11,
+    "errorMessage": "Max execution steps (50) reached. Possible infinite loop detected.",
+    "nodeExecutions": []
+  },
+  {
+    "id": "1102697c-c478-496a-ae93-ddbab5854105",
+    "graphId": "test-graph",
+    "graphName": "Test Graph Name",
+    "startedAt": "2026-07-03T11:38:03.813Z",
+    "finishedAt": "2026-07-03T11:38:03.817Z",
+    "status": "success",
+    "totalTokens": 51,
+    "totalCostUsd": 0.000271,
+    "totalLatencyMs": 4,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_qou3xqj2q",
+        "executionId": "1102697c-c478-496a-ae93-ddbab5854105",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 31,
+        "costUsd": 0.000145,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
+        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
+      },
+      {
+        "id": "node_exec_2eunbxpnw",
+        "executionId": "1102697c-c478-496a-ae93-ddbab5854105",
+        "nodeId": "step-prompt",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 1,
+        "inputPreview": "Test trace ID system",
+        "outputPreview": "Test trace ID system"
+      },
+      {
+        "id": "node_exec_9uyd13ol5",
+        "executionId": "1102697c-c478-496a-ae93-ddbab5854105",
+        "nodeId": "step-output",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Graph Termination",
+        "outputPreview": "Test trace ID system"
+      }
+    ]
+  },
+  {
+    "id": "57547470-ef4f-4c37-9cfe-a297794a3d34",
+    "graphId": "metrics-test-graph",
+    "graphName": "Metrics Test Graph",
+    "startedAt": "2026-07-03T11:38:03.848Z",
+    "finishedAt": "2026-07-03T11:38:03.849Z",
+    "status": "success",
+    "totalTokens": 51,
+    "totalCostUsd": 0.000271,
+    "totalLatencyMs": 1,
+    "nodeExecutions": [
+      {
+        "id": "node_exec_px7ghd9l8",
+        "executionId": "57547470-ef4f-4c37-9cfe-a297794a3d34",
+        "nodeId": "step-input",
+        "nodeType": "step",
+        "tokensUsed": 31,
+        "costUsd": 0.000145,
+        "latencyMs": 0,
+        "inputPreview": "[\n  {\n    \"key\": \"subject\",\n    \"value\": \"Test Trace UUID\",\n    \"label\": \"Subject\"\n  }\n]",
+        "outputPreview": "{\n  \"subject\": \"Test Trace UUID\"\n}"
+      },
+      {
+        "id": "node_exec_0ylbcwlgh",
+        "executionId": "57547470-ef4f-4c37-9cfe-a297794a3d34",
+        "nodeId": "step-prompt",
+        "nodeType": "step",
+        "tokensUsed": 10,
+        "costUsd": 0.000063,
+        "latencyMs": 0,
+        "inputPreview": "Test trace ID system",
+        "outputPreview": "Test trace ID system"
+      },
+      {
+        "id": "node_exec_b9jf6as5c",
+        "executionId": "57547470-ef4f-4c37-9cfe-a297794a3d34",
         "nodeId": "step-output",
         "nodeType": "step",
         "tokensUsed": 10,

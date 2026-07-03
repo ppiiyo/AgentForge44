@@ -16,15 +16,15 @@ This report documents the performance, scalability, and resource utilization of 
 | **Total Pipelines Simulated** | 1000 |
 | **Successful Executions** | 1000 (100.0%) |
 | **Failed Executions** | 0 |
-| **Total Execution Duration** | 0.39 seconds |
-| **Orchestrator Throughput** | **2577.32 pipelines / second** |
-| **Minimum Latency** | 19 ms |
-| **Average Latency** | 32.5 ms |
-| **95th Percentile Latency (P95)** | 58 ms |
-| **Maximum Latency** | 68 ms |
-| **V8 Heap Memory before** | 56.79 MB |
-| **V8 Heap Memory after** | 74.24 MB |
-| **Heap Memory Overhead** | **+17.45 MB** |
+| **Total Execution Duration** | 0.34 seconds |
+| **Orchestrator Throughput** | **2915.45 pipelines / second** |
+| **Minimum Latency** | 17 ms |
+| **Average Latency** | 28.0 ms |
+| **95th Percentile Latency (P95)** | 43 ms |
+| **Maximum Latency** | 50 ms |
+| **V8 Heap Memory before** | 61.29 MB |
+| **V8 Heap Memory after** | 66.48 MB |
+| **Heap Memory Overhead** | **+5.19 MB** |
 
 ## Analysis & Production Evaluation
 1. **Perfect Execution Safety**: Under a concurrent flood of 1,000 pipelines, our **Kahn Topological Scheduler** achieved a **100.0% success rate** with zero race conditions or circular dependency locks.
@@ -32,4 +32,4 @@ This report documents the performance, scalability, and resource utilization of 
 3. **Pristine Memory Profile**: Thanks to Node.js garbage collection and efficient cleanups in "PipelineExecutor" instances, heap memory utilization remained extremely low and bounded, proving that the orchestrator is ready for production.
 
 ---
-*Report automatically generated on 01.07.2026 via AgentForge Performance Simulator.*
+*Report automatically generated on 03.07.2026 via AgentForge Performance Simulator.*

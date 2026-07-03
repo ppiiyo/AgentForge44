@@ -3,8 +3,8 @@ FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
 
-# Define build-time environment variables
-ARG NODE_ENV=production
+# Define build-time environment variables (default to development to ensure devDependencies are installed)
+ARG NODE_ENV=development
 ARG VITE_API_URL
 ENV NODE_ENV=${NODE_ENV}
 ENV VITE_API_URL=${VITE_API_URL}
