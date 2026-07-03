@@ -3,6 +3,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
+# Define build-time environment variables
+ARG NODE_ENV=production
+ARG VITE_API_URL
+ENV NODE_ENV=${NODE_ENV}
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Install build tools required for node-gyp and native compiler bindings
 RUN apk add --no-cache python3 make g++ gcc libc-dev
 
@@ -25,8 +31,11 @@ RUN npm run build
 FROM node:20-alpine AS runner
 
 WORKDIR /usr/src/app
-ENV NODE_ENV=production
-ENV PORT=3000
+
+ARG NODE_ENV=production
+ARG PORT=3000
+ENV NODE_ENV=${NODE_ENV}
+ENV PORT=${PORT}
 
 # Copy compiled bundles and static assets from builder container
 COPY --from=builder /usr/src/app/dist ./dist

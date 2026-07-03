@@ -3,6 +3,12 @@ FROM node:20-slim AS builder
 
 WORKDIR /usr/src/app
 
+# Define build-time environment variables
+ARG NODE_ENV=production
+ARG VITE_API_URL
+ENV NODE_ENV=${NODE_ENV}
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -12,8 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package manifests
-COPY package*.json ./
+# Copy package manifests explicitly
+COPY package.json package-lock.json ./
 
 # Install all dependencies (required for building frontend Vite/React)
 RUN npm ci
