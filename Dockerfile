@@ -19,7 +19,7 @@ COPY package.json package-lock.json ./
 ENV PYTHON=/usr/bin/python3
 
 # Install all workspace dependencies
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy full-source codebase
 COPY . .

@@ -89,20 +89,45 @@ export class SecureSandbox {
   }
 }
 
-// Singleton pool for reuse
-const sandboxPool = new Map<string, SecureSandbox>();
+// Singleton pool for reuse with last accessed tracking
+const sandboxPool = new Map<string, { sandbox: SecureSandbox; lastAccessed: number }>();
 
 export function getSandbox(runId: string): SecureSandbox {
-  if (!sandboxPool.has(runId)) {
-    sandboxPool.set(runId, new SecureSandbox());
+  let entry = sandboxPool.get(runId);
+  if (!entry) {
+    entry = { sandbox: new SecureSandbox(), lastAccessed: Date.now() };
+    sandboxPool.set(runId, entry);
+  } else {
+    entry.lastAccessed = Date.now();
   }
-  return sandboxPool.get(runId)!;
+  return entry.sandbox;
 }
 
 export function releaseSandbox(runId: string) {
-  const sandbox = sandboxPool.get(runId);
-  if (sandbox) {
-    sandbox.dispose();
+  const entry = sandboxPool.get(runId);
+  if (entry) {
+    entry.sandbox.dispose();
     sandboxPool.delete(runId);
+  }
+}
+
+// Background cleanup for abandoned sandboxes (inactive for > 5 minutes)
+if (typeof setInterval !== 'undefined') {
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes of inactivity
+    for (const [runId, entry] of sandboxPool.entries()) {
+      if (now - entry.lastAccessed > INACTIVITY_TIMEOUT) {
+        try {
+          entry.sandbox.dispose();
+        } catch (e: any) {
+          console.warn(`Error disposing abandoned sandbox ${runId}:`, e.message);
+        }
+        sandboxPool.delete(runId);
+      }
+    }
+  }, 30000); // Check every 30 seconds
+  if (cleanupInterval && typeof cleanupInterval === 'object' && 'unref' in cleanupInterval) {
+    (cleanupInterval as any).unref();
   }
 }

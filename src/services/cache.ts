@@ -5,6 +5,21 @@ import { logger } from '../utils/logger.js';
 // Fallback in-memory store
 const memoryCache = new Map<string, { val: string; expiresAt: number }>();
 
+// Periodic pruning of expired fallback cache items to prevent memory leaks
+if (typeof setInterval !== 'undefined') {
+  const interval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of memoryCache.entries()) {
+      if (now >= entry.expiresAt) {
+        memoryCache.delete(key);
+      }
+    }
+  }, 60000);
+  if (interval && typeof interval === 'object' && 'unref' in interval) {
+    (interval as any).unref();
+  }
+}
+
 export class CacheService {
   private redis: Redis | null = null;
   private isRedisConnected = false;
