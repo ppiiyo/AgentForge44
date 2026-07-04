@@ -28,9 +28,6 @@ RUN npx drizzle-kit generate && \
     npx tsx scripts/generate-swagger.ts && \
     npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
 
-# Prune development dependencies so that node_modules only contains production dependencies
-RUN npm prune --omit=dev
-
 # --- Stage 2: Production Backend Container ---
 FROM node:20-slim AS runner
 

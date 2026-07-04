@@ -27,9 +27,6 @@ COPY . .
 # Compile application assets and backend server
 RUN npm run build
 
-# Prune development dependencies so that node_modules only contains production dependencies
-RUN npm prune --omit=dev
-
 # Stage 2: Runner Stage
 FROM node:20-alpine AS runner
 
