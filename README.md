@@ -67,6 +67,7 @@ It unifies modern LLM providers (**Google Gemini, OpenAI, Anthropic Claude, and 
 | 🛡️ **Security Fortress** | Built-in SSRF guards, timing-safe PBKDF2-SHA512 hashing, AES-256-GCM secret masking. |
 | 🔌 **Resilience Stack** | Exponential backoff retries with Jitter, stateful circuit breakers, and offline LLM fallbacks. |
 | 📊 **3D RAG Viewer** | Visualize embedding clusters and similarity connections in a fully interactive 3D space. |
+| 📚 **RAG Indexer & Previewer** | Advanced document chunker and interactive multi-document visual catalog with deep text search and chunk-highlight previews. |
 | 👥 **Real-Time Collaboration** | Synchronized multi-user presence, cursors, and state locks over Socket.io WebSockets. |
 | 🔍 **Observability Engine** | Deeply integrated OpenTelemetry traces and Prometheus metric counters. |
 | 🕑 **Time-Travel Debugger** | Git-style graph revision histories with interactive diff viewers. |
