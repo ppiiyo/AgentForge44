@@ -18,6 +18,65 @@ interface LogsTabProps {
   setCopiedText: (text: string | null) => void;
 }
 
+const Sparkline: React.FC<{ data: number[]; steps: string[] }> = ({ data, steps }) => {
+  if (data.length === 0) return null;
+  const height = 28;
+  const width = 140;
+  const padding = 2;
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min;
+
+  const points = data.map((val, index) => {
+    const x = padding + (index / Math.max(data.length - 1, 1)) * (width - padding * 2);
+    const y = height - (padding + ((val - min) / range) * (height - padding * 2));
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="flex flex-col items-center space-y-1 select-none">
+      <span className="text-[8px] text-slate-500 font-extrabold uppercase tracking-widest">Latency Sparkline</span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-[7.5px] font-mono text-slate-500">{min}ms</span>
+        <svg width={width} height={height} className="overflow-visible">
+          {data.length > 1 && (
+            <path
+              d={`M ${padding},${height} L ${points} L ${width - padding},${height} Z`}
+              className="fill-sky-500/10"
+            />
+          )}
+          {data.length > 1 ? (
+            <polyline
+              fill="none"
+              stroke="#0ea5e9"
+              strokeWidth="1.25"
+              points={points}
+            />
+          ) : (
+            <circle cx={width / 2} cy={height / 2} r="2" fill="#0ea5e9" />
+          )}
+          {data.map((val, idx) => {
+            const x = padding + (idx / Math.max(data.length - 1, 1)) * (width - padding * 2);
+            const y = height - (padding + ((val - min) / range) * (height - padding * 2));
+            return (
+              <circle
+                key={idx}
+                cx={x}
+                cy={y}
+                r="1.75"
+                className="fill-sky-400 stroke-slate-950 stroke-[0.75px] hover:r-3.5 transition-all cursor-crosshair"
+              >
+                <title>{`Step ${idx + 1} (${steps[idx] || 'Step'}): ${val}ms`}</title>
+              </circle>
+            );
+          })}
+        </svg>
+        <span className="text-[7.5px] font-mono text-sky-400 font-bold">{max}ms</span>
+      </div>
+    </div>
+  );
+};
+
 export const LogsTab: React.FC<LogsTabProps> = ({
   currentLang,
   errorText,
@@ -256,12 +315,21 @@ export const LogsTab: React.FC<LogsTabProps> = ({
           </div>
 
           {/* Success Summary Header Status Card */}
-          <div className="bg-emerald-950/25 border border-emerald-900/45 p-4 rounded-2xl flex items-center justify-between">
+          <div className="bg-emerald-950/25 border border-emerald-900/45 p-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm shadow-emerald-950/10">
             <div>
               <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block">Status Completed</span>
               <span className="text-xs text-slate-400 block pt-0.5">Engine executed successfully.</span>
             </div>
-            <div className="text-right">
+
+            {/* Sparkline Latency Metric */}
+            <div className="bg-slate-950/45 px-3 py-1.5 rounded-xl border border-slate-900 flex items-center justify-center self-stretch sm:self-auto shrink-0">
+              <Sparkline 
+                data={runLogs.map(log => log.duration || 0)} 
+                steps={runLogs.map(log => log.nodeTitle)} 
+              />
+            </div>
+
+            <div className="text-left sm:text-right">
               <span className="text-[10px] text-slate-400 block leading-tight">Total Duration</span>
               <span className="text-lg font-bold text-emerald-300 font-mono tracking-wide">
                 {totalDuration} ms

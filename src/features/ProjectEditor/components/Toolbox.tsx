@@ -350,25 +350,30 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   const [selectedDocType, setSelectedDocType] = useState<NodeType>('gemini');
 
   const creators = [
-    { type: 'input' as NodeType, label: 'Inputs', desc: 'Variables parameters', color: 'hover:border-blue-500/40 hover:bg-blue-950/10' },
-    { type: 'prompt' as NodeType, label: 'Prompt Template', desc: 'Formula parameters', color: 'hover:border-purple-500/40 hover:bg-purple-950/10' },
-    { type: 'gemini' as NodeType, label: 'Gemini LLM', desc: 'Trigger twin core reasoning models', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
-    { type: 'reviewer' as NodeType, label: 'Critique Review', desc: 'Feedback loops system rules', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
-    { type: 'router' as NodeType, label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10' },
-    { type: 'tool' as NodeType, label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10' },
-    { type: 'webhook' as NodeType, label: 'Outbound Webhook', desc: 'Trigger external HTTP POST callbacks', color: 'hover:border-pink-500/40 hover:bg-pink-950/10' },
-    { type: 'rag' as NodeType, label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10' },
-    { type: 'vector-search' as NodeType, label: 'PGVector Search', desc: 'Secure PGVector DB RAG lookup', color: 'hover:border-cyan-500/40 hover:bg-cyan-950/10' },
-    { type: 'multimodal' as NodeType, label: 'Multimodal (PDF/Audio/Excel)', desc: 'Process documents pipeline', color: 'hover:border-amber-500/40 hover:bg-amber-950/10' },
-    { type: 'human_confirmation' as NodeType, label: 'Human confirmation', desc: 'Approve execution pipeline', color: 'hover:border-rose-600/40 hover:bg-rose-950/10' },
-    { type: 'prompt_optimizer' as NodeType, label: 'Prompt Optimizer', desc: 'Few-Shot COT prompt helper', color: 'hover:border-emerald-500/40 hover:bg-emerald-950/10' },
-    { type: 'output' as NodeType, label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10' }
+    { type: 'input' as NodeType, label: 'Inputs', desc: 'Variables parameters', color: 'hover:border-blue-500/40 hover:bg-blue-950/10', keywords: ['variables', 'parameters', 'arguments', 'start', 'initial', 'inputs', 'data'] },
+    { type: 'prompt' as NodeType, label: 'Prompt Template', desc: 'Formula parameters', color: 'hover:border-purple-500/40 hover:bg-purple-950/10', keywords: ['template', 'formula', 'prompt', 'format', 'text', 'instructions'] },
+    { type: 'gemini' as NodeType, label: 'Gemini LLM', desc: 'Trigger twin core reasoning models', color: 'hover:border-teal-500/40 hover:bg-teal-950/10', keywords: ['gemini', 'llm', 'ai', 'google', 'search', 'grounding', 'reasoning', 'text', 'intelligence'] },
+    { type: 'reviewer' as NodeType, label: 'Critique Review', desc: 'Feedback loops system rules', color: 'hover:border-amber-500/40 hover:bg-amber-950/10', keywords: ['critique', 'review', 'feedback', 'loop', 'rules', 'correct', 'self-heal', 'logic', 'validate', 'reviewer'] },
+    { type: 'router' as NodeType, label: 'Router (If-Else)', desc: 'Condition route switch', color: 'hover:border-sky-500/40 hover:bg-sky-950/10', keywords: ['router', 'if-else', 'condition', 'branch', 'route', 'switch', 'logic', 'split', 'decision'] },
+    { type: 'tool' as NodeType, label: 'HTTP API Custom Tool', desc: 'Execute outer REST fetch', color: 'hover:border-rose-500/40 hover:bg-rose-950/10', keywords: ['http', 'api', 'custom', 'tool', 'outer', 'rest', 'fetch', 'request', 'csv', 'json', 'data', 'integration'] },
+    { type: 'webhook' as NodeType, label: 'Outbound Webhook', desc: 'Trigger external HTTP POST callbacks', color: 'hover:border-pink-500/40 hover:bg-pink-950/10', keywords: ['outbound', 'webhook', 'post', 'callback', 'slack', 'zapier', 'event', 'trigger', 'dispatch'] },
+    { type: 'rag' as NodeType, label: 'RAG Knowledge Search', desc: 'Semantic Vector Db lookup', color: 'hover:border-teal-500/40 hover:bg-teal-950/10', keywords: ['rag', 'knowledge', 'search', 'vector', 'lookup', 'index', 'document', 'pdf', 'text', 'store'] },
+    { type: 'vector-search' as NodeType, label: 'PGVector Search', desc: 'Secure PGVector DB RAG lookup', color: 'hover:border-cyan-500/40 hover:bg-cyan-950/10', keywords: ['pgvector', 'postgres', 'database', 'rag', 'lookup', 'search', 'sql', 'query'] },
+    { type: 'multimodal' as NodeType, label: 'Multimodal (PDF/Audio/Excel)', desc: 'Process documents pipeline', color: 'hover:border-amber-500/40 hover:bg-amber-950/10', keywords: ['multimodal', 'pdf', 'audio', 'excel', 'csv', 'image', 'file', 'binary', 'document', 'sheets'] },
+    { type: 'human_confirmation' as NodeType, label: 'Human confirmation', desc: 'Approve execution pipeline', color: 'hover:border-rose-600/40 hover:bg-rose-950/10', keywords: ['human', 'confirmation', 'approve', 'gate', 'pause', 'operator', 'logic', 'wait', 'manual'] },
+    { type: 'prompt_optimizer' as NodeType, label: 'Prompt Optimizer', desc: 'Few-Shot COT prompt helper', color: 'hover:border-emerald-500/40 hover:bg-emerald-950/10', keywords: ['prompt', 'optimizer', 'few-shot', 'cot', 'helper', 'ai', 'llm', 'tune'] },
+    { type: 'output' as NodeType, label: 'Outputs', desc: 'Compiled visual payload', color: 'hover:border-indigo-500/40 hover:bg-indigo-950/10', keywords: ['outputs', 'compiled', 'payload', 'markdown', 'render', 'end', 'result', 'display'] }
   ];
 
   const filteredCreators = creators.filter(tb => {
     if (!toolboxSearch) return true;
     const s = toolboxSearch.toLowerCase();
-    return tb.label.toLowerCase().includes(s) || tb.type.toLowerCase().includes(s) || tb.desc.toLowerCase().includes(s);
+    return (
+      tb.label.toLowerCase().includes(s) || 
+      tb.type.toLowerCase().includes(s) || 
+      tb.desc.toLowerCase().includes(s) ||
+      tb.keywords.some(kw => kw.toLowerCase().includes(s))
+    );
   });
 
   const handleImportSwagger = () => {

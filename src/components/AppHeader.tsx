@@ -20,6 +20,7 @@ interface AppHeaderProps {
   onAutoAlign: () => void;
   onShowImportExport: () => void;
   onSaveSnapshot: () => void;
+  onShowShortcuts: () => void;
   nodesCount: number;
   connectionsCount: number;
 }
@@ -38,6 +39,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onAutoAlign,
   onShowImportExport,
   onSaveSnapshot,
+  onShowShortcuts,
   nodesCount,
   connectionsCount
 }) => {
@@ -158,6 +160,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
         >
           <Upload size={15} />
+        </button>
+
+        {/* Shortcuts Cheat Sheet help button */}
+        <button
+          id="btn_show_shortcuts_header"
+          onClick={onShowShortcuts}
+          title={currentLang === 'ru' ? "Горячие клавиши" : currentLang === 'zh' ? "键盘快捷键" : "Keyboard Shortcuts"}
+          className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
+        >
+          <HelpCircle size={15} />
         </button>
 
         {/* Language selector */}

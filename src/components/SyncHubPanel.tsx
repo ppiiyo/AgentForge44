@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Globe, Plus, Trash, ToggleLeft, ToggleRight, Loader, RefreshCw, Layers, ShieldAlert } from 'lucide-react';
+import { Calendar, Globe, Plus, Trash, ToggleLeft, ToggleRight, Loader, RefreshCw, Layers, ShieldAlert, Github, GitBranch, Link, Check, Play, AlertCircle } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
 
 interface SyncHubPanelProps {
@@ -16,6 +16,101 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('applet-key-forge-secret');
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  // GitHub States
+  const [gitRepoUrl, setGitRepoUrl] = useState('');
+  const [gitBranch, setGitBranch] = useState('main');
+  const [gitAutoDeploy, setGitAutoDeploy] = useState(true);
+  const [gitConfig, setGitConfig] = useState<any>(null);
+  const [gitSyncing, setGitSyncing] = useState(false);
+  const [gitFeedback, setGitFeedback] = useState<string | null>(null);
+
+  const fetchGitConfig = async () => {
+    try {
+      const resp = await fetch('/api/github/config');
+      if (resp.ok) {
+        const data = await resp.json();
+        setGitConfig(data);
+        if (data.linked) {
+          setGitRepoUrl(data.repoUrl);
+          setGitBranch(data.branch);
+          setGitAutoDeploy(data.autoDeploy);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLinkGit = async () => {
+    if (!gitRepoUrl.trim()) return;
+    try {
+      const response = await fetch('/api/github/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repoUrl: gitRepoUrl,
+          branch: gitBranch,
+          autoDeploy: gitAutoDeploy
+        })
+      });
+      if (response.ok) {
+        setGitFeedback("GitHub repository linked successfully!");
+        setTimeout(() => setGitFeedback(null), 3000);
+        fetchGitConfig();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUnlinkGit = async () => {
+    try {
+      const response = await fetch('/api/github/unlink', {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setGitFeedback("GitHub repository unlinked.");
+        setTimeout(() => setGitFeedback(null), 3000);
+        setGitRepoUrl('');
+        setGitBranch('main');
+        setGitAutoDeploy(true);
+        fetchGitConfig();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSyncGit = async () => {
+    setGitSyncing(true);
+    try {
+      const response = await fetch('/api/github/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes, connections })
+      });
+      if (response.ok) {
+        setGitFeedback("Code synchronization initiated...");
+        setTimeout(() => setGitFeedback(null), 3000);
+        
+        let count = 0;
+        const interval = setInterval(async () => {
+          await fetchGitConfig();
+          count++;
+          if (count >= 4) {
+            clearInterval(interval);
+            setGitSyncing(false);
+          }
+        }, 500);
+      } else {
+        setGitSyncing(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setGitSyncing(false);
+    }
+  };
 
   const t = {
     en: {
@@ -87,6 +182,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
 
   useEffect(() => {
     fetchData();
+    fetchGitConfig();
   }, []);
 
   const handleCreateSchedule = async () => {
@@ -366,6 +462,168 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
             </button>
           </div>
         </div>
+      </section>
+
+      {/* GitHub Integration Card */}
+      <section className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-4" id="github_integration_section">
+        <div className="flex items-start gap-2.5">
+          <Github size={15} className="text-purple-400 mt-1 animate-pulse" />
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-widest leading-none">
+                {currentLang === 'ru' ? "Интеграция с GitHub" : currentLang === 'zh' ? "GitHub 仓库持续集成" : "GitHub Repository Sync"}
+              </h4>
+              {gitConfig?.linked && (
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  {currentLang === 'ru' ? "СВЯЗАНО" : currentLang === 'zh' ? "已绑定" : "LINKED"}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+              {currentLang === 'ru' 
+                ? "Синхронизируйте код проекта напрямую с репозиторием GitHub и запускайте автоматическое развертывание." 
+                : currentLang === 'zh' 
+                  ? "将当前 AgentForge 设计的工作流代码一键推送到您的 GitHub 存储库，配置自动部署策略与版本触发。" 
+                  : "Keep your workflow model code synced with your GitHub repository and trigger automatic web/container deployments."}
+            </p>
+          </div>
+        </div>
+
+        {gitFeedback && (
+          <div className="bg-purple-950/20 border border-purple-900/40 text-purple-300 p-2.5 rounded-lg text-center text-[11px] font-medium leading-normal animate-in fade-in duration-200">
+            {gitFeedback}
+          </div>
+        )}
+
+        {!gitConfig?.linked ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Repository (owner/repo)</label>
+                <input
+                  id="github_repo_input"
+                  type="text"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 placeholder-slate-600 outline-none"
+                  placeholder="e.g. owner/agentforge-project"
+                  value={gitRepoUrl}
+                  onChange={(e) => setGitRepoUrl(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Target Branch</label>
+                <div className="relative">
+                  <GitBranch size={12} className="absolute left-2.5 top-2.5 text-slate-500" />
+                  <input
+                    id="github_branch_input"
+                    type="text"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 pl-7 text-xs text-slate-300 outline-none"
+                    placeholder="main"
+                    value={gitBranch}
+                    onChange={(e) => setGitBranch(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-slate-850">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-300">
+                  {currentLang === 'ru' ? "Автоматическое развертывание" : currentLang === 'zh' ? "触发自动化构建部署" : "Automated Deployment Trigger"}
+                </span>
+                <span className="text-[9px] text-slate-500 mt-0.5">
+                  {currentLang === 'ru' ? "Запускать сборку на Cloud Run при синхронизации" : "Rebuild Cloud Run container instances on push sync"}
+                </span>
+              </div>
+              <button
+                type="button"
+                id="btn_git_toggle_autodeploy"
+                onClick={() => setGitAutoDeploy(!gitAutoDeploy)}
+                className="text-slate-400 hover:text-purple-400 transition-all cursor-pointer"
+              >
+                {gitAutoDeploy ? <ToggleRight size={22} className="text-purple-400" /> : <ToggleLeft size={22} />}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              id="btn_github_link_repo"
+              onClick={handleLinkGit}
+              disabled={!gitRepoUrl}
+              className="w-full bg-purple-600 hover:bg-purple-550 disabled:opacity-40 text-white font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+            >
+              <Link size={12} />
+              {currentLang === 'ru' ? "Связать Репозиторий" : currentLang === 'zh' ? "绑定 GitHub 仓库" : "Link Repository"}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="bg-slate-900 border border-slate-850 rounded-lg p-3 space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-850 pb-2">
+                <div>
+                  <span className="text-[9px] text-slate-500 font-extrabold block uppercase tracking-wider">Linked Repository</span>
+                  <span className="text-xs text-slate-200 font-mono font-semibold">{gitConfig.repoUrl}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-500 font-extrabold block uppercase tracking-wider text-right">Branch</span>
+                  <span className="text-xs text-purple-400 font-mono font-bold flex items-center justify-end gap-1">
+                    <GitBranch size={11} /> {gitConfig.branch}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">
+                  {currentLang === 'ru' ? "Автодеплой:" : currentLang === 'zh' ? "持续部署触发:" : "Continuous Deployment:"}
+                </span>
+                <span className={`font-mono text-[10px] font-bold ${gitConfig.autoDeploy ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {gitConfig.autoDeploy ? 'ENABLED' : 'DISABLED'}
+                </span>
+              </div>
+
+              {gitConfig.lastSyncedAt && (
+                <div className="text-[10px] text-slate-500 flex items-center justify-between border-t border-slate-850/55 pt-2">
+                  <span>Last Code Sync:</span>
+                  <span className="font-mono text-slate-400">{new Date(gitConfig.lastSyncedAt).toLocaleString()}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Sync Console Output logs */}
+            {gitConfig.syncLogs && gitConfig.syncLogs.length > 0 && (
+              <div className="bg-slate-950/80 border border-slate-900 p-2.5 rounded-lg max-h-32 overflow-y-auto font-mono text-[9px] text-slate-400 space-y-1">
+                <span className="text-[8px] font-bold text-slate-500 block uppercase mb-1 tracking-wider">Sync Syncing Pipeline Console</span>
+                {gitConfig.syncLogs.map((log: string, idx: number) => (
+                  <div key={idx} className="leading-normal border-l border-slate-800 pl-1.5">
+                    {log}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                id="btn_github_sync_now"
+                onClick={handleSyncGit}
+                disabled={gitSyncing}
+                className="flex-1 bg-purple-600 hover:bg-purple-550 text-white disabled:opacity-50 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+              >
+                {gitSyncing ? <Loader size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                {currentLang === 'ru' ? "Синхронизировать сейчас" : currentLang === 'zh' ? "开始代码同步" : "Sync Code Now"}
+              </button>
+              <button
+                type="button"
+                id="btn_github_unlink"
+                onClick={handleUnlinkGit}
+                className="bg-slate-950 hover:bg-rose-950/15 border border-slate-850 hover:border-rose-900 text-slate-400 hover:text-rose-400 font-bold text-xs px-3.5 rounded-lg transition-all cursor-pointer active:scale-98"
+                title="Unlink Repository"
+              >
+                Unlink
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

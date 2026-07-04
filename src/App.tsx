@@ -10,6 +10,7 @@ import { Settings } from './features/Settings';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { RightSidebarPanel } from './components/RightSidebarPanel';
 import { ImportExportModal } from './components/ImportExportModal';
+import { ShortcutsModal } from './components/ShortcutsModal';
 import posthog from 'posthog-js';
 
 // Dynamically lazy-loaded sub-modules for bundle splitting optimization
@@ -233,6 +234,20 @@ export default function App() {
   const app = useAgentApp();
 
   const [apiKeysMissing, setApiKeysMissing] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement?.tagName;
+      const isInput = activeEl === 'INPUT' || activeEl === 'TEXTAREA';
+      if (!isInput && (e.key === '?' || (e.ctrlKey && e.key === '/'))) {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const checkKeys = async () => {
@@ -266,6 +281,7 @@ export default function App() {
           onAutoAlign={app.handleAutoAlignNodes}
           onShowImportExport={() => app.setIsImportExportModalOpen(true)}
           onSaveSnapshot={() => app.handleSaveSnapshot()}
+          onShowShortcuts={() => setIsShortcutsOpen(true)}
           nodesCount={app.nodes.length}
           connectionsCount={app.connections.length}
         />
@@ -496,6 +512,13 @@ export default function App() {
           copiedText={app.copiedText}
           setCopiedText={app.setCopiedText}
           activeWorkflow={app.activeWorkflow || { name: app.projectNameInput }}
+          currentLang={app.currentLang}
+        />
+
+        {/* Global Keyboard Shortcuts Cheat Sheet Modal */}
+        <ShortcutsModal
+          isOpen={isShortcutsOpen}
+          onClose={() => setIsShortcutsOpen(false)}
           currentLang={app.currentLang}
         />
       </div>
