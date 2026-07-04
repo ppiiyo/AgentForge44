@@ -43,12 +43,12 @@ export function validateDatabaseConfig(dbType: string, databaseUrl: string): voi
  * conducting strict config checks and returning high-resilience adapters.
  */
 export function createDatabaseConnection(): IDatabaseAdapter {
-  const envDbType = process.env.DB_TYPE || 'sqlite';
-  const databaseUrl = process.env.DATABASE_URL || '';
+  let envDbType = process.env.DB_TYPE || 'sqlite';
+  let databaseUrl = process.env.DATABASE_URL || '';
 
   // Classify connection type cleanly
-  const isPostgresScheme = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
-  const dbType = (isPostgresScheme || envDbType === 'postgres') ? 'postgres' : 'sqlite';
+  let isPostgresScheme = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
+  let dbType = (isPostgresScheme || envDbType === 'postgres') ? 'postgres' : 'sqlite';
 
   logger.info(`Database connection factory resolving adapter type: "${dbType}" (requested env DB_TYPE: "${envDbType}").`);
 
@@ -63,7 +63,8 @@ export function createDatabaseConnection(): IDatabaseAdapter {
       return new SqliteDatabaseAdapter();
     }
   } catch (error: any) {
-    logger.error(`DATABASE FACTORY INITIALIZATION CRITICAL BLOCKED: ${error.message}`);
-    throw error;
+    logger.warn(`DATABASE FACTORY INITIALIZATION CRITICAL BLOCKED: ${error.message}. Falling back to SQLite adapter context to prevent startup and container crash.`);
+    process.env.DB_TYPE = 'sqlite';
+    return new SqliteDatabaseAdapter();
   }
 }

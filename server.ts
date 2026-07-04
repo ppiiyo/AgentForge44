@@ -38,12 +38,29 @@ import { unifiedGuardMiddleware } from './src/middleware/guard.js';
 dotenv.config();
 
 // Pre-flight database and secrets credential validation
+const isProd = process.env.NODE_ENV === 'production';
+
 try {
   validateSecrets();
+} catch (error: any) {
+  if (isProd) {
+    logger.error(`CRITICAL CONFIGURATION ERROR ON STARTUP: ${error.message}`);
+    process.exit(1);
+  } else {
+    logger.warn(`SECRETS CONFIGURATION WARNING: ${error.message}`);
+  }
+}
+
+try {
   validateDatabaseConfig(process.env.DB_TYPE || 'sqlite', process.env.DATABASE_URL || '');
 } catch (error: any) {
-  logger.error(`CRITICAL PRE-FLIGHT CHECK FAILURE: ${error.message}`);
-  process.exit(1);
+  if (isProd) {
+    logger.error(`CRITICAL DATABASE CONFIGURATION ERROR: ${error.message}`);
+    process.exit(1);
+  } else {
+    logger.warn(`DATABASE CONFIGURATION WARNING: ${error.message}. Defaulting DB_TYPE to "sqlite" and falling back gracefully.`);
+    process.env.DB_TYPE = 'sqlite';
+  }
 }
 
 initTracing();

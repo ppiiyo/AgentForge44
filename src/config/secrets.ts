@@ -1,4 +1,5 @@
 import winston from 'winston';
+import crypto from 'crypto';
 
 const logger = winston.createLogger({
   level: 'info',
@@ -29,7 +30,7 @@ if (isDevelopmentOrTest) {
 
 /**
  * Validates the cryptographic secrets configuration parameters on start.
- * Throws a descriptive error and exits if keys are missing or lack sufficient entropy.
+ * Throws a descriptive error if keys are missing or lack sufficient entropy in production.
  */
 export function validateSecrets(): void {
   const jwtSecret = process.env.JWT_SECRET;
