@@ -79,5 +79,24 @@ router.get('/rag/stats', async (req: Request, res: Response, next: NextFunction)
   }
 });
 
+router.get('/rag/chunks', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const chunks = await ragService.getAllChunks();
+    res.json({ chunks });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
+router.delete('/rag/document/:source', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const source = req.params.source;
+    await ragService.deleteDocumentBySource(source);
+    res.json({ success: true, message: `Document "${source}" deleted.` });
+  } catch (err: any) {
+    next(err);
+  }
+});
+
 export default router;
 

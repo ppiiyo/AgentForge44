@@ -46,11 +46,28 @@ export class RAGService {
     logger.warn(`deleteDocument called for chunk ID: ${id} (Table cleanup is managed by database policies).`);
   }
 
+  async getAllChunks(): Promise<Array<{ id: string; text: string; source: string; createdAt: number }>> {
+    return vectorStore.getAllChunks();
+  }
+
+  async deleteDocumentBySource(sourceName: string): Promise<void> {
+    return vectorStore.deleteChunksBySource(sourceName);
+  }
+
   async getStats(): Promise<{ totalDocuments: number; totalChunks: number }> {
-    return {
-      totalDocuments: 1,
-      totalChunks: 5
-    };
+    try {
+      const chunks = await vectorStore.getAllChunks();
+      const uniqueSources = new Set(chunks.map(c => c.source));
+      return {
+        totalDocuments: uniqueSources.size,
+        totalChunks: chunks.length
+      };
+    } catch (err) {
+      return {
+        totalDocuments: 0,
+        totalChunks: 0
+      };
+    }
   }
 }
 

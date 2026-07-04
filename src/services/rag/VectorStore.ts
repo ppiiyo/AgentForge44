@@ -308,6 +308,74 @@ export class VectorStore {
       logger.warn(`[PGVectorStore] Default document seeding skipped or failed: ${err.message}`);
     }
   }
+
+  /**
+   * Retrieves all chunks from the store
+   */
+  public async getAllChunks(): Promise<Array<{ id: string; text: string; source: string; createdAt: number }>> {
+    await this.ensureInitialized();
+    try {
+      if (this.isPgActive && pg) {
+        interface DbRow {
+          id: string;
+          text: string;
+          source: string;
+          created_at: string;
+        }
+        const results = await pg`
+          SELECT id, text, source, created_at
+          FROM rag_document_chunks
+          ORDER BY created_at DESC
+        ` as unknown as DbRow[];
+        return results.map(row => ({
+          id: row.id,
+          text: row.text,
+          source: row.source,
+          createdAt: Number(row.created_at) || Date.now()
+        }));
+      } else if (sqlite) {
+        interface SqliteRow {
+          id: string;
+          text: string;
+          source: string;
+          created_at: number;
+        }
+        const stmt = sqlite.prepare('SELECT id, text, source, created_at FROM rag_document_chunks ORDER BY created_at DESC');
+        const rows = stmt.all() as SqliteRow[];
+        return rows.map(row => ({
+          id: row.id,
+          text: row.text,
+          source: row.source,
+          createdAt: row.created_at || Date.now()
+        }));
+      }
+    } catch (err: any) {
+      logger.error('[PGVectorStore] Failed fetching all chunks', err);
+    }
+    return [];
+  }
+
+  /**
+   * Deletes all chunks associated with a specific source
+   */
+  public async deleteChunksBySource(sourceName: string): Promise<void> {
+    await this.ensureInitialized();
+    try {
+      if (this.isPgActive && pg) {
+        await pg`
+          DELETE FROM rag_document_chunks
+          WHERE source = ${sourceName}
+        `;
+      } else if (sqlite) {
+        const stmt = sqlite.prepare('DELETE FROM rag_document_chunks WHERE source = ?');
+        stmt.run(sourceName);
+      }
+      logger.info(`[PGVectorStore] Deleted all chunks for source "${sourceName}".`);
+    } catch (err: any) {
+      logger.error(`[PGVectorStore] Failed deleting chunks for source "${sourceName}"`, err);
+      throw err;
+    }
+  }
 }
 
 export const vectorStore = new VectorStore();
