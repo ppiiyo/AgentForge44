@@ -9,10 +9,10 @@ logs/
 !.env.example
 
 # SQLite database files
-agentforge.db
-agentforge.db-journal
-agentforge.db-shm
-agentforge.db-wal
+kostromai44.db
+kostromai44.db-journal
+kostromai44.db-shm
+kostromai44.db-wal
 *.sqlite
 *.db
 *.db-shm

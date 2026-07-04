@@ -71,7 +71,7 @@ interface AgentFlowCanvasProps {
   showMiniMap?: boolean;
 }
 
-// Custom Node wrapper for ReactFlow that renders our exact exquisite AgentForge44 cards!
+// Custom Node wrapper for ReactFlow that renders our exact exquisite KostromAi44 cards!
 const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
   const { 
     node, 

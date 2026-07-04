@@ -337,7 +337,7 @@ export const PREBUILT_TEMPLATES: Workflow[] = [
         description: 'Information about your product launch or open-source repo.',
         fields: {
           variables: [
-            { key: 'project', value: 'AgentForge44 - Visual Node-Based Agent Sandbox', label: 'Project Name' },
+            { key: 'project', value: 'KostromAi44 - Visual Node-Based Agent Sandbox', label: 'Project Name' },
             { key: 'achievement', value: 'Built from scratch in an hour, runs full-stack Gemini tools visually', label: 'Key Hook Detail' }
           ]
         }

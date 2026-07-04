@@ -8,7 +8,7 @@ export class CodeGenerator {
     const sortedNodes = this.topologicalSort(nodes, connections);
     
     let code = `/**
- * AgentForge Workflow Auto-Generated TypeScript Executable Script
+ * KostromAi44 Workflow Auto-Generated TypeScript Executable Script
  * Replicates the configured visual node pipeline programmatically.
  */
 import { GoogleGenAI } from "@google/genai";
@@ -32,7 +32,7 @@ function getValueByDotPath(obj: any, pathStr: string): any {
 }
 
 export async function executeWorkflow(initialInputs: Record<string, string> = {}) {
-  console.log("🚀 Starting AgentForge Executable Workflow...");
+  console.log("🚀 Starting KostromAi44 Executable Workflow...");
   
   // Local state container
   const state: Record<string, any> = { ...initialInputs };
@@ -228,7 +228,7 @@ export async function executeWorkflow(initialInputs: Record<string, string> = {}
     const sortedNodes = this.topologicalSort(nodes, connections);
 
     let code = `"""
-AgentForge Workflow Auto-Generated Python Executable Script
+KostromAi44 Workflow Auto-Generated Python Executable Script
 Replicates compile pipeline sequence of visual nodes programmatically.
 """
 import os
@@ -256,7 +256,7 @@ def get_value_by_dot_path(obj, path_str):
     return current
 
 def execute_workflow(initial_inputs=None):
-    print("🚀 Starting AgentForge Python Compiled Workflow Runner...")
+    print("🚀 Starting KostromAi44 Python Compiled Workflow Runner...")
     
     # State storage dict
     state = dict(initial_inputs) if initial_inputs else {}

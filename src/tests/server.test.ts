@@ -87,7 +87,7 @@ describe('Server API Integration Suite', () => {
   describe('Secret Masking & Sanitization Unit Tests', () => {
     it('should recursively mask secret fields like password and api_key', () => {
       const input = {
-        name: 'AgentForge',
+        name: 'KostromAi44',
         nested: {
           api_key: 'super-sensitive-token',
           password: 'plain_password_123',
@@ -98,7 +98,7 @@ describe('Server API Integration Suite', () => {
       };
 
       const result = maskSecrets(input);
-      expect(result.name).toBe('AgentForge');
+      expect(result.name).toBe('KostromAi44');
       expect(result.nested.api_key).toBe('***MASKED***');
       expect(result.nested.password).toBe('***MASKED***');
       expect(result.nested.normalField).toBe('allgood');

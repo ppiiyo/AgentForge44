@@ -4,8 +4,8 @@ import type { RequestHandler } from 'express';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://agentforge44.com',
-  'https://app.agentforge44.com'
+  'https://kostromai4444.com',
+  'https://app.kostromai4444.com'
 ];
 
 export const corsMiddleware: RequestHandler = cors({

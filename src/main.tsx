@@ -13,7 +13,7 @@ const originalFetch = window.fetch;
 
 /* eslint-disable no-undef */
 const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit) {
-  const token = localStorage.getItem('agentforge_auth_token');
+  const token = localStorage.getItem('kostromai44_auth_token');
   
   // Resolve the URL string safely
   let url = '';
@@ -77,12 +77,12 @@ try {
 // Async authentication bootstrap
 async function bootstrapAuth() {
   const credentials = {
-    email: 'guest@agentforge.ai',
+    email: 'guest@kostromai44.ai',
     password: 'GuestPassword123!'
   };
 
   try {
-    const existingToken = localStorage.getItem('agentforge_auth_token');
+    const existingToken = localStorage.getItem('kostromai44_auth_token');
     if (existingToken) return;
 
     // Attempt login first
@@ -95,7 +95,7 @@ async function bootstrapAuth() {
     if (loginRes.ok) {
       const data = await loginRes.json();
       if (data.token) {
-        localStorage.setItem('agentforge_auth_token', data.token);
+        localStorage.setItem('kostromai44_auth_token', data.token);
         return;
       }
     }
@@ -110,7 +110,7 @@ async function bootstrapAuth() {
     if (registerRes.ok) {
       const data = await registerRes.json();
       if (data.token) {
-        localStorage.setItem('agentforge_auth_token', data.token);
+        localStorage.setItem('kostromai44_auth_token', data.token);
       }
     }
   } catch (err) {

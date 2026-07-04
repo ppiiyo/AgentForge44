@@ -179,7 +179,7 @@ describe('=== Phase 4: Interactive Evaluation Suite & Advanced Features Pipeline
     });
 
     it('should index active document content into the store and allow high-performance retrieval', async () => {
-      const docContent = "AgentForge44 achieves enterprise integration using local indices and semantic retrievers for multi-agent logic.";
+      const docContent = "KostromAi44 achieves enterprise integration using local indices and semantic retrievers for multi-agent logic.";
       const indexResult = await indexLibraryDocument(docContent, "Validation Doc");
 
       expect(indexResult.success).toBe(true);
@@ -189,7 +189,7 @@ describe('=== Phase 4: Interactive Evaluation Suite & Advanced Features Pipeline
       const searchResult = await searchIndexedLibrary("enterprise integration", 2);
       expect(searchResult.chunks).toBeDefined();
       expect(searchResult.chunks.length).toBeGreaterThan(0);
-      expect(searchResult.chunks[0].text).toContain("AgentForge44");
+      expect(searchResult.chunks[0].text).toContain("KostromAi44");
     }, 30000);
   });
 

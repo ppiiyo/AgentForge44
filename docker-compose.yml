@@ -2,29 +2,29 @@ version: '3.8'
 
 services:
   # 1. Frontend Web Service (Reverse Proxy & Static Asset server)
-  agentforge-frontend:
+  kostromai44-frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: agentforge-frontend
+    container_name: kostromai44-frontend
     ports:
       - "3000:3000"
     depends_on:
-      - agentforge-backend
+      - kostromai44-backend
     restart: unless-stopped
 
   # 2. Backend REST & WebSocket API Service
-  agentforge-backend:
+  kostromai44-backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: agentforge-backend
+    container_name: kostromai44-backend
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://agentforge:forge_secure_pass@agentforge-db:5432/agentforge_db
-      - REDIS_URL=redis://agentforge-redis:6379
+      - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
+      - REDIS_URL=redis://kostromai44-redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -34,23 +34,23 @@ services:
       - JWT_SECRET=${JWT_SECRET:-super_secure_random_jwt_token_key_development_32_bytes}
       - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-bc911854ea01d2c94bb507f308a0dfce9a6b8c7d8e9f0a1b2c3d4e5f6a7b8c9d}
     volumes:
-      - agentforge-projects:/usr/src/app/projects
+      - kostromai44-projects:/usr/src/app/projects
     depends_on:
-      - agentforge-db
-      - agentforge-redis
+      - kostromai44-db
+      - kostromai44-redis
     restart: unless-stopped
 
   # 3. Independent Pipeline Execution Worker (Scale out as needed)
-  agentforge-executor:
+  kostromai44-executor:
     build:
       context: .
       dockerfile: Dockerfile.executor
-    container_name: agentforge-executor
+    container_name: kostromai44-executor
     environment:
       - NODE_ENV=production
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://agentforge:forge_secure_pass@agentforge-db:5432/agentforge_db
-      - REDIS_URL=redis://agentforge-redis:6379
+      - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
+      - REDIS_URL=redis://kostromai44-redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -59,35 +59,35 @@ services:
       - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY}
       - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-bc911854ea01d2c94bb507f308a0dfce9a6b8c7d8e9f0a1b2c3d4e5f6a7b8c9d}
     volumes:
-      - agentforge-projects:/usr/src/app/projects
+      - kostromai44-projects:/usr/src/app/projects
     depends_on:
-      - agentforge-db
-      - agentforge-redis
+      - kostromai44-db
+      - kostromai44-redis
     restart: unless-stopped
 
   # 4. Redis Queue & Cache Backend
-  agentforge-redis:
+  kostromai44-redis:
     image: redis:7-alpine
-    container_name: agentforge-redis
+    container_name: kostromai44-redis
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
     restart: unless-stopped
 
   # 5. PostgreSQL Database
-  agentforge-db:
+  kostromai44-db:
     image: postgres:15-alpine
-    container_name: agentforge-db
+    container_name: kostromai44-db
     environment:
-      - POSTGRES_USER=agentforge
+      - POSTGRES_USER=kostromai44
       - POSTGRES_PASSWORD=forge_secure_pass
-      - POSTGRES_DB=agentforge_db
+      - POSTGRES_DB=kostromai44_db
     volumes:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  agentforge-projects:
+  kostromai44-projects:
     driver: local
   redis-data:
     driver: local

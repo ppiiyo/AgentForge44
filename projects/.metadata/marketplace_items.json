@@ -3,7 +3,7 @@
     "id": "web-research-assistant",
     "title": "Web Research Assistant",
     "description": "Uses Google Search Grounding to research real-time topics on the wild internet, compile structured market reports, and find sources.",
-    "authorId": "agentforge_core",
+    "authorId": "kostromai44_core",
     "category": "agent",
     "tags": [
       "google-search",
@@ -96,7 +96,7 @@
     "id": "simple-chatbot",
     "title": "Simple Chatbot",
     "description": "A plug-and-play chatbot template. Accepts arbitrary user greetings, compilation of templates, and generates real-time answers.",
-    "authorId": "agentforge_core",
+    "authorId": "kostromai44_core",
     "category": "agent",
     "tags": [
       "chatbot",
@@ -188,7 +188,7 @@
     "id": "code-reviewer-agent",
     "title": "Code Reviewer Agent",
     "description": "Self-correcting multi-agent loop that generates code, critisizes it with custom rules, and applies feedback automatically.",
-    "authorId": "agentforge_core",
+    "authorId": "kostromai44_core",
     "category": "agent",
     "tags": [
       "coding",
@@ -297,7 +297,7 @@
     "id": "rag-document-qa",
     "title": "RAG Document QA Pipeline",
     "description": "Connects your local Jaccard Knowledge Embeddings Retriever directly to the generation path. Ideal for knowledge bases.",
-    "authorId": "agentforge_core",
+    "authorId": "kostromai44_core",
     "category": "rag-pipeline",
     "tags": [
       "rag",
@@ -412,7 +412,7 @@
     "id": "multi-agent-debate",
     "title": "Multi-Agent Debate Protocol",
     "description": "Two opinionated agents debate a given topic. A third agent acts as a judge, analyzing points made by both sides and presenting the verdict.",
-    "authorId": "agentforge_core",
+    "authorId": "kostromai44_core",
     "category": "template",
     "tags": [
       "debate",

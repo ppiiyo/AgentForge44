@@ -25,7 +25,7 @@ export function classifyLLMError(err: any): { isTransient: boolean; reason: stri
 }
 
 export function generateSimulatedResponse(model: string, contents: string): RetryResult {
-  console.warn(`[AgentForge44] Gemini API Quota fully exhausted (429). Activating smart local simulation fallback...`);
+  console.warn(`[KostromAi44] Gemini API Quota fully exhausted (429). Activating smart local simulation fallback...`);
   
   const lowerContents = contents.toLowerCase();
   let text = "";
@@ -42,7 +42,7 @@ export function handleSimulatedRequest(data: any) {
   return {
     success: true,
     timestamp: new Date().toISOString(),
-    source: "AgentForge44 Local Simulation Engine",
+    source: "KostromAi44 Local Simulation Engine",
     status: "healthy"
   };
 }`;
@@ -50,17 +50,17 @@ export function handleSimulatedRequest(data: any) {
   // 3. If it is translation or language handling
   else if (lowerContents.includes("translate") || lowerContents.includes("language") || lowerContents.includes("spanish") || lowerContents.includes("translation")) {
     text = `[Simulated Translation Response - API Quota Exceeded Mode]
-"¡Hola! Bienvenidos a AgentForge44, el orquestador visual de agentes de IA."
+"¡Hola! Bienvenidos a KostromAi44, el orquestador visual de agentes de IA."
 (Original prompt requested translation or language handling for: "${contents.substring(0, 100)}...")`;
   }
   // 4. If it's summarizing or text expansion
   else {
     const subjectMatch = contents.match(/(?:about|for|subject|topic|input|welcome to|welcome|hello)\s+([\w\sа-яА-ЯёЁ\-]{1,50})/i);
-    const subject = subjectMatch ? subjectMatch[1].trim() : "AgentForge44 Workspace Workflow";
+    const subject = subjectMatch ? subjectMatch[1].trim() : "KostromAi44 Workspace Workflow";
     
     text = `[Simulated LLM Output - API Quota Exceeded Fallback]
 
-Здравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, AgentForge44 автоматически подключил локальный симулятор интеллекта.
+Здравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, KostromAi44 автоматически подключил локальный симулятор интеллекта.
 
 Тема вашего запроса: "${subject}"
 
@@ -129,7 +129,7 @@ export async function generateWithRetry(
       if (classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") {
         if (currentModel === "gemini-3.5-flash" || currentModel === "gemini-3.1-pro-preview") {
           const fallbackModel = "gemini-3.1-flash-lite";
-          console.warn(`[AgentForge44] ${classification.label} on ${currentModel}. Trying fallback model ${fallbackModel}...`);
+          console.warn(`[KostromAi44] ${classification.label} on ${currentModel}. Trying fallback model ${fallbackModel}...`);
           currentModel = fallbackModel;
           attemptsLeft = 2; // give fallback 2 retry attempts
           currentDelay = delayMs;
@@ -139,13 +139,13 @@ export async function generateWithRetry(
 
       if (!classification.isTransient || attemptsLeft <= 0) {
         if ((classification.label === "RATE_LIMIT_EXHAUSTED" || classification.label === "SERVICE_OVERLOAD") && process.env.DEMO_MODE === "true") {
-          console.warn(`[AgentForge44] API Quota or Service Overload fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
+          console.warn(`[KostromAi44] API Quota or Service Overload fallback exhausted. Activating high-fidelity smart local simulation fallback...`);
           return generateSimulatedResponse(model, contents);
         }
         throw new Error(`[${classification.label}] LLM request failed: ${classification.reason} (Original: ${err.message || err})`);
       }
 
-      console.warn(`[AgentForge44] [${classification.label}] Transient error: ${classification.reason}. Retrying in ${currentDelay}ms... Attempts left: ${attemptsLeft}`);
+      console.warn(`[KostromAi44] [${classification.label}] Transient error: ${classification.reason}. Retrying in ${currentDelay}ms... Attempts left: ${attemptsLeft}`);
       await new Promise(resolve => setTimeout(resolve, currentDelay));
       currentDelay *= 2; // exponential backoff
     }

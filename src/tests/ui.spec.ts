@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('AgentForge44 E2E Orchestrator Suit', () => {
+test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test.beforeEach(async ({ page }) => {
     // Navigate to homepage before each scenario
     await page.goto('/');
     // Check initial loading
-    await expect(page.locator('span:has-text("AgentForge44")').first()).toBeVisible();
+    await expect(page.locator('span:has-text("KostromAi44")').first()).toBeVisible();
   });
 
   test('1. should load the workspace page, render canvas, and trigger template switching', async ({ page }) => {

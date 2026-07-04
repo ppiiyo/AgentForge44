@@ -21,7 +21,7 @@ const CloudDeployer = React.lazy(() => import('./components/CloudDeployer').then
 // Multi-language localization dictionaries
 const translationsStatic = {
   en: {
-    title: "AgentForge44 Console",
+    title: "KostromAi44 Console",
     subtitle: "Visual AI Agent Workflow Builder & Code Engine",
     loadTemplate: "Templates",
     validateWorkflow: "Validate Workflow",
@@ -86,7 +86,7 @@ const translationsStatic = {
     noSavedProjects: "No project files stored on the server yet."
   },
   ru: {
-    title: "Арена AgentForge44",
+    title: "Арена KostromAi44",
     subtitle: "Визуальный конструктор ИИ-агентов и генератор кода",
     loadTemplate: "Шаблоны",
     validateWorkflow: "Проверить схему",
@@ -151,7 +151,7 @@ const translationsStatic = {
     noSavedProjects: "На сервере пока нет сохраненных проектов."
   },
   zh: {
-    title: "AgentForge44 控制台",
+    title: "KostromAi44 控制台",
     subtitle: "AI 智能体可视化工作流编辑器与代码引擎",
     loadTemplate: "工作流模板",
     validateWorkflow: "验证工作流",
@@ -267,7 +267,7 @@ export default function App() {
           onLanguageChange={(lang) => {
             app.setCurrentLang(lang);
             i18nInstance.changeLanguage(lang);
-            localStorage.setItem("agentforge_lang", lang);
+            localStorage.setItem("kostromai44_lang", lang);
             posthog.capture('language_switched', { locale: lang });
           }}
           projectNameInput={app.projectNameInput}
@@ -412,7 +412,7 @@ export default function App() {
               setCurrentLang={(lang) => {
                 app.setCurrentLang(lang);
                 i18nInstance.changeLanguage(lang);
-                localStorage.setItem("agentforge_lang", lang);
+                localStorage.setItem("kostromai44_lang", lang);
                 posthog.capture('language_switched', { locale: lang });
               }}
               snapToGrid={app.snapToGrid}

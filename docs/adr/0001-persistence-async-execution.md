@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-In Phase 1, AgentForge relied primarily on client-side state models and in-memory execution loops. To transition to a robust production-ready state satisfying Phase 2 Department of Defense (DoD) compliance, the platform requires:
+In Phase 1, KostromAi44 relied primarily on client-side state models and in-memory execution loops. To transition to a robust production-ready state satisfying Phase 2 Department of Defense (DoD) compliance, the platform requires:
 1. **Durable, Audit-Compliant Persistence**: Absolute data integrity, tenant separation, and comprehensive audit logs of all pipeline definitions, runs, and security audits.
 2. **Reliable Async Task Management**: Execution of complex, long-running agent flows without blocking the primary Node.js server thread, protecting against socket leaks, container memory exhaustion, and unplanned failures.
 3. **Rigorous Sandbox Security & SSRF Protection**: Blocking Server-Side Request Forgery (SSRF) and ensuring secure worker execution blocks with complete system logs.

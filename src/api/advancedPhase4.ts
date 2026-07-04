@@ -106,7 +106,7 @@ Actual Result Generated: "${actualOutput.substring(0, 1500)}"`;
         } catch (apiErr: any) {
           const apiMsg = String(apiErr.message || apiErr);
           if (apiMsg.includes("quota") || apiMsg.includes("RESOURCE_EXHAUSTED") || apiMsg.includes("429") || apiErr.status === 429) {
-            console.warn("[AgentForge44] LLM Judge hit API rate/quota limits. Falling back to local simulated grading...");
+            console.warn("[KostromAi44] LLM Judge hit API rate/quota limits. Falling back to local simulated grading...");
             response = {
               text: JSON.stringify({
                 score: 8,

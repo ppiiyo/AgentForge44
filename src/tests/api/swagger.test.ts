@@ -14,7 +14,7 @@ describe('=== Swagger and OpenAPI Documentation Suite ===', () => {
     expect(res.body).toBeDefined();
     expect(res.body.openapi).toBe('3.0.0');
     expect(res.body.info).toBeDefined();
-    expect(res.body.info.title).toContain('AgentForge44');
+    expect(res.body.info.title).toContain('KostromAi44');
     expect(res.body.paths).toBeDefined();
     expect(res.body.paths['/api/graphs']).toBeDefined();
   });

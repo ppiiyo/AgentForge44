@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as Sentry from '@sentry/node';
 import { logger } from '../../utils/logger.js';
-import { AgentForgeError } from '../../api/errors/AgentErrors.js';
+import { KostromAi44Error } from '../../api/errors/AgentErrors.js';
 
 export function errorHandler(err: Error & { statusCode?: number; status?: number; code?: string }, req: Request, res: Response, next: NextFunction): void {
   if (process.env.SENTRY_DSN) {
@@ -9,7 +9,7 @@ export function errorHandler(err: Error & { statusCode?: number; status?: number
   }
   
   const statusCode = err.statusCode || err.status || 500;
-  const errorCode = err instanceof AgentForgeError ? err.code : 'INTERNAL_SERVER_ERROR';
+  const errorCode = err instanceof KostromAi44Error ? err.code : 'INTERNAL_SERVER_ERROR';
   
   logger.error("Unhandled Server Exception captured:", { 
     error: err.message || err, 

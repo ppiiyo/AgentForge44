@@ -30,7 +30,7 @@ function getSimulatedGraphForPrompt(prompt: string) {
           title: "Source Document",
           fields: {
             variables: [
-              { key: "document_text", value: "Hello! Welcome to AgentForge44, the multi-agent orchestrator." },
+              { key: "document_text", value: "Hello! Welcome to KostromAi44, the multi-agent orchestrator." },
               { key: "target_language", value: "Spanish" }
             ]
           },
@@ -124,7 +124,7 @@ function getSimulatedGraphForPrompt(prompt: string) {
   }
 
   // Default Fallback flow (General Multi-Agent Pipeline)
-  const subject = prompt.trim() || "AgentForge custom process";
+  const subject = prompt.trim() || "KostromAi44 custom process";
   return {
     explanation: `[Simulated Architect Flow] Formulated a highly flexible 4-node pipeline to fulfill "${subject}". It links prompt templating, high-performance Gemini synthesis, and structured output formatting.`,
     nodes: [
@@ -191,7 +191,7 @@ router.post('/copilot/architect', async (req, res) => {
     const ai = getGeminiClient(customGeminiApiKey);
     
     const systemInstruction = `
-You are the AgentForge AI Copilot Architect. Your task is to generate complete, operational visual agent flows (graphs) based on user descriptions.
+You are the KostromAi44 AI Copilot Architect. Your task is to generate complete, operational visual agent flows (graphs) based on user descriptions.
 You must return a valid JSON object matching this TypeScript interface:
 {
   "explanation": "Brief explanation of how this pipeline satisfies the user prompt.",
@@ -263,7 +263,7 @@ router.post('/copilot/optimize', async (req, res) => {
     const ai = getGeminiClient(customGeminiApiKey);
 
     const systemInstruction = `
-You are the AgentForge Self-Optimizer. Your task is to analyze an existing flow graph of nodes and connections, point out architectural weaknesses (cost, latency, security, logic cycles), formulate optimization points, and return a corrected, optimal output.
+You are the KostromAi44 Self-Optimizer. Your task is to analyze an existing flow graph of nodes and connections, point out architectural weaknesses (cost, latency, security, logic cycles), formulate optimization points, and return a corrected, optimal output.
 You must return a valid JSON object matching this TypeScript interface:
 {
   "explanation": "A complete analysis or summary of what was optimized and why, e.g. model consolidations, template refactoring, security sanitization, parallel execution paths.",

@@ -1,17 +1,17 @@
-# AgentForge Production Deployment Guide
+# KostromAi44 Production Deployment Guide
 
-This guide details the system requirements, configuration variables, and deployment workflows for running the **AgentForge** visual orchestrator in a production environment. Following these practices ensures maximum resilience, high availability, and security-fortified operations.
+This guide details the system requirements, configuration variables, and deployment workflows for running the **KostromAi44** visual orchestrator in a production environment. Following these practices ensures maximum resilience, high availability, and security-fortified operations.
 
 ---
 
 ## 🏗️ 1. Infrastructure Architecture & Prerequisites
 
-AgentForge utilizes a stateless, horizontally scalable multi-tier architecture. It is designed to run inside containerized environments (Kubernetes, AWS ECS, Google Cloud Run) backed by robust cloud services.
+KostromAi44 utilizes a stateless, horizontally scalable multi-tier architecture. It is designed to run inside containerized environments (Kubernetes, AWS ECS, Google Cloud Run) backed by robust cloud services.
 
 ### 🗄️ Database Tier (PostgreSQL v15+)
 - **Purpose**: Durable, relational multi-tenant persistence (users, workspaces, graphs, metrics, versions, marketplace).
 - **Production Standard**: A managed instance (such as Amazon RDS, GCP Cloud SQL, or Supabase) with automatic backups, multi-AZ high availability, and secure SSL/TLS connection tunnels.
-- **Resilience Fallback**: If the Postgres instance is unavailable on startup, AgentForge’s connection factory automatically defaults to a high-resilience local SQLite database context to maintain application uptime.
+- **Resilience Fallback**: If the Postgres instance is unavailable on startup, KostromAi44’s connection factory automatically defaults to a high-resilience local SQLite database context to maintain application uptime.
 
 ### ⚡ Cache & Queue Tier (Redis v7+)
 - **Purpose**: Dynamic rate-limiting, background task/pipeline execution via BullMQ, and pub/sub message synchronization for multi-user collaboration cursors.
@@ -34,7 +34,7 @@ Configure these environment variables in your deployment manifests or secret man
 | `JWT_SECRET` | **Yes** | *None* | A high-entropy, cryptographically strong key (minimum 32 characters) used to sign and verify JSON Web Tokens (JWT) for authentication. |
 | `ENCRYPTION_MASTER_KEY` | **Yes** | *None* | A secure 32+ character key used for AES-256-GCM symmetric encryption of third-party API keys and workspace credentials stored in the database. |
 
-> 🛡️ **Zero-Crash Safety Fallback**: If `JWT_SECRET` or `ENCRYPTION_MASTER_KEY` are missing or insecure in production, AgentForge will automatically generate a cryptographically strong, secure ephemeral fallback key on startup and log a prominent security warning. Active sessions will invalidate on restart.
+> 🛡️ **Zero-Crash Safety Fallback**: If `JWT_SECRET` or `ENCRYPTION_MASTER_KEY` are missing or insecure in production, KostromAi44 will automatically generate a cryptographically strong, secure ephemeral fallback key on startup and log a prominent security warning. Active sessions will invalidate on restart.
 
 ### Database Settings
 
@@ -68,14 +68,14 @@ These keys are used for multi-agent orchestrations, evaluators, and LLM code-gen
 | :--- | :---: | :--- | :--- |
 | `NODE_ENV` | No | `development` | Set to `production` to disable developer debugging endpoints and activate strict security middleware. |
 | `DISABLE_HMR` | No | `false` | Set to `true` inside production environments to suppress local Hot Module Replacement listeners. |
-| `CORS_ALLOWED_ORIGINS` | No | `*` | Comma-separated list of allowed domains for API access (e.g., `https://app.agentforge.com`). |
+| `CORS_ALLOWED_ORIGINS` | No | `*` | Comma-separated list of allowed domains for API access (e.g., `https://app.kostromai44.com`). |
 | `SENTRY_DSN` | No | *None* | Integrates Sentry error reporting for live API log tracking. |
 
 ---
 
 ## 📦 3. Production Build & Lifecycle Workflow
 
-To maintain extremely fast container startups and small image sizes, AgentForge uses a multi-stage Docker compilation process.
+To maintain extremely fast container startups and small image sizes, KostromAi44 uses a multi-stage Docker compilation process.
 
 ### Step 1: Multi-Stage Build Pipeline
 The build pipeline compiles assets, bundles the TypeScript Express server, and minimizes runtime package trees.

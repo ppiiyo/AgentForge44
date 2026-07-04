@@ -18,7 +18,7 @@ vi.mock('@google/genai', () => {
   return { GoogleGenAI };
 });
 
-describe('AgentForge Comprehensive Resilience & Chaos Engineering Suite', () => {
+describe('KostromAi44 Comprehensive Resilience & Chaos Engineering Suite', () => {
   const ai = new GoogleGenAI({ apiKey: 'sandbox_test_key' });
 
   beforeEach(() => {

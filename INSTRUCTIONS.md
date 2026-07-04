@@ -1,6 +1,6 @@
 # 📖 Comprehensive Guide to API Key Configuration & Local Setup
 
-This guide provides step-by-step instructions on **where to obtain your API keys**, **how to configure them** inside environment variables, and **how to boot the AgentForge44 project locally**.
+This guide provides step-by-step instructions on **where to obtain your API keys**, **how to configure them** inside environment variables, and **how to boot the KostromAi44 project locally**.
 
 ---
 
@@ -16,7 +16,7 @@ This guide provides step-by-step instructions on **where to obtain your API keys
 3. [⚙️ Mandatory Cryptographic Backend Secrets](#-mandatory-cryptographic-backend-secrets)
    - [JWT_SECRET](#1-jwt_secret)
    - [ENCRYPTION_MASTER_KEY](#2-encryption_master_key)
-   - [AGENTFORGE_API_KEY (Bearer Shield)](#3-agentforge_api_key-bearer-shield)
+   - [AGENTFORGE_API_KEY (Bearer Shield)](#3-kostromai44_api_key-bearer-shield)
 4. [🖥️ Project Startup Instructions](#-project-startup-instructions)
    - [Method A: Run with Docker Compose (Recommended)](#method-a-run-with-docker-compose-recommended)
    - [Method B: Local Run via npm (For development)](#method-b-local-run-via-npm-for-development)

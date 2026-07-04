@@ -12,10 +12,10 @@ terraform {
     }
   }
   backend "s3" {
-    bucket         = "agentforge44-terraform-state"
+    bucket         = "kostromai4444-terraform-state"
     key            = "production/state.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "agentforge44-tflocks"
+    dynamodb_table = "kostromai4444-tflocks"
     encrypt        = true
   }
 }
@@ -29,7 +29,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
-  name = "agentforge44-production-vpc"
+  name = "kostromai4444-production-vpc"
   cidr = "10.0.0.0/16"
 
   azs             = ["us-east-1a", "us-east-1b", "us-east-1c"]
@@ -43,12 +43,12 @@ module "vpc" {
   enable_dns_support     = true
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/agentforge44-production" = "shared"
+    "kubernetes.io/cluster/kostromai4444-production" = "shared"
     "kubernetes.io/role/elb"                        = "1"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/agentforge44-production" = "shared"
+    "kubernetes.io/cluster/kostromai4444-production" = "shared"
     "kubernetes.io/role/internal-elb"               = "1"
   }
 }
@@ -60,7 +60,7 @@ resource "aws_kms_key" "primary" {
   enable_key_rotation     = true
   tags = {
     Environment = "production"
-    Application = "agentforge44"
+    Application = "kostromai4444"
   }
 }
 
@@ -69,7 +69,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "agentforge44-production"
+  cluster_name    = "kostromai4444-production"
   cluster_version = "1.29"
 
   cluster_endpoint_public_access = true
@@ -99,12 +99,12 @@ module "eks" {
 
 # --- PostgreSQL Primary RDS Database ---
 resource "aws_db_subnet_group" "db_subnets" {
-  name       = "agentforge44-db-subnets"
+  name       = "kostromai4444-db-subnets"
   subnet_ids = module.vpc.private_subnets
 }
 
 resource "aws_security_group" "db_sg" {
-  name        = "agentforge44-db-security-group"
+  name        = "kostromai4444-db-security-group"
   description = "Controls PostgreSQL ingress routing rules"
   vpc_id      = module.vpc.vpc_id
 
@@ -124,15 +124,15 @@ resource "aws_security_group" "db_sg" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier           = "agentforge44-production-rds"
+  identifier           = "kostromai4444-production-rds"
   allocated_storage    = 100
   max_allocated_storage = 1000
   storage_type         = "gp3"
   engine               = "postgres"
   engine_version       = "16.1"
   instance_class       = "db.m6g.xlarge"
-  db_name              = "agentforge44"
-  username             = "agentforge_admin"
+  db_name              = "kostromai4444"
+  username             = "kostromai44_admin"
   password             = var.database_password # Loaded securely via sensitive variable
   parameter_group_name = "default.postgres16"
   db_subnet_group_name = aws_db_subnet_group.db_subnets.name
@@ -147,17 +147,17 @@ resource "aws_db_instance" "postgres" {
   maintenance_window      = "Sun:04:00-Sun:05:00"
 
   skip_final_snapshot = false
-  final_snapshot_identifier = "agentforge44-rds-final-snapshot"
+  final_snapshot_identifier = "kostromai4444-rds-final-snapshot"
 }
 
 # --- ElastiCache Redis HA Cluster ---
 resource "aws_elasticache_subnet_group" "redis_subnets" {
-  name       = "agentforge44-redis-subnets"
+  name       = "kostromai4444-redis-subnets"
   subnet_ids = module.vpc.private_subnets
 }
 
 resource "aws_elasticache_replication_group" "redis" {
-  replication_group_id        = "agentforge44-redis-cluster"
+  replication_group_id        = "kostromai4444-redis-cluster"
   description                 = "High Availability Redis cluster for session memory, cache management, and rate limiting"
   node_type                   = "cache.m6g.large"
   port                        = 6379

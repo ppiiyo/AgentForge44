@@ -4,7 +4,7 @@ import path from 'path';
 import { StatefulExecutionEngine } from './execution.js';
 
 /**
- * Command Line Interface for AgentForge44.
+ * Command Line Interface for KostromAi44.
  * Usage:
  *   npx tsx src/api/cli.ts run ./graph.json --input "key1=value1,key2=value2"
  */
@@ -53,10 +53,10 @@ function printHelp() {
 ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝  ╚════██║╚════██║
 ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗     ██║     ██║
 ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝     ╚═╝     ╚═╝\x1b[0m
-                                        \x1b[35m[ AgentForge44 CLI Engine v1.0 ]\x1b[0m
+                                        \x1b[35m[ KostromAi44 CLI Engine v1.0 ]\x1b[0m
 
   \x1b[1mUsage:\x1b[0m
-    agentforge44 <command> [options]
+    kostromai4444 <command> [options]
 
   \x1b[1mCommands:\x1b[0m
     run <graph_path>  Loads and executes a graph JSON file matching our architectural specs.

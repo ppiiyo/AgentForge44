@@ -1,6 +1,6 @@
-# 🤝 AgentForge44 Contributing Guidelines
+# 🤝 KostromAi44 Contributing Guidelines
 
-We love your interest in contributing to **AgentForge44**! Follow this document to understand our standards, directory structure, and instructions for introducing new modules in clean, production-ready style.
+We love your interest in contributing to **KostromAi44**! Follow this document to understand our standards, directory structure, and instructions for introducing new modules in clean, production-ready style.
 
 ---
 

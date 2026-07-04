@@ -22,7 +22,7 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
   sqliteInstance: Database.Database;
 
   constructor(dbPath?: string) {
-    const resolvedPath = dbPath || path.join(process.cwd(), 'agentforge.db');
+    const resolvedPath = dbPath || path.join(process.cwd(), 'kostromai44.db');
     this.sqliteInstance = new Database(resolvedPath, { timeout: 10000 });
     
     // WAL mode

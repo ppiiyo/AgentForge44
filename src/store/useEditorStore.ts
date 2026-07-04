@@ -15,7 +15,7 @@ export interface EditorState {
 
 const loadLocalNodes = (): FlowNode[] => {
   if (typeof localStorage !== 'undefined') {
-    const saved = localStorage.getItem("agentforge_autosave_nodes");
+    const saved = localStorage.getItem("kostromai44_autosave_nodes");
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -27,7 +27,7 @@ const loadLocalNodes = (): FlowNode[] => {
 
 const loadLocalConnections = (): FlowConnection[] => {
   if (typeof localStorage !== 'undefined') {
-    const saved = localStorage.getItem("agentforge_autosave_connections");
+    const saved = localStorage.getItem("kostromai44_autosave_connections");
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -39,13 +39,13 @@ const loadLocalConnections = (): FlowConnection[] => {
 
 const saveLocalNodes = (nodes: FlowNode[]) => {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem("agentforge_autosave_nodes", JSON.stringify(nodes));
+    localStorage.setItem("kostromai44_autosave_nodes", JSON.stringify(nodes));
   }
 };
 
 const saveLocalConnections = (connections: FlowConnection[]) => {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem("agentforge_autosave_connections", JSON.stringify(connections));
+    localStorage.setItem("kostromai44_autosave_connections", JSON.stringify(connections));
   }
 };
 

@@ -1,6 +1,6 @@
-# 🚀 AgentForge44 Quick Start Guide
+# 🚀 KostromAi44 Quick Start Guide
 
-Welcome to the AgentForge44 Setup Guide! This document will help you obtain your AI API keys, configure your environment variables, and run the project locally.
+Welcome to the KostromAi44 Setup Guide! This document will help you obtain your AI API keys, configure your environment variables, and run the project locally.
 
 ---
 

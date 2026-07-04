@@ -87,7 +87,7 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
 
       authMiddleware(req, res, next);
 
-      expect(req.user).toEqual({ id: 'admin', email: 'admin@agentforge.ai', role: 'admin' });
+      expect(req.user).toEqual({ id: 'admin', email: 'admin@kostromai44.ai', role: 'admin' });
       expect(next).toHaveBeenCalled();
 
       process.env.AGENTFORGE_API_KEY = oldKey;
@@ -122,7 +122,7 @@ describe('Auth Middleware and LLM Classifier Suite', () => {
 
       authMiddleware(req, res, next);
 
-      expect(req.user).toEqual({ id: 'admin', email: 'admin@agentforge.ai', role: 'admin' });
+      expect(req.user).toEqual({ id: 'admin', email: 'admin@kostromai44.ai', role: 'admin' });
       expect(next).toHaveBeenCalled();
 
       // Now verify requireRole permits this admin user bypassing workspaceRole

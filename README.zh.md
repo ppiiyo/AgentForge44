@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/AgentForge44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="AgentForge44 标志" />
+<img src="https://img.shields.io/badge/KostromAi44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="KostromAi44 标志" />
 
-# 🌌 AgentForge44
+# 🌌 KostromAi44
 
 ### 用于高弹性、自我纠正多智能体 LLM 工作流的可视化低代码编排平台
 
@@ -31,7 +31,7 @@
 
 ## ✨ 项目概览
 
-**AgentForge44** 是一款生产级、低代码的多智能体 AI 工作流设计与编排平台。它配备了全交互式矢量画布，允许开发者通过拖拽节点轻松连接 LLM 推理链、条件路由（Router）、语义知识检索器（RAG）以及自我纠正的评估环路（Reviewer），并将整套编排成果发布为高可用、高弹性的 REST API。
+**KostromAi44** 是一款生产级、低代码的多智能体 AI 工作流设计与编排平台。它配备了全交互式矢量画布，允许开发者通过拖拽节点轻松连接 LLM 推理链、条件路由（Router）、语义知识检索器（RAG）以及自我纠正的评估环路（Reviewer），并将整套编排成果发布为高可用、高弹性的 REST API。
 
 该平台统一集成了当前最主流的 LLM 供应商（**Google Gemini、OpenAI、Anthropic Claude 以及本地离线 Ollama**），提供鲁棒的并行执行机制、自动数据库迁移功能，并在网络安全与分布式遥测方面提供卓越的默认保障。
 
@@ -155,8 +155,8 @@ flowchart TD
 确保您的系统已经正确安装了 Docker 和 Docker Compose：
 ```bash
 # 1. 克隆代码仓库
-git clone https://github.com/igraybalalayka/AgentForge44.git
-cd AgentForge44
+git clone https://github.com/igraybalalayka/KostromAi44.git
+cd KostromAi44
 
 # 2. 一键拉起多容器生产开发环境
 docker-compose up --build

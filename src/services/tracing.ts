@@ -18,7 +18,7 @@ export function initTracing() {
     trace.setGlobalTracerProvider(provider);
     
     // Fetch tracer from global trace context register
-    tracer = trace.getTracer('agentforge44-core');
+    tracer = trace.getTracer('kostromai4444-core');
     isInitialized = true;
     logger.info('OpenTelemetry Tracing service initialized successfully with ConsoleSpanExporter');
   } catch (err: any) {

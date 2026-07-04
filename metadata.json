@@ -1,5 +1,5 @@
 {
-  "name": "AgentForge44",
+  "name": "KostromAi44",
   "description": "Visual AI Agent builder, prompt engineering playground, and code generator featuring secure isolated Node/Python sandboxes and multimodal PDF/Audio/Excel processing.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

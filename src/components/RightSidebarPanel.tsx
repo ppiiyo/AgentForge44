@@ -142,8 +142,8 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
   const [docCopied, setDocCopied] = React.useState(false);
 
   const generateREADME = () => {
-    let md = `# 🤖 AgentForge44 Pipeline README: ${projectNameInput || 'Untitled Workspace'}\n\n`;
-    md += `This workflow pipeline contains **${nodes.length} agent nodes** and **${connections.length} communication connections**. It was dynamically documented using the AgentForge44 Auto-Documenter.\n\n`;
+    let md = `# 🤖 KostromAi44 Pipeline README: ${projectNameInput || 'Untitled Workspace'}\n\n`;
+    md += `This workflow pipeline contains **${nodes.length} agent nodes** and **${connections.length} communication connections**. It was dynamically documented using the KostromAi44 Auto-Documenter.\n\n`;
 
     md += `## 📊 Flow Topology Overview\n\n`;
     if (connections.length === 0) {
@@ -182,7 +182,7 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
       md += `---\n\n`;
     });
 
-    md += `*Documented with ❤️ by AgentForge44 Auto-Documenter.*`;
+    md += `*Documented with ❤️ by KostromAi44 Auto-Documenter.*`;
     return md;
   };
 

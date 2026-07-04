@@ -38,7 +38,7 @@ jobs:
           context: .
           file: Dockerfile.frontend
           push: false
-          tags: agentforge-frontend:latest
+          tags: kostromai44-frontend:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
@@ -48,7 +48,7 @@ jobs:
           context: .
           file: Dockerfile.backend
           push: false
-          tags: agentforge-backend:latest
+          tags: kostromai44-backend:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
@@ -58,13 +58,13 @@ jobs:
           context: .
           file: Dockerfile.executor
           push: false
-          tags: agentforge-executor:latest
+          tags: kostromai44-executor:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Start Database and Redis Dependency containers
         run: |
-          docker compose up -d agentforge-db agentforge-redis
+          docker compose up -d kostromai44-db kostromai44-redis
           echo "Waiting for services to initialize..."
           sleep 10
           docker compose ps
@@ -72,7 +72,7 @@ jobs:
       - name: Run Integration Tests inside Compose Environment
         run: |
           # Build and run tests within the backend container connected to database & redis
-          docker compose run --rm agentforge-backend npm run test
+          docker compose run --rm kostromai44-backend npm run test
 
       - name: Shutdown Compose Services
         if: always()

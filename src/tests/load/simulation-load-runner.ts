@@ -76,7 +76,7 @@ async function runLoadSimulation() {
   const reportText = `
 # Load and Scalability Testing Results
 
-This report documents the performance, scalability, and resource utilization of AgentForge's multi-agent orchestrator and Kahn-based topological scheduler under peak concurrent loads.
+This report documents the performance, scalability, and resource utilization of KostromAi44's multi-agent orchestrator and Kahn-based topological scheduler under peak concurrent loads.
 
 ## Test Specifications
 - **Simulated Request Volume**: 1,000 total pipeline run executions.
@@ -107,7 +107,7 @@ This report documents the performance, scalability, and resource utilization of 
 3. **Pristine Memory Profile**: Thanks to Node.js garbage collection and efficient cleanups in "PipelineExecutor" instances, heap memory utilization remained extremely low and bounded, proving that the orchestrator is ready for production.
 
 ---
-*Report automatically generated on ${new Date().toLocaleDateString('ru-RU')} via AgentForge Performance Simulator.*
+*Report automatically generated on ${new Date().toLocaleDateString('ru-RU')} via KostromAi44 Performance Simulator.*
 `;
 
   const docPath = path.join(process.cwd(), 'src', 'docs', 'LoadTestResults.md');

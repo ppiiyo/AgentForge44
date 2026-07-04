@@ -224,7 +224,7 @@ router.post('/github/sync', (req, res) => {
       const connectionCount = connections ? connections.length : 0;
       
       githubConfig.syncLogs.push(`[${nowStr}] Serializing workspace agent configuration...`);
-      githubConfig.syncLogs.push(`[${nowStr}] Generated agentforge-flow.json with ${nodeCount} active canvas processing nodes and ${connectionCount} linkages.`);
+      githubConfig.syncLogs.push(`[${nowStr}] Generated kostromai44-flow.json with ${nodeCount} active canvas processing nodes and ${connectionCount} linkages.`);
       githubConfig.syncLogs.push(`[${nowStr}] Direct pushing code commit to branch: refs/heads/${githubConfig.branch}`);
       githubConfig.syncLogs.push(`[${nowStr}] GitHub commit pushed successfully: SHA 4d7fbc28e19b485`);
       

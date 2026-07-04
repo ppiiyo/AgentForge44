@@ -1,4 +1,4 @@
-# AgentForge44 Enterprise Applet: Manual Security Verification Rules
+# KostromAi44 Enterprise Applet: Manual Security Verification Rules
 
 This reference document outlines the exact manual validation scenarios, test payloads, and expected secure behaviors designed to authenticate security postures for enterprise compliance.
 

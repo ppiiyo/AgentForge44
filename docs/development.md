@@ -1,6 +1,6 @@
-# AgentForge44 Development & Architecture Guide
+# KostromAi44 Development & Architecture Guide
 
-Welcome to the development guide for **AgentForge44** — a visually intuitive visual Visual Multi-Agent Low-Code Workflow Constructor and Code Generation Engine.
+Welcome to the development guide for **KostromAi44** — a visually intuitive visual Visual Multi-Agent Low-Code Workflow Constructor and Code Generation Engine.
 
 This document describes the stack, architectural choices, server components, test suites, and troubleshooting strategies.
 
@@ -8,7 +8,7 @@ This document describes the stack, architectural choices, server components, tes
 
 ## 1. System Context & Tech Stack
 
-AgentForge44 is designed to run as a single-unit **Full-Stack Monolith Application** for developer convenience, high responsiveness, and zero-latency inter-process communication.
+KostromAi44 is designed to run as a single-unit **Full-Stack Monolith Application** for developer convenience, high responsiveness, and zero-latency inter-process communication.
 
 * **Frontend:** React 18 / Vite / Tailwind CSS (v4) / Lucide Icons / Framer Motion (`motion/react`)
 * **Backend:** Express custom server with TypeScript integration and native ESM type-stripping support.

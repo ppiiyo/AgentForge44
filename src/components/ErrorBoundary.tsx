@@ -64,7 +64,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <div className="space-y-4 flex-1">
                 <div>
                   <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">
-                    AgentForge Core Fault Detected
+                    KostromAi44 Core Fault Detected
                   </h2>
                   <p className="text-xs text-rose-300 font-bold mt-1">
                     An unexpected runtime crash occurred in the interface layer.

@@ -309,7 +309,7 @@ export class PipelineExecutor {
 
             if (!isPassed && incomingPredecessors.length > 0) {
               const loopHeadId = incomingPredecessors[0];
-              console.warn(`[AgentForge44 Executor] Critique loop-back re-injects to loop head node: ${loopHeadId}`);
+              console.warn(`[KostromAi44 Executor] Critique loop-back re-injects to loop head node: ${loopHeadId}`);
 
               const loopContainedNodes = this.getReachableNodes(loopHeadId);
               for (const reachableId of loopContainedNodes) {

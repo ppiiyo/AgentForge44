@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "AgentForge44 API",
+    "title": "KostromAi44 API",
     "version": "1.0.0",
     "description": "API для визуального конструктора мультиагентных систем"
   },

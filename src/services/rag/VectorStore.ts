@@ -300,7 +300,7 @@ export class VectorStore {
         );
         await this.indexDocument(
           "Multi-agent architecture enables parallel node execution with proper isolation, RBAC tenant separation, and checkpoint/resume state machine transitions using standard relational backends.",
-          "AgentForge Architecture Manual"
+          "KostromAi44 Architecture Manual"
         );
         logger.info('[PGVectorStore] Default seeding complete.');
       }

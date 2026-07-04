@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/AgentForge44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="AgentForge44 Лого" />
+<img src="https://img.shields.io/badge/KostromAi44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="KostromAi44 Лого" />
 
-# 🌌 AgentForge44
+# 🌌 KostromAi44
 
 ### Визуальный low-code оркестратор отказоустойчивых самокорректирующихся пайплайнов мультиагентных LLM
 
@@ -31,7 +31,7 @@
 
 ## ✨ Обзор
 
-**AgentForge44** — это промышленная low-code платформа визуального моделирования и оркестрации ИИ-агентов. С ее помощью вы можете создавать сложные цепочки рассуждений моделей, условия ветвления, модули семантического поиска RAG и циклы самокоррекции на интерактивном холсте, а затем разворачивать полученный пайплайн в виде высокодоступного и отказоустойчивого REST API.
+**KostromAi44** — это промышленная low-code платформа визуального моделирования и оркестрации ИИ-агентов. С ее помощью вы можете создавать сложные цепочки рассуждений моделей, условия ветвления, модули семантического поиска RAG и циклы самокоррекции на интерактивном холсте, а затем разворачивать полученный пайплайн в виде высокодоступного и отказоустойчивого REST API.
 
 Платформа объединяет современные ИИ-провайдеры (**Google Gemini, OpenAI, Anthropic Claude и локальный Ollama**), реализует надежную очередь выполнения и предоставляет передовые инструменты мониторинга (Observability) и безопасности "из коробки".
 
@@ -157,8 +157,8 @@ flowchart TD
 Убедитесь, что на вашем компьютере установлен Docker:
 ```bash
 # 1. Клонируйте проект
-git clone https://github.com/igraybalalayka/AgentForge44.git
-cd AgentForge44
+git clone https://github.com/igraybalalayka/KostromAi44.git
+cd KostromAi44
 
 # 2. Запустите мультиконтейнерную среду
 docker-compose up --build

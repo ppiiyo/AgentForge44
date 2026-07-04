@@ -73,9 +73,9 @@ export const Settings: React.FC<SettingsProps> = ({
   const [activeTab, setActiveTab] = useState<'preferences' | 'import_export' | 'help'>('preferences');
 
   // API Key local state (autosaved to localStorage)
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('agentforge_gemini_api_key') || '');
-  const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('agentforge_openai_api_key') || '');
-  const [anthropicKey, setAnthropicKey] = useState(() => localStorage.getItem('agentforge_anthropic_api_key') || '');
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('kostromai44_gemini_api_key') || '');
+  const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem('kostromai44_openai_api_key') || '');
+  const [anthropicKey, setAnthropicKey] = useState(() => localStorage.getItem('kostromai44_anthropic_api_key') || '');
 
   // Visibility toggle state
   const [showGemini, setShowGemini] = useState(false);
@@ -88,13 +88,13 @@ export const Settings: React.FC<SettingsProps> = ({
   const saveKey = (provider: 'gemini' | 'openai' | 'anthropic', value: string) => {
     if (provider === 'gemini') {
       setGeminiKey(value);
-      localStorage.setItem('agentforge_gemini_api_key', value);
+      localStorage.setItem('kostromai44_gemini_api_key', value);
     } else if (provider === 'openai') {
       setOpenaiKey(value);
-      localStorage.setItem('agentforge_openai_api_key', value);
+      localStorage.setItem('kostromai44_openai_api_key', value);
     } else if (provider === 'anthropic') {
       setAnthropicKey(value);
-      localStorage.setItem('agentforge_anthropic_api_key', value);
+      localStorage.setItem('kostromai44_anthropic_api_key', value);
     }
     setSaveStatus('Keys saved successfully');
     setTimeout(() => setSaveStatus(null), 1500);
@@ -104,7 +104,7 @@ export const Settings: React.FC<SettingsProps> = ({
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStringInput);
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `${activeWorkflow?.name?.replace(/\s+/g, '-')?.toLowerCase() || 'agentforge'}-export.json`);
+    downloadAnchor.setAttribute("download", `${activeWorkflow?.name?.replace(/\s+/g, '-')?.toLowerCase() || 'kostromai44'}-export.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

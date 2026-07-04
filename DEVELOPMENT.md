@@ -1,4 +1,4 @@
-# 📖 AgentForge44 Full-Stack Documentation Index & Structure
+# 📖 KostromAi44 Full-Stack Documentation Index & Structure
 
 This index details our documentation layout built on **Fumadocs/Docusaurus** to guarantee high Developer Experience (DX).
 
@@ -32,7 +32,7 @@ docs/
 import { defineConfig } from 'fumadocs/config';
 
 export default defineConfig({
-  title: 'AgentForge44 Documentation Hub',
+  title: 'KostromAi44 Documentation Hub',
   description: 'Enterprise visual orchestrations, custom sandboxed environments, and robust multi-agent setups.',
   theme: {
     primaryColor: '#38bdf8', // Elegant Sky Blue
@@ -41,7 +41,7 @@ export default defineConfig({
   },
   navigation: {
     links: [
-      { text: 'GitHub Hub', url: 'https://github.com/ppiiyo/agentforge44' },
+      { text: 'GitHub Hub', url: 'https://github.com/ppiiyo/kostromai4444' },
       { text: 'REST API Specs', url: '/api-reference/runs' }
     ]
   }

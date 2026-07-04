@@ -147,7 +147,7 @@ export function CopilotPanel({ currentLang, nodes, connections, onApplyGraph }: 
         </div>
         <div>
           <h4 className="font-bold text-xs text-sky-300 uppercase tracking-widest flex items-center gap-1.5">
-            AgentForge Copilot <span className="bg-sky-500/20 text-sky-300 text-[8.5px] font-black px-1.5 py-0.5 rounded-full uppercase">VIP Extreme Edition</span>
+            KostromAi44 Copilot <span className="bg-sky-500/20 text-sky-300 text-[8.5px] font-black px-1.5 py-0.5 rounded-full uppercase">VIP Extreme Edition</span>
           </h4>
           <p className="text-[11px] text-sky-450 mt-1 leading-relaxed">
             {currentLang === 'ru' 

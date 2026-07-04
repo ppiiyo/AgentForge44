@@ -59,7 +59,7 @@ export class SecretsShield {
     if (parts.length === 4) {
       [salt, ivHex, tagHex, contentHex] = parts;
     } else if (parts.length === 3) {
-      salt = 'agentforge-salt'; // Legacy fallback salt
+      salt = 'kostromai44-salt'; // Legacy fallback salt
       [ivHex, tagHex, contentHex] = parts;
     } else {
       throw new Error("Invalid GCM secrets container schema configuration.");

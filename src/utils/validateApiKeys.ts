@@ -10,9 +10,9 @@ export interface ApiKeysValidationResult {
  * or in the server-side environment variables.
  */
 export async function validateApiKeys(): Promise<ApiKeysValidationResult> {
-  const localGemini = localStorage.getItem('agentforge_gemini_api_key');
-  const localOpenai = localStorage.getItem('agentforge_openai_api_key');
-  const localAnthropic = localStorage.getItem('agentforge_anthropic_api_key');
+  const localGemini = localStorage.getItem('kostromai44_gemini_api_key');
+  const localOpenai = localStorage.getItem('kostromai44_openai_api_key');
+  const localAnthropic = localStorage.getItem('kostromai44_anthropic_api_key');
 
   let geminiConfigured = false;
   let openaiConfigured = false;

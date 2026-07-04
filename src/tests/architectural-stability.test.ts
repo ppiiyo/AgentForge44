@@ -11,7 +11,7 @@ describe('=== Phase 2: Architectural Stability and Performance Suite ===', () =>
 
   describe('1. SQLite Concurrency (WAL and Busy Timeout)', () => {
     it('should have journal_mode set to wal and busy_timeout configured appropriately', () => {
-      const DB_PATH = path.join(process.cwd(), 'agentforge.db');
+      const DB_PATH = path.join(process.cwd(), 'kostromai44.db');
       const db = new Database(DB_PATH);
       
       const journalMode = db.pragma('journal_mode', { simple: true });

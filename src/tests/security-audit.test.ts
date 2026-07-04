@@ -46,7 +46,7 @@ describe('=== Phase 1 Security Audit: Robust Cryptographic and Password Hashing 
     });
 
     it('should transparently upgrade legacy password hashes to modern pbkdf2-sha512 on successful login', async () => {
-      const email = `test-migration-${Date.now()}@agentforge.ai`;
+      const email = `test-migration-${Date.now()}@kostromai44.ai`;
       const password = 'migration-test-password-2026';
       
       // Create a user directly with a legacy PBKDF2-1000 hash
@@ -100,10 +100,10 @@ describe('=== Phase 1 Security Audit: Robust Cryptographic and Password Hashing 
 
     it('should transparently decrypt legacy ciphertexts that were encrypted without dynamic salts', () => {
       // Simulate legacy SecretsShield key derivation:
-      // In the legacy version, constructor did: crypto.scryptSync(keySource, 'agentforge-salt', 32)
+      // In the legacy version, constructor did: crypto.scryptSync(keySource, 'kostromai44-salt', 32)
       // Then encrypt did: IV, cipher with key, final, join with colon.
-      const legacyKeySource = process.env.ENCRYPTION_MASTER_KEY || 'test_encryption_master_key_with_32_chars_or_more_agentforge_2026';
-      const legacyKey = crypto.scryptSync(legacyKeySource, 'agentforge-salt', 32);
+      const legacyKeySource = process.env.ENCRYPTION_MASTER_KEY || 'test_encryption_master_key_with_32_chars_or_more_kostromai44_2026';
+      const legacyKey = crypto.scryptSync(legacyKeySource, 'kostromai44-salt', 32);
       
       const plainText = 'legacy-third-party-api-secret';
       const iv = crypto.randomBytes(12);

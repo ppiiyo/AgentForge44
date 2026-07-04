@@ -16,9 +16,9 @@ import { usePipelineStore } from '../store/usePipelineStore';
 
 // Import translations just for default snapshot names
 const translationsLocal = {
-  en: { title: "AgentForge44 Console", saveSuccess: "Snapshot successfully captured!", restoreSuccess: "Workflow restored to capture point." },
-  ru: { title: "Арена AgentForge44", saveSuccess: "Снимок конфигурации холста успешно сохранен!", restoreSuccess: "Конфигурация холста восстановлена из резервной точки." },
-  zh: { title: "AgentForge44 控制台", saveSuccess: "画布快照配置已成功保存！", restoreSuccess: "已成功将编辑器回滚到该捕获点。" }
+  en: { title: "KostromAi44 Console", saveSuccess: "Snapshot successfully captured!", restoreSuccess: "Workflow restored to capture point." },
+  ru: { title: "Арена KostromAi44", saveSuccess: "Снимок конфигурации холста успешно сохранен!", restoreSuccess: "Конфигурация холста восстановлена из резервной точки." },
+  zh: { title: "KostromAi44 控制台", saveSuccess: "画布快照配置已成功保存！", restoreSuccess: "已成功将编辑器回滚到该捕获点。" }
 };
 
 export function useAgentApp() {
@@ -27,7 +27,7 @@ export function useAgentApp() {
   // Multi-language localization state
   const [currentLang, setCurrentLang] = useState<'en' | 'ru' | 'zh'>(() => {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem("agentforge_lang");
+      const saved = localStorage.getItem("kostromai44_lang");
       if (saved === 'ru' || saved === 'zh' || saved === 'en') return saved;
     }
     return 'en';
@@ -144,7 +144,7 @@ export function useAgentApp() {
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState<boolean>(false);
   const [jsonStringInput, setJsonStringInput] = useState<string>(() => {
     const defaultVal = {
-      name: "AgentForge44 Export Workflow",
+      name: "KostromAi44 Export Workflow",
       description: "Visual agent node hierarchy topology configuration",
       nodes: PREBUILT_TEMPLATES[0]?.nodes || [],
       connections: PREBUILT_TEMPLATES[0]?.connections || []
@@ -164,7 +164,7 @@ export function useAgentApp() {
   // Load saved snapshots on mount, and save on change
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
-      const stored = localStorage.getItem("agentforge_snapshots");
+      const stored = localStorage.getItem("kostromai44_snapshots");
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
@@ -176,7 +176,7 @@ export function useAgentApp() {
 
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem("agentforge_snapshots", JSON.stringify(savedSnapshots));
+      localStorage.setItem("kostromai44_snapshots", JSON.stringify(savedSnapshots));
     }
   }, [savedSnapshots]);
 
@@ -445,7 +445,7 @@ export function useAgentApp() {
 
     const updated = [newSnapshot, ...savedSnapshots];
     setSavedSnapshots(updated);
-    localStorage.setItem("agentforge_snapshots", JSON.stringify(updated));
+    localStorage.setItem("kostromai44_snapshots", JSON.stringify(updated));
 
     setCopiedText(dict.saveSuccess);
     setTimeout(() => setCopiedText(null), 2500);
@@ -468,7 +468,7 @@ export function useAgentApp() {
     e.stopPropagation();
     const filtered = savedSnapshots.filter(s => s.id !== snapId);
     setSavedSnapshots(filtered);
-    localStorage.setItem("agentforge_snapshots", JSON.stringify(filtered));
+    localStorage.setItem("kostromai44_snapshots", JSON.stringify(filtered));
   };
 
   const {
@@ -1007,7 +1007,7 @@ export function useAgentApp() {
     if (codeTab === 'typescript') {
       return `/**
  * @license Apache-2.0
- * Compiled from AgentForge44 Visual Flow Canvas
+ * Compiled from KostromAi44 Visual Flow Canvas
  */
 import { GoogleGenAI } from "@google/genai";
 
@@ -1052,7 +1052,7 @@ runAgent().catch(console.error);`;
 
     if (codeTab === 'python') {
       return `"""
-Refined code from AgentForge44 Visual agent flows
+Refined code from KostromAi44 Visual agent flows
 """
 import os
 from google import genai

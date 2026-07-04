@@ -121,7 +121,7 @@ export const ViralityTab: React.FC<ViralityTabProps> = ({
         </span>
 
         <p className="text-[11px] text-slate-500 px-2 leading-relaxed leading-normal pt-1.5 border-t border-slate-850/60 text-left font-sans">
-          💡 <strong>Virality Tip:</strong> Flow-builders and node canvases like <strong>AgentForge44</strong> have high fork-to-star ratios because developers Fork them to write customized workflow components for SaaS solutions!
+          💡 <strong>Virality Tip:</strong> Flow-builders and node canvases like <strong>KostromAi44</strong> have high fork-to-star ratios because developers Fork them to write customized workflow components for SaaS solutions!
         </p>
       </div>
     </div>

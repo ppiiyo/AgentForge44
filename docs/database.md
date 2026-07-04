@@ -1,19 +1,19 @@
 # 💾 Database Configuration & Migration Guide
 
-AgentForge44 features a polymorphic database adapter layer managed by a central database connection factory (`src/api/db.ts`). This allows seamless transitioning between local, lightweight development instances (using SQLite) and highly available multi-tenant production configurations (using PostgreSQL).
+KostromAi44 features a polymorphic database adapter layer managed by a central database connection factory (`src/api/db.ts`). This allows seamless transitioning between local, lightweight development instances (using SQLite) and highly available multi-tenant production configurations (using PostgreSQL).
 
 ---
 
 ## ⚙️ Supported Database Types
 
 ### 1. SQLite (Development & Single-Instance Testing)
-Ideal for local prototyping, lightweight setups, and offline runs. SQLite stores data locally in a single file (`agentforge.db`) and requires zero separate infrastructure.
+Ideal for local prototyping, lightweight setups, and offline runs. SQLite stores data locally in a single file (`kostromai44.db`) and requires zero separate infrastructure.
 
 * **Configuration**:
   ```env
   DB_TYPE=sqlite
   ```
-* **Storage Location**: Root directory (`./agentforge.db`). Temporary journals or cache are generated alongside as `agentforge.db-shm` and `agentforge.db-wal` (which are excluded from version control tracking via `.gitignore`).
+* **Storage Location**: Root directory (`./kostromai44.db`). Temporary journals or cache are generated alongside as `kostromai44.db-shm` and `kostromai44.db-wal` (which are excluded from version control tracking via `.gitignore`).
 
 ---
 
@@ -51,11 +51,11 @@ Update your server's environment variables (typically in your cloud control plan
 DB_TYPE=postgres
 
 # Provide the fully qualified secure connection string
-DATABASE_URL=postgresql://app_user:strong_password@prod-db-host.com:5432/agentforge?sslmode=verify-full
+DATABASE_URL=postgresql://app_user:strong_password@prod-db-host.com:5432/kostromai44?sslmode=verify-full
 ```
 
 ### Step 3: Run Auto-Healing Migrations
-Unlike other traditional setups that require manual database patching or secondary migration execution flags, AgentForge44 relies on **Auto-Healing Schema Migrations** (`src/api/migrate.ts`):
+Unlike other traditional setups that require manual database patching or secondary migration execution flags, KostromAi44 relies on **Auto-Healing Schema Migrations** (`src/api/migrate.ts`):
 1. Upon start, the main Express server boot cycle initiates `runSchemaMigrations()`.
 2. The migrator tests connection path viability via an adapter health-check probe.
 3. Upon success, it transactionally executes dynamic schema verification, building all core tables (`users`, `graphs`, `metrics`, `deployments`, `versions`, `api_keys`) if they do not yet exist.

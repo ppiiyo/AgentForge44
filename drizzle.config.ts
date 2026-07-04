@@ -9,7 +9,7 @@ export default defineConfig(
         out: './drizzle/postgres',
         dialect: 'postgresql',
         dbCredentials: {
-          url: process.env.DATABASE_URL || 'postgres://localhost:5432/agentforge',
+          url: process.env.DATABASE_URL || 'postgres://localhost:5432/kostromai44',
         },
       }
     : {
@@ -17,7 +17,7 @@ export default defineConfig(
         out: './drizzle/sqlite',
         dialect: 'sqlite',
         dbCredentials: {
-          url: './agentforge.db',
+          url: './kostromai44.db',
         },
       }
 );

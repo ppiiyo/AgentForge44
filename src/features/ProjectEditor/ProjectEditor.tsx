@@ -154,7 +154,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const [currentTheme, setCurrentTheme] = React.useState<'cosmic' | 'monotropic' | 'indigo'>(() => {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem("agentforge_theme");
+      const saved = localStorage.getItem("kostromai44_theme");
       if (saved === 'cosmic' || saved === 'monotropic' || saved === 'indigo') return saved;
     }
     return 'cosmic';
@@ -163,13 +163,13 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const handleSetTheme = (theme: 'cosmic' | 'monotropic' | 'indigo') => {
     setCurrentTheme(theme);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem("agentforge_theme", theme);
+      localStorage.setItem("kostromai44_theme", theme);
     }
   };
 
   const [showMiniMap, setShowMiniMap] = React.useState<boolean>(() => {
     if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem("agentforge_show_minimap");
+      const saved = localStorage.getItem("kostromai44_show_minimap");
       return saved !== 'false';
     }
     return true;
@@ -179,7 +179,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setShowMiniMap(prev => {
       const next = !prev;
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem("agentforge_show_minimap", String(next));
+        localStorage.setItem("kostromai44_show_minimap", String(next));
       }
       return next;
     });

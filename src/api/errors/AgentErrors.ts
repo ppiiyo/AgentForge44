@@ -1,4 +1,4 @@
-export class AgentForgeError extends Error {
+export class KostromAi44Error extends Error {
   constructor(
     public readonly code: string,
     message: string,
@@ -11,7 +11,7 @@ export class AgentForgeError extends Error {
   }
 }
 
-export class MissingApiKeyError extends AgentForgeError {
+export class MissingApiKeyError extends KostromAi44Error {
   constructor(provider: string, details?: string) {
     super(
       "MISSING_API_KEY",
@@ -21,7 +21,7 @@ export class MissingApiKeyError extends AgentForgeError {
   }
 }
 
-export class NodeExecutionError extends AgentForgeError {
+export class NodeExecutionError extends KostromAi44Error {
   constructor(nodeId: string, nodeType: string, originalError: Error, metadata: Record<string, any> = {}) {
     super(
       "NODE_EXECUTION_ERROR",
@@ -32,13 +32,13 @@ export class NodeExecutionError extends AgentForgeError {
   }
 }
 
-export class TemplateCompilationError extends AgentForgeError {
+export class TemplateCompilationError extends KostromAi44Error {
   constructor(message: string) {
     super("TEMPLATE_COMPILATION_ERROR", message, 400);
   }
 }
 
-export class SSRFValidationError extends AgentForgeError {
+export class SSRFValidationError extends KostromAi44Error {
   constructor(message: string) {
     super("SSRF_VALIDATION_ERROR", message, 403);
   }

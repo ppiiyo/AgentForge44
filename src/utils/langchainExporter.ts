@@ -5,7 +5,7 @@ export class LangChainExporter {
     const sortedNodes = this.topologicalSort(nodes, connections);
 
     let code = `"""
-AgentForge Visual Graph Exported to Python LangChain LCEL Chaining Pipeline.
+KostromAi44 Visual Graph Exported to Python LangChain LCEL Chaining Pipeline.
 Uses langchain-google-genai and langchain-core to replicate executing agent chains.
 """
 import os

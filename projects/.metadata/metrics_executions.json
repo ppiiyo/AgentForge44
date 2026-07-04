@@ -6556,7 +6556,7 @@
         "costUsd": 0.001607,
         "latencyMs": 2319,
         "inputPreview": "Analyze the following topic thoroughly: Significant advancements in superconductor technology in 2026.\nCollect recent announcements, scientific papers, and research groups. List sources.",
-        "outputPreview": "[Simulated LLM Output - API Quota Exceeded Fallback]\n\nЗдравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, AgentForge44 автоматически подключил ло"
+        "outputPreview": "[Simulated LLM Output - API Quota Exceeded Fallback]\n\nЗдравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, KostromAi44 автоматически подключил ло"
       },
       {
         "id": "node_exec_wnpeh73tw",
@@ -6567,7 +6567,7 @@
         "costUsd": 0.001507,
         "latencyMs": 0,
         "inputPreview": "Pipeline Stream Completed",
-        "outputPreview": "[Simulated LLM Output - API Quota Exceeded Fallback]\n\nЗдравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, AgentForge44 автоматически подключил ло"
+        "outputPreview": "[Simulated LLM Output - API Quota Exceeded Fallback]\n\nЗдравствуйте! Из-за временного превышения лимитов запросов (429 Quota Exceeded) на вашем API-ключе Gemini, KostromAi44 автоматически подключил ло"
       }
     ]
   },

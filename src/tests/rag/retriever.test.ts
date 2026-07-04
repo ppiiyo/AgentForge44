@@ -3,7 +3,7 @@ import { indexLibraryDocument, searchIndexedLibrary } from '../../api/advancedPh
 
 describe('RAG Knowledge Library / Retriever Unit Suite', () => {
   it('should successfully index documents into overlapping chunks', async () => {
-    const rawText = "This is a detailed article discussing standard visual low-code orchestrator development for multi-agent LLM systems. AgentForge44 relies on clean modular design principles to operate at super high performance benchmarks, resolving state dependencies with local SQLite in-memory tables.";
+    const rawText = "This is a detailed article discussing standard visual low-code orchestrator development for multi-agent LLM systems. KostromAi44 relies on clean modular design principles to operate at super high performance benchmarks, resolving state dependencies with local SQLite in-memory tables.";
     
     const indexing = await indexLibraryDocument(rawText, "System Documentation Manual");
     

@@ -1,12 +1,12 @@
 # 🛡️ Enterprise Security Architecture
 
-AgentForge44 is built with a security-first posture, implementing defensive design principles across every tier of the full-stack system. This guide documents the active threat mitigation models, API key management guidelines, and secure deployment configurations.
+KostromAi44 is built with a security-first posture, implementing defensive design principles across every tier of the full-stack system. This guide documents the active threat mitigation models, API key management guidelines, and secure deployment configurations.
 
 ---
 
 ## 🔒 1. Secrets Management and Environment Variables
 
-Every critical secret utilized by AgentForge44 — including LLM vendor credentials (Gemini, OpenAI, Anthropic, Sentry, DB strings, session tokens) — must be declared environment-side.
+Every critical secret utilized by KostromAi44 — including LLM vendor credentials (Gemini, OpenAI, Anthropic, Sentry, DB strings, session tokens) — must be declared environment-side.
 
 ### Rules of Engagement
 1. **Never Commit Secrets to Git**: High-risk environment details must always be ignored. The `.env` file must never be committed. Always maintain `.env.example` with blank placeholders.
@@ -19,7 +19,7 @@ Every critical secret utilized by AgentForge44 — including LLM vendor credenti
 
 ### 🚫 2.1. SSRF (Server-Side Request Forgery) Protection
 When users construct workflows containing `Tool Nodes` (custom JS scripts) or dynamic API connectors, malicious chains might attempt to issue target-probing requests inwards to your secure network infrastructure.
-AgentForge44 deploys a custom validation layer (`src/utils/ssrf-validator.js`) that enforces:
+KostromAi44 deploys a custom validation layer (`src/utils/ssrf-validator.js`) that enforces:
 * **Host Filtering**: All externalized request destinations requested by tools are validated.
 * **Network Exclusion List**: Requests resolving to `localhost`, loopbacks (`127.0.0.1`), metadata endpoints (`169.254.169.254` for AWS/GCP/Azure metadata harvesting), and private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) are blocked instantly.
 
@@ -39,7 +39,7 @@ Code executed inside custom `Tool Nodes` must never have access to the underlyin
 
 ## 🌐 3. Production Deployment Hardening
 
-For maximum perimeter security when deploying AgentForge44 to external networks:
+For maximum perimeter security when deploying KostromAi44 to external networks:
 
 ### 🔑 3.1. SSL/TLS Verification
 * Force encryption on all connections by configuring a secure Reverse Proxy (Nginx, Cloudflare Tunnel, or Google Cloud Load Balancer) to terminate TLS traffic.
@@ -48,7 +48,7 @@ For maximum perimeter security when deploying AgentForge44 to external networks:
 
 ### 🕸️ 3.2. Network Policies
 * **Ingress Firewall**: Only standard external ports (`3000` or `443`) should be exposed to public networks. Keep individual API routing, internal test gateways, or database sockets blocked behind firewall perimeters.
-* **VPC Peering**: Database backends must run in private subnets, only accepting traffic coming from the container subnets of AgentForge44.
+* **VPC Peering**: Database backends must run in private subnets, only accepting traffic coming from the container subnets of KostromAi44.
 
 ### ⏳ 3.3. API Rate-Limiting
 An integrated sliding window rate-limiter protects backend handlers against brute-force attacks and token consumption loops. For extreme enterprise needs, deploy a distributed rate-limiter (e.g., Redis-backed rate limits) as outlined in the Deployment Guide.

@@ -1,12 +1,12 @@
 # 🚀 Production Deployment Guide
 
-Deploying AgentForge44 into high-availability, enterprise-grade production environments requires configuring proper server resources, environment variables, state databases, and robust service layers. This guide outlines standard deployment architectures for Cloud VMs, Kubernetes (K8s), and Serverless Container environments (such as Google Cloud Run or AWS ECS).
+Deploying KostromAi44 into high-availability, enterprise-grade production environments requires configuring proper server resources, environment variables, state databases, and robust service layers. This guide outlines standard deployment architectures for Cloud VMs, Kubernetes (K8s), and Serverless Container environments (such as Google Cloud Run or AWS ECS).
 
 ---
 
 ## 🏗️ 1. Production Architecture Overview
 
-A production-ready AgentForge44 cluster consists of the following components:
+A production-ready KostromAi44 cluster consists of the following components:
 
 ```text
                [ Public Internet Traffic ]
@@ -18,7 +18,7 @@ A production-ready AgentForge44 cluster consists of the following components:
     ┌───────────────────────┼───────────────────────┐
     │                       ▼                       │ Private Network
     │             ┌───────────────────┐             │ (VPC Subnets)
-    │             │   AgentForge44    │             │
+    │             │   KostromAi44    │             │
     │             │  Container Nodes  │             │
     │             └─────────┬─────────┘             │
     │                       │                       │
@@ -34,7 +34,7 @@ A production-ready AgentForge44 cluster consists of the following components:
 ```
 
 1. **Gateway Layer**: A reliable Reverse Proxy (Nginx, Cloudflare, etc.) for TLS termination, routing WebSocket frames correctly (`ws://` / `wss://`), and protecting backend processes.
-2. **Compute Nodes**: Scalable AgentForge44 instances packaged as Docker containers running Node.js 18+.
+2. **Compute Nodes**: Scalable KostromAi44 instances packaged as Docker containers running Node.js 18+.
 3. **Database Layer (Primary State Store)**: A highly available database instance (PostgreSQL) configured with connection pooling.
 4. **Caching & WebSocket Store (Redis)**: Optional but recommended layer for syncing multi-user Socket.io connections across clusters or executing distributed queue structures.
 
@@ -58,7 +58,7 @@ sudo npm install -y pm2 -g
 ### Step 2: Extract & Build Project Files
 Download the codebase and construct the production application bundle:
 ```bash
-cd /var/www/agentforge
+cd /var/www/kostromai44
 npm install --omit=dev
 
 # Execute the production compilation bundling server and frontends
@@ -70,7 +70,7 @@ Create a PM2 system process configuration file (`ecosystem.config.cjs`):
 ```javascript
 module.exports = {
   apps: [{
-    name: 'agentforge-server',
+    name: 'kostromai44-server',
     script: 'dist/server.cjs',
     instances: 'max',
     exec_mode: 'cluster',
@@ -93,11 +93,11 @@ pm2 startup
 
 ## 🐳 3. Container Deployment (Docker / Cloud Run)
 
-AgentForge44 features a self-contained multi-stage `Dockerfile` making it trivial to run as a secure stateless container.
+KostromAi44 features a self-contained multi-stage `Dockerfile` making it trivial to run as a secure stateless container.
 
 ### Building & Tagging the Image
 ```bash
-docker build -t gcr.io/my-project/agentforge:v1.0.0 .
+docker build -t gcr.io/my-project/kostromai44:v1.0.0 .
 ```
 
 ### Environment Variables Checklist (.env)
@@ -115,7 +115,7 @@ Apply these environment configurations inside your cloud runtime configuration:
 
 ## 🏎️ 4. Enterprise Components: PostgreSQL & Redis
 
-To scale AgentForge44 seamlessly to cope with thousand-node graphs or high concurrent loads:
+To scale KostromAi44 seamlessly to cope with thousand-node graphs or high concurrent loads:
 
 ### 🐘 PostgreSQL Scaling
 * Disable cold starts by setting Drizzle adapter bounds properly.

@@ -5,7 +5,7 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   en: {
     translation: {
-      title: "AgentForge44 Console",
+      title: "KostromAi44 Console",
       subtitle: "Visual AI Agent Workflow Builder & Code Engine",
       loadTemplate: "Templates",
       validateWorkflow: "Validate Workflow",
@@ -72,7 +72,7 @@ const resources = {
   },
   ru: {
     translation: {
-      title: "Арена AgentForge44",
+      title: "Арена KostromAi44",
       subtitle: "Визуальный конструктор ИИ-агентов и генератор кода",
       loadTemplate: "Шаблоны",
       validateWorkflow: "Проверить схему",
@@ -139,7 +139,7 @@ const resources = {
   },
   zh: {
     translation: {
-      title: "AgentForge44 控制台",
+      title: "KostromAi44 控制台",
       subtitle: "AI 智能体可视化工作流编辑器与代码引擎",
       loadTemplate: "工作流模板",
       validateWorkflow: "验证工作流",
@@ -210,7 +210,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: localStorage.getItem("agentforge_lang") || 'en',
+    lng: localStorage.getItem("kostromai44_lang") || 'en',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false // react already escapes values

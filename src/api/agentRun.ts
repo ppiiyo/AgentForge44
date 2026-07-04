@@ -12,7 +12,7 @@ export { classifyLLMError };
 
 /**
  * Execute the multi-agent graph with parallel-scheduling and circuit breaker protection.
- * Central coordinator for AgentForge's execution engine.
+ * Central coordinator for KostromAi44's execution engine.
  */
 export async function executePipeline(
   nodes: FlowNode[],

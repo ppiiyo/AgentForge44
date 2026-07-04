@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agentforge44-api
+  name: kostromai4444-api
   namespace: production
   labels:
-    app: agentforge44-api
+    app: kostromai4444-api
     tier: backend
 spec:
   replicas: 5
@@ -15,15 +15,15 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: agentforge44-api
+      app: kostromai4444-api
   template:
     metadata:
       labels:
-        app: agentforge44-api
+        app: kostromai4444-api
     spec:
       containers:
       - name: api
-        image: agentforge44/api:v1.2.3
+        image: kostromai4444/api:v1.2.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
@@ -85,10 +85,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: agentforge44-api-service
+  name: kostromai4444-api-service
   namespace: production
   labels:
-    app: agentforge44-api
+    app: kostromai4444-api
 spec:
   type: ClusterIP
   ports:
@@ -97,4 +97,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: agentforge44-api
+    app: kostromai4444-api

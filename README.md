@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/AgentForge44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="AgentForge44 Logo" />
+<img src="https://img.shields.io/badge/KostromAi44-Visual%20AI%20Orchestrator-6d28d9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PC9zdmc+" alt="KostromAi44 Logo" />
 
-# 🌌 AgentForge44
+# 🌌 KostromAi44
 
 ### Visual, low-code orchestrator for resilient, self-correcting multi-agent LLM workflows
 
@@ -31,7 +31,7 @@
 
 ## ✨ Overview
 
-**AgentForge44** is a production-grade, low-code platform for building, testing, evaluating, and deploying complex multi-agent AI workflows. Featuring an interactive vector canvas, it enables developers to wire up chains of LLM reasoning, conditional routers, semantic knowledge retrievers, and self-correcting evaluation loops, serving the pipeline as an enterprise-resilient REST API.
+**KostromAi44** is a production-grade, low-code platform for building, testing, evaluating, and deploying complex multi-agent AI workflows. Featuring an interactive vector canvas, it enables developers to wire up chains of LLM reasoning, conditional routers, semantic knowledge retrievers, and self-correcting evaluation loops, serving the pipeline as an enterprise-resilient REST API.
 
 It unifies modern LLM providers (**Google Gemini, OpenAI, Anthropic Claude, and offline Ollama**), leverages a high-availability execution queue, and enforces first-class observability and security out of the box.
 
@@ -157,8 +157,8 @@ flowchart TD
 Make sure you have Docker installed on your host system:
 ```bash
 # 1. Clone the project
-git clone https://github.com/igraybalalayka/AgentForge44.git
-cd AgentForge44
+git clone https://github.com/igraybalalayka/KostromAi44.git
+cd KostromAi44
 
 # 2. Start the multi-container environment
 docker-compose up --build
@@ -211,7 +211,7 @@ Detailed OpenAPI specifications are available at **`GET /api-docs`**.
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "developer@agentforge.ai",
+    "email": "developer@kostromai44.ai",
     "password": "SecurePassword123!",
     "role": "editor"
   }'
@@ -222,7 +222,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "developer@agentforge.ai",
+    "email": "developer@kostromai44.ai",
     "password": "SecurePassword123!"
   }'
 ```

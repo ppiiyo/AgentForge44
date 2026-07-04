@@ -484,7 +484,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
               {currentLang === 'ru' 
                 ? "Синхронизируйте код проекта напрямую с репозиторием GitHub и запускайте автоматическое развертывание." 
                 : currentLang === 'zh' 
-                  ? "将当前 AgentForge 设计的工作流代码一键推送到您的 GitHub 存储库，配置自动部署策略与版本触发。" 
+                  ? "将当前 KostromAi44 设计的工作流代码一键推送到您的 GitHub 存储库，配置自动部署策略与版本触发。" 
                   : "Keep your workflow model code synced with your GitHub repository and trigger automatic web/container deployments."}
             </p>
           </div>
@@ -505,7 +505,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
                   id="github_repo_input"
                   type="text"
                   className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 placeholder-slate-600 outline-none"
-                  placeholder="e.g. owner/agentforge-project"
+                  placeholder="e.g. owner/kostromai44-project"
                   value={gitRepoUrl}
                   onChange={(e) => setGitRepoUrl(e.target.value)}
                 />

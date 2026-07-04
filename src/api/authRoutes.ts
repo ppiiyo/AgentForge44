@@ -29,7 +29,7 @@ export function authMiddleware(req: express.Request, res: express.Response, next
     const apiKeyBuffer = Buffer.from(API_KEY);
     if (tokenBuffer.length === apiKeyBuffer.length) {
       if (crypto.timingSafeEqual(tokenBuffer, apiKeyBuffer)) {
-        req.user = { id: 'admin', email: 'admin@agentforge.ai', role: 'admin' };
+        req.user = { id: 'admin', email: 'admin@kostromai44.ai', role: 'admin' };
         next();
         return;
       }
