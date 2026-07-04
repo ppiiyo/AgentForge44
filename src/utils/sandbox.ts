@@ -32,9 +32,16 @@ export class SecureSandbox {
       // Safe fetch callback with whitelist check
       const fetchCallback = new ivm.Callback((url: string, options?: any) => {
         try {
-          const allowedDomains = ['api.openai.com', 'api.anthropic.com', 'api.openai.com', 'api.google.com', 'api.cohere.com', 'localhost'];
+          const allowedDomains = ['api.openai.com', 'api.anthropic.com', 'api.google.com', 'api.cohere.com', 'localhost'];
           const urlObj = new URL(url);
-          if (!allowedDomains.some(d => urlObj.hostname.includes(d))) {
+          const hostname = urlObj.hostname.toLowerCase().trim();
+          
+          const isAllowed = allowedDomains.some(d => {
+            const domain = d.toLowerCase().trim();
+            return hostname === domain || hostname.endsWith('.' + domain);
+          });
+
+          if (!isAllowed) {
             throw new Error('Domain not allowed');
           }
           // Simple mock / fetch logic

@@ -24,6 +24,7 @@ interface UsePipelineExecutionProps {
   setIsDryRunningNode: React.Dispatch<React.SetStateAction<string | null>>;
   dryRunOutput: Record<string, string>;
   setDryRunOutput: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  handleValidateFlow?: () => { errors: string[]; warnings: string[] };
 }
 
 export function usePipelineExecution({
@@ -47,6 +48,7 @@ export function usePipelineExecution({
   setIsDryRunningNode,
   dryRunOutput,
   setDryRunOutput,
+  handleValidateFlow,
 }: UsePipelineExecutionProps) {
 
   // Trace animator
@@ -124,6 +126,16 @@ export function usePipelineExecution({
   // Execute actual Node Pipeline
   const handleRunPipeline = async () => {
     if (isRunning) return;
+
+    if (handleValidateFlow) {
+      const { errors } = handleValidateFlow();
+      if (errors && errors.length > 0) {
+        setErrorText(`Workflow validation failed: ${errors.join(' | ')}`);
+        setActiveTab('logs');
+        return;
+      }
+    }
+
     setIsRunning(true);
     setRunLogs([]);
     setNodeExecutionStatuses({});
@@ -186,6 +198,16 @@ export function usePipelineExecution({
   // Auto Self-Heal to gemini-3.1-flash-lite
   const handleAutoSelfHealAndRun = async () => {
     if (isRunning) return;
+
+    if (handleValidateFlow) {
+      const { errors } = handleValidateFlow();
+      if (errors && errors.length > 0) {
+        setErrorText(`Workflow validation failed: ${errors.join(' | ')}`);
+        setActiveTab('logs');
+        return;
+      }
+    }
+
     const updatedNodes = nodes.map(n => {
       if (n.type === 'gemini') {
         return {

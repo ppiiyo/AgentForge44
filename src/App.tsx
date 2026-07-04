@@ -23,6 +23,7 @@ const translationsStatic = {
     title: "AgentForge44 Console",
     subtitle: "Visual AI Agent Workflow Builder & Code Engine",
     loadTemplate: "Templates",
+    validateWorkflow: "Validate Workflow",
     autoAlign: "Clean Grid Layout",
     exportImport: "Export & Import Flow",
     runPipeline: "Run Pipe Flows",
@@ -87,6 +88,7 @@ const translationsStatic = {
     title: "Арена AgentForge44",
     subtitle: "Визуальный конструктор ИИ-агентов и генератор кода",
     loadTemplate: "Шаблоны",
+    validateWorkflow: "Проверить схему",
     autoAlign: "Выровнять сетку",
     exportImport: "Экспорт и импорт",
     runPipeline: "Запустить поток",
@@ -151,6 +153,7 @@ const translationsStatic = {
     title: "AgentForge44 控制台",
     subtitle: "AI 智能体可视化工作流编辑器与代码引擎",
     loadTemplate: "工作流模板",
+    validateWorkflow: "验证工作流",
     autoAlign: "干净的网格布局",
     exportImport: "导入与导出",
     runPipeline: "运行工作流",
@@ -258,6 +261,7 @@ export default function App() {
           savingProject={app.savingProject}
           autoSavingStatus={app.autoSavingStatus}
           onRunPipeline={app.handleRunPipeline}
+          onValidateWorkflow={app.handleValidateFlow}
           isRunning={app.isRunning}
           onAutoAlign={app.handleAutoAlignNodes}
           onShowImportExport={() => app.setIsImportExportModalOpen(true)}
@@ -377,6 +381,9 @@ export default function App() {
               canUndo={app.canUndo}
               canRedo={app.canRedo}
               recordAction={app.recordAction}
+              validationReport={app.validationReport}
+              setValidationReport={app.setValidationReport}
+              handleValidateFlow={app.handleValidateFlow}
             />
           ) : app.currentView === 'dashboard' ? (
             <Dashboard

@@ -86,6 +86,11 @@ interface ProjectEditorProps {
   canUndo?: boolean;
   canRedo?: boolean;
   recordAction?: (customNodes?: FlowNode[], customConnections?: FlowConnection[]) => void;
+
+  // Validation props
+  validationReport: { errors: string[]; warnings: string[] } | null;
+  setValidationReport: (report: { errors: string[]; warnings: string[] } | null) => void;
+  handleValidateFlow: () => void;
 }
 
 export const ProjectEditor: React.FC<ProjectEditorProps> = ({
@@ -140,10 +145,12 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   handleRedo,
   canUndo,
   canRedo,
-  recordAction
+  recordAction,
+  validationReport,
+  setValidationReport,
+  handleValidateFlow
 }) => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
-  const [validationReport, setValidationReport] = React.useState<{ errors: string[]; warnings: string[] } | null>(null);
 
   const [currentTheme, setCurrentTheme] = React.useState<'cosmic' | 'monotropic' | 'indigo'>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -212,66 +219,6 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
     });
   };
 
-  const handleValidateFlow = () => {
-    const errList: string[] = [];
-    const warnList: string[] = [];
-
-    const connectedIds = new Set<string>();
-    connections.forEach(c => {
-      connectedIds.add(c.sourceId);
-      connectedIds.add(c.targetId);
-    });
-
-    nodes.forEach(node => {
-      if (nodes.length > 1 && !connectedIds.has(node.id)) {
-        warnList.push(`Node "${node.title || node.id}" is completely disconnected from the rest of the flow network.`);
-      }
-
-      const f = node.fields as any;
-      if (node.type === 'gemini') {
-        if (!f?.systemInstruction?.trim()) {
-          warnList.push(`Gemini Agent Node "${node.title}" has empty System Instructions.`);
-        }
-      }
-      if (node.type === 'prompt' && !f?.template?.trim()) {
-        warnList.push(`Prompt Template Node "${node.title}" has empty Prompt Template text.`);
-      }
-      if (node.type === 'reviewer' && !f?.criteria?.trim()) {
-        warnList.push(`Reviewer Agent Node "${node.title}" has no Review Criteria defined.`);
-      }
-      if (node.type === 'webhook' && !f?.url?.trim()) {
-        errList.push(`Webhook Node "${node.title}" is missing the Outbound Endpoint URL.`);
-      }
-
-      const fieldsText = [
-        f?.template || '',
-        f?.systemInstruction || '',
-        f?.body || '',
-        f?.headers || '',
-        f?.url || ''
-      ].join(' ');
-
-      const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
-      const referenced = [...new Set(matches.map(m => m[1]))];
-      const excluded = ['nodeId', 'lastOutput', 'nodeTitle'];
-
-      referenced.forEach(v => {
-        if (excluded.includes(v)) return;
-        const isDefined = nodes.some(n => {
-          if (n.type === 'input' && (n.fields as any)?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
-          if (n.id === v) return true;
-          if (n.title?.toLowerCase() === v.toLowerCase()) return true;
-          return false;
-        });
-
-        if (!isDefined && nodes.length > 1) {
-          warnList.push(`Node "${node.title}" references variable "${v}" which is not defined by any input node on the active canvas.`);
-        }
-      });
-    });
-
-    setValidationReport({ errors: errList, warnings: warnList });
-  };
   return (
     <div className="flex-1 flex flex-row overflow-hidden relative" id="project_editor_wrapper">
       {/* Left Side: Builder Toolbox & Node Editor */}

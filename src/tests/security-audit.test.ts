@@ -1,11 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import crypto from 'crypto';
 import { hashPassword, verifyPassword, UserManager, db } from '../api/userAuth.js';
 import { SecretsShield } from '../api/auth.js';
-import { tables } from '../db/index.js';
+import { tables, adapter } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { runSchemaMigrations } from '../api/migrate.js';
 
 describe('=== Phase 1 Security Audit: Robust Cryptographic and Password Hashing Tests ===', () => {
+
+  beforeAll(async () => {
+    try {
+      await runSchemaMigrations(adapter);
+    } catch {}
+  });
 
   describe('1. Dynamic Password Hashing & Transparent Migration', () => {
     

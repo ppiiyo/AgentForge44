@@ -44,6 +44,91 @@ export function useAgentApp() {
   const connections = useEditorStore((state) => state.connections);
   const setConnections = useEditorStore((state) => state.setConnections);
 
+  // Centralized Validation Engine
+  const [validationReport, setValidationReport] = useState<{ errors: string[]; warnings: string[] } | null>(null);
+
+  const handleValidateFlow = () => {
+    const errList: string[] = [];
+    const warnList: string[] = [];
+
+    // 1. Check for Orphan Nodes
+    const connectedNodeIds = new Set<string>();
+    connections.forEach(c => {
+      connectedNodeIds.add(c.sourceId);
+      connectedNodeIds.add(c.targetId);
+    });
+
+    nodes.forEach(node => {
+      if (nodes.length > 1 && !connectedNodeIds.has(node.id)) {
+        errList.push(`Orphan Node detected: "${node.title || node.id}" has no incoming or outgoing connections in this flow.`);
+      }
+
+      const f = node.fields as any;
+      if (node.type === 'gemini') {
+        if (!f?.systemInstruction?.trim()) {
+          warnList.push(`Gemini Agent Node "${node.title}" has empty System Instructions.`);
+        }
+      }
+      if (node.type === 'prompt' && !f?.template?.trim()) {
+        warnList.push(`Prompt Template Node "${node.title}" has empty Prompt Template text.`);
+      }
+      if (node.type === 'reviewer' && !f?.criteria?.trim()) {
+        warnList.push(`Reviewer Agent Node "${node.title}" has no Review Criteria defined.`);
+      }
+      if (node.type === 'webhook' && !f?.url?.trim()) {
+        errList.push(`Webhook Node "${node.title}" is missing the Outbound Endpoint URL.`);
+      }
+
+      const fieldsText = [
+        f?.template || '',
+        f?.systemInstruction || '',
+        f?.body || '',
+        f?.headers || '',
+        f?.url || ''
+      ].join(' ');
+
+      const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
+      const referenced = [...new Set(matches.map(m => m[1]))];
+      const excluded = ['nodeId', 'lastOutput', 'nodeTitle'];
+
+      referenced.forEach(v => {
+        if (excluded.includes(v)) return;
+        const isDefined = nodes.some(n => {
+          if (n.type === 'input' && (n.fields as any)?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
+          if (n.id === v) return true;
+          if (n.title?.toLowerCase() === v.toLowerCase()) return true;
+          return false;
+        });
+
+        if (!isDefined && nodes.length > 1) {
+          warnList.push(`Node "${node.title}" references variable "${v}" which is not defined by any input node on the active canvas.`);
+        }
+      });
+    });
+
+    // 2. Check for Dangling Edges
+    const nodeIds = new Set(nodes.map(n => n.id));
+    connections.forEach((c, idx) => {
+      const sourceExists = nodeIds.has(c.sourceId);
+      const targetExists = nodeIds.has(c.targetId);
+      if (!sourceExists || !targetExists) {
+        let msg = `Dangling Edge detected (Connection #${idx + 1}): `;
+        if (!sourceExists && !targetExists) {
+          msg += `Both source node ("${c.sourceId}") and target node ("${c.targetId}") do not exist.`;
+        } else if (!sourceExists) {
+          msg += `Source node ("${c.sourceId}") does not exist.`;
+        } else {
+          msg += `Target node ("${c.targetId}") does not exist.`;
+        }
+        errList.push(msg);
+      }
+    });
+
+    const report = { errors: errList, warnings: warnList };
+    setValidationReport(report);
+    return report;
+  };
+
   // Focus & Drag interactions
   const selectedNodeId = useUIStore((state) => state.selectedNodeId);
   const setSelectedNodeId = useUIStore((state) => state.setSelectedNodeId);
@@ -412,6 +497,7 @@ export function useAgentApp() {
     setIsDryRunningNode,
     dryRunOutput,
     setDryRunOutput,
+    handleValidateFlow,
   });
 
   // Run automated benchmark suite
@@ -1239,6 +1325,8 @@ curl -X POST "${window.location.origin}/api/run-pipeline" \\
     past, setPast,
     future, setFuture,
     savedSnapshots, setSavedSnapshots,
+    validationReport, setValidationReport,
+    handleValidateFlow,
     nodeExecutionStatuses, setNodeExecutionStatuses,
     isDryRunningNode, setIsDryRunningNode,
     dryRunOutput, setDryRunOutput,

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Sparkles, Play, Database, Workflow, Check, Layers, RefreshCw, RefreshCcw, 
-  HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X
+  HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X, CheckSquare
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
 
@@ -15,6 +15,7 @@ interface AppHeaderProps {
   savingProject: boolean;
   autoSavingStatus?: 'idle' | 'saving' | 'saved' | 'failed';
   onRunPipeline: () => void;
+  onValidateWorkflow: () => void;
   isRunning: boolean;
   onAutoAlign: () => void;
   onShowImportExport: () => void;
@@ -32,6 +33,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   savingProject,
   autoSavingStatus = 'idle',
   onRunPipeline,
+  onValidateWorkflow,
   isRunning,
   onAutoAlign,
   onShowImportExport,
@@ -188,6 +190,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </div>
           )}
         </div>
+
+        {/* Validate Workflow button */}
+        <button
+          onClick={onValidateWorkflow}
+          id="btn_validate_workflow_header"
+          title={t('validateWorkflow')}
+          className="flex items-center space-x-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold text-[11px] px-3.5 py-2.5 rounded-xl border border-amber-500/20 shadow-sm transition-all cursor-pointer active:scale-95 shrink-0"
+        >
+          <CheckSquare size={13} className="text-amber-400" />
+          <span>{t('validateWorkflow')}</span>
+        </button>
 
         {/* Active execution trigger */}
         <button
