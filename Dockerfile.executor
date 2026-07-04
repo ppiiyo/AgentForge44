@@ -27,6 +27,9 @@ RUN npx drizzle-kit generate && \
     npx drizzle-kit generate --config=drizzle-postgres.config.ts && \
     npx esbuild src/queue/worker-entry.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/worker.cjs
 
+# Prune development dependencies so that node_modules only contains production dependencies
+RUN npm prune --omit=dev
+
 # --- Stage 2: Production Worker Container ---
 FROM node:20-slim AS runner
 
@@ -39,10 +42,8 @@ ENV NODE_ENV=${NODE_ENV}
 COPY --from=builder /usr/src/app/dist/worker.cjs ./dist/worker.cjs
 COPY --from=builder /usr/src/app/dist/worker.cjs.map ./dist/worker.cjs.map
 COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/drizzle ./drizzle
-
-# Install only production-level node modules
-RUN npm ci --omit=dev
 
 # Create storage directory for local project configurations
 RUN mkdir -p projects && chown -R node:node /usr/src/app

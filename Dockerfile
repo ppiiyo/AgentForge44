@@ -27,6 +27,9 @@ COPY . .
 # Compile application assets and backend server
 RUN npm run build
 
+# Prune development dependencies so that node_modules only contains production dependencies
+RUN npm prune --omit=dev
+
 # Stage 2: Runner Stage
 FROM node:20-alpine AS runner
 
@@ -40,10 +43,8 @@ ENV PORT=${PORT}
 # Copy compiled bundles and static assets from builder container
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/drizzle ./drizzle
-
-# Install only production-level node modules, skipping heavy compilers
-RUN npm ci --omit=dev
 
 # Create a storage volume directory for projects saved on server filesystems
 RUN mkdir -p projects && chown -R node:node /usr/src/app
