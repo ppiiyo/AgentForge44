@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, Plus, RefreshCcw, Eye, Trash2, Search, X, 
-  Check, Copy, Calendar, FileText, Database 
+  Check, Copy, Calendar, FileText, Database, Upload 
 } from 'lucide-react';
 
 interface LibraryTabProps {
@@ -38,6 +38,69 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const [docSearchQuery, setDocSearchQuery] = React.useState("");
   const [isCopied, setIsCopied] = React.useState(false);
 
+  // States and refs for Drag & Drop and Pre-Index preview drawer
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isPreIndexDrawerOpen, setIsPreIndexDrawerOpen] = React.useState(false);
+  const [preIndexSearchQuery, setPreIndexSearchQuery] = React.useState("");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Client-side text chunker for pre-index simulation
+  const chunkTextClient = React.useCallback((text: string, chunkSize = 400, overlap = 40): string[] => {
+    const words = text.split(/\s+/);
+    const chunks: string[] = [];
+    for (let i = 0; i < words.length; i += chunkSize - overlap) {
+      const chunk = words.slice(i, i + chunkSize).join(' ');
+      if (chunk.trim().length > 0) {
+        chunks.push(chunk);
+      }
+      if (i + chunkSize >= words.length) break;
+    }
+    return chunks;
+  }, []);
+
+  const preIndexChunks = React.useMemo(() => {
+    return chunkTextClient(ragText);
+  }, [ragText, chunkTextClient]);
+
+  // Handle drag and drop file ingestion
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleFileRead = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setRagText(text);
+      const cleanName = file.name.replace(/\.[^/.]+$/, "");
+      setRagSource(cleanName);
+      // Automatically pop open pre-index visual drawer for verification!
+      setIsPreIndexDrawerOpen(true);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileRead(file);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileRead(file);
+    }
+  };
+
   // Internationalization translation dictionary
   const t = React.useMemo(() => {
     const dict = {
@@ -62,7 +125,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         filterPlaceholder: "Search within document text...",
         copyContent: "Copy Content",
         closePreview: "Close Preview",
-        createdAt: "Indexed on"
+        createdAt: "Indexed on",
+        dropzoneText: "Drag & drop .txt or .md files here, or click to browse",
+        btnPreviewDraft: "Inspect Draft Chunks Preview",
+        preIndexHeader: "Pre-Indexing Document Inspection",
+        preIndexDesc: "Review and inspect calculated semantic embeddings layout before committing them to PGVector.",
+        commitIndex: "Approve & Index Document"
       },
       ru: {
         ragTitle: "RAG Индексатор знаний",
@@ -85,7 +153,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         filterPlaceholder: "Поиск по тексту документа...",
         copyContent: "Копировать текст",
         closePreview: "Закрыть предпросмотр",
-        createdAt: "Индексировано"
+        createdAt: "Индексировано",
+        dropzoneText: "Перетащите файлы .txt или .md сюда или нажмите для выбора",
+        btnPreviewDraft: "Инспектировать структуру фрагментов",
+        preIndexHeader: "Инспекция документа перед индексацией",
+        preIndexDesc: "Просмотрите и проверьте структуру семантических эмбеддингов перед отправкой в PGVector.",
+        commitIndex: "Утвердить и индексировать"
       },
       zh: {
         ragTitle: "RAG 知识索引库",
@@ -108,7 +181,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         filterPlaceholder: "在文档文本内搜索...",
         copyContent: "复制全部内容",
         closePreview: "关闭预览",
-        createdAt: "索引时间"
+        createdAt: "索引时间",
+        dropzoneText: "拖拽 .txt 或 .md 文件至此，或点击浏览文件",
+        btnPreviewDraft: "检查预览分块结构",
+        preIndexHeader: "入库前分块检查预览",
+        preIndexDesc: "在将文档提交到 PGVector 向量库之前，查看并分析生成的语义块结构布局。",
+        commitIndex: "核准并开始建立索引"
       }
     };
     return dict[currentLang] || dict.en;
@@ -234,7 +312,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         </p>
       </div>
 
-      {/* Manual Paste Section */}
+      {/* Manual Paste & Ingestion Section */}
       <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 shrink-0">
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -255,6 +333,34 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
           </div>
         </div>
 
+        {/* Drag & Drop Upload Zone */}
+        <div 
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+            isDragging 
+              ? "border-teal-400 bg-teal-950/20" 
+              : "border-slate-800 hover:border-slate-700 bg-slate-900/30"
+          }`}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileSelect} 
+            accept=".txt,.md" 
+            className="hidden" 
+          />
+          <Upload size={18} className={`${isDragging ? 'text-teal-400 animate-bounce' : 'text-slate-500'}`} />
+          <p className="text-[10px] text-slate-300 font-bold select-none leading-tight">
+            {t.dropzoneText}
+          </p>
+          <p className="text-[8.5px] text-slate-500 font-medium font-mono select-none">
+            Accepts: Markdown (.md), plain text (.txt)
+          </p>
+        </div>
+
         <div>
           <label className="text-[9.5px] font-black text-slate-500 uppercase block mb-1">{t.payloadLabel}</label>
           <textarea
@@ -266,23 +372,34 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
           />
         </div>
 
-        <button
-          onClick={handleIndexDocument}
-          disabled={isRAGIndexing || !ragText.trim()}
-          className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-black py-2.5 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
-        >
-          {isRAGIndexing ? (
-            <>
-              <RefreshCcw size={13} className="animate-spin" />
-              <span>{t.btnIndexing}</span>
-            </>
-          ) : (
-            <>
-              <Plus size={13} />
-              <span>{t.btnIndex}</span>
-            </>
-          )}
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setIsPreIndexDrawerOpen(true)}
+            disabled={!ragText.trim()}
+            className="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 font-black py-2.5 px-2 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-98"
+          >
+            <Eye size={12.5} />
+            <span className="truncate">{t.btnPreviewDraft}</span>
+          </button>
+
+          <button
+            onClick={handleIndexDocument}
+            disabled={isRAGIndexing || !ragText.trim()}
+            className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-black py-2.5 px-2 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+          >
+            {isRAGIndexing ? (
+              <>
+                <RefreshCcw size={13} className="animate-spin" />
+                <span className="truncate">{t.btnIndexing}</span>
+              </>
+            ) : (
+              <>
+                <Plus size={13} />
+                <span className="truncate">{t.btnIndex}</span>
+              </>
+            )}
+          </button>
+        </div>
 
         {ragIndexStatus && (
           <p className="text-[10px] font-mono font-bold text-center text-teal-400 leading-normal bg-teal-950/20 py-1.5 px-3 rounded border border-teal-900/30">
@@ -514,6 +631,147 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                     No matching occurrences found for &ldquo;{docSearchQuery}&rdquo; within this document index.
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Pre-Indexing Preview Drawer Overlay */}
+      <AnimatePresence>
+        {isPreIndexDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-end select-text"
+            onClick={() => setIsPreIndexDrawerOpen(false)}
+          >
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-slate-900 border-l border-slate-800 w-full max-w-xl h-full flex flex-col shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drawer Header */}
+              <div className="border-b border-slate-800 p-5 flex items-center justify-between gap-4 shrink-0 bg-slate-950/40">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 shrink-0">
+                    <Eye size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase text-teal-400 tracking-widest font-mono block">
+                      {t.preIndexHeader}
+                    </span>
+                    <h3 className="text-sm font-black text-slate-100 truncate mt-0.5" title={ragSource || "Pasted Content"}>
+                      {ragSource || "Pasted Content"}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setPreIndexSearchQuery("");
+                    setIsPreIndexDrawerOpen(false);
+                  }}
+                  className="p-2 bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-slate-100 border border-slate-800 rounded-xl transition-all cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Drawer Context / Stats Bar */}
+              <div className="bg-slate-950/80 px-5 py-4 border-b border-slate-850 shrink-0 space-y-3">
+                <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                  {t.preIndexDesc}
+                </p>
+                <div className="flex flex-wrap gap-2 text-[10px]">
+                  <span className="font-mono text-slate-300 font-extrabold bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
+                    Words: {ragText.split(/\s+/).filter(Boolean).length}
+                  </span>
+                  <span className="font-mono text-slate-300 font-extrabold bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
+                    Chars: {ragText.length}
+                  </span>
+                  <span className="font-mono text-teal-300 font-extrabold bg-teal-950/35 px-2.5 py-1 rounded border border-teal-900/30">
+                    Est. Chunks: {preIndexChunks.length}
+                  </span>
+                </div>
+
+                {/* Local search within draft chunks */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={t.filterPlaceholder}
+                    value={preIndexSearchQuery}
+                    onChange={(e) => setPreIndexSearchQuery(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 py-1.5 pl-8 pr-3 rounded-lg text-xs text-slate-200 outline-none focus:border-teal-500/30"
+                  />
+                  <Search size={12} className="text-slate-500 absolute left-2.5 top-2.5" />
+                </div>
+              </div>
+
+              {/* Chunks List Body */}
+              <div className="flex-1 overflow-y-auto p-5 bg-slate-950/20 text-slate-350 text-[11px] font-mono leading-relaxed select-text space-y-3">
+                {preIndexChunks.map((chunkTextVal: string, index: number) => {
+                  const matchesSearch = preIndexSearchQuery.trim() === "" || chunkTextVal.toLowerCase().includes(preIndexSearchQuery.toLowerCase());
+                  
+                  if (!matchesSearch) return null;
+
+                  return (
+                    <div 
+                      key={index} 
+                      className="border border-slate-850/50 bg-slate-900/10 p-3 rounded-xl relative group hover:border-slate-800 transition-all"
+                    >
+                      <span className="absolute top-2 right-2.5 text-[8.5px] font-mono text-slate-650 group-hover:text-teal-400/50 transition-colors uppercase font-bold tracking-wider">
+                        chunk #{index + 1}
+                      </span>
+                      <div className="text-[9.5px] text-slate-500 mb-1 font-sans font-bold">
+                        Size: {chunkTextVal.split(/\s+/).filter(Boolean).length} words
+                      </div>
+                      <p className="whitespace-pre-wrap leading-relaxed mt-1 text-slate-300">
+                        {renderHighlightedText(chunkTextVal, preIndexSearchQuery)}
+                      </p>
+                    </div>
+                  );
+                })}
+
+                {preIndexSearchQuery.trim() !== "" && preIndexChunks.every((text: string) => !text.toLowerCase().includes(preIndexSearchQuery.toLowerCase())) && (
+                  <div className="text-center py-12 text-slate-500 italic font-sans text-xs">
+                    No matching occurrences found for &ldquo;{preIndexSearchQuery}&rdquo; within this document index draft.
+                  </div>
+                )}
+              </div>
+
+              {/* Actions Footer inside drawer */}
+              <div className="border-t border-slate-800 p-4 shrink-0 bg-slate-950/50 flex gap-2">
+                <button
+                  onClick={() => setIsPreIndexDrawerOpen(false)}
+                  className="flex-1 py-2.5 px-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100 rounded-xl text-xs font-black transition-all cursor-pointer text-center"
+                >
+                  {currentLang === 'ru' ? "Назад" : currentLang === 'zh' ? "返回" : "Cancel"}
+                </button>
+                <button
+                  onClick={async () => {
+                    setIsPreIndexDrawerOpen(false);
+                    await handleIndexDocument();
+                  }}
+                  disabled={isRAGIndexing || !ragText.trim()}
+                  className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black py-2.5 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
+                >
+                  {isRAGIndexing ? (
+                    <>
+                      <RefreshCcw size={13} className="animate-spin" />
+                      <span>{t.btnIndexing}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={13} />
+                      <span>{t.commitIndex}</span>
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           </motion.div>

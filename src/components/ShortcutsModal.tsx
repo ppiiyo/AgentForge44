@@ -26,6 +26,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         ctrlS: "Save local checkpoint state",
         ctrlEnter: "Execute active pipeline trace",
         ctrlK: "Open command palette finder",
+        ctrl0: "Reset viewport scale to 100%",
         ctrlZ: "Undo last connection or action",
         ctrlY: "Redo last connection or action",
         ctrlD: "Duplicate highlighted node",
@@ -33,7 +34,9 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         escape: "Deselect node / close modals",
         space: "Pan canvas freely",
         shiftDrag: "Box select multiple cards",
-        shiftClick: "Toggle select individual nodes"
+        shiftClick: "Toggle select individual nodes",
+        scroll: "Zoom in & out of canvas",
+        dblClick: "Quick-create node at mouse position"
       }
     },
     ru: {
@@ -48,6 +51,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         ctrlS: "Сохранить локальную копию проекта",
         ctrlEnter: "Запустить активный поток выполнения",
         ctrlK: "Открыть палитру команд и поиска",
+        ctrl0: "Сбросить масштаб холста на 100%",
         ctrlZ: "Отменить последнее действие",
         ctrlY: "Вернуть отмененное действие",
         ctrlD: "Дублировать выбранный узел",
@@ -55,7 +59,9 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         escape: "Снять выделение / закрыть окна",
         space: "Свободное перемещение по холсту",
         shiftDrag: "Выделение рамкой нескольких карт",
-        shiftClick: "Мультивыбор отдельных узлов"
+        shiftClick: "Мультивыбор отдельных узлов",
+        scroll: "Масштабирование холста (Приблизить/Отдалить)",
+        dblClick: "Быстро создать узел в позиции курсора"
       }
     },
     zh: {
@@ -70,6 +76,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         ctrlS: "保存当前项目到本地快照",
         ctrlEnter: "立即执行并流式运转当前管道",
         ctrlK: "唤出全能命令面板 / 跳转节点",
+        ctrl0: "重置画布缩放比例为 100%",
         ctrlZ: "撤销上一步连接或位移",
         ctrlY: "重做撤销的连接或位移",
         ctrlD: "一键复制当前高亮节点",
@@ -77,7 +84,9 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
         escape: "清除选择状态 / 关闭悬浮窗",
         space: "按住空格键并拖拽以平移画布",
         shiftDrag: "按住 Shift 框选多组节点卡片",
-        shiftClick: "按住 Shift 单选多组独立节点"
+        shiftClick: "按住 Shift 单选多组独立节点",
+        scroll: "鼠标滚轮或双指缩放画布大小",
+        dblClick: "双击空白画布快速召唤并添加节点"
       }
     }
   }[currentLang];
@@ -132,6 +141,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
                     { shortcut: "Ctrl + S", label: t.keys.ctrlS },
                     { shortcut: "Ctrl + Enter", label: t.keys.ctrlEnter },
                     { shortcut: "Ctrl + K", label: t.keys.ctrlK },
+                    { shortcut: "Ctrl + 0", label: t.keys.ctrl0 },
                   ].map((sc, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-950/30 border border-slate-850/50 rounded-xl">
                       <span className="text-[11px] text-slate-300 font-medium">{sc.label}</span>
@@ -172,6 +182,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({
                     { shortcut: "Space + Drag", label: t.keys.space },
                     { shortcut: "Shift + Drag", label: t.keys.shiftDrag },
                     { shortcut: "Shift + Click", label: t.keys.shiftClick },
+                    { shortcut: "Wheel / Pinch", label: t.keys.scroll },
+                    { shortcut: "Double Click", label: t.keys.dblClick },
                   ].map((sc, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-950/30 border border-slate-850/50 rounded-xl">
                       <span className="text-[11px] text-slate-300 font-medium">{sc.label}</span>

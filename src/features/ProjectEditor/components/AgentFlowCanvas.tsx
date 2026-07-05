@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../../../types';
 import { useUIStore } from '../../../store/useUIStore';
+import { playClickSound, playConnectSound } from '../../../utils/audio';
 
 // Helper functions to check if a line segment intersects a bounding box
 function intersectSegments(
@@ -508,6 +509,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   const onConnectCallback = useCallback((params: Connection) => {
     if (params.source && params.target) {
       onConnectNodes(params.source, params.target);
+      playConnectSound();
     }
   }, [onConnectNodes]);
 
@@ -529,6 +531,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   // Handle selection event
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     onSelectNode(node.id);
+    playClickSound();
   }, [onSelectNode]);
 
   // ReactFlow selection sync listener

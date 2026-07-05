@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { 
   Plus, Database, Terminal, Sparkles, CheckSquare, GitBranch, Globe, 
   BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X,
-  Clock, Cpu, Settings, Code, FileJson
+  Clock, Cpu, Settings, Code, FileJson, Download
 } from 'lucide-react';
 import { FlowNode, NodeType } from '../../../types';
+import { exportSnapshotsToZip } from '../../../utils/zipExporter';
 
 const nodeDocMap: Record<NodeType, {
   purpose: { en: string; ru: string; zh: string };
@@ -596,14 +597,32 @@ export const Toolbox: React.FC<ToolboxProps> = ({
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <History size={14} className="text-purple-400" /> {t('history')}
           </h3>
-          <button
-            id="btn_capture_session_snapshot"
-            onClick={onSaveSnapshot}
-            className="text-[10px] font-bold text-sky-450 hover:text-sky-300 flex items-center gap-0.5 cursor-pointer bg-sky-950/20 px-2 py-1 border border-sky-850 rounded-lg active:scale-95 transition-all"
-            title={t('historyDesc')}
-          >
-            <Plus size={10} /> {currentLang === 'ru' ? "Снять" : "Save"}
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              id="btn_capture_session_snapshot"
+              onClick={onSaveSnapshot}
+              className="text-[10px] font-bold text-sky-450 hover:text-sky-300 flex items-center gap-0.5 cursor-pointer bg-sky-950/20 px-2 py-1 border border-sky-850 rounded-lg active:scale-95 transition-all"
+              title={t('historyDesc')}
+            >
+              <Plus size={10} /> {currentLang === 'ru' ? "Снять" : "Save"}
+            </button>
+            {savedSnapshots.length > 0 && (
+              <button
+                id="btn_export_all_snapshots_zip"
+                onClick={async () => {
+                  try {
+                    await exportSnapshotsToZip(savedSnapshots as any, projectNameInput);
+                  } catch (err: any) {
+                    alert(`Export error: ${err.message}`);
+                  }
+                }}
+                className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center gap-0.5 cursor-pointer bg-teal-950/20 px-2 py-1 border border-teal-850 rounded-lg active:scale-95 transition-all"
+                title={currentLang === 'ru' ? "Экспортировать все снимки в ZIP" : currentLang === 'zh' ? "批量导出快照为 ZIP" : "Export all snapshots as ZIP"}
+              >
+                <Download size={10} /> {currentLang === 'ru' ? "Экспорт" : currentLang === 'zh' ? "导出" : "Export"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
