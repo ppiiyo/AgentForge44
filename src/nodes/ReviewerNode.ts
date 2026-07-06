@@ -1,6 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { generateWithRetry } from '../api/services/RetryService.js';
 import { logger } from '../utils/logger.js';
+import { z } from 'zod';
+
+export const ReviewResultSchema = z.object({
+  score: z.number().min(0).max(100),
+  feedback: z.string().max(2000),
+  suggestions: z.array(z.string().max(500)).max(10).optional(),
+  approved: z.boolean().optional()
+});
 
 export interface ReviewerConfig {
   criteria: string;
@@ -85,23 +93,39 @@ Ensure the response is valid JSON.`;
         parsed = JSON.parse(cleanText);
       } catch (e) {
         logger.warn(`Failed to parse JSON response from Reviewer evaluation, using regex fallback: ${text}`);
-        const scoreMatch = text.match(/"score"\s*:\s*(\d+)/);
-        const feedbackMatch = text.match(/"feedback"\s*:\s*"([^"]+)"/);
-        parsed = {
-          score: scoreMatch ? Number(scoreMatch[1]) : 80,
-          feedback: feedbackMatch ? feedbackMatch[1] : text
+        parsed = this.safeRegexFallback(text);
+      }
+
+      // Validate against schema
+      const validationResult = ReviewResultSchema.safeParse(parsed);
+      let validatedData: { score: number; feedback: string };
+
+      if (!validationResult.success) {
+        logger.error('Review result validation failed', {
+          errors: validationResult.error.issues,
+          received: parsed
+        });
+        
+        validatedData = {
+          score: 0,
+          feedback: 'Invalid review format or validation constraint failed'
+        };
+      } else {
+        validatedData = {
+          score: validationResult.data.score,
+          feedback: validationResult.data.feedback
         };
       }
 
       // Check if threshold is met. Handle both 0-1 (e.g. 0.8) and 0-100 (e.g. 80) threshold definitions.
-      const normalizedScore = parsed.score;
+      const normalizedScore = validatedData.score;
       const normalizedThreshold = this.threshold <= 1 ? this.threshold * 100 : this.threshold;
       const passed = normalizedScore >= normalizedThreshold;
 
       return {
         score: normalizedScore,
         passed,
-        feedback: parsed.feedback
+        feedback: validatedData.feedback
       };
 
     } catch (err: any) {
@@ -112,6 +136,15 @@ Ensure the response is valid JSON.`;
         feedback: `API Error during evaluation: ${err.message}`
       };
     }
+  }
+
+  private safeRegexFallback(text: string): { score: number; feedback: string } {
+    const scoreMatch = text.match(/"score"\s*:\s*(\d+)/);
+    const feedbackMatch = text.match(/"feedback"\s*:\s*"([^"]+)"/);
+    return {
+      score: scoreMatch ? Math.min(Math.max(Number(scoreMatch[1]), 0), 100) : 80,
+      feedback: feedbackMatch ? feedbackMatch[1].substring(0, 2000) : text.substring(0, 2000)
+    };
   }
 
   /**

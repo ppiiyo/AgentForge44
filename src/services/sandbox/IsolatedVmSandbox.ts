@@ -52,7 +52,7 @@ export class IsolatedVmSandbox {
       });
       await jail.set('__collectLog', logCallback);
 
-      // Inject secure sandbox-only console implementation
+      // Inject secure sandbox-only console implementation and require module whitelist
       const setupCode = `
         globalThis.console = {
           log: (...args) => {
@@ -67,6 +67,60 @@ export class IsolatedVmSandbox {
           info: (...args) => {
             __collectLog.apply(undefined, args);
           }
+        };
+
+        const mocks = {
+          path: {
+            join: (...args) => args.filter(Boolean).join('/'),
+            resolve: (...args) => args.filter(Boolean).join('/'),
+            basename: (p) => p.split('/').pop() || '',
+            dirname: (p) => p.split('/').slice(0, -1).join('/') || '.',
+            extname: (p) => {
+              const base = p.split('/').pop() || '';
+              const parts = base.split('.');
+              return parts.length > 1 ? '.' + parts.pop() : '';
+            }
+          },
+          url: {
+            parse: (urlStr) => {
+              try {
+                const u = new URL(urlStr);
+                return { href: u.href, protocol: u.protocol, host: u.host, hostname: u.hostname, port: u.port, pathname: u.pathname, search: u.search, hash: u.hash };
+              } catch (e) {
+                return {};
+              }
+            }
+          },
+          querystring: {
+            stringify: (obj) => {
+              const params = new URLSearchParams();
+              for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                  params.append(key, obj[key]);
+                }
+              }
+              return params.toString();
+            },
+            parse: (str) => {
+              const params = new URLSearchParams(str);
+              const obj = {};
+              for (const [key, val] of params.entries()) {
+                obj[key] = val;
+              }
+              return obj;
+            }
+          },
+          util: {
+            format: (...args) => args.join(' '),
+            inspect: (obj) => JSON.stringify(obj)
+          }
+        };
+
+        globalThis.require = (name) => {
+          if (mocks.hasOwnProperty(name)) {
+            return mocks[name];
+          }
+          throw new Error("Module '" + name + "' is not allowed in this sandbox");
         };
       `;
       const setupScript = await isolate.compileScript(setupCode);

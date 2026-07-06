@@ -11,8 +11,26 @@ describe('Sandbox Isolation and Security Safeguards', () => {
     const res = await executeCodeInSandbox(code);
     expect(res.success).toBe(false);
     expect(res.error).toBeDefined();
-    // In isolated-vm, require doesn't exist at all inside the V8 context
-    expect(res.error).toContain('require is not defined');
+    expect(res.error).toContain('is not allowed in this sandbox');
+  });
+
+  it('should allow whitelisted modules (e.g. path) inside the sandbox', async () => {
+    const code = `
+      const path = require('path');
+      path.join('foo', 'bar');
+    `;
+    const res = await IsolatedVmSandbox.execute(code);
+    expect(res.success).toBe(true);
+    expect(res.result).toBe('foo/bar');
+  });
+
+  it('should block non-whitelisted modules (e.g. fs) inside the sandbox', async () => {
+    const code = `
+      const fs = require('fs');
+    `;
+    const res = await IsolatedVmSandbox.execute(code);
+    expect(res.success).toBe(false);
+    expect(res.error).toContain('is not allowed in this sandbox');
   });
 
   it('should not allow access to process, global, or fs', async () => {
