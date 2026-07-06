@@ -7,6 +7,7 @@ import * as sqliteSchema from './schema.js';
 import * as pgSchema from './postgres-schema.js';
 import { traceSpan } from '../services/tracing.js';
 import { chaosEngine } from '../services/chaosEngine.js';
+import { cache, computeHash } from '../services/cache.js';
 
 // Resolve adapter cleanly using the centralized database factory
 export const adapter = createDatabaseConnection();
@@ -14,20 +15,61 @@ const dbType = adapter.type;
 
 const rawDb = adapter.db;
 
+async function executeWithCaching(target: any, originalThen: any, onfulfilled: any, onrejected: any): Promise<any> {
+  try {
+    await chaosEngine.simulateDbAccess();
+
+    let isSelect = false;
+    let sqlObj: any = null;
+    try {
+      if (target && typeof target.toSQL === 'function') {
+        sqlObj = target.toSQL();
+        const sqlStr = (sqlObj.sql || '').trim().toUpperCase();
+        isSelect = sqlStr.startsWith('SELECT');
+      }
+    } catch (e) {
+      // Ignore errors from toSQL
+    }
+
+    if (isSelect && sqlObj) {
+      const queryKey = `db_query:${computeHash(JSON.stringify(sqlObj))}`;
+      const cached = await cache.get(queryKey);
+      if (cached !== null) {
+        const parsed = JSON.parse(cached);
+        if (onfulfilled) return onfulfilled(parsed);
+        return parsed;
+      }
+
+      // Run actual query
+      const result = await originalThen.call(target);
+      await cache.set(queryKey, JSON.stringify(result), 10); // Cache for 10 seconds
+
+      if (onfulfilled) return onfulfilled(result);
+      return result;
+    }
+
+    if (sqlObj) {
+      const sqlStr = (sqlObj.sql || '').trim().toUpperCase();
+      if (sqlStr.startsWith('INSERT') || sqlStr.startsWith('UPDATE') || sqlStr.startsWith('DELETE')) {
+        cache.clearLocalCache();
+      }
+    }
+
+    return originalThen.call(target, onfulfilled, onrejected);
+  } catch (err) {
+    if (onrejected) return onrejected(err);
+    throw err;
+  }
+}
+
 function wrapQueryBuilder(qb: any): any {
   if (!qb || typeof qb !== 'object') return qb;
   return new Proxy(qb, {
     get(target, prop, receiver) {
       const val = Reflect.get(target, prop, receiver);
       if (prop === 'then' && typeof val === 'function') {
-        return async function(onfulfilled: any, onrejected: any) {
-          try {
-            await chaosEngine.simulateDbAccess();
-            return val.call(target, onfulfilled, onrejected);
-          } catch (err) {
-            if (onrejected) return onrejected(err);
-            throw err;
-          }
+        return function(onfulfilled: any, onrejected: any) {
+          return executeWithCaching(target, val, onfulfilled, onrejected);
         };
       }
       if (typeof val === 'function') {
@@ -44,7 +86,7 @@ function wrapQueryBuilder(qb: any): any {
   });
 }
 
-// Create a wrapper for Drizzle database instance to support Chaos Engineering
+// Create a wrapper for Drizzle database instance to support Chaos Engineering and query caching
 export const db = new Proxy(rawDb, {
   get(target, prop, receiver) {
     const value = Reflect.get(target, prop, receiver);
@@ -58,14 +100,8 @@ export const db = new Proxy(rawDb, {
 
         if (queryBuilder && typeof queryBuilder.then === 'function') {
           const originalThen = queryBuilder.then;
-          queryBuilder.then = async function(onfulfilled: any, onrejected: any) {
-            try {
-              await chaosEngine.simulateDbAccess();
-              return originalThen.call(this, onfulfilled, onrejected);
-            } catch (err) {
-              if (onrejected) return onrejected(err);
-              throw err;
-            }
+          queryBuilder.then = function(onfulfilled: any, onrejected: any) {
+            return executeWithCaching(queryBuilder, originalThen, onfulfilled, onrejected);
           };
           return queryBuilder;
         } else if (queryBuilder && typeof queryBuilder === 'object') {

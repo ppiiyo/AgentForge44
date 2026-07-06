@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -22,6 +22,11 @@ export const memberships = sqliteTable('memberships', {
   workspaceId: text('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('viewer'), // 'owner' | 'editor' | 'viewer'
   createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('memberships_user_id_idx').on(table.userId),
+    workspaceIdIdx: index('memberships_workspace_id_idx').on(table.workspaceId),
+  };
 });
 
 export const projects = sqliteTable('projects', {
@@ -32,6 +37,11 @@ export const projects = sqliteTable('projects', {
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
+}, (table) => {
+  return {
+    tenantIdIdx: index('projects_tenant_id_idx').on(table.tenantId),
+    userIdIdx: index('projects_user_id_idx').on(table.userId),
+  };
 });
 
 export const graphs = sqliteTable('graphs', {
@@ -43,6 +53,11 @@ export const graphs = sqliteTable('graphs', {
   version: integer('version').notNull().default(1),
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    projectIdIdx: index('graphs_project_id_idx').on(table.projectId),
+    tenantIdIdx: index('graphs_tenant_id_idx').on(table.tenantId),
+  };
 });
 
 export const metrics = sqliteTable('metrics', {
@@ -57,6 +72,11 @@ export const metrics = sqliteTable('metrics', {
   nodeExecutions: text('node_executions').notNull(), // JSON array of NodeExecution
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    graphIdIdx: index('metrics_graph_id_idx').on(table.graphId),
+    tenantIdIdx: index('metrics_tenant_id_idx').on(table.tenantId),
+  };
 });
 
 export const versions = sqliteTable('versions', {
@@ -69,6 +89,11 @@ export const versions = sqliteTable('versions', {
   commitMessage: text('commit_message').notNull(),
   diffSummary: text('diff_summary').notNull(),
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
+}, (table) => {
+  return {
+    graphIdIdx: index('versions_graph_id_idx').on(table.graphId),
+    tenantIdIdx: index('versions_tenant_id_idx').on(table.tenantId),
+  };
 });
 
 export const marketplaceItems = sqliteTable('marketplace_items', {
@@ -97,6 +122,11 @@ export const deployments = sqliteTable('deployments', {
   deployedBy: text('deployed_by'),
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    graphIdIdx: index('deployments_graph_id_idx').on(table.graphId),
+    tenantIdIdx: index('deployments_tenant_id_idx').on(table.tenantId),
+  };
 });
 
 export const apiKeys = sqliteTable('api_keys', {
@@ -109,6 +139,11 @@ export const apiKeys = sqliteTable('api_keys', {
   expiresAt: text('expires_at'),
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('api_keys_user_id_idx').on(table.userId),
+    tenantIdIdx: index('api_keys_tenant_id_idx').on(table.tenantId),
+  };
 });
 
 export const pipelineRuns = sqliteTable('pipeline_runs', {
@@ -127,4 +162,9 @@ export const pipelineRuns = sqliteTable('pipeline_runs', {
   tenantId: text('tenant_id').notNull().default('default-workspace').references(() => workspaces.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
+}, (table) => {
+  return {
+    graphIdIdx: index('pipeline_runs_graph_id_idx').on(table.graphId),
+    tenantIdIdx: index('pipeline_runs_tenant_id_idx').on(table.tenantId),
+  };
 });

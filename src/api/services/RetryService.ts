@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { cache, computeHash } from '../../services/cache.js';
 
 export interface RetryResult {
   response: any;
@@ -87,6 +88,35 @@ export function handleSimulatedRequest(data: any) {
 }
 
 export async function generateWithRetry(
+  ai: GoogleGenAI,
+  model: string,
+  contents: string,
+  config: any,
+  attempts = 3,
+  delayMs = 1500
+): Promise<RetryResult> {
+  const cacheKey = `llm_cache:${computeHash(JSON.stringify({ model, contents, config }))}`;
+  try {
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    // Ignore cache lookup errors
+  }
+
+  const result = await generateWithRetryInternal(ai, model, contents, config, attempts, delayMs);
+
+  try {
+    await cache.set(cacheKey, JSON.stringify(result), 300); // Cache for 5 minutes
+  } catch (e) {
+    // Ignore cache write errors
+  }
+
+  return result;
+}
+
+async function generateWithRetryInternal(
   ai: GoogleGenAI,
   model: string,
   contents: string,
