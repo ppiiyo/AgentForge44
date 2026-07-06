@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Clock, RefreshCw, AlertTriangle, 
   CheckCircle2, Search, Filter, ShieldAlert, ChevronRight, BarChart3, Database,
-  Zap, Flame, Sliders
+  Zap, Flame, Sliders, Brain, GitFork, Network, Cpu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Legend, Cell 
 } from 'recharts';
+import { useEditorStore } from '../store/useEditorStore';
 
 interface ExecutionDetail {
   id: string;
@@ -72,7 +73,16 @@ const TRANSLATIONS = {
     others: 'Other Nodes',
     runsLabel: 'Runs Count',
     costLabel: 'Cost (USD)',
-    tokensLabel: 'Token Weight'
+    tokensLabel: 'Token Weight',
+    complexityTitle: 'Active Workspace Blueprint Complexity',
+    complexityDesc: 'An interactive heuristic assessment of cognitive weight, routing depth, and semantic density on your canvas.',
+    complexityScore: 'Complexity Score',
+    complexityTier: 'Structural Tier',
+    nodesConnected: 'Connected Active Nodes',
+    logicOverhead: 'Logic & Routing Depth',
+    semanticDensity: 'RAG & Semantic Operations',
+    scaleLabel: 'Scale',
+    complexityBreakdown: 'Heuristic Operator Distribution'
   },
   ru: {
     title: 'Метрики обсервабилити и телеметрии',
@@ -102,7 +112,16 @@ const TRANSLATIONS = {
     others: 'Прочие узлы',
     runsLabel: 'Количество запусков',
     costLabel: 'Стоимость (USD)',
-    tokensLabel: 'Объем токенов'
+    tokensLabel: 'Объем токенов',
+    complexityTitle: 'Сложность активного шаблона',
+    complexityDesc: 'Интерактивная эвристическая оценка когнитивного веса, глубины маршрутизации и семантической плотности на холсте.',
+    complexityScore: 'Показатель сложности',
+    complexityTier: 'Уровень структуры',
+    nodesConnected: 'Подключенные активные узлы',
+    logicOverhead: 'Глубина логики и маршрутизации',
+    semanticDensity: 'RAG и семантические операции',
+    scaleLabel: 'Масштаб',
+    complexityBreakdown: 'Эвристический структурный анализ'
   },
   zh: {
     title: '智能代理工作流可观测性与监控仪表盘',
@@ -132,7 +151,16 @@ const TRANSLATIONS = {
     others: '其他业务节点',
     runsLabel: '执行次数',
     costLabel: '资费金额 (USD)',
-    tokensLabel: '消耗 Token 字节'
+    tokensLabel: '消耗 Token 字节',
+    complexityTitle: '当前工作区蓝图复杂度指标',
+    complexityDesc: '基于节点拓扑结构、认知决策链深度、语义检索密度的多维综合复杂度评估。',
+    complexityScore: '综合复杂度评分',
+    complexityTier: '架构等级',
+    nodesConnected: '已关联的有源节点',
+    logicOverhead: '逻辑分流控制深度',
+    semanticDensity: '语义索引与RAG算子占比',
+    scaleLabel: '阶梯比率',
+    complexityBreakdown: '拓扑算子权重分配柱状图'
   }
 };
 
@@ -249,6 +277,144 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   }, [activeTab]);
 
   const text = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+
+  // Fetch active canvas nodes and connections for live complexity calculations
+  const canvasNodes = useEditorStore((state) => state.nodes) || [];
+  const canvasConnections = useEditorStore((state) => state.connections) || [];
+
+  // Heuristic logic to calculate live workflow complexity
+  const {
+    totalNodesCount,
+    connectedNodesCount,
+    connectionDensity,
+    complexityScore,
+    complexityPercent,
+    nodeBreakdown,
+    complexityTier,
+    complexityColor,
+    complexityAdvice
+  } = React.useMemo(() => {
+    const totalNodes = canvasNodes.length;
+    const totalConnections = canvasConnections.length;
+
+    // Get list of connected node IDs (nodes with at least one connection incoming or outgoing)
+    const connectedNodeIds = new Set<string>();
+    canvasConnections.forEach(c => {
+      connectedNodeIds.add(c.sourceId);
+      connectedNodeIds.add(c.targetId);
+    });
+    const connectedCount = Array.from(connectedNodeIds).filter(id => canvasNodes.some(n => n.id === id)).length;
+
+    // Categorize nodes for heuristic breakdown & scoring
+    let baseIOCount = 0; // input, output, prompt
+    let llmCount = 0;    // gemini, prompt_optimizer
+    let logicCount = 0;  // router, tool, human_confirmation, webhook
+    let semanticCount = 0; // rag, vector-search, multimodal, reviewer
+
+    canvasNodes.forEach(node => {
+      const type = node.type;
+      if (type === 'input' || type === 'output' || type === 'prompt') {
+        baseIOCount++;
+      } else if (type === 'gemini' || type === 'prompt_optimizer') {
+        llmCount++;
+      } else if (type === 'router' || type === 'tool' || type === 'human_confirmation' || type === 'webhook') {
+        logicCount++;
+      } else if (type === 'rag' || type === 'vector-search' || type === 'multimodal' || type === 'reviewer') {
+        semanticCount++;
+      } else {
+        baseIOCount++; // Fallback
+      }
+    });
+
+    // Calculate score based on node types
+    const baseScore = (baseIOCount * 1.5) + (llmCount * 3.5) + (logicCount * 5.0) + (semanticCount * 7.5);
+    // Add connection density weight (connections provide flow complexity)
+    const connectionScore = totalConnections * 2.5;
+
+    const rawScore = baseScore + connectionScore;
+    // Normalize to 100 max, assume a score of 45 is a 100% highly dense agentic loop
+    const percent = Math.min(100, Math.round((rawScore / 45) * 100));
+
+    // Determine tier
+    let tier = '';
+    let color = '';
+    let advice = '';
+
+    if (percent <= 20) {
+      if (currentLang === 'ru') {
+        tier = 'Базовый (Линейный)';
+        color = 'text-sky-450 bg-sky-950/20 border-sky-900/35';
+        advice = 'Простой линейный поток. Отлично подходит для базовых шаблонов запросов без разветвления логики.';
+      } else if (currentLang === 'zh') {
+        tier = '基础线性工作流';
+        color = 'text-sky-450 bg-sky-950/20 border-sky-900/35';
+        advice = '结构极为简练的线性流。适合单步 Prompt 拼装，不涉及任何条件分支或自主反馈循环。';
+      } else {
+        tier = 'Basic Linear Utility';
+        color = 'text-sky-450 bg-sky-950/20 border-sky-900/35';
+        advice = 'A simple linear pipeline. Great for single-step template rendering and direct input-output workflows.';
+      }
+    } else if (percent <= 50) {
+      if (currentLang === 'ru') {
+        tier = 'Умеренный (Интерактивный)';
+        color = 'text-emerald-400 bg-emerald-950/20 border-emerald-900/35';
+        advice = 'Сбалансированный поток. Содержит ИИ-агентов с базовыми связями для структурированных ответов.';
+      } else if (currentLang === 'zh') {
+        tier = '中等交互智能体';
+        color = 'text-emerald-400 bg-emerald-950/20 border-emerald-900/35';
+        advice = '具备一定交互能力的标准智能体。包含了大语言模型算子，适用于常规结构化生成任务。';
+      } else {
+        tier = 'Moderate Interactive Agent';
+        color = 'text-emerald-400 bg-emerald-950/20 border-emerald-900/35';
+        advice = 'A well-rounded agent configuration. Integrates discrete LLM invocations with solid structural bindings.';
+      }
+    } else if (percent <= 80) {
+      if (currentLang === 'ru') {
+        tier = 'Сложная система (Оркестрация)';
+        color = 'text-amber-400 bg-amber-950/20 border-amber-900/35';
+        advice = 'Высокая сложность. Использует условную маршрутизацию, инструменты или самопроверку для надежности.';
+      } else if (currentLang === 'zh') {
+        tier = '高级决策编排系统';
+        color = 'text-amber-400 bg-amber-950/20 border-amber-900/35';
+        advice = '高度复杂的系统编排。引人了条件路由决策、自定义函数工具或自我纠错审查机制。';
+      } else {
+        tier = 'Orchestrated Complex System';
+        color = 'text-amber-400 bg-amber-950/20 border-amber-900/35';
+        advice = 'High structural density. Leverages conditional routers, tool calls, or review loops for advanced decision making.';
+      }
+    } else {
+      if (currentLang === 'ru') {
+        tier = 'Когнитивный супер-агент';
+        color = 'text-purple-400 bg-purple-950/20 border-purple-900/35';
+        advice = 'Предельная автономность. Многократная самокоррекция, семантический поиск RAG и глубокие циклы обратной связи.';
+      } else if (currentLang === 'zh') {
+        tier = '自主深度认知网络';
+        color = 'text-purple-400 bg-purple-950/20 border-purple-900/35';
+        advice = '极致的自主执行力。深度整合了多轮反馈自愈回路、高维向量检索 (RAG) 与智能工具协作网。';
+      } else {
+        tier = 'Autonomous Cognitive Network';
+        color = 'text-purple-400 bg-purple-950/20 border-purple-900/35';
+        advice = 'Maximum autonomy. Combines iterative self-correction, dynamic RAG document search, and deep cyclic feedback loops.';
+      }
+    }
+
+    return {
+      totalNodesCount: totalNodes,
+      connectedNodesCount: connectedCount,
+      connectionDensity: totalNodes > 0 ? (totalConnections / totalNodes).toFixed(1) : '0.0',
+      complexityScore: rawScore.toFixed(1),
+      complexityPercent: percent,
+      nodeBreakdown: [
+        { name: currentLang === 'ru' ? 'Ввод/Вывод' : currentLang === 'zh' ? '基础 I/O' : 'Base I/O', value: baseIOCount, color: '#64748b' },
+        { name: currentLang === 'ru' ? 'Модели ИИ' : currentLang === 'zh' ? '大模型算子' : 'LLM Brains', value: llmCount, color: '#10b981' },
+        { name: currentLang === 'ru' ? 'Логика/Роутинг' : currentLang === 'zh' ? '逻辑路由' : 'Logic Ops', value: logicCount, color: '#f59e0b' },
+        { name: currentLang === 'ru' ? 'Семантика/RAG' : currentLang === 'zh' ? '语义检索' : 'Semantic/RAG', value: semanticCount, color: '#8b5cf6' },
+      ],
+      complexityTier: tier,
+      complexityColor: color,
+      complexityAdvice: advice
+    };
+  }, [canvasNodes, canvasConnections, currentLang]);
 
   // Filter local executions inside UI for high-fidelity client sorting
   const filteredExecutions = summary?.executions ? summary.executions.filter(e => {
@@ -412,6 +578,186 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
               </div>
               <div className="bg-purple-950/20 p-2.5 rounded-2xl border border-purple-900/30 text-purple-400 shrink-0">
                 <CheckCircle2 size={18} />
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Structural & Heuristic Complexity Analyzer Section */}
+          <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
+            {/* Ambient subtle glowing background effect */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            {/* Left Column (Span 2): Complexity Gauge, Meters, and Metrics */}
+            <div className="lg:col-span-2 space-y-5 relative">
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+                  <Brain className="text-emerald-400" size={16} />
+                  {text.complexityTitle}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {text.complexityDesc}
+                </p>
+              </div>
+
+              {/* Meter and percentage details row */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center bg-slate-900/20 border border-slate-900 p-4.5 rounded-2xl">
+                
+                {/* Circular styled glow percentage display */}
+                <div className="md:col-span-4 flex flex-col items-center justify-center text-center p-3 border-b md:border-b-0 md:border-r border-slate-900">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+                    {text.complexityScore}
+                  </span>
+                  
+                  <div className="relative flex items-center justify-center my-3 w-28 h-28">
+                    {/* SVG background circle and progress track */}
+                    <svg className="w-full h-full -rotate-90">
+                      <circle
+                        cx="56"
+                        cy="56"
+                        r="46"
+                        className="stroke-slate-900"
+                        strokeWidth="8"
+                        fill="transparent"
+                      />
+                      <motion.circle
+                        cx="56"
+                        cy="56"
+                        r="46"
+                        className="stroke-emerald-500"
+                        strokeWidth="8"
+                        strokeDasharray={289}
+                        initial={{ strokeDashoffset: 289 }}
+                        animate={{ strokeDashoffset: 289 - (289 * complexityPercent) / 100 }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        strokeLinecap="round"
+                        fill="transparent"
+                      />
+                    </svg>
+                    
+                    {/* Inner Text with active rating */}
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-2xl font-black text-slate-100 font-mono tracking-tight">
+                        {complexityPercent}%
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-450 mt-0.5">
+                        {complexityScore} pt
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Heuristic stats column */}
+                <div className="md:col-span-8 space-y-4">
+                  {/* Status Tier Badge */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <span className="text-[9px] font-extrabold uppercase text-slate-500 tracking-wider">
+                        {text.complexityTier}
+                      </span>
+                      <div className={`px-2.5 py-1 rounded-xl border text-xs font-black uppercase tracking-wide inline-block ${complexityColor}`}>
+                        {complexityTier}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[9px] font-extrabold uppercase text-slate-505 tracking-wider block">
+                        Workspace Health
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400 font-mono">
+                        Active & Synced
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Micro Heuristics Grid */}
+                  <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-900/60">
+                    <div className="bg-slate-950/40 p-2 rounded-xl border border-slate-900/50">
+                      <span className="text-[8px] font-extrabold uppercase text-slate-500 tracking-wide block leading-none">
+                        Nodes Connected
+                      </span>
+                      <span className="text-xs font-black text-slate-200 font-mono mt-1.5 block">
+                        {connectedNodesCount} <span className="text-[9px] text-slate-500 font-sans font-normal">/ {totalNodesCount}</span>
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-950/40 p-2 rounded-xl border border-slate-900/50">
+                      <span className="text-[8px] font-extrabold uppercase text-slate-500 tracking-wide block leading-none">
+                        Connection Ratio
+                      </span>
+                      <span className="text-xs font-black text-slate-200 font-mono mt-1.5 block">
+                        {connectionDensity} <span className="text-[9px] text-slate-500 font-sans font-normal">conn/nd</span>
+                      </span>
+                    </div>
+
+                    <div className="bg-slate-950/40 p-2 rounded-xl border border-slate-900/50">
+                      <span className="text-[8px] font-extrabold uppercase text-slate-500 tracking-wide block leading-none">
+                        Active Loop Logic
+                      </span>
+                      <span className="text-xs font-black text-purple-400 font-mono mt-1.5 block">
+                        {canvasConnections.length} paths
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actionable advice note */}
+                  <p className="text-[10px] text-slate-400 leading-relaxed italic bg-slate-950/25 p-2 rounded-xl border border-slate-900/30">
+                    💡 {complexityAdvice}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Right Column (Span 1): Pure HTML/Tailwind Horizontal Operator Bar Graph */}
+            <div className="bg-slate-900/20 border border-slate-900 p-4.5 rounded-2xl flex flex-col justify-between">
+              <div className="space-y-1 pb-3 border-b border-slate-900">
+                <h4 className="text-[11px] font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+                  <Cpu size={12} className="text-emerald-400" />
+                  {text.complexityBreakdown}
+                </h4>
+                <p className="text-[9px] text-slate-500">
+                  Workspace token and logical operator distribution weight.
+                </p>
+              </div>
+
+              {/* Progress bars list */}
+              <div className="space-y-3.5 my-4 flex-1 flex flex-col justify-center">
+                {nodeBreakdown.map((item, idx) => {
+                  const maxVal = Math.max(...nodeBreakdown.map(b => b.value)) || 1;
+                  const ratioPercent = Math.max(8, Math.round((item.value / maxVal) * 100));
+                  
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-450 font-bold flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+                          {item.name}
+                        </span>
+                        <span className="text-slate-300 font-mono font-black bg-slate-900 px-1.5 py-0.5 rounded">
+                          {item.value} {item.value === 1 ? 'node' : 'nodes'}
+                        </span>
+                      </div>
+                      
+                      {/* Visual progress bar layout */}
+                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-850/40">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${ratioPercent}%` }}
+                          transition={{ duration: 0.8, delay: idx * 0.1, ease: 'easeOut' }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Heuristic validation summary */}
+              <div className="text-[9px] text-slate-500 font-mono flex justify-between items-center pt-2.5 border-t border-slate-900 leading-none">
+                <span>Metric Baseline: Heuristics v3.1</span>
+                <span className="text-emerald-500">✔ Live Update</span>
               </div>
             </div>
           </div>
