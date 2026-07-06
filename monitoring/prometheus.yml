@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: 'agentforge-backend'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['backend:3000']
+    scrape_interval: 10s
+
+  - job_name: 'agentforge-executor'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['executor:3001']
+    scrape_interval: 10s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:9121'] # redis_exporter
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:9187'] # postgres_exporter

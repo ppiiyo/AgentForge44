@@ -1,0 +1,38 @@
+groups:
+  - name: pipeline_alerts
+    rules:
+      - alert: HighPipelineErrorRate
+        expr: rate(pipeline_errors_total[5m]) / rate(pipeline_executions_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High pipeline execution error rate (instance {{ $labels.instance }})"
+          description: "Pipeline error rate is above 5% over the last 5 minutes."
+
+      - alert: SlowPipelineExecutions
+        expr: histogram_quantile(0.95, sum(rate(pipeline_execution_duration_seconds_bucket[5m])) by (le)) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow 95th percentile pipeline execution (instance {{ $labels.instance }})"
+          description: "95% of pipeline executions are taking longer than 10 seconds over the last 5 minutes."
+
+      - alert: ExecutorContainerDead
+        expr: up{job="agentforge-executor"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Agentforge Executor service is down"
+          description: "The executor service container has been unreachable for more than 1 minute."
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_activity_count{state="active"} / pg_settings_max_connections > 0.85
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool is almost exhausted"
+          description: "Active database connections are above 85% of max connections."
