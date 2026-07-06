@@ -19,6 +19,8 @@ export class PipelineExecutor {
   private logs: StepLog[] = [];
   private concurrencyLimit: number;
   private model: string;
+  private readonly GLOBAL_TIMEOUT = 300000; // 5 минут
+  private abortController: AbortController;
 
   constructor(
     private nodes: FlowNode[],
@@ -28,6 +30,7 @@ export class PipelineExecutor {
   ) {
     this.concurrencyLimit = options.concurrencyLimit || 3;
     this.model = options.model || 'gemini-3.5-flash';
+    this.abortController = new AbortController();
   }
 
   /**
@@ -62,10 +65,31 @@ export class PipelineExecutor {
     }
   }
 
+  private createTimeoutPromise(ms: number): Promise<never> {
+    return new Promise((_, reject) => {
+      const timer = setTimeout(() => {
+        this.abortController.abort();
+        reject(new Error(`Pipeline timeout after ${ms}ms`));
+      }, ms);
+      if (timer && timer.unref) {
+        timer.unref();
+      }
+    });
+  }
+
   /**
    * Run the pipeline using Kahn's topological scheduler with parallel concurrency limits.
    */
   async execute(): Promise<PipelineExecutionResult> {
+    this.abortController = new AbortController();
+    
+    return Promise.race([
+      this.executeInternal(),
+      this.createTimeoutPromise(this.GLOBAL_TIMEOUT)
+    ]);
+  }
+
+  private async executeInternal(): Promise<PipelineExecutionResult> {
     const startTime = Date.now();
     logger.info(`[KahnPipelineExecutor] Starting execution with concurrency limit: ${this.concurrencyLimit}`);
 
@@ -88,6 +112,11 @@ export class PipelineExecutor {
 
     return new Promise<PipelineExecutionResult>((resolve, reject) => {
       const checkAndRunNext = () => {
+        if (this.abortController.signal.aborted) {
+          reject(new Error('Execution cancelled'));
+          return;
+        }
+
         // If we finished everything
         if (completedNodes.size === this.nodes.length) {
           let finalResultText = "";
@@ -115,12 +144,20 @@ export class PipelineExecutor {
 
         // Spawn as many tasks as possible up to the concurrency limit
         while (readyQueue.length > 0 && runningTasks.size < this.concurrencyLimit) {
+          if (this.abortController.signal.aborted) {
+            reject(new Error('Execution cancelled'));
+            return;
+          }
+
           const nextNodeId = readyQueue.shift()!;
           const node = this.nodes.find(n => n.id === nextNodeId);
           if (!node) continue;
 
           const taskPromise = this.executeNode(node)
             .then(() => {
+              if (this.abortController.signal.aborted) {
+                return;
+              }
               completedNodes.add(nextNodeId);
               runningTasks.delete(taskPromise);
 
@@ -156,6 +193,10 @@ export class PipelineExecutor {
    * Executes a single node with strategy lookup and telemetry logging.
    */
   private async executeNode(node: FlowNode): Promise<void> {
+    if (this.abortController.signal.aborted) {
+      throw new Error('Execution cancelled');
+    }
+
     const stepStart = Date.now();
     logger.debug(`[KahnPipelineExecutor] Executing node: ${node.title} (${node.id})`);
 
@@ -201,6 +242,7 @@ export class PipelineExecutor {
         connections: this.connections,
         logs: this.logs,
         iterationsCount: {},
+        signal: this.abortController.signal,
       };
 
       await strategy.execute(node, context as any);

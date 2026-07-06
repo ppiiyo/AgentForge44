@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { RedisClient } from '../infrastructure/cache/RedisClient.js';
 
 export enum CircuitState {
   CLOSED = 'CLOSED',
@@ -30,11 +31,43 @@ export class CircuitBreaker extends EventEmitter {
     };
   }
 
+  async syncFromRedis(): Promise<void> {
+    try {
+      const redis = RedisClient.getInstance();
+      const cached = await redis.getCircuitBreakerState(this.options.name);
+      if (cached) {
+        this.state = cached.state as any;
+        this.failureCount = cached.failureCount;
+        this.lastFailureTime = cached.lastFailureTime ?? null;
+        this.nextAttempt = cached.nextRetryTime ?? null;
+      }
+    } catch (err) {
+      // Degrade gracefully
+    }
+  }
+
+  async syncToRedis(): Promise<void> {
+    try {
+      const redis = RedisClient.getInstance();
+      await redis.setCircuitBreakerState(this.options.name, {
+        state: this.state as any,
+        failureCount: this.failureCount,
+        lastFailureTime: this.lastFailureTime ?? undefined,
+        nextRetryTime: this.nextAttempt ?? undefined
+      });
+    } catch (err) {
+      // Degrade gracefully
+    }
+  }
+
   async execute<T>(fn: () => Promise<T>): Promise<T> {
+    await this.syncFromRedis().catch(() => {});
+
     if (this.state === CircuitState.OPEN) {
       if (Date.now() >= (this.nextAttempt || 0)) {
         this.state = CircuitState.HALF_OPEN;
         this.emit('stateChange', { state: this.state, name: this.options.name });
+        await this.syncToRedis().catch(() => {});
       } else {
         const error = new Error(`Circuit breaker ${this.options.name} is OPEN`);
         this.emit('failure', { error, name: this.options.name });
@@ -44,53 +77,55 @@ export class CircuitBreaker extends EventEmitter {
 
     try {
       const result = await fn();
-      this.onSuccess();
+      await this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure(error as Error);
+      await this.onFailure(error as Error);
       throw error;
     }
   }
 
-  private onSuccess(): void {
+  private async onSuccess(): Promise<void> {
     if (this.state === CircuitState.HALF_OPEN) {
       this.successCount++;
       if (this.successCount >= 3) {
-        this.close();
+        await this.close();
       }
     } else {
-      this.reset();
+      await this.reset();
     }
+    await this.syncToRedis().catch(() => {});
   }
 
-  private onFailure(error: Error): void {
+  private async onFailure(error: Error): Promise<void> {
     this.failureCount++;
     this.lastFailureTime = Date.now();
 
     if (this.state === CircuitState.HALF_OPEN) {
-      this.open();
+      await this.open();
     } else if (this.failureCount >= this.options.failureThreshold) {
-      this.open();
+      await this.open();
     }
 
     this.emit('failure', { error, name: this.options.name, failureCount: this.failureCount });
+    await this.syncToRedis().catch(() => {});
   }
 
-  private open(): void {
+  private async open(): Promise<void> {
     this.state = CircuitState.OPEN;
     this.nextAttempt = Date.now() + this.options.resetTimeout;
     this.emit('stateChange', { state: this.state, name: this.options.name });
     console.warn(`Circuit breaker ${this.options.name} OPENED`);
   }
 
-  private close(): void {
+  private async close(): Promise<void> {
     this.state = CircuitState.CLOSED;
-    this.reset();
+    await this.reset();
     this.emit('stateChange', { state: this.state, name: this.options.name });
     console.log(`Circuit breaker ${this.options.name} CLOSED`);
   }
 
-  private reset(): void {
+  private async reset(): Promise<void> {
     this.failureCount = 0;
     this.successCount = 0;
     this.lastFailureTime = null;

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { adapter } from '../db/index.js';
+import { RedisClient } from '../infrastructure/cache/RedisClient.js';
 
 export function createHealthRoutes(): Router {
   const router = Router();
@@ -25,11 +26,29 @@ export function createHealthRoutes(): Router {
       dbStatus = 'error';
     }
 
+    let redisStatus = 'disabled';
+    let redisLatency: number | undefined;
+    if (process.env.REDIS_URL) {
+      const redisStart = Date.now();
+      try {
+        const redis = RedisClient.getInstance();
+        await redis.ping();
+        redisStatus = 'up';
+        redisLatency = Date.now() - redisStart;
+      } catch (err: any) {
+        redisStatus = 'down';
+      }
+    }
+
     const memUsage = process.memoryUsage();
     const checks = {
       database: {
         status: dbStatus,
         latency: dbLatency
+      },
+      redis: {
+        status: redisStatus,
+        latency: redisLatency
       },
       memory: {
         status: 'ok',
@@ -39,8 +58,8 @@ export function createHealthRoutes(): Router {
       }
     };
 
-    const allHealthy = dbStatus === 'ok';
-    const statusCode = allHealthy ? 200 : 503;
+    const allHealthy = dbStatus === 'ok' && (redisStatus === 'up' || redisStatus === 'disabled');
+    const statusCode = dbStatus === 'ok' ? 200 : 503;
 
     res.status(statusCode).json({
       status: allHealthy ? 'ok' : 'degraded',
