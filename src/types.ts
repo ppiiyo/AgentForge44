@@ -157,7 +157,7 @@ export interface Workflow {
 export interface StepLog {
   nodeId: string;
   nodeTitle: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'paused';
   input?: string;
   output?: string;
   duration?: number; // ms

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, ChevronLeft, ChevronRight, Terminal, Clock, RefreshCw, Trash2, ShieldAlert, Zap, RotateCcw } from 'lucide-react';
+import { Play, Pause, ChevronLeft, ChevronRight, Terminal, Clock, RefreshCw, Trash2, ShieldAlert, Zap, RotateCcw, Send, Check, X, MessageSquare } from 'lucide-react';
 import { playClickSound } from '../utils/audio';
 
 interface Snapshot {
@@ -20,7 +20,7 @@ interface DebugSession {
 interface AsyncPipelineRun {
   id: string;
   graphId: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'paused';
   stepCount: number;
   error?: string | null;
   createdAt: string;
@@ -50,6 +50,15 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [pollingRunId, setPollingRunId] = useState<string | null>(null);
   const [resumingRunId, setResumingRunId] = useState<string | null>(null);
+
+  // Interactive Human Confirmation Gate & AI Copilot Chat state
+  const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
+    { sender: 'ai', text: 'Workflow execution is PAUSED at a Human Gate. I am your Interactive Intervention Copilot. You can ask me questions about the current state, inspect inputs, edit values, or approve the step to resume execution!' }
+  ]);
+  const [userChatMessage, setUserChatMessage] = useState('');
+  const [isSendingChatMessage, setIsSendingChatMessage] = useState(false);
+  const [gateEditValue, setGateEditValue] = useState('');
+  const [isGateSubmitting, setIsGateSubmitting] = useState(false);
 
   const t = {
     en: {
@@ -253,6 +262,93 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     }
   };
 
+  const pausedNode = nodes.find(n => n.type === 'human_confirmation');
+  const pausedNodeId = sessionDetails?.snapshots?.[sessionDetails.snapshots.length - 1]?.nodeId || pausedNode?.id;
+  const pausedNodeTitle = sessionDetails?.snapshots?.[sessionDetails.snapshots.length - 1]?.nodeTitle || pausedNode?.title || "Operator Confirmation";
+
+  const handleSendChatMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userChatMessage.trim() || !activeRunId || isSendingChatMessage) return;
+
+    const userText = userChatMessage;
+    setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setUserChatMessage('');
+    setIsSendingChatMessage(true);
+
+    try {
+      const response = await fetch(`/api/runs/${activeRunId}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer forge_production_admin_token'
+        },
+        body: JSON.stringify({
+          message: userText,
+          nodes
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setChatMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
+      } else {
+        setChatMessages(prev => [...prev, { sender: 'ai', text: 'Error: Failed to fetch response from Copilot.' }]);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { sender: 'ai', text: `Connection error: ${err.message || String(err)}` }]);
+    } finally {
+      setIsSendingChatMessage(false);
+    }
+  };
+
+  const handleConfirmGate = async (approved: boolean) => {
+    if (!activeRunId || isGateSubmitting) return;
+
+    const activePausedNodeId = pausedNodeId;
+    if (!activePausedNodeId) {
+      alert("Active paused node ID could not be determined.");
+      return;
+    }
+
+    setIsGateSubmitting(true);
+    try {
+      const response = await fetch(`/api/runs/${activeRunId}/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer forge_production_admin_token'
+        },
+        body: JSON.stringify({
+          nodes,
+          connections,
+          nodeId: activePausedNodeId,
+          approved,
+          editValue: approved ? (gateEditValue || undefined) : undefined,
+          feedback: approved ? undefined : "Interrupted and aborted by operator"
+        })
+      });
+
+      if (response.ok) {
+        if (approved) {
+          setPollingRunId(activeRunId);
+          fetchAsyncRuns();
+        } else {
+          fetchAsyncRuns();
+          loadAsyncRunDetails(activeRunId);
+        }
+      } else {
+        const data = await response.json();
+        alert(`Failed to submit gate action: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(`Gate action failed: ${err.message || String(err)}`);
+    } finally {
+      setIsGateSubmitting(false);
+    }
+  };
+
   const handleResumeRun = async (runId: string) => {
     setResumingRunId(runId);
     try {
@@ -319,7 +415,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
               error: data.error
             } : r));
 
-            if (data.status === 'completed' || data.status === 'failed') {
+            if (data.status === 'completed' || data.status === 'failed' || data.status === 'paused') {
               setPollingRunId(null);
               loadAsyncRunDetails(pollingRunId);
               fetchAsyncRuns();
@@ -465,13 +561,14 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                 >
                   <div className="flex items-center justify-between text-[10px] font-mono font-bold">
                     <span className="flex items-center gap-1">
-                      <Zap size={10} className={run.status === 'running' ? 'text-amber-400 animate-bounce' : 'text-slate-500'} />
+                      <Zap size={10} className={run.status === 'running' ? 'text-amber-400 animate-bounce' : run.status === 'paused' ? 'text-amber-400 animate-pulse' : 'text-slate-500'} />
                       <span>Queue Run {run.id.slice(-8)}</span>
                     </span>
                     <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider ${
                       run.status === 'completed' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/40' :
                       run.status === 'failed' ? 'bg-rose-950/50 text-rose-400 border border-rose-900/40' :
                       run.status === 'running' ? 'bg-sky-950/50 text-sky-400 border border-sky-900/40' :
+                      run.status === 'paused' ? 'bg-amber-950/50 text-amber-400 border border-amber-900/40 animate-pulse' :
                       'bg-slate-950 text-slate-500'
                     }`}>
                       {run.status === 'running' || pollingRunId === run.id ? t.polling : run.status}
@@ -597,6 +694,111 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                   </>
                 )}
               </button>
+            </div>
+          )}
+
+          {/* If background queue run is paused, show the Interactive Intervention & AI Copilot Chat Gate */}
+          {activeAsyncRun && activeAsyncRun.status === 'paused' && (
+            <div className="bg-amber-950/20 border border-amber-500/30 p-4 rounded-2xl space-y-4">
+              <div className="flex items-start gap-2.5">
+                <span className="relative flex h-3 w-3 mt-1 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
+                <div>
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-amber-400">
+                    Human Intervention Required
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    Execution suspended at node: <span className="font-mono text-amber-300 font-bold">"{pausedNodeTitle}"</span>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Dynamic Copilot Chat History */}
+              <div className="bg-slate-950/90 border border-slate-850 rounded-xl p-3 space-y-3 max-h-[180px] overflow-y-auto">
+                <span className="text-[8.5px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1">
+                  <MessageSquare size={10} />
+                  Copilot Dialogue Interventions
+                </span>
+                <div className="space-y-2 text-[10.5px]">
+                  {chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-2.5 rounded-xl leading-normal ${
+                        msg.sender === 'user'
+                          ? 'bg-amber-500/10 border border-amber-500/20 text-slate-200 ml-4'
+                          : 'bg-slate-900 border border-slate-850 text-slate-300 mr-4'
+                      }`}
+                    >
+                      <span className="font-extrabold text-[9px] uppercase tracking-wider block mb-1 text-slate-500">
+                        {msg.sender === 'user' ? 'Operator' : 'Copilot'}
+                      </span>
+                      {msg.text}
+                    </div>
+                  ))}
+                  {isSendingChatMessage && (
+                    <div className="flex items-center gap-2 text-slate-400 italic">
+                      <RefreshCw size={10} className="animate-spin text-amber-400" />
+                      <span>Copilot is formulating advice...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chat Send Input Form */}
+              <form onSubmit={handleSendChatMessage} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask copilot or inspect current context..."
+                  value={userChatMessage}
+                  onChange={(e) => setUserChatMessage(e.target.value)}
+                  disabled={isSendingChatMessage}
+                  className="flex-1 bg-slate-950 border border-slate-850 text-[10.5px] rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-amber-500 disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={isSendingChatMessage || !userChatMessage.trim()}
+                  className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-450 text-slate-950 cursor-pointer disabled:opacity-40 transition-all flex items-center justify-center"
+                >
+                  <Send size={12} />
+                </button>
+              </form>
+
+              {/* Edit Payload before confirming */}
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase tracking-wider text-slate-500 block">
+                  Optional Approval Output Override (Payload)
+                </label>
+                <textarea
+                  placeholder="Leave blank to use node approved default payload value"
+                  value={gateEditValue}
+                  onChange={(e) => setGateEditValue(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2.5 text-[10.5px] font-mono text-emerald-400 focus:outline-none focus:border-amber-500 min-h-[50px] resize-none"
+                />
+              </div>
+
+              {/* Confirm / Reject Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmGate(false)}
+                  disabled={isGateSubmitting}
+                  className="py-2 px-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-extrabold rounded-lg text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                >
+                  <X size={11} />
+                  Reject Gate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmGate(true)}
+                  disabled={isGateSubmitting}
+                  className="py-2 px-3 bg-emerald-500 hover:bg-emerald-450 text-slate-950 font-black rounded-lg text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-lg active:scale-[0.98] transition-all"
+                >
+                  <Check size={11} />
+                  Approve Gate
+                </button>
+              </div>
             </div>
           )}
 

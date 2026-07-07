@@ -72,7 +72,7 @@ export class PipelineExecutor {
   /**
    * Save checkpoint state to DB
    */
-  public async saveCheckpoint(status: 'pending' | 'running' | 'completed' | 'failed' = 'running', error?: string): Promise<void> {
+  public async saveCheckpoint(status: 'pending' | 'running' | 'completed' | 'failed' | 'paused' = 'running', error?: string): Promise<void> {
     if (!this.runId) return;
     try {
       const existing = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, this.runId)).limit(1);
@@ -239,14 +239,25 @@ export class PipelineExecutor {
                 await telemetry.traceNode(node, () => strategy.execute(node, context));
                 return this.nodeOutputs[node.id];
               } catch (err: any) {
-                this.logs.push({
-                  nodeId: node.id,
-                  nodeTitle: node.title,
-                  status: 'failed',
-                  input: 'Execution Interrupted',
-                  output: err.message || String(err),
-                  duration: Date.now() - stepStart,
-                });
+                if (err.message?.startsWith("PAUSED_FOR_CONFIRMATION:")) {
+                  this.logs.push({
+                    nodeId: node.id,
+                    nodeTitle: node.title,
+                    status: 'paused',
+                    input: `Requested Operator Confirmation: "${(node.fields as any).message || 'Approval requested.'}"`,
+                    output: `Execution suspended. Awaiting human confirmation...`,
+                    duration: Date.now() - stepStart,
+                  });
+                } else {
+                  this.logs.push({
+                    nodeId: node.id,
+                    nodeTitle: node.title,
+                    status: 'failed',
+                    input: 'Execution Interrupted',
+                    output: err.message || String(err),
+                    duration: Date.now() - stepStart,
+                  });
+                }
                 throw err;
               }
             }
@@ -357,6 +368,29 @@ export class PipelineExecutor {
       };
 
     } catch (err: any) {
+      let pauseError: Error | null = null;
+      if (err instanceof AggregateError) {
+        for (const e of err.errors) {
+          if (e?.message?.startsWith("PAUSED_FOR_CONFIRMATION:")) {
+            pauseError = e;
+            break;
+          }
+        }
+      } else if (err.message?.startsWith("PAUSED_FOR_CONFIRMATION:")) {
+        pauseError = err;
+      }
+
+      if (pauseError) {
+        const nodeId = pauseError.message.split(":")[1];
+        if (this.runId) {
+          await this.saveCheckpoint('paused');
+        }
+        return {
+          logs: this.logs,
+          finalResult: `Workflow paused at node "${nodeId}". Awaiting operator intervention...`,
+          totalDuration: Date.now() - startTime,
+        };
+      }
       if (this.runId) {
         await this.saveCheckpoint('failed', err.message || String(err));
       }

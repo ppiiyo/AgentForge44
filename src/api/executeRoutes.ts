@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { GoogleGenAI } from '@google/genai';
 import { executePipeline } from './agentRun.js';
 import { validateBody, PipelineExecuteSchema } from '../utils/validation.js';
 import { StatefulExecutionEngine } from './execution.js';
@@ -474,6 +475,133 @@ router.post('/runs/:id/resume', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
+  try {
+    const runId = req.params.id;
+    const { nodes, connections, nodeId, approved, feedback, editValue } = req.body;
+
+    if (!nodes || !connections || !nodeId) {
+      res.status(400).json({ success: false, error: "Nodes, connections, and nodeId are required." });
+      return;
+    }
+
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    if (run.length === 0) {
+      res.status(404).json({ success: false, error: "Pipeline run not found." });
+      return;
+    }
+    const data = run[0];
+
+    if (approved) {
+      const completedNodes = new Set<string>(JSON.parse(data.completedNodes || '[]'));
+      const activatedNodes = new Set<string>(JSON.parse(data.activatedNodes || '[]'));
+      const nodeOutputs = JSON.parse(data.nodeOutputs || '{}');
+
+      completedNodes.add(nodeId);
+      activatedNodes.delete(nodeId);
+
+      const targetNode = nodes.find((n: any) => n.id === nodeId);
+      const approvedValue = targetNode?.fields?.approvedValue || "Approved payload action.";
+      const finalPayload = editValue !== undefined ? editValue : approvedValue;
+      nodeOutputs[nodeId] = finalPayload;
+
+      const targets = connections.filter((c: any) => c.sourceId === nodeId).map((c: any) => c.targetId);
+      targets.forEach((tId: string) => activatedNodes.add(tId));
+
+      await db.update(tables.pipelineRuns).set({
+        status: 'pending',
+        completedNodes: JSON.stringify(Array.from(completedNodes)),
+        activatedNodes: JSON.stringify(Array.from(activatedNodes)),
+        nodeOutputs: JSON.stringify(nodeOutputs),
+        error: null,
+        updatedAt: new Date().toISOString()
+      }).where(eq(tables.pipelineRuns.id, runId));
+
+      const tenantId = data.tenantId || 'default-workspace';
+      const graphId = data.graphId || 'canvas-workspace';
+      await enqueuePipelineRun(runId, nodes, connections, JSON.parse(data.variables || '{}'), tenantId, graphId);
+
+      res.json({
+        success: true,
+        runId,
+        status: 'pending'
+      });
+    } else {
+      await db.update(tables.pipelineRuns).set({
+        status: 'failed',
+        error: feedback || "Rejected by operator",
+        updatedAt: new Date().toISOString()
+      }).where(eq(tables.pipelineRuns.id, runId));
+
+      res.json({
+        success: true,
+        runId,
+        status: 'failed'
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/runs/:id/chat', async (req: Request, res: Response) => {
+  try {
+    const runId = req.params.id;
+    const { message, nodes } = req.body;
+
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    if (run.length === 0) {
+      res.status(404).json({ success: false, error: "Pipeline run not found." });
+      return;
+    }
+    const data = run[0];
+    const nodeOutputs = JSON.parse(data.nodeOutputs || '{}');
+    const logs = JSON.parse(data.logs || '[]');
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    const isSandbox = !apiKey || 
+                      apiKey === "sandbox_free_test_gemini" || 
+                      apiKey === "your_gemini_api_key_here" || 
+                      apiKey.startsWith("sandbox_") || 
+                      apiKey.includes("sandbox") || 
+                      process.env.NODE_ENV === "test";
+
+    if (isSandbox) {
+      res.json({
+        success: true,
+        reply: `[Demo Mode / Sandbox] Chat received: "${message}". I am the KostromAi44 Interactive Intervention Copilot. The workflow is paused at a human confirmation gate. You can approve or reject the step to resume execution.`
+      });
+      return;
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: `You are the KostromAi44 Interactive Intervention Copilot. The user's workflow pipeline execution is currently PAUSED at a human gate.
+Here is the context of the running graph so far:
+- Current Status: ${data.status}
+- Node Outputs So Far: ${JSON.stringify(nodeOutputs, null, 2)}
+- Execution Logs: ${JSON.stringify(logs.slice(-5), null, 2)}
+- Graph Structure (Nodes): ${JSON.stringify(nodes?.map((n: any) => ({ id: n.id, title: n.title, type: n.type })) || "N/A")}
+
+The user says: "${message}"
+
+Provide a concise, extremely helpful, professional reply explaining what's happening, what inputs are expected at the current pause node, and answering any questions they have. Keep your reply direct, scannable, and clean.`
+    });
+
+    res.json({
+      success: true,
+      reply: response.text || "No response received."
+    });
+  } catch (err: any) {
+    console.warn(`[Copilot Chat Fallback] Live LLM generation failed or was rate-limited (${err.message || String(err)}). Gracefully falling back to sandbox response.`);
+    res.json({
+      success: true,
+      reply: `[Simulated Copilot Response] Pipeline execution is suspended at a Human Confirmation Gate. You can ask me questions about inputs or edit the override output payload. When you are ready, please click Approve or Reject to continue.`
+    });
   }
 });
 
