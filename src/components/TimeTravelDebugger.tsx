@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, ChevronLeft, ChevronRight, Terminal, Clock, RefreshCw, Trash2, ShieldAlert, Zap, RotateCcw } from 'lucide-react';
+import { playClickSound } from '../utils/audio';
 
 interface Snapshot {
   nodeId: string;
@@ -343,6 +344,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     const snap = sessionDetails.snapshots[clampedIndex];
     onHighlightNode(snap.nodeId);
     updateDryRunPreview(snap);
+    playClickSound();
   };
 
   const updateDryRunPreview = (snap: Snapshot) => {
