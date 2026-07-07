@@ -4,6 +4,20 @@ import App from './App.tsx';
 import './index.css';
 import './i18n.ts';
 
+// Suppress benign ResizeObserver loop completed / limit exceeded notifications
+if (typeof window !== 'undefined') {
+  const preventBenignResizeObserverError = (e: ErrorEvent) => {
+    if (e && (
+      e.message?.includes('ResizeObserver loop completed with undelivered notifications') ||
+      e.message?.includes('ResizeObserver loop limit exceeded')
+    )) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  };
+  window.addEventListener('error', preventBenignResizeObserverError);
+}
+
 import * as Sentry from '@sentry/react';
 import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';

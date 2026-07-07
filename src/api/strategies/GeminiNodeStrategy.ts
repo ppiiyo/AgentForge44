@@ -12,10 +12,10 @@ export class GeminiNodeStrategy implements NodeExecutionStrategy {
     const useSearchGrounding = !!node.fields.useSearchGrounding;
 
     const apiKey = context.apiKey || "";
-    const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here" || apiKey.startsWith("sandbox_") || apiKey.includes("sandbox") || !!process.env.VITEST || process.env.NODE_ENV === "test";
+    const isSandbox = !apiKey || apiKey === "sandbox_free_test_gemini" || apiKey === "your_gemini_api_key_here" || apiKey.startsWith("sandbox_") || apiKey.includes("sandbox");
 
     const envKey = process.env.GEMINI_API_KEY || "";
-    const isEnvSandbox = !envKey || envKey === "sandbox_free_test_gemini" || envKey === "your_gemini_api_key_here" || envKey.startsWith("sandbox_") || envKey.includes("sandbox") || !!process.env.VITEST || process.env.NODE_ENV === "test";
+    const isEnvSandbox = !envKey || envKey === "sandbox_free_test_gemini" || envKey === "your_gemini_api_key_here" || envKey.startsWith("sandbox_") || envKey.includes("sandbox");
 
     // Enforce fail-fast checks: throw descriptive error if real key is expected but process.env.GEMINI_API_KEY is sandbox/unconfigured
     if (!isSandbox && isEnvSandbox) {
