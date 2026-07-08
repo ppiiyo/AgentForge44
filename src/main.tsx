@@ -16,6 +16,32 @@ if (typeof window !== 'undefined') {
     }
   };
   window.addEventListener('error', preventBenignResizeObserverError);
+
+  // Wrap ResizeObserver to schedule callbacks via requestAnimationFrame, avoiding synchronous loop errors
+  if (window.ResizeObserver) {
+    const OriginalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver = class ResizeObserver extends OriginalResizeObserver {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      constructor(callback: any) {
+        super((entries, observer) => {
+          requestAnimationFrame(() => {
+            try {
+              callback(entries, observer);
+            } catch (err: any) {
+              const msg = err?.message || String(err);
+              if (
+                msg.includes('ResizeObserver loop completed with undelivered notifications') ||
+                msg.includes('ResizeObserver loop limit exceeded')
+              ) {
+                return;
+              }
+              throw err;
+            }
+          });
+        });
+      }
+    };
+  }
 }
 
 import * as Sentry from '@sentry/react';
