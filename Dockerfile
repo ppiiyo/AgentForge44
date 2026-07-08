@@ -47,6 +47,7 @@ COPY --from=builder /usr/src/app/drizzle-postgres.config.ts ./drizzle-postgres.c
 COPY --from=builder /usr/src/app/drizzle.config.json ./drizzle.config.json
 COPY --from=builder /usr/src/app/tsconfig.json ./tsconfig.json
 COPY --from=builder /usr/src/app/vite.config.ts ./vite.config.ts
+COPY --from=builder /usr/src/app/server.ts ./server.ts
 COPY --from=builder /usr/src/app/src ./src
 
 # Create a storage volume directory for projects saved on server filesystems

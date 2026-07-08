@@ -4,8 +4,8 @@ import { cache } from '../services/cache.js';
 import { GoogleGenAI } from '@google/genai';
 
 describe('=== Task 3.2: LLM Request / Prompt Caching ===', () => {
-  beforeEach(() => {
-    cache.clearLocalCache();
+  beforeEach(async () => {
+    await cache.clearLocalCache();
   });
 
   it('should cache consecutive identical LLM calls transparently', async () => {

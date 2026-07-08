@@ -168,8 +168,15 @@ export class CacheService {
     return val;
   }
 
-  clearLocalCache() {
+  async clearLocalCache(): Promise<void> {
     memoryCache.clear();
+    if (this.redis && this.isRedisConnected) {
+      try {
+        await this.redis.flushall();
+      } catch (err: any) {
+        logger.warn(`[Redis] 'flushall' failed in clearLocalCache: ${err.message}`);
+      }
+    }
   }
 
   getRedisClient(): Redis | null {

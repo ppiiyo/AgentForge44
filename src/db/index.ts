@@ -51,7 +51,7 @@ async function executeWithCaching(target: any, originalThen: any, onfulfilled: a
     if (sqlObj) {
       const sqlStr = (sqlObj.sql || '').trim().toUpperCase();
       if (sqlStr.startsWith('INSERT') || sqlStr.startsWith('UPDATE') || sqlStr.startsWith('DELETE')) {
-        cache.clearLocalCache();
+        await cache.clearLocalCache();
       }
     }
 

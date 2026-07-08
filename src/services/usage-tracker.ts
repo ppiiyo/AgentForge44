@@ -21,11 +21,12 @@ export async function checkSlidingWindow(key: string, limit: number = MAX_REQUES
     try {
       const redisKey = `sliding:${key}`;
       const minScore = now - durationMs;
+      const member = `${now}:${Math.random().toString(36).substring(2, 8)}`;
       
       const pipeline = client.pipeline();
       pipeline.zremrangebyscore(redisKey, '-inf', minScore);
       pipeline.zcard(redisKey);
-      pipeline.zadd(redisKey, now, String(now));
+      pipeline.zadd(redisKey, now, member);
       pipeline.expire(redisKey, Math.ceil(durationMs / 1000));
       
       const results = await pipeline.exec();
@@ -36,7 +37,7 @@ export async function checkSlidingWindow(key: string, limit: number = MAX_REQUES
       // results[1][1] holds the zcard result before zadd runs or in pipeline sequence
       const cardResult = results[1][1] as number;
       if (cardResult >= limit) {
-        await client.zrem(redisKey, String(now));
+        await client.zrem(redisKey, member);
         return false;
       }
       return true;

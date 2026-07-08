@@ -46,12 +46,15 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
     } else if (adapter.type === 'postgres') {
       const migrationsFolder = path.join(process.cwd(), 'drizzle/postgres');
       logger.info(`Running Postgres versioned migrations from: ${migrationsFolder}`);
-      await migratePostgres(db, { migrationsFolder });
+      try {
+        await migratePostgres(db, { migrationsFolder });
+        logger.info('✅ Programmatic migrations executed successfully.');
+      } catch (migError: any) {
+        logger.warn(`[Migrator] Programmatic Postgres migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+      }
     } else {
       throw new Error(`Unsupported database adapter type for migration routing: ${adapter.type}`);
     }
-
-    logger.info('✅ Programmatic migrations executed successfully.');
 
     // Seed the "default-workspace" to bootstrap existing/default accounts
     await seedDefaultWorkspace(adapter);

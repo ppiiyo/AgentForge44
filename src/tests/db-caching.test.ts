@@ -18,7 +18,7 @@ describe('=== Task 3.1: Database Query Caching & Invalidation ===', () => {
 
     try {
       // Clear any pre-existing cache to make the test pristine
-      cache.clearLocalCache();
+      await cache.clearLocalCache();
 
       // Spy on the cache.get and cache.set methods
       const getSpy = vi.spyOn(cache, 'get');

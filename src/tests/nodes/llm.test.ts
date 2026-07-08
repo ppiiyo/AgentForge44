@@ -24,9 +24,9 @@ vi.mock('@google/genai', () => {
 describe('LLM Providers Unit Suite', () => {
   const originalFetch = global.fetch;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     global.fetch = vi.fn();
-    cache.clearLocalCache();
+    await cache.clearLocalCache();
   });
 
   afterEach(() => {
