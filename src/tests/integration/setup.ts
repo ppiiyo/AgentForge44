@@ -1,6 +1,7 @@
 import { TestContainers } from './test-containers.js';
-import { db } from '../../db/index.js';
+import { db, adapter } from '../../db/index.js';
 import { IntegrationPipelineExecutor } from './setup-executor.js';
+import { runSchemaMigrations } from '../../api/migrate.js';
 
 export class IntegrationTestContext {
   public containers!: TestContainers;
@@ -14,6 +15,9 @@ export class IntegrationTestContext {
     
     await ctx.containers.startPostgres();
     await ctx.containers.startRedis();
+    
+    // Programmatically migrate and seed the database context for integration tests
+    await runSchemaMigrations(adapter);
     
     ctx.db = db;
     

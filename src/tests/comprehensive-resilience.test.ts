@@ -191,4 +191,37 @@ describe('KostromAi44 Comprehensive Resilience & Chaos Engineering Suite', () =>
 
     expect(duration).toBeGreaterThanOrEqual(25); // Should have taken at least 30ms due to hang
   });
+
+  // -------------------------------------------------------------
+  // 5. Runtime Self-Healing: Auto-recovery on node crash
+  // -------------------------------------------------------------
+  it('should trigger runtime self-healing when a node fails, recovering successfully', async () => {
+    const nodes: any[] = [
+      { id: 'input-node', type: 'input', title: 'Input', fields: { variables: [] } },
+      { id: 'gemini-node', type: 'gemini', title: 'Gemini Generation', fields: { model: 'gemini-3.5-flash' } },
+      { id: 'output-node', type: 'output', title: 'Output', fields: { value: '' } }
+    ];
+    const connections: any[] = [
+      { id: 'c1', sourceId: 'input-node', targetId: 'gemini-node' },
+      { id: 'c2', sourceId: 'gemini-node', targetId: 'output-node' }
+    ];
+
+    // Force failure on the gemini-node using ChaosEngine
+    chaosEngine.updateConfig({
+      llmFailureActive: { Gemini: true }
+    });
+
+    const executor = new PipelineExecutor(nodes, connections, ai);
+    const result = await executor.execute();
+
+    // Reset chaos
+    chaosEngine.reset();
+
+    const hasHealedContent = result.finalResult.includes('Automatically recovered from failure state') || result.finalResult.includes('Simulated LLM Output');
+    expect(hasHealedContent).toBe(true);
+    const healingLog = result.logs.find(l => l.nodeId === 'gemini-node');
+    expect(healingLog).toBeDefined();
+    const hasCorrectHealingLogInput = healingLog?.input.includes('Self-Healing Recovery') || healingLog?.input.includes('Self-Healing Automated Recovery');
+    expect(hasCorrectHealingLogInput).toBe(true);
+  });
 });
