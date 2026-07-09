@@ -42,7 +42,12 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
     if (adapter.type === 'sqlite') {
       const migrationsFolder = path.join(process.cwd(), 'drizzle/sqlite');
       logger.info(`Running SQLite versioned migrations from: ${migrationsFolder}`);
-      await migrateSqlite(db, { migrationsFolder });
+      try {
+        await migrateSqlite(db, { migrationsFolder });
+        logger.info('✅ Programmatic migrations executed successfully.');
+      } catch (migError: any) {
+        logger.warn(`[Migrator] Programmatic SQLite migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+      }
     } else if (adapter.type === 'postgres') {
       const migrationsFolder = path.join(process.cwd(), 'drizzle/postgres');
       logger.info(`Running Postgres versioned migrations from: ${migrationsFolder}`);
