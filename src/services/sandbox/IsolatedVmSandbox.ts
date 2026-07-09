@@ -16,7 +16,7 @@ export class IsolatedVmSandbox {
   public static async execute(
     code: string,
     timeoutMs: number = 5000,
-    memoryLimitMb: number = 32
+    memoryLimitMb: number = 128
   ): Promise<SandboxExecutionResult> {
     const startTime = Date.now();
     const logs: string[] = [];
@@ -26,8 +26,9 @@ export class IsolatedVmSandbox {
     let logCallback: ivm.Callback | null = null;
 
     try {
-      // Memory limit (e.g., 32MB) to prevent OOM attacks
-      isolate = new ivm.Isolate({ memoryLimit: memoryLimitMb });
+      // Impose a strict ceiling of 128MB to prevent memory-exhaustion/DoS attacks in multi-tenant contexts
+      const actualMemoryLimit = Math.min(memoryLimitMb, 128);
+      isolate = new ivm.Isolate({ memoryLimit: actualMemoryLimit });
       context = await isolate.createContext();
 
       const jail = context.global;

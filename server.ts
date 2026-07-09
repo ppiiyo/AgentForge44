@@ -22,7 +22,7 @@ import { logger } from './src/utils/logger.js';
 import { setupSwagger } from './src/api/swagger.js';
 import { register } from './src/services/metrics.js';
 import { initTracing } from './src/services/tracing.js';
-import authRoutes from './src/api/authRoutes.js';
+import authRoutes, { authMiddleware } from './src/api/authRoutes.js';
 import projectsRouter from './src/api/projectsRoutes.js';
 import graphsRouter from './src/api/graphsRoutes.js';
 import executeRouter from './src/api/executeRoutes.js';
@@ -117,7 +117,7 @@ app.use('/api', marketplaceRouter);
 app.use('/api', deploymentRouter);
 app.use('/api', mcpRouter);
 app.use('/api', metricsRouter);
-app.get('/metrics', async (req: express.Request, res: express.Response) => {
+app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     res.set('Content-Type', register.contentType);
     res.end(await register.metrics());

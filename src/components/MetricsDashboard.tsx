@@ -192,6 +192,35 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     nodeHangMs: {},
   });
 
+  const [readinessData, setReadinessData] = useState<{
+    score: number;
+    checklist: Array<{ key: string; status: 'pass' | 'fail' | 'warning'; name: string; description: string }>;
+    meta: {
+      appName: string;
+      appDescription: string;
+      dbType: string;
+      nodeEnv: string;
+      geminiConfigured: boolean;
+      agentForgeConfigured: boolean;
+    };
+  } | null>(null);
+  const [readinessLoading, setReadinessLoading] = useState(false);
+
+  const fetchReadinessData = async () => {
+    setReadinessLoading(true);
+    try {
+      const res = await fetch('/api/metrics/readiness');
+      if (res.ok) {
+        const data = await res.json();
+        setReadinessData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load readiness data:', err);
+    } finally {
+      setReadinessLoading(false);
+    }
+  };
+
   const fetchMetrics = async () => {
     setLoading(true);
     try {
@@ -263,8 +292,12 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 
   useEffect(() => {
     fetchMetrics();
+    fetchReadinessData();
     // Auto refresh every 15 seconds to stream live dashboard stats
-    const t = setInterval(fetchMetrics, 15000);
+    const t = setInterval(() => {
+      fetchMetrics();
+      fetchReadinessData();
+    }, 15000);
     return () => clearInterval(t);
   }, [period]);
 
@@ -758,6 +791,136 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
               <div className="text-[9px] text-slate-500 font-mono flex justify-between items-center pt-2.5 border-t border-slate-900 leading-none">
                 <span>Metric Baseline: Heuristics v3.1</span>
                 <span className="text-emerald-500">✔ Live Update</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Deployment Readiness Module Card */}
+          <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-80 h-80 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-80 h-80 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            {/* Left Column (Span 2): Checklist detail */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex justify-between items-start gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-slate-100 flex items-center gap-2">
+                    <TrendingUp className="text-blue-400" size={16} />
+                    Cloud Deployment Readiness Compliance
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Systematically audits active env secrets, cloud database engines, secure cryptography keys, and project identity configurations prior to public cloud container deployment.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchReadinessData}
+                  disabled={readinessLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-850 text-slate-350 font-bold rounded-xl border border-slate-850 hover:border-slate-800 text-[10px] transition cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw size={12} className={readinessLoading ? "animate-spin text-blue-400" : "text-blue-400"} />
+                  Re-Scan
+                </button>
+              </div>
+
+              {/* Checklist rendering */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+                {readinessData?.checklist.map((check, idx) => {
+                  let Icon = CheckCircle2;
+                  let iconColor = "text-emerald-400 bg-emerald-950/20 border-emerald-900/30";
+                  if (check.status === 'fail') {
+                    Icon = ShieldAlert;
+                    iconColor = "text-rose-400 bg-rose-950/20 border-rose-900/30";
+                  } else if (check.status === 'warning') {
+                    Icon = AlertTriangle;
+                    iconColor = "text-amber-400 bg-amber-950/20 border-amber-900/30";
+                  }
+
+                  return (
+                    <div key={idx} className="bg-slate-900/20 border border-slate-900/70 rounded-xl p-3 flex gap-3 items-start">
+                      <div className={`p-1.5 rounded-lg border shrink-0 ${iconColor}`}>
+                        <Icon size={14} />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-[11px] font-bold text-slate-200">{check.name}</h4>
+                        <p className="text-[10px] text-slate-400 leading-normal">{check.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Column (Span 1): Dynamic Gauge */}
+            <div className="bg-slate-900/20 border border-slate-900 p-4.5 rounded-2xl flex flex-col justify-between">
+              <div className="space-y-1 pb-3 border-b border-slate-900">
+                <h4 className="text-[11px] font-extrabold uppercase text-slate-305 tracking-wider flex items-center gap-1.5">
+                  <Activity size={12} className="text-blue-400" />
+                  Compliance Score Card
+                </h4>
+                <p className="text-[9px] text-slate-500">
+                  Calculated health evaluation based on strict enterprise checklist.
+                </p>
+              </div>
+
+              {/* Circle progress display */}
+              <div className="flex flex-col items-center justify-center py-4 relative">
+                <div className="relative flex items-center justify-center w-28 h-28">
+                  <svg className="w-full h-full -rotate-90">
+                    <circle
+                      cx="56"
+                      cy="56"
+                      r="46"
+                      className="stroke-slate-900"
+                      strokeWidth="8"
+                      fill="transparent"
+                    />
+                    <motion.circle
+                      cx="56"
+                      cy="56"
+                      r="46"
+                      className={
+                        (readinessData?.score ?? 0) === 100 ? "stroke-emerald-500" :
+                        (readinessData?.score ?? 0) >= 70 ? "stroke-amber-500" : "stroke-rose-500"
+                      }
+                      strokeWidth="8"
+                      strokeDasharray={289}
+                      initial={{ strokeDashoffset: 289 }}
+                      animate={{ strokeDashoffset: 289 - (289 * (readinessData?.score ?? 0)) / 100 }}
+                      transition={{ duration: 1, ease: 'easeOut' }}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-2xl font-black text-slate-100 font-mono tracking-tight">
+                      {readinessData?.score ?? 0}%
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-500 mt-0.5">
+                      Compliant
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 text-center">
+                  <span className="text-[9px] font-extrabold uppercase text-slate-500 tracking-wider block mb-1">
+                    Readiness Rating
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wide inline-block ${
+                    (readinessData?.score ?? 0) === 100 ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" :
+                    (readinessData?.score ?? 0) >= 70 ? "bg-amber-950/40 text-amber-400 border border-amber-900/30" :
+                    "bg-rose-950/40 text-rose-400 border border-rose-900/30"
+                  }`}>
+                    {(readinessData?.score ?? 0) === 100 ? "🎖️ Production Grade" :
+                     (readinessData?.score ?? 0) >= 70 ? "⚡ Ready with Warnings" :
+                     "⚠️ Non-compliant"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer summary */}
+              <div className="text-[9px] text-slate-500 font-mono flex justify-between items-center pt-2.5 border-t border-slate-900 leading-none">
+                <span>Profile: {readinessData?.meta.nodeEnv?.toUpperCase() || 'DEVELOPMENT'}</span>
+                <span className="text-slate-450">DB: {readinessData?.meta.dbType?.toUpperCase() || 'SQLITE'}</span>
               </div>
             </div>
           </div>
