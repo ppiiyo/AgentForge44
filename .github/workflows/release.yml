@@ -1,0 +1,56 @@
+name: Production Release Packager
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on any semantic version tag, e.g., v1.0.0
+
+jobs:
+  release-package:
+    name: Package Application for Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Application Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Compile and Bundle Frontend & Backend Assets
+        run: npm run build
+
+      - name: Create Release Archive Directories
+        run: |
+          mkdir -p dist-release/dist
+          cp -r dist/* dist-release/dist/
+          cp package.json package-lock.json setup.sh docker-compose.yml Dockerfile .env.example README.md LICENSE dist-release/
+          # Prune devDependencies inside production runtime container representation
+          cd dist-release
+          npm install --omit=dev --legacy-peer-deps
+          cd ..
+
+      - name: Generate Tar and Zip Bundles
+        run: |
+          tar -czf kostromai44-release-${{ github.ref_name }}.tar.gz -C dist-release .
+          zip -r kostromai44-release-${{ github.ref_name }}.zip -F dist-release/*
+
+      - name: Draft Github Release and Upload Build Artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            kostromai44-release-${{ github.ref_name }}.tar.gz
+            kostromai44-release-${{ github.ref_name }}.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

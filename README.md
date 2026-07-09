@@ -71,6 +71,10 @@ It unifies modern LLM providers (**Google Gemini, OpenAI, Anthropic Claude, and 
 | 👥 **Real-Time Collaboration** | Synchronized multi-user presence, cursors, and state locks over Socket.io WebSockets. |
 | 🔍 **Observability Engine** | Deeply integrated OpenTelemetry traces and Prometheus metric counters. |
 | 🕑 **Time-Travel Debugger** | Git-style graph revision histories with interactive diff viewers. |
+| 🎭 **Multi-Agent Debate** | Run consensus-seeking structured debates between opposing AI personas with central arbiter synthesis. |
+| 🧠 **Topology Optimizer** | Auto-analyze canvas graph designs for security issues or structural blocks, injecting optimal fixes. |
+| 🔒 **Zero-Trust Privacy** | Encrypt, mask, and filter emails, API tokens, and PII using localized AES-256 masking (Privacy Shield). |
+| 💬 **Interactive Gate** | Pause pipeline execution at arbitrary milestones to await manual confirmations or chat with paused nodes. |
 
 ---
 
@@ -86,6 +90,9 @@ It unifies modern LLM providers (**Google Gemini, OpenAI, Anthropic Claude, and 
 | `RAG / Knowledge` | Embedded semantic retriever serving chunked document vector lookups. |
 | `Tool / Code` | Safely executes sandboxed custom JS code inside secure isolated threads. |
 | `Output` | Consolidates and returns the final structured pipeline response. |
+| `Debate` | Conducts a structured debate between two specialized agents with consensus-seeking arbiter synthesis. |
+| `Human Confirmation` | Serves as an interactive human-in-the-loop validation gate with chat-based property adjustment support. |
+| `Prompt Optimizer` | Refines and systematically polishes prompts to achieve optimal reasoning quality prior to LLM submission. |
 
 ---
 
