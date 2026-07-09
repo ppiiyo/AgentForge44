@@ -22,3 +22,6 @@ kostromai44.db-wal
 .models/
 .rag-store/
 drizzle/
+projects/.metadata/
+projects/*.json
+!projects/.gitkeep

@@ -2,7 +2,7 @@ import { pg, sqlite } from '../../db/index.js';
 import { pipeline, env } from '@xenova/transformers';
 import path from 'path';
 import { logger } from '../../utils/logger.js';
-import { VectorStoreAdapter, PineconeAdapter, WeaviateAdapter, QdrantAdapter, VectorStoreConfig } from './VectorStoreAdapters.js';
+import { VectorStoreAdapter, PineconeAdapter, WeaviateAdapter, QdrantAdapter, VectorStoreConfig } from './VectorStoreAdapter.js';
 
 // Setup Xenova transformers cache paths
 env.cacheDir = path.join(process.cwd(), '.models');

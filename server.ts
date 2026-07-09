@@ -125,6 +125,35 @@ app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Re
     res.status(500).end(err.message);
   }
 });
+app.get('/traces', authMiddleware, async (req: express.Request, res: express.Response) => {
+  try {
+    const logPath = path.join(process.cwd(), 'logs/combined.log');
+    let traces: any[] = [];
+    if (fs.existsSync(logPath)) {
+      const content = fs.readFileSync(logPath, 'utf8');
+      const lines = content.split('\n').filter(Boolean);
+      for (const line of lines) {
+        try {
+          const parsed = JSON.parse(line);
+          if (parsed.execution_id || parsed.correlationId || parsed.level === 'error' || parsed.message?.includes('Trace')) {
+            traces.push(parsed);
+          }
+        } catch {
+          // ignore parsing error
+        }
+      }
+    }
+    res.json({
+      success: true,
+      service: 'kostromai44-core',
+      provider: 'OpenTelemetry',
+      totalSpans: traces.length,
+      spans: traces.slice(-100).reverse() // Return last 100 traces
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 app.use('/api', ragRouter);
 app.use('/api', patternsRouter);
 app.use('/api', schedulerAndWebhooksRouter);
