@@ -730,13 +730,13 @@ export function useAgentApp() {
     const typeOrder: Record<NodeType, number> = {
       'input': 0, 'prompt': 1, 'gemini': 2, 'tool': 3, 'webhook': 3, 'router': 4,
       'rag': 5, 'vector-search': 5, 'multimodal': 6, 'reviewer': 7,
-      'output': 8, 'human_confirmation': 9, 'prompt_optimizer': 10
+      'output': 8, 'human_confirmation': 9, 'prompt_optimizer': 10, 'debate': 2
     };
 
     const counts: Record<NodeType, number> = {
       'input': 0, 'prompt': 0, 'gemini': 0, 'tool': 0, 'webhook': 0, 'router': 0,
       'rag': 0, 'vector-search': 0, 'multimodal': 0, 'reviewer': 0,
-      'output': 0, 'human_confirmation': 0, 'prompt_optimizer': 0
+      'output': 0, 'human_confirmation': 0, 'prompt_optimizer': 0, 'debate': 0
     };
 
     setNodes(prev => {

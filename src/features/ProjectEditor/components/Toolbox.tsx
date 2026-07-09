@@ -297,7 +297,29 @@ const nodeDocMap: Record<NodeType, {
     tip: {
       en: "Connect this node at the absolute end of the graph to visualize the overall outcome.",
       ru: "Подключайте этот блок в самом конце графа для визуализации всех результатов.",
-      zh: "通常建议将此节点设为全图的终极末梢，便于用户一目了然最终交付状态。"
+      zh: "通常建议将此节点设为全图의 终极末梢，便于用户一目了然最终交付状态。"
+    }
+  },
+  debate: {
+    purpose: {
+      en: "Conduct a structured debate between two specialized agents with consensus arbitration.",
+      ru: "Проводите структурированные дебаты между специализированными агентами с арбитражем консенсуса.",
+      zh: "在两个特定视角的智能体之间开展结构化辩论，并由裁判进行共识裁决。"
+    },
+    inputs: {
+      en: "Debate topic, pro persona, contra persona, rounds, arbiter instruction.",
+      ru: "Тема дебатов, роль PRO, роль CON, число раундов, инструкция арбитру.",
+      zh: "辩论主题、支持角色、反对角色、轮数、裁判指令。"
+    },
+    outputs: {
+      en: "Synthesized multi-agent debate and consensus report transcript.",
+      ru: "Синтезированная стенограмма дебатов и консенсусный отчет.",
+      zh: "经裁判综合两方观点后产出的辩论实录及最终共识报告。"
+    },
+    tip: {
+      en: "Provide highly distinct and opinionated personas for each agent to drive deeper synthesis.",
+      ru: "Задавайте детальные полярные роли агентам, чтобы арбитр мог собрать более глубокий консенсус.",
+      zh: "为双方配置极具差异化和态度的独立人格，能帮助裁判挖掘出更深刻的融合观点。"
     }
   }
 };

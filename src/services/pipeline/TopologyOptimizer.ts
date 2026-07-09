@@ -85,7 +85,10 @@ export class TopologyOptimizer {
 
     // 4. Check for Zero-Trust Privacy issues:
     // Any input node or text-heavy prompt node processing confidential information without explicit masking or privacy filters.
-    const hasPrivacyMaskingEnabled = nodes.some(n => n.fields?.maskSensitiveData === true || n.fields?.encryptionEnabled === true);
+    const hasPrivacyMaskingEnabled = nodes.some(n => {
+      const f = n.fields as any;
+      return f?.maskSensitiveData === true || f?.encryptionEnabled === true;
+    });
     if (!hasPrivacyMaskingEnabled) {
       issues.push({
         severity: 'medium',
@@ -134,9 +137,10 @@ export class TopologyOptimizer {
     // 1. Auto-enable Zero-Trust privacy masking on input and prompt nodes
     optimizedNodes.forEach(node => {
       if (node.type === 'input' || node.type === 'prompt') {
-        if (!node.fields.maskSensitiveData) {
-          node.fields.maskSensitiveData = true;
-          node.fields.encryptionEnabled = true;
+        const fields = node.fields as any;
+        if (!fields.maskSensitiveData) {
+          fields.maskSensitiveData = true;
+          fields.encryptionEnabled = true;
           enhancementsReport += `- **[Security Enhanced]** Automatically enabled Zero-Trust Privacy Shield (AES-256 masking) on node "${node.title}" (${node.id}) to protect PII, emails, and credentials.\n`;
           changesInjectedCount++;
         }
