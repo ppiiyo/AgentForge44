@@ -11,6 +11,7 @@ import { RAGNodeStrategy } from './RAGNodeStrategy.js';
 import { HumanConfirmationNodeStrategy } from './HumanConfirmationNodeStrategy.js';
 import { PromptOptimizerNodeStrategy } from './PromptOptimizerNodeStrategy.js';
 import { WebhookNodeStrategy } from './WebhookNodeStrategy.js';
+import { DebateNodeStrategy } from './DebateNodeStrategy.js';
 
 export class StrategyFactory {
   private static strategies = new Map<string, NodeExecutionStrategy>([
@@ -26,7 +27,8 @@ export class StrategyFactory {
     ['rag', new RAGNodeStrategy()],
     ['vector-search', new RAGNodeStrategy()],
     ['human_confirmation', new HumanConfirmationNodeStrategy()],
-    ['prompt_optimizer', new PromptOptimizerNodeStrategy()]
+    ['prompt_optimizer', new PromptOptimizerNodeStrategy()],
+    ['debate', new DebateNodeStrategy()]
   ]);
 
   static get(type: string): NodeExecutionStrategy {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const FlowNodeSchema = z.object({
   id: z.string().min(1, "Node id is required"),
-  type: z.enum(['input', 'prompt', 'gemini', 'reviewer', 'output', 'router', 'tool', 'rag', 'multimodal', 'human_confirmation', 'prompt_optimizer', 'vector-search']),
+  type: z.enum(['input', 'prompt', 'gemini', 'reviewer', 'output', 'router', 'tool', 'rag', 'multimodal', 'human_confirmation', 'prompt_optimizer', 'vector-search', 'webhook', 'debate']),
   title: z.string().default('Untitled Node'),
   x: z.number().optional().default(0),
   y: z.number().optional().default(0),

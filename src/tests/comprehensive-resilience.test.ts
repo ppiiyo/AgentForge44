@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
 import { PipelineExecutor } from '../services/pipeline/PipelineExecutor.js';
 import { chaosEngine } from '../services/chaosEngine.js';
 import { circuitBreakerRegistry, CircuitState } from '../services/circuitBreaker.js';
 import { GeminiProvider } from '../api/providers.js';
 import { GoogleGenAI } from '@google/genai';
-import { db, tables } from '../db/index.js';
+import { db, tables, adapter } from '../db/index.js';
 import { eq } from 'drizzle-orm';
+import { runSchemaMigrations } from '../api/migrate.js';
 
 // Mock GoogleGenAI models.generateContent to make direct calls predictable
 const generateContentMock = vi.fn();
@@ -20,6 +21,12 @@ vi.mock('@google/genai', () => {
 
 describe('KostromAi44 Comprehensive Resilience & Chaos Engineering Suite', () => {
   const ai = new GoogleGenAI({ apiKey: 'sandbox_test_key' });
+
+  beforeAll(async () => {
+    try {
+      await runSchemaMigrations(adapter);
+    } catch {}
+  });
 
   beforeEach(() => {
     chaosEngine.reset();

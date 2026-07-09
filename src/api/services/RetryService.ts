@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { cache, computeHash } from '../../services/cache.js';
+import { chaosEngine } from '../../services/chaosEngine.js';
 
 export interface RetryResult {
   response: any;
@@ -124,6 +125,9 @@ async function generateWithRetryInternal(
   attempts = 3,
   delayMs = 1500
 ): Promise<RetryResult> {
+  // Check for simulated Chaos outage first
+  await chaosEngine.checkLlmChaos("Gemini");
+
   const apiKey = process.env.GEMINI_API_KEY || "";
   const isExplicitSandbox = apiKey && apiKey.startsWith("sandbox_");
   const isPlaceholderKey = apiKey === "your_gemini_api_key_here";

@@ -1,4 +1,4 @@
-export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'vector-search' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer' | 'webhook';
+export type NodeType = 'input' | 'prompt' | 'gemini' | 'reviewer' | 'output' | 'router' | 'tool' | 'rag' | 'vector-search' | 'multimodal' | 'human_confirmation' | 'prompt_optimizer' | 'webhook' | 'debate';
 
 export interface BaseNode {
   id: string;
@@ -134,7 +134,18 @@ export interface WebhookNode extends BaseNode {
   };
 }
 
-export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | VectorSearchNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode | WebhookNode;
+export interface DebateNode extends BaseNode {
+  type: 'debate';
+  fields: {
+    topic: string;
+    personaPro: string;
+    personaContra: string;
+    rounds: number;
+    consensusArbiterInstruction: string;
+  };
+}
+
+export type FlowNode = InputNode | PromptNode | GeminiNode | ReviewerNode | OutputNode | RouterNode | ToolNode | RAGNode | VectorSearchNode | MultimodalNode | HumanConfirmationNode | PromptOptimizerNode | WebhookNode | DebateNode;
 
 export interface FlowConnection {
   id: string;
