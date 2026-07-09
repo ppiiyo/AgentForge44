@@ -12,7 +12,8 @@ export class SecureSandbox {
   private context: ivm.Context;
   
   constructor(private memoryLimit: number = 128) {
-    this.isolate = new ivm.Isolate({ memoryLimit: this.memoryLimit });
+    const actualMemoryLimit = Math.min(this.memoryLimit, 128);
+    this.isolate = new ivm.Isolate({ memoryLimit: actualMemoryLimit });
     this.context = this.isolate.createContextSync();
   }
 
