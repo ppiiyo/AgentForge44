@@ -15,7 +15,8 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
-  CheckCircle
+  CheckCircle,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -46,6 +47,7 @@ interface SettingsProps {
   onUserNameInputChange?: (name: string) => void;
   userColorInput?: string;
   onUserColorInputChange?: (color: string) => void;
+  onReRunWizard?: () => void;
 }
 
 export const Settings: React.FC<SettingsProps> = ({
@@ -67,7 +69,8 @@ export const Settings: React.FC<SettingsProps> = ({
   userNameInput = "",
   onUserNameInputChange,
   userColorInput = "#38bdf8",
-  onUserColorInputChange
+  onUserColorInputChange,
+  onReRunWizard
 }) => {
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'preferences' | 'import_export' | 'help'>('preferences');
@@ -245,6 +248,19 @@ export const Settings: React.FC<SettingsProps> = ({
                             />
                             <span className="text-[10px] font-mono text-slate-500">{userColorInput}</span>
                           </div>
+                        </div>
+                      )}
+
+                      {onReRunWizard && (
+                        <div className="pt-2 border-t border-slate-800/40">
+                          <button
+                            type="button"
+                            onClick={onReRunWizard}
+                            className="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-black py-2.5 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <Sparkles size={14} className="animate-pulse" />
+                            {currentLang === 'ru' ? 'Запустить заново мастер настройки' : 'Re-run Setup Wizard'}
+                          </button>
                         </div>
                       )}
                     </div>

@@ -11,6 +11,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { RightSidebarPanel } from './components/RightSidebarPanel';
 import { ImportExportModal } from './components/ImportExportModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
+import { FirstLaunchWizard } from './components/FirstLaunchWizard';
+import { PREBUILT_TEMPLATES } from './types';
 import posthog from 'posthog-js';
 
 // Dynamically lazy-loaded sub-modules for bundle splitting optimization
@@ -235,6 +237,68 @@ export default function App() {
 
   const [apiKeysMissing, setApiKeysMissing] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isFirstLaunchOpen, setIsFirstLaunchOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      const isInitialized = localStorage.getItem("kostromai44_initialized");
+      if (isInitialized !== 'true') {
+        setIsFirstLaunchOpen(true);
+      }
+    }
+  }, []);
+
+  const handleWizardComplete = (config: {
+    lang: 'en' | 'ru' | 'zh';
+    geminiKey: string;
+    userName: string;
+    userColor: string;
+    selectedTemplateId: string;
+  }) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem("kostromai44_initialized", "true");
+      localStorage.setItem("kostromai44_lang", config.lang);
+      
+      if (config.geminiKey) {
+        localStorage.setItem("kostromai44_gemini_api_key", config.geminiKey);
+      }
+      
+      localStorage.setItem("kostromai44_user_name", config.userName);
+      localStorage.setItem("kostromai44_user_color", config.userColor);
+    }
+
+    // Apply values to app state
+    app.setCurrentLang(config.lang);
+    i18nInstance.changeLanguage(config.lang);
+    
+    if (app.updateUserName) {
+      app.updateUserName(config.userName);
+    }
+    if ((app as any).updateUserColor) {
+      (app as any).updateUserColor(config.userColor);
+    }
+
+    // Load initial workflow template
+    if (config.selectedTemplateId === 'blank-canvas') {
+      app.setNodes([]);
+      app.setConnections([]);
+    } else {
+      const matched = PREBUILT_TEMPLATES.find(t => t.id === config.selectedTemplateId);
+      if (matched) {
+        app.setNodes(matched.nodes);
+        app.setConnections(matched.connections);
+      }
+    }
+
+    // Recheck API keys status
+    const recheck = async () => {
+      const res = await validateApiKeys();
+      setApiKeysMissing(res.geminiMissing);
+    };
+    recheck();
+
+    setIsFirstLaunchOpen(false);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -255,7 +319,7 @@ export default function App() {
       setApiKeysMissing(res.geminiMissing);
     };
     checkKeys();
-  }, [app.currentView]);
+  }, [app.currentView, isFirstLaunchOpen]);
 
   return (
     <ErrorBoundary>
@@ -428,8 +492,11 @@ export default function App() {
               handleImportWorkflowJSON={app.handleImportWorkflowJSON}
               isImportExportModalOpen={app.isImportExportModalOpen}
               setIsImportExportModalOpen={app.setIsImportExportModalOpen}
-              userNameInput={app.projectNameInput}
-              onUserNameInputChange={app.setProjectNameInput}
+              userNameInput={app.userName}
+              onUserNameInputChange={app.updateUserName}
+              userColorInput={app.userColor}
+              onUserColorInputChange={(app as any).updateUserColor}
+              onReRunWizard={() => setIsFirstLaunchOpen(true)}
             />
           )}
 
@@ -519,6 +586,13 @@ export default function App() {
         <ShortcutsModal
           isOpen={isShortcutsOpen}
           onClose={() => setIsShortcutsOpen(false)}
+          currentLang={app.currentLang}
+        />
+
+        {/* Dynamic First Launch Configuration & Onboarding Wizard */}
+        <FirstLaunchWizard
+          isOpen={isFirstLaunchOpen}
+          onClose={handleWizardComplete}
           currentLang={app.currentLang}
         />
       </div>

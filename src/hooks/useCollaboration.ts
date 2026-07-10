@@ -30,10 +30,26 @@ export function useCollaboration(
   _setConnections: React.Dispatch<React.SetStateAction<FlowConnection[]>>
 ) {
   const [userId] = useState("local-user");
-  const [userName, setUserName] = useState("Local Architect");
-  const [userColor] = useState("#38bdf8");
+  const [userName, setUserName] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem("kostromai44_user_name") || "Local Architect";
+    }
+    return "Local Architect";
+  });
+  const [userColor, setUserColor] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem("kostromai44_user_color") || "#38bdf8";
+    }
+    return "#38bdf8";
+  });
   const [connected] = useState(true);
-  const [onlineUsers] = useState([{ id: "local-user", name: "Local Architect", color: "#38bdf8" }]);
+  const [onlineUsers] = useState(() => [
+    { 
+      id: "local-user", 
+      name: typeof localStorage !== 'undefined' ? (localStorage.getItem("kostromai44_user_name") || "Local Architect") : "Local Architect", 
+      color: typeof localStorage !== 'undefined' ? (localStorage.getItem("kostromai44_user_color") || "#38bdf8") : "#38bdf8" 
+    }
+  ]);
   const [cursors] = useState<Record<string, RemoteCursor>>({});
   const [locks] = useState<Record<string, RemoteLock>>({});
   const [notifications] = useState<CollabNotification[]>([]);
@@ -48,7 +64,20 @@ export function useCollaboration(
     cursors,
     locks,
     notifications,
-    updateUserName: (name: string) => setUserName(name || "Local Architect"),
+    updateUserName: (name: string) => {
+      const nextName = name || "Local Architect";
+      setUserName(nextName);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem("kostromai44_user_name", nextName);
+      }
+    },
+    updateUserColor: (color: string) => {
+      const nextColor = color || "#38bdf8";
+      setUserColor(nextColor);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem("kostromai44_user_color", nextColor);
+      }
+    },
     addNotification: () => {},
     clearNotifications: () => {},
     broadcastCursorMoved: (_x: number, _y: number) => {},
