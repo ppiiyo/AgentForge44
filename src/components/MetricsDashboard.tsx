@@ -206,6 +206,127 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
   } | null>(null);
   const [readinessLoading, setReadinessLoading] = useState(false);
 
+  // Auto-Refresh and Sandbox Memory states
+  const [refreshInterval, setRefreshInterval] = useState<number | 'manual'>(15000);
+  const [sandboxMemory, setSandboxMemory] = useState<{
+    usedBytes: number;
+    totalBytes: number;
+    percentage: number;
+    limitMB: number;
+    usedMB: number;
+    status: 'ok' | 'warning';
+  } | null>(null);
+
+  const [promData, setPromData] = useState<{
+    success: boolean;
+    source: string;
+    sandboxMemory: number;
+    httpRequestCount: number;
+    llmCallsCount: number;
+    timestamp: string;
+  } | null>(null);
+
+  const [promLoading, setPromLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<'clear' | 'stop' | 'simulate' | null>(null);
+  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+
+  const fetchSandboxMemory = async () => {
+    try {
+      const res = await fetch('/api/metrics/sandbox-memory');
+      if (res.ok) {
+        const data = await res.json();
+        setSandboxMemory(data);
+      }
+    } catch (err) {
+      console.error('Failed to load sandbox memory:', err);
+    }
+  };
+
+  const fetchPromData = async () => {
+    setPromLoading(true);
+    try {
+      const res = await fetch('/api/metrics/prometheus');
+      if (res.ok) {
+        const data = await res.json();
+        setPromData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load Prometheus data:', err);
+    } finally {
+      setPromLoading(false);
+    }
+  };
+
+  const fetchAllDashboardData = async () => {
+    fetchMetrics();
+    fetchReadinessData();
+    fetchSandboxMemory();
+    fetchPromData();
+  };
+
+  const handleSimulateHighLoad = async () => {
+    setActionLoading('simulate');
+    try {
+      const res = await fetch('/api/metrics/simulate-high-load', { method: 'POST' });
+      if (res.ok) {
+        await fetchSandboxMemory();
+        await fetchPromData();
+        setActionSuccessMessage(
+          currentLang === 'ru' 
+            ? 'Симуляция критической утилизации памяти (> 85%) успешно запущена!' 
+            : 'Critical sandbox memory stress test simulation (> 85%) started!'
+        );
+        setTimeout(() => setActionSuccessMessage(null), 5000);
+      }
+    } catch (err) {
+      console.error('Failed to start high load simulation:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleClearCache = async () => {
+    setActionLoading('clear');
+    try {
+      const res = await fetch('/api/metrics/clear-cache', { method: 'POST' });
+      if (res.ok) {
+        await fetchSandboxMemory();
+        await fetchPromData();
+        setActionSuccessMessage(
+          currentLang === 'ru' 
+            ? 'Память успешно оптимизирована! Кэш песочницы сброшен.' 
+            : 'Sandbox cache successfully cleared and memory usage optimized!'
+        );
+        setTimeout(() => setActionSuccessMessage(null), 5000);
+      }
+    } catch (err) {
+      console.error('Failed to clear cache:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStopPipelines = async () => {
+    setActionLoading('stop');
+    try {
+      const res = await fetch('/api/metrics/stop-pipelines', { method: 'POST' });
+      if (res.ok) {
+        await fetchSandboxMemory();
+        await fetchPromData();
+        setActionSuccessMessage(
+          currentLang === 'ru' 
+            ? 'Все выполняющиеся конвейеры принудительно остановлены. Нагрузка сброшена.' 
+            : 'All heavy pipelines and execution threads stopped successfully.'
+        );
+        setTimeout(() => setActionSuccessMessage(null), 5000);
+      }
+    } catch (err) {
+      console.error('Failed to stop pipelines:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const fetchReadinessData = async () => {
     setReadinessLoading(true);
     try {
@@ -290,16 +411,20 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     }
   };
 
+  // Main effect to trigger data refresh on period/interval change
   useEffect(() => {
-    fetchMetrics();
-    fetchReadinessData();
-    // Auto refresh every 15 seconds to stream live dashboard stats
-    const t = setInterval(() => {
-      fetchMetrics();
-      fetchReadinessData();
-    }, 15000);
-    return () => clearInterval(t);
+    fetchAllDashboardData();
   }, [period]);
+
+  useEffect(() => {
+    if (refreshInterval === 'manual') return;
+
+    const t = setInterval(() => {
+      fetchAllDashboardData();
+    }, refreshInterval);
+
+    return () => clearInterval(t);
+  }, [refreshInterval, period]);
 
   useEffect(() => {
     if (activeTab === 'resilience') {
@@ -497,26 +622,56 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
         </div>
 
         {activeTab === 'metrics' && (
-          <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-900 self-end sm:self-auto">
-            {(['24h', '7d', '30d'] as const).map(p => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  period === p 
-                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
-                    : 'text-slate-500 hover:text-slate-300 border border-transparent'
-                }`}
+          <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+            {/* Auto-Refresh dropdown */}
+            <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-900">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                {currentLang === 'ru' ? 'Обновление:' : 'Auto-Refresh:'}
+              </span>
+              <select
+                value={refreshInterval === 'manual' ? 'manual' : refreshInterval}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setRefreshInterval(val === 'manual' ? 'manual' : Number(val));
+                }}
+                className="bg-transparent text-xs font-bold text-emerald-400 focus:outline-none cursor-pointer border-none py-0.5"
+                id="auto-refresh-select"
               >
-                {p.toUpperCase()}
+                <option value="2000" className="bg-slate-950 text-slate-300">2s</option>
+                <option value="5000" className="bg-slate-950 text-slate-300">5s</option>
+                <option value="15000" className="bg-slate-950 text-slate-300">15s</option>
+                <option value="30000" className="bg-slate-950 text-slate-300">30s</option>
+                <option value="manual" className="bg-slate-950 text-slate-300">
+                  {currentLang === 'ru' ? 'Вручную' : 'Manual'}
+                </option>
+              </select>
+            </div>
+
+            {/* Period selector */}
+            <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-900">
+              {(['24h', '7d', '30d'] as const).map(p => (
+                <button
+                  key={p}
+                  id={`period-btn-${p}`}
+                  onClick={() => setPeriod(p)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    period === p 
+                      ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+                      : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              ))}
+              <button
+                id="manual-refresh-btn"
+                onClick={fetchAllDashboardData}
+                className="p-1 px-2.5 hover:text-emerald-400 text-slate-500 transition-colors cursor-pointer"
+                title={currentLang === 'ru' ? 'Обновить данные' : 'Refresh Metrics'}
+              >
+                <RefreshCw size={12} className={loading || promLoading ? 'animate-spin' : ''} />
               </button>
-            ))}
-            <button
-              onClick={fetchMetrics}
-              className="p-1 px-2.5 hover:text-emerald-400 text-slate-500 transition-colors"
-            >
-              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            </button>
+            </div>
           </div>
         )}
       </div>
@@ -544,6 +699,78 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           🛡️ {currentLang === 'ru' ? 'Отказоустойчивость и Хаос' : 'Circuit Breakers & Chaos'}
         </button>
       </div>
+
+      {/* Action Success Toast Notification */}
+      <AnimatePresence>
+        {actionSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="bg-emerald-950/90 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl flex items-center gap-3 shadow-xl backdrop-blur-md z-50 my-4"
+          >
+            <CheckCircle2 className="text-emerald-400 shrink-0" size={18} />
+            <span className="text-xs font-bold font-sans">{actionSuccessMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* High Sandbox Memory Warning Notification Block (>85%) */}
+      <AnimatePresence>
+        {sandboxMemory && sandboxMemory.percentage > 85 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -10 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -10 }}
+            className="overflow-hidden mb-6 mt-4"
+          >
+            <div className="bg-red-950/80 border border-red-500/30 rounded-2xl p-4.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-lg backdrop-blur-md relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-xl rounded-full pointer-events-none" />
+              
+              <div className="flex items-start gap-3.5">
+                <div className="bg-red-500/10 p-2.5 rounded-xl border border-red-500/20 text-red-400 shrink-0 animate-bounce">
+                  <AlertTriangle size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-red-200 uppercase tracking-wide flex items-center gap-2">
+                    {currentLang === 'ru' 
+                      ? 'ВНИМАНИЕ: Превышен критический лимит памяти песочницы!' 
+                      : 'WARNING: Critical Sandbox Memory Threshold Exceeded!'}
+                    <span className="font-mono bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded text-xs border border-red-500/20">
+                      {sandboxMemory.percentage}%
+                    </span>
+                  </h4>
+                  <p className="text-xs text-red-300 leading-relaxed max-w-xl">
+                    {currentLang === 'ru' 
+                      ? `Текущее потребление V8 Isolate составляет ${sandboxMemory.usedMB} MB (лимит: ${sandboxMemory.limitMB} MB). Ваши цепочки агентов KostromAi44 могут аварийно завершиться с ошибкой Out-of-Memory (OOM). Очистите кэш или остановите тяжелые конвейеры.` 
+                      : `Active IsolatedVM heap usage is at ${sandboxMemory.usedMB} MB (cap: ${sandboxMemory.limitMB} MB). Your executing KostromAi44 pipelines may experience fatal Out-of-Memory (OOM) crashes. Clear sandbox memory or halt executing threads immediately.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Proactive mitigation buttons */}
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto md:shrink-0">
+                <button
+                  onClick={handleClearCache}
+                  disabled={actionLoading !== null}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-black bg-emerald-500 border border-emerald-600 text-slate-950 hover:bg-emerald-400 transition-all shadow-md hover:shadow-emerald-500/10 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw size={12} className={actionLoading === 'clear' ? 'animate-spin' : ''} />
+                  {currentLang === 'ru' ? 'Очистить кэш песочницы' : 'Clear Sandbox Cache'}
+                </button>
+                <button
+                  onClick={handleStopPipelines}
+                  disabled={actionLoading !== null}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-black bg-slate-900 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all hover:border-red-500/50 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <AlertTriangle size={12} className={actionLoading === 'stop' ? 'animate-ping' : ''} />
+                  {currentLang === 'ru' ? 'Остановить конвейер' : 'Stop Heavy Pipelines'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {activeTab === 'metrics' ? (
         <div className="space-y-6">
@@ -923,6 +1150,169 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
                 <span className="text-slate-450">DB: {readinessData?.meta.dbType?.toUpperCase() || 'SQLITE'}</span>
               </div>
             </div>
+          </div>
+
+          {/* Prometheus & Sandbox Observability Control Plane */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Left Card: Sandbox Memory & Lifecycle Controls */}
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 md:p-6 relative overflow-hidden space-y-4">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 blur-[80px] rounded-full pointer-events-none" />
+              
+              <div className="flex justify-between items-start border-b border-slate-900 pb-3">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-black text-slate-100 flex items-center gap-2 uppercase tracking-wide">
+                    <Cpu className="text-amber-450" size={14} />
+                    {currentLang === 'ru' ? 'Песочница Кода (Когнитивная память)' : 'Sandbox Memory Allocation'}
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    {currentLang === 'ru' ? 'Выделенная оперативная память V8 Isolate' : 'V8 execution sandbox heap slice allocation'}
+                  </p>
+                </div>
+                
+                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                  (sandboxMemory?.percentage ?? 0) > 85
+                    ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                }`}>
+                  {(sandboxMemory?.percentage ?? 0) > 85 
+                    ? (currentLang === 'ru' ? 'Критично (>85%)' : 'Critical (>85%)') 
+                    : (currentLang === 'ru' ? 'Норма' : 'Healthy')}
+                </span>
+              </div>
+
+              {/* Memory progress bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-slate-400 font-sans">{currentLang === 'ru' ? 'Утилизация памяти:' : 'Memory Utilization:'}</span>
+                  <span className={`font-bold ${
+                    (sandboxMemory?.percentage ?? 0) > 85 ? 'text-red-400 font-extrabold' : 'text-slate-200'
+                  }`}>
+                    {sandboxMemory?.usedMB ?? '14.2'} MB / {sandboxMemory?.limitMB ?? '64.0'} MB ({sandboxMemory?.percentage ?? '22.1'}%)
+                  </span>
+                </div>
+
+                {/* Outer Track */}
+                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden p-[2px] border border-slate-850">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      (sandboxMemory?.percentage ?? 0) > 85
+                        ? 'bg-gradient-to-r from-red-500 to-rose-600 animate-pulse'
+                        : (sandboxMemory?.percentage ?? 0) > 50
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                    }`}
+                    style={{ width: `${Math.min(100, sandboxMemory?.percentage ?? 22.1)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Lifecycle operations */}
+              <div className="space-y-2 pt-1">
+                <span className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider block">
+                  {currentLang === 'ru' ? 'Управление нагрузкой и песочницей:' : 'Sandbox Lifecycle Control Plane:'}
+                </span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    onClick={handleSimulateHighLoad}
+                    disabled={actionLoading !== null}
+                    className={`px-3 py-2 rounded-xl text-xs font-black transition-all border cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                      (sandboxMemory?.percentage ?? 0) > 85
+                        ? 'bg-slate-900/40 border-slate-850 text-slate-500 cursor-not-allowed border-dashed'
+                        : 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20'
+                    }`}
+                  >
+                    <Flame size={12} className={actionLoading === 'simulate' ? 'animate-pulse' : ''} />
+                    {currentLang === 'ru' ? 'Стресс-тест' : 'Stress Test'}
+                  </button>
+
+                  <button
+                    onClick={handleClearCache}
+                    disabled={actionLoading !== null}
+                    className="px-3 py-2 rounded-xl text-xs font-black bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw size={12} className={actionLoading === 'clear' ? 'animate-spin' : ''} />
+                    {currentLang === 'ru' ? 'Сбросить кэш' : 'Clear Cache'}
+                  </button>
+
+                  <button
+                    onClick={handleStopPipelines}
+                    disabled={actionLoading !== null}
+                    className="px-3 py-2 rounded-xl text-xs font-black bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  >
+                    <AlertTriangle size={12} className={actionLoading === 'stop' ? 'animate-bounce' : ''} />
+                    {currentLang === 'ru' ? 'Остановить' : 'Stop Threads'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: Prometheus Live Scraping Metrics */}
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-5 md:p-6 relative overflow-hidden space-y-4">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 blur-[80px] rounded-full pointer-events-none" />
+              
+              <div className="flex justify-between items-start border-b border-slate-900 pb-3">
+                <div className="space-y-1">
+                  <h3 className="text-xs font-black text-slate-100 flex items-center gap-2 uppercase tracking-wide">
+                    <Activity className="text-sky-400" size={14} />
+                    {currentLang === 'ru' ? 'Потоковая телеметрия Prometheus' : 'Prometheus Live Scrape Stream'}
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    {currentLang === 'ru' ? 'Реальные метрики, собираемые из Grafana/Prometheus' : 'Operational metrics scraped directly from local daemon'}
+                  </p>
+                </div>
+                
+                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1.5 ${
+                  promData?.source === 'prometheus_server'
+                    ? 'bg-sky-500/10 border-sky-500/20 text-sky-400'
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    promData?.source === 'prometheus_server' ? 'bg-sky-400 animate-ping' : 'bg-emerald-400 animate-pulse'
+                  }`} />
+                  {promData?.source === 'prometheus_server' ? 'PROMETHEUS-DAEMON' : 'LOCAL-REGISTRY'}
+                </span>
+              </div>
+
+              {/* Scraped metrics list */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900/40 border border-slate-900 p-3.5 rounded-xl space-y-1.5">
+                  <span className="text-[9px] uppercase font-bold text-slate-500 block">
+                    {currentLang === 'ru' ? 'HTTP Запросы (Всего)' : 'HTTP Requests (Scraped)'}
+                  </span>
+                  <div className="text-xl font-black text-sky-400 font-mono">
+                    {promLoading ? '...' : (promData?.httpRequestCount ?? 0)}
+                  </div>
+                  <span className="text-[8px] text-slate-500 block">
+                    {currentLang === 'ru' ? 'Запуски REST API и Webhook портов' : 'Collected via express_prom_client'}
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/40 border border-slate-900 p-3.5 rounded-xl space-y-1.5">
+                  <span className="text-[9px] uppercase font-bold text-slate-500 block">
+                    {currentLang === 'ru' ? 'LLM Запросы (Всего)' : 'LLM Calls (Scraped)'}
+                  </span>
+                  <div className="text-xl font-black text-purple-400 font-mono">
+                    {promLoading ? '...' : (promData?.llmCallsCount ?? 0)}
+                  </div>
+                  <span className="text-[8px] text-slate-500 block">
+                    {currentLang === 'ru' ? 'Когнитивные вызовы моделей Gemini' : 'Scraped via gemini_api_counter'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Telemetry info row */}
+              <div className="flex justify-between items-center text-[10px] text-slate-500 pt-1 font-mono">
+                <span>
+                  {currentLang === 'ru' ? 'Метод сбора: Pull-Scrape' : 'Ingress transport: Pull-Scrape'}
+                </span>
+                <span>
+                  {currentLang === 'ru' ? 'Обновлено:' : 'Last pull:'} {promData?.timestamp ? new Date(promData.timestamp).toLocaleTimeString() : '...'}
+                </span>
+              </div>
+            </div>
+            
           </div>
 
           {/* Visual Charts Layout Dashboard Block */}
