@@ -33,6 +33,7 @@ import metricsRouter from './src/api/metricsRoutes.js';
 import githubRouter from './src/api/githubRoutes.js';
 import ragRouter from './src/api/ragRoutes.js';
 import patternsRouter from './src/api/patternsRoutes.js';
+import diagnosticsRouter from './src/api/diagnosticsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 import { unifiedGuardMiddleware } from './src/middleware/guard.js';
 
@@ -119,6 +120,7 @@ app.use('/api', deploymentRouter);
 app.use('/api', mcpRouter);
 app.use('/api', metricsRouter);
 app.use('/api', githubRouter);
+app.use('/api', diagnosticsRouter);
 app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     res.set('Content-Type', register.contentType);

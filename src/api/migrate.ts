@@ -46,7 +46,12 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
         await migrateSqlite(db, { migrationsFolder });
         logger.info('✅ Programmatic migrations executed successfully.');
       } catch (migError: any) {
-        logger.warn(`[Migrator] Programmatic SQLite migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+        const isAlreadyExists = migError.message?.toLowerCase().includes('already exists');
+        if (isAlreadyExists) {
+          logger.info('ℹ️ Database tables are already initialized (tables already exist). Programmatic bootstrap migration bypassed safely.');
+        } else {
+          logger.warn(`[Migrator] Programmatic SQLite migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+        }
       }
     } else if (adapter.type === 'postgres') {
       const migrationsFolder = path.join(process.cwd(), 'drizzle/postgres');
@@ -55,7 +60,12 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
         await migratePostgres(db, { migrationsFolder });
         logger.info('✅ Programmatic migrations executed successfully.');
       } catch (migError: any) {
-        logger.warn(`[Migrator] Programmatic Postgres migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+        const isAlreadyExists = migError.message?.toLowerCase().includes('already exists');
+        if (isAlreadyExists) {
+          logger.info('ℹ️ Database tables are already initialized (tables already exist). Programmatic bootstrap migration bypassed safely.');
+        } else {
+          logger.warn(`[Migrator] Programmatic Postgres migrations warning: ${migError.message}. Proceeding to seed default workspace in case tables are already present.`);
+        }
       }
     } else {
       throw new Error(`Unsupported database adapter type for migration routing: ${adapter.type}`);

@@ -45,11 +45,36 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
   const [loading, setLoading] = useState(false);
 
   // Phase 2 Async Checkpoint Queue State
-  const [activeTabSub, setActiveTabSub] = useState<'sync' | 'async'>('sync');
+  const [activeTabSub, setActiveTabSub] = useState<'sync' | 'async' | 'diagnostics'>('sync');
   const [asyncRuns, setAsyncRuns] = useState<AsyncPipelineRun[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [pollingRunId, setPollingRunId] = useState<string | null>(null);
   const [resumingRunId, setResumingRunId] = useState<string | null>(null);
+
+  // Advanced Diagnostics State
+  const [diagnosticsData, setDiagnosticsData] = useState<any>(null);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
+
+  const fetchDiagnostics = async () => {
+    setDiagnosticsLoading(true);
+    try {
+      const res = await fetch('/api/diagnostics');
+      if (res.ok) {
+        const data = await res.json();
+        setDiagnosticsData(data);
+      }
+    } catch (err) {
+      console.error('Failed to load diagnostics:', err);
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTabSub === 'diagnostics') {
+      fetchDiagnostics();
+    }
+  }, [activeTabSub]);
 
   // Interactive Human Confirmation Gate & AI Copilot Chat state
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
@@ -467,27 +492,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     };
   }, [isPlaying, currentStepIndex, sessionDetails]);
 
-  const activeStep = sessionDetails?.snapshots?.[currentStepIndex] || null;
-
-  // Find corresponding run for active details
-  const activeAsyncRun = activeRunId ? asyncRuns.find(r => r.id === activeRunId) : null;
-
-  return (
-    <div className="space-y-4" id="time_travel_debugger_outer">
-      {/* Visual Sub-tabs: In-Memory Sync Traces vs Async Checkpoint Queues */}
-      <div className="flex bg-slate-950/60 p-0.5 rounded-xl border border-slate-850" id="debugger_subtabs">
-        <button
-          type="button"
-          onClick={() => setActiveTabSub('sync')}
-          className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-extrabold uppercase tracking-widest text-center cursor-pointer transition-all ${
-            activeTabSub === 'sync'
-              ? 'bg-sky-500/10 border border-sky-500/20 text-sky-400 font-black'
-              : 'text-slate-500 border border-transparent hover:text-slate-300'
-          }`}
-        >
-          {t.syncTab}
-        </button>
-        <button
+  const active        <button
           type="button"
           onClick={() => setActiveTabSub('async')}
           className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-extrabold uppercase tracking-widest text-center cursor-pointer transition-all ${
@@ -498,22 +503,43 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
         >
           {t.asyncTab}
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTabSub('diagnostics')}
+          className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-extrabold uppercase tracking-widest text-center cursor-pointer transition-all ${
+            activeTabSub === 'diagnostics'
+              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black'
+              : 'text-slate-500 border border-transparent hover:text-slate-300'
+          }`}
+        >
+          {currentLang === 'ru' ? 'Диагностика' : currentLang === 'zh' ? '系统诊断' : 'Diagnostics'}
+        </button>
       </div>
 
       {/* Directory Section */}
       <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-extrabold uppercase tracking-widest text-slate-350 flex items-center gap-1.5">
-            <Terminal size={12} className={activeTabSub === 'async' ? "text-amber-500 animate-pulse" : "text-sky-500 animate-pulse"} />
-            {activeTabSub === 'async' ? "Background Queue Runs" : t.sessionsHeader}
+            <Terminal size={12} className={
+              activeTabSub === 'async' ? "text-amber-500 animate-pulse" : 
+              activeTabSub === 'diagnostics' ? "text-emerald-500 animate-pulse" : 
+              "text-sky-500 animate-pulse"
+            } />
+            {
+              activeTabSub === 'async' ? "Background Queue Runs" : 
+              activeTabSub === 'diagnostics' ? "Startup Environment Scan" :
+              t.sessionsHeader
+            }
           </label>
-          <button
-            id="btn_clear_debug_sessions"
-            onClick={activeTabSub === 'async' ? handleClearAsyncRuns : handleClear}
-            className="text-[9px] font-bold text-slate-550 hover:text-rose-450 uppercase flex items-center gap-1 transition-all cursor-pointer"
-          >
-            <Trash2 size={10} /> {activeTabSub === 'async' ? t.clearRuns : t.clearAll}
-          </button>
+          {activeTabSub !== 'diagnostics' && (
+            <button
+              id="btn_clear_debug_sessions"
+              onClick={activeTabSub === 'async' ? handleClearAsyncRuns : handleClear}
+              className="text-[9px] font-bold text-slate-550 hover:text-rose-450 uppercase flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <Trash2 size={10} /> {activeTabSub === 'async' ? t.clearRuns : t.clearAll}
+            </button>
+          )}
         </div>
 
         {activeTabSub === 'sync' ? (
@@ -544,7 +570,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
               {t.noSessions}
             </div>
           )
-        ) : (
+        ) : activeTabSub === 'async' ? (
           /* Asynchronous queue runs list */
           asyncRuns.length > 0 ? (
             <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
@@ -570,6 +596,171 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                       run.status === 'running' ? 'bg-sky-950/50 text-sky-400 border border-sky-900/40' :
                       run.status === 'paused' ? 'bg-amber-950/50 text-amber-400 border border-amber-900/40 animate-pulse' :
                       'bg-slate-950 text-slate-500'
+                    }`}>
+                      {run.status === 'running' || pollingRunId === run.id ? t.polling : run.status}
+                    </span>
+                  </div>
+                  {run.error && (
+                    <p className="text-[9px] text-rose-450 truncate mt-0.5 font-mono italic">
+                      Err: {run.error}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-[8px] text-slate-550 font-mono mt-1 pt-1 border-t border-slate-950/50">
+                    <span>{run.stepCount} nodes completed</span>
+                    <span>{run.createdAt.split('T')[1]?.slice(0, 8) || 'Just now'}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[10px] text-slate-650 p-3 italic text-center">
+              {t.noRuns}
+            </div>
+          )
+        ) : (
+          /* Diagnostics list/drawer view */
+          <div className="space-y-3 font-mono text-[10.5px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${diagnosticsData?.success ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+                {currentLang === 'ru' ? 'Результаты сканирования' : currentLang === 'zh' ? '环境诊断结果' : 'Diagnostic Output'}
+              </span>
+              <button
+                onClick={fetchDiagnostics}
+                disabled={diagnosticsLoading}
+                className="py-1 px-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-extrabold uppercase rounded-lg text-[9px] flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw size={10} className={diagnosticsLoading ? 'animate-spin' : ''} />
+                {diagnosticsLoading 
+                  ? (currentLang === 'ru' ? 'СКАНИРОВАНИЕ...' : currentLang === 'zh' ? '检测中...' : 'SCANNING...') 
+                  : (currentLang === 'ru' ? 'ПЕРЕЗАПУСК' : currentLang === 'zh' ? '重新检测' : 'RESCAN')}
+              </button>
+            </div>
+
+            {diagnosticsLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2">
+                <RefreshCw size={24} className="animate-spin text-emerald-400" />
+                <span className="text-[10px] uppercase tracking-widest animate-pulse font-extrabold">
+                  {currentLang === 'ru' ? 'Сбор телеметрии окружения...' : currentLang === 'zh' ? '正在诊断微服务底层依赖...' : 'Running startup checks...'}
+                </span>
+              </div>
+            ) : diagnosticsData ? (
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                {/* 1. Dependencies */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1 text-slate-450 uppercase text-[9px] font-black tracking-widest">
+                    <span>{currentLang === 'ru' ? '● Зависимости Ядра' : currentLang === 'zh' ? '● 核心依赖包' : '● Core Dependencies'}</span>
+                    <span className={`px-1 rounded text-[8px] ${
+                      diagnosticsData.checks.dependencies.status === 'ok' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                    }`}>
+                      {diagnosticsData.checks.dependencies.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-900/60 space-y-1.5">
+                    {diagnosticsData.checks.dependencies.details.map((dep: any) => (
+                      <div key={dep.name} className="flex items-start justify-between gap-2 border-b border-slate-900/20 pb-1 last:border-0 last:pb-0">
+                        <span className="font-bold text-slate-300">{dep.name}</span>
+                        <div className="flex flex-col items-end">
+                          {dep.status === 'installed' ? (
+                            <span className="text-emerald-400 font-bold text-[9px]">
+                              ✓ installed {dep.version ? `v${dep.version}` : ''}
+                            </span>
+                          ) : (
+                            <div className="text-right">
+                              <span className="text-rose-450 font-bold text-[9px]">✗ missing</span>
+                              <p className="text-[8.5px] text-slate-500 max-w-[180px] break-words leading-tight mt-0.5">
+                                {dep.error}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. JSON Configs */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1 text-slate-450 uppercase text-[9px] font-black tracking-widest">
+                    <span>{currentLang === 'ru' ? '● Конфигурации JSON' : currentLang === 'zh' ? '● 配置文件状态' : '● JSON Configurations'}</span>
+                    <span className={`px-1 rounded text-[8px] ${
+                      diagnosticsData.checks.jsonConfigs.status === 'ok' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                    }`}>
+                      {diagnosticsData.checks.jsonConfigs.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-900/60 space-y-1.5">
+                    {diagnosticsData.checks.jsonConfigs.details.map((json: any) => (
+                      <div key={json.filepath} className="flex items-start justify-between gap-2 border-b border-slate-900/20 pb-1 last:border-0 last:pb-0">
+                        <span className="font-bold text-slate-300">{json.filepath}</span>
+                        <div className="flex flex-col items-end">
+                          {json.status === 'valid' ? (
+                            <span className="text-emerald-400 font-bold text-[9px]">✓ Valid JSON</span>
+                          ) : json.status === 'missing' ? (
+                            <span className="text-slate-500 text-[9px] italic">optional/missing</span>
+                          ) : (
+                            <div className="text-right">
+                              <span className="text-rose-450 font-bold text-[9px]">✗ Syntax Error</span>
+                              <p className="text-[8.5px] text-slate-500 max-w-[180px] break-words leading-tight mt-0.5">
+                                {json.error}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Port Conflicts */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1 text-slate-450 uppercase text-[9px] font-black tracking-widest">
+                    <span>{currentLang === 'ru' ? '● Состояние Портов' : currentLang === 'zh' ? '● 网口/服务端口' : '● TCP Port Allocations'}</span>
+                  </div>
+                  <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-900/60 space-y-1.5">
+                    {diagnosticsData.checks.ports.details.map((port: any) => (
+                      <div key={port.port} className="flex flex-col gap-0.5 border-b border-slate-900/20 pb-1 last:border-0 last:pb-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-300">Port {port.port}</span>
+                          <span className={`text-[8.5px] px-1 py-0.2 rounded font-black uppercase ${
+                            port.status === 'free' ? 'bg-slate-900 text-slate-400 border border-slate-850' :
+                            port.status === 'occupied_by_self' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                            'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {port.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-slate-550 leading-tight">
+                          {port.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-[9.5px] text-slate-550 italic leading-snug">
+                  {diagnosticsData.success 
+                    ? (currentLang === 'ru' ? '✓ Окружение в отличном состоянии. Ошибок запуска не обнаружено.' : currentLang === 'zh' ? '✓ 所有核心服务链路就绪，未检测到任何启动阻塞。' : '✓ Environment in superb state. No critical startup barriers detected.')
+                    : (currentLang === 'ru' ? '⚠ Обнаружены проблемы. Устраните указанные выше ошибки.' : currentLang === 'zh' ? '⚠ 检测到可能导致异常启动的隐患，请参考详情修复。' : '⚠ Action required. Address the highlighted warnings to stabilize app boots.')}
+                </div>
+              </div>
+            ) : (
+              <div className="text-[10px] text-slate-650 p-3 italic text-center">
+                Failed to gather diagnostics.
+              </div>
+            )}
+          </div>
+        )}
+      </div>�常启动的隐患，请参考详情修复。' : '⚠ Action required. Address the highlighted warnings to stabilize app boots.')}
+                </div>
+              </div>
+            ) : (
+              <div className="text-[10px] text-slate-650 p-3 italic text-center">
+                Failed to gather diagnostics.
+              </div>
+            )}
+          </div>
+        )}         'bg-slate-950 text-slate-500'
                     }`}>
                       {run.status === 'running' || pollingRunId === run.id ? t.polling : run.status}
                     </span>

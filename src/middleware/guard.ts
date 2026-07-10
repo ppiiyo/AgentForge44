@@ -10,6 +10,7 @@ const PUBLIC_PATHS_ALLOWLIST = [
   '/api/auth/reset-password',
   '/api/auth/logout',
   '/api/health',
+  '/api/diagnostics',
   '/api/marketplace',
   '/api/marketplace/featured',
   '/api/test-payload',
