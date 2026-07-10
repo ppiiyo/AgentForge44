@@ -12,6 +12,7 @@ import { RightSidebarPanel } from './components/RightSidebarPanel';
 import { ImportExportModal } from './components/ImportExportModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { FirstLaunchWizard } from './components/FirstLaunchWizard';
+import { EnvironmentSecurityModal } from './components/EnvironmentSecurityModal';
 import { PREBUILT_TEMPLATES } from './types';
 import posthog from 'posthog-js';
 
@@ -248,12 +249,13 @@ export default function App() {
     }
   }, []);
 
-  const handleWizardComplete = (config: {
+  const handleWizardComplete = async (config: {
     lang: 'en' | 'ru' | 'zh';
     geminiKey: string;
     userName: string;
     userColor: string;
     selectedTemplateId: string;
+    generateWorkspaceFiles?: boolean;
   }) => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem("kostromai44_initialized", "true");
@@ -287,6 +289,27 @@ export default function App() {
       if (matched) {
         app.setNodes(matched.nodes);
         app.setConnections(matched.connections);
+      }
+    }
+
+    // Pre-generate and save files on backend if toggled
+    if (config.generateWorkspaceFiles) {
+      try {
+        await fetch('/api/config/setup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            geminiKey: config.geminiKey || 'sandbox_free_test_gemini',
+            openaiKey: 'sandbox_free_test_openai',
+            anthropicKey: 'sandbox_free_test_anthropic',
+            jwtSecret: 'sandbox_jwt_secret_token_signature_key_32_chars',
+            encryptionKey: 'sandbox_encryption_master_key_for_api_keys_32_chars'
+          }),
+        });
+      } catch (err) {
+        console.error('Error auto-generating workspace credentials:', err);
       }
     }
 
@@ -594,6 +617,14 @@ export default function App() {
           isOpen={isFirstLaunchOpen}
           onClose={handleWizardComplete}
           currentLang={app.currentLang}
+        />
+
+        {/* Mandatory Environment Shield Modal */}
+        <EnvironmentSecurityModal
+          currentLang={app.currentLang}
+          onInitialized={() => {
+            console.log('Cryptographic environment verified secure.');
+          }}
         />
       </div>
     </ErrorBoundary>

@@ -5,6 +5,7 @@ import {
   HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X, CheckSquare
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
+import { AppHealthMonitor } from './AppHealthMonitor';
 
 interface AppHeaderProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -58,6 +59,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <span className="text-[9px] bg-sky-500/10 text-sky-400 font-extrabold px-1.5 py-0.5 rounded-full tracking-normal border border-sky-500/20">
               v44
             </span>
+            <AppHealthMonitor currentLang={currentLang} />
           </h1>
           <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
             {t('subtitle')}

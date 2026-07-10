@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { GoogleGenAI } from '@google/genai';
 import { executePipeline } from './agentRun.js';
 import { validateBody, PipelineExecuteSchema } from '../utils/validation.js';
@@ -690,6 +692,120 @@ router.get('/config/status', (req: Request, res: Response) => {
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     anthropicConfigured: !!process.env.ANTHROPIC_API_KEY
   });
+});
+
+// Helper function to update/write .env file
+function updateEnvFile(keys: Record<string, string>) {
+  const envPath = path.join(process.cwd(), '.env');
+  let envContent = '';
+  
+  if (fs.existsSync(envPath)) {
+    envContent = fs.readFileSync(envPath, 'utf8');
+  } else {
+    const examplePath = path.join(process.cwd(), '.env.example');
+    if (fs.existsSync(examplePath)) {
+      envContent = fs.readFileSync(examplePath, 'utf8');
+    }
+  }
+
+  for (const [key, value] of Object.entries(keys)) {
+    if (!value) continue;
+    process.env[key] = value;
+    
+    const regex = new RegExp(`^${key}=.*$`, 'm');
+    if (regex.test(envContent)) {
+      envContent = envContent.replace(regex, `${key}=${value}`);
+    } else {
+      if (envContent && !envContent.endsWith('\n')) {
+        envContent += '\n';
+      }
+      envContent += `${key}=${value}\n`;
+    }
+  }
+
+  fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf8');
+}
+
+// Helper function to update workspace_config.json
+function updateConfigJson(keys: Record<string, string>) {
+  const configPath = path.join(process.cwd(), 'workspace_config.json');
+  let configData: Record<string, string> = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch {
+      configData = {};
+    }
+  }
+  configData = { ...configData, ...keys };
+  fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf8');
+}
+
+// Check security/presence of mandatory environment variables
+router.get('/config/env-status', (req: Request, res: Response) => {
+  const jwt = process.env.JWT_SECRET || '';
+  const encryption = process.env.ENCRYPTION_MASTER_KEY || '';
+
+  const jwtMissing = !jwt || jwt === '';
+  const jwtInsecure = jwtMissing || jwt.length < 32 || jwt.toLowerCase().includes('fallback') || jwt.toLowerCase().includes('development');
+
+  const encryptionMissing = !encryption || encryption === '';
+  const encryptionInsecure = encryptionMissing || encryption.length < 32 || encryption.toLowerCase().includes('fallback') || encryption.toLowerCase().includes('development');
+
+  res.json({
+    jwtMissing,
+    jwtInsecure,
+    jwtLength: jwt.length,
+    encryptionMissing,
+    encryptionInsecure,
+    encryptionLength: encryption.length,
+    overallSecure: !jwtInsecure && !encryptionInsecure
+  });
+});
+
+// Update JWT_SECRET and/or ENCRYPTION_MASTER_KEY
+router.post('/config/update-keys', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
+  let { jwtSecret, encryptionKey } = req.body;
+  const crypto = require('crypto');
+
+  if (jwtSecret === 'generate_secure') {
+    jwtSecret = crypto.randomBytes(32).toString('hex');
+  }
+  if (encryptionKey === 'generate_secure') {
+    encryptionKey = crypto.randomBytes(32).toString('hex');
+  }
+
+  const updates: Record<string, string> = {};
+  if (jwtSecret) updates['JWT_SECRET'] = jwtSecret;
+  if (encryptionKey) updates['ENCRYPTION_MASTER_KEY'] = encryptionKey;
+
+  try {
+    updateEnvFile(updates);
+    updateConfigJson(updates);
+    res.json({ success: true, jwtSecret, encryptionKey });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Core config setup to pre-populate/save workspace settings (including sandbox credentials)
+router.post('/config/setup', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
+  const { geminiKey, openaiKey, anthropicKey, jwtSecret, encryptionKey } = req.body;
+  
+  const updates: Record<string, string> = {};
+  if (geminiKey) updates['GEMINI_API_KEY'] = geminiKey;
+  if (openaiKey) updates['OPENAI_API_KEY'] = openaiKey;
+  if (anthropicKey) updates['ANTHROPIC_API_KEY'] = anthropicKey;
+  if (jwtSecret) updates['JWT_SECRET'] = jwtSecret;
+  if (encryptionKey) updates['ENCRYPTION_MASTER_KEY'] = encryptionKey;
+
+  try {
+    updateEnvFile(updates);
+    updateConfigJson(updates);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

@@ -25,6 +25,7 @@ interface FirstLaunchWizardProps {
     userName: string;
     userColor: string;
     selectedTemplateId: string;
+    generateWorkspaceFiles?: boolean;
   }) => void;
   currentLang: 'en' | 'ru' | 'zh';
 }
@@ -40,6 +41,7 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
   const [userColor, setUserColor] = useState('#10b981'); // Emerald default
   const [geminiKey, setGeminiKey] = useState('');
   const [useSimulation, setUseSimulation] = useState(false);
+  const [generateWorkspaceFiles, setGenerateWorkspaceFiles] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState('multi-agent-coder');
 
   const presetColors = [
@@ -133,7 +135,8 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
         geminiKey: finalKey,
         userName: userName.trim() || 'KostromAiDev',
         userColor,
-        selectedTemplateId
+        selectedTemplateId,
+        generateWorkspaceFiles
       });
     }
   };
@@ -401,6 +404,40 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
                     </div>
                     <p className="text-[10px] text-slate-500 leading-relaxed">
                       {translations.simulationDesc}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Workspace Config File Pre-generation toggle */}
+                <div 
+                  onClick={() => setGenerateWorkspaceFiles(!generateWorkspaceFiles)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 select-none ${
+                    generateWorkspaceFiles 
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+                      : 'bg-slate-950/30 border-slate-850 text-slate-400 hover:border-slate-800'
+                  }`}
+                  id="wizard-generate-workspace-toggle"
+                >
+                  <div className={`p-2 rounded-xl border shrink-0 ${
+                    generateWorkspaceFiles ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-900 border-slate-800'
+                  }`}>
+                    <FileJson size={16} className={generateWorkspaceFiles ? 'animate-pulse' : ''} />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                      {lang === 'ru' ? 'Записать конфигурацию в рабочую область' : lang === 'zh' ? '将配置保存至工作区' : 'Generate Workspace Config Files'}
+                      {generateWorkspaceFiles && (
+                        <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] border border-emerald-500/20 font-mono font-black">
+                          RECOMMENDED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-relaxed font-sans">
+                      {lang === 'ru' 
+                        ? 'Автоматически запишет файлы .env и workspace_config.json с демо-токенами "sandbox" для мгновенного запуска всех функций.' 
+                        : lang === 'zh' 
+                        ? '自动将包含沙盒测试令牌的 .env 和 workspace_config.json 模版写入工作区。' 
+                        : 'Automatically pre-generates and saves .env and workspace_config.json template pre-populated with sandbox demo tokens.'}
                     </p>
                   </div>
                 </div>
