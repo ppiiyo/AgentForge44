@@ -1,4 +1,5 @@
 import ivm from 'isolated-vm';
+import { sandboxMemoryGauge } from '../metrics.js';
 
 export interface SandboxExecutionResult {
   success: boolean;
@@ -153,6 +154,13 @@ export class IsolatedVmSandbox {
         }
       }
 
+      if (isolate) {
+        try {
+          const stats = await isolate.getHeapStatistics();
+          sandboxMemoryGauge.set({ isolation_level: 'IsolatedVm', status: 'success' }, stats.used_heap_size);
+        } catch {}
+      }
+
       return {
         success: true,
         result: finalResult,
@@ -161,6 +169,13 @@ export class IsolatedVmSandbox {
         isolationLevel: 'IsolatedVm'
       };
     } catch (err: any) {
+      if (isolate) {
+        try {
+          const stats = await isolate.getHeapStatistics();
+          sandboxMemoryGauge.set({ isolation_level: 'IsolatedVm', status: 'failed' }, stats.used_heap_size);
+        } catch {}
+      }
+
       return {
         success: false,
         logs,

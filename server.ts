@@ -30,6 +30,7 @@ import marketplaceRouter from './src/api/marketplaceRoutes.js';
 import deploymentRouter from './src/api/deploymentRoutes.js';
 import mcpRouter from './src/api/mcpRoutes.js';
 import metricsRouter from './src/api/metricsRoutes.js';
+import githubRouter from './src/api/githubRoutes.js';
 import ragRouter from './src/api/ragRoutes.js';
 import patternsRouter from './src/api/patternsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
@@ -117,6 +118,7 @@ app.use('/api', marketplaceRouter);
 app.use('/api', deploymentRouter);
 app.use('/api', mcpRouter);
 app.use('/api', metricsRouter);
+app.use('/api', githubRouter);
 app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     res.set('Content-Type', register.contentType);

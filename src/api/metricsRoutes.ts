@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { MetricsCollector } from './metricsAndVersions.js';
-import { register } from '../services/metrics.js';
+import { register, circuitBreakerStateGauge } from '../services/metrics.js';
 import { circuitBreakerRegistry } from '../services/circuitBreaker.js';
 import { chaosEngine } from '../services/chaosEngine.js';
 
@@ -49,6 +49,14 @@ router.post('/resilience/chaos-reset', (req: Request, res: Response) => {
 
 router.get('/metrics', async (req: Request, res: Response) => {
   try {
+    // Dynamically update circuit breaker states before returning metrics
+    const breakers = circuitBreakerRegistry.getAllBreakers();
+    for (const b of breakers) {
+      const stats = b.getStats();
+      const stateVal = stats.state === 'CLOSED' ? 0 : stats.state === 'HALF_OPEN' ? 1 : 2;
+      circuitBreakerStateGauge.set({ breaker_name: stats.name }, stateVal);
+    }
+
     res.set('Content-Type', register.contentType);
     res.end(await register.metrics());
   } catch (err: any) {

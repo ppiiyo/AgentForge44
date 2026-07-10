@@ -4,6 +4,7 @@ import { StrategyFactory } from '../../api/strategies/index.js';
 import { logger } from '../logger.js';
 import { chaosEngine } from '../chaosEngine.js';
 import { generateWithRetry } from '../../api/services/RetryService.js';
+import { pipelineExecutionsCounter, pipelineExecutionDuration, pipelineNodeExecutionDuration } from '../metrics.js';
 
 export interface ExecutorOptions {
   concurrencyLimit?: number;
@@ -112,6 +113,23 @@ export class PipelineExecutor {
     const completedNodes = new Set<string>();
 
     return new Promise<PipelineExecutionResult>((resolve, reject) => {
+      const originalResolve = resolve;
+      const originalReject = reject;
+
+      resolve = (val: PipelineExecutionResult) => {
+        const duration = (Date.now() - startTime) / 1000;
+        pipelineExecutionsCounter.inc({ status: 'success' });
+        pipelineExecutionDuration.observe(duration);
+        return originalResolve(val);
+      };
+
+      reject = (err: any) => {
+        const duration = (Date.now() - startTime) / 1000;
+        pipelineExecutionsCounter.inc({ status: 'failed' });
+        pipelineExecutionDuration.observe(duration);
+        return originalReject(err);
+      };
+
       const checkAndRunNext = () => {
         if (this.abortController.signal.aborted) {
           reject(new Error('Execution cancelled'));
@@ -248,12 +266,20 @@ export class PipelineExecutor {
 
       await strategy.execute(node, context as any);
       this.nodeOutputs[node.id] = this.nodeOutputs[node.id] ?? this.activeValueRef.value;
+
+      const duration = (Date.now() - stepStart) / 1000;
+      pipelineNodeExecutionDuration.observe({ node_type: node.type, node_id: node.id, status: 'success' }, duration);
     } catch (err: any) {
       const healed = await this.attemptSelfHealing(node, err, localValue, stepStart);
       if (healed) {
         logger.info(`[Self-Healing] Successfully recovered node "${node.title}" (${node.id}) at runtime.`);
+        const duration = (Date.now() - stepStart) / 1000;
+        pipelineNodeExecutionDuration.observe({ node_type: node.type, node_id: node.id, status: 'success_healed' }, duration);
         return;
       }
+
+      const duration = (Date.now() - stepStart) / 1000;
+      pipelineNodeExecutionDuration.observe({ node_type: node.type, node_id: node.id, status: 'failed' }, duration);
 
       this.logs.push({
         nodeId: node.id,

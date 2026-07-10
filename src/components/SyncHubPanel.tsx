@@ -1,11 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Globe, Plus, Trash, ToggleLeft, ToggleRight, Loader, RefreshCw, Layers, ShieldAlert, Github, GitBranch, Link, Check, Play, AlertCircle } from 'lucide-react';
+import { 
+  Calendar, 
+  Globe, 
+  Plus, 
+  Trash, 
+  ToggleLeft, 
+  ToggleRight, 
+  Loader, 
+  RefreshCw, 
+  Github, 
+  GitBranch, 
+  Link, 
+  Check, 
+  AlertCircle,
+  ExternalLink
+} from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
 
 interface SyncHubPanelProps {
   currentLang: 'en' | 'ru' | 'zh';
   nodes: FlowNode[];
   connections: FlowConnection[];
+}
+
+interface GitHubRepo {
+  name: string;
+  full_name: string;
+  default_branch: string;
+  private: boolean;
+}
+
+interface GitHubConnection {
+  connected: boolean;
+  username?: string;
+  avatarUrl?: string;
+  connectedAt?: string;
 }
 
 export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelProps) {
@@ -18,99 +47,17 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
   const [feedback, setFeedback] = useState<string | null>(null);
 
   // GitHub States
-  const [gitRepoUrl, setGitRepoUrl] = useState('');
-  const [gitBranch, setGitBranch] = useState('main');
-  const [gitAutoDeploy, setGitAutoDeploy] = useState(true);
-  const [gitConfig, setGitConfig] = useState<any>(null);
-  const [gitSyncing, setGitSyncing] = useState(false);
+  const [githubConnection, setGithubConnection] = useState<GitHubConnection>({ connected: false });
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [selectedRepo, setSelectedRepo] = useState('');
+  const [customRepo, setCustomRepo] = useState('');
+  const [branch, setBranch] = useState('main');
+  const [filePath, setFilePath] = useState('workflows/kostromai44-agent.json');
+  const [commitMessage, setCommitMessage] = useState('Sync agent workflow from KostromAi44 editor');
+  const [pushing, setPushing] = useState(false);
   const [gitFeedback, setGitFeedback] = useState<string | null>(null);
-
-  const fetchGitConfig = async () => {
-    try {
-      const resp = await fetch('/api/github/config');
-      if (resp.ok) {
-        const data = await resp.json();
-        setGitConfig(data);
-        if (data.linked) {
-          setGitRepoUrl(data.repoUrl);
-          setGitBranch(data.branch);
-          setGitAutoDeploy(data.autoDeploy);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleLinkGit = async () => {
-    if (!gitRepoUrl.trim()) return;
-    try {
-      const response = await fetch('/api/github/link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          repoUrl: gitRepoUrl,
-          branch: gitBranch,
-          autoDeploy: gitAutoDeploy
-        })
-      });
-      if (response.ok) {
-        setGitFeedback("GitHub repository linked successfully!");
-        setTimeout(() => setGitFeedback(null), 3000);
-        fetchGitConfig();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleUnlinkGit = async () => {
-    try {
-      const response = await fetch('/api/github/unlink', {
-        method: 'POST'
-      });
-      if (response.ok) {
-        setGitFeedback("GitHub repository unlinked.");
-        setTimeout(() => setGitFeedback(null), 3000);
-        setGitRepoUrl('');
-        setGitBranch('main');
-        setGitAutoDeploy(true);
-        fetchGitConfig();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleSyncGit = async () => {
-    setGitSyncing(true);
-    try {
-      const response = await fetch('/api/github/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes, connections })
-      });
-      if (response.ok) {
-        setGitFeedback("Code synchronization initiated...");
-        setTimeout(() => setGitFeedback(null), 3000);
-        
-        let count = 0;
-        const interval = setInterval(async () => {
-          await fetchGitConfig();
-          count++;
-          if (count >= 4) {
-            clearInterval(interval);
-            setGitSyncing(false);
-          }
-        }, 500);
-      } else {
-        setGitSyncing(false);
-      }
-    } catch (err) {
-      console.error(err);
-      setGitSyncing(false);
-    }
-  };
+  const [pushedFileUrl, setPushedFileUrl] = useState<string | null>(null);
+  const [loadingRepos, setLoadingRepos] = useState(false);
 
   const t = {
     en: {
@@ -126,7 +73,21 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
       noSchedules: "No cron schedules registered.",
       noWebhooks: "No webhook subscriptions created yet.",
       secret: "Secure Signature Secret",
-      successMsg: "Synchronized state updated!"
+      successMsg: "Synchronized state updated!",
+      githubTitle: "GitHub Repository Sync",
+      githubDesc: "Keep your workflow model code synced with your GitHub repository and push current agent structures on-demand.",
+      connectGithub: "Connect GitHub Account",
+      disconnectGithub: "Disconnect Account",
+      selectRepo: "Select Repository",
+      customRepoLabel: "Or Enter Custom Repository (owner/repo)",
+      branchLabel: "Target Branch",
+      filePathLabel: "File Destination Path",
+      commitMessageLabel: "Commit Message",
+      pushBtn: "Push Workflow to Repository",
+      pushingState: "Pushing code to GitHub...",
+      successPush: "Workflow successfully pushed to GitHub!",
+      viewOnGithub: "View File on GitHub",
+      connectedAs: "Connected as"
     },
     ru: {
       schedulesTitle: "Планировщики Задач",
@@ -141,7 +102,21 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
       noSchedules: "Нет активных расписаний запуска.",
       noWebhooks: "Список внешних подписок пуст.",
       secret: "Секретный ключ подписи",
-      successMsg: "Изменения сохранены на бэкенде!"
+      successMsg: "Изменения сохранены на бэкенде!",
+      githubTitle: "Интеграция с GitHub",
+      githubDesc: "Синхронизируйте JSON-код вашего агента напрямую с репозиторием GitHub.",
+      connectGithub: "Подключить аккаунт GitHub",
+      disconnectGithub: "Отключить аккаунт",
+      selectRepo: "Выберите репозиторий",
+      customRepoLabel: "Или укажите репозиторий вручную (владелец/репо)",
+      branchLabel: "Целевая ветка",
+      filePathLabel: "Путь к файлу назначения",
+      commitMessageLabel: "Сообщение коммита",
+      pushBtn: "Отправить workflow в репозиторий",
+      pushingState: "Код отправляется на GitHub...",
+      successPush: "Workflow успешно отправлен на GitHub!",
+      viewOnGithub: "Посмотреть файл на GitHub",
+      connectedAs: "Подключено как"
     },
     zh: {
       schedulesTitle: "自动化定时计划 (Cron)",
@@ -156,7 +131,21 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
       noSchedules: "暂未注册任何定时触发规则。",
       noWebhooks: "Webhooks 接收列表尚未初始化。",
       secret: "数据篡改安全校验密钥 (Secret)",
-      successMsg: "后台配置同步刷新成功！"
+      successMsg: "后台配置同步刷新成功！",
+      githubTitle: "GitHub 存储库代码推送",
+      githubDesc: "连接您的实际 GitHub 账户，一键同步画布的 JSON 配置逻辑到指定的代码库与目标路径。",
+      connectGithub: "连接 GitHub 账户",
+      disconnectGithub: "断开账户连接",
+      selectRepo: "选择目标仓库",
+      customRepoLabel: "或者手动填写仓库路径 (owner/repo)",
+      branchLabel: "目标分支 (Branch)",
+      filePathLabel: "目标文件路径",
+      commitMessageLabel: "提交信息 (Commit Message)",
+      pushBtn: "推送工作流逻辑到 GitHub",
+      pushingState: "正在将代码推送到 GitHub...",
+      successPush: "工作流代码成功推送至 GitHub!",
+      viewOnGithub: "在 GitHub 上查看此文件",
+      connectedAs: "已关联账户"
     }
   }[currentLang];
 
@@ -180,10 +169,136 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
     }
   };
 
+  const fetchGithubConnectionStatus = async () => {
+    try {
+      const resp = await fetch('/api/github/connection');
+      if (resp.ok) {
+        const data = await resp.json();
+        setGithubConnection(data);
+        if (data.connected) {
+          fetchRepos();
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching GitHub connection status:', e);
+    }
+  };
+
+  const fetchRepos = async () => {
+    setLoadingRepos(true);
+    try {
+      const resp = await fetch('/api/github/repos');
+      if (resp.ok) {
+        const data = await resp.json();
+        setRepos(data);
+        if (data.length > 0) {
+          setSelectedRepo(data[0].full_name);
+          setBranch(data[0].default_branch || 'main');
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching repos:', e);
+    } finally {
+      setLoadingRepos(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
-    fetchGitConfig();
+    fetchGithubConnectionStatus();
   }, []);
+
+  // Listen for message from the popup OAuth window
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'OAUTH_AUTH_SUCCESS') {
+        setGithubConnection({
+          connected: true,
+          username: event.data.username,
+          avatarUrl: event.data.avatarUrl,
+          connectedAt: new Date().toISOString()
+        });
+        setGitFeedback(t.successPush);
+        setTimeout(() => setGitFeedback(null), 3000);
+        fetchRepos();
+      }
+    };
+
+    window.addEventListener('message', handleOAuthMessage);
+    return () => window.removeEventListener('message', handleOAuthMessage);
+  }, []);
+
+  const handleConnectGitHub = () => {
+    const token = localStorage.getItem('kostromai44_auth_token') || 'forge_production_admin_token';
+    const url = `/api/auth/github/url?token=${encodeURIComponent(token)}`;
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.innerWidth - width) / 2;
+    const top = window.screenY + (window.innerHeight - height) / 2;
+    window.open(url, 'Connect GitHub', `width=${width},height=${height},left=${left},top=${top}`);
+  };
+
+  const handleDisconnectGitHub = async () => {
+    try {
+      const resp = await fetch('/api/github/connection', { method: 'DELETE' });
+      if (resp.ok) {
+        setGithubConnection({ connected: false });
+        setRepos([]);
+        setSelectedRepo('');
+        setCustomRepo('');
+        setGitFeedback(null);
+        setPushedFileUrl(null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePushToGitHub = async () => {
+    const repoToPush = customRepo.trim() || selectedRepo;
+    if (!repoToPush) {
+      setGitFeedback(currentLang === 'ru' ? 'Пожалуйста, выберите или укажите репозиторий.' : 'Please select or enter a repository.');
+      return;
+    }
+
+    setPushing(true);
+    setGitFeedback(null);
+    setPushedFileUrl(null);
+
+    try {
+      // Serialize current workflow/graph structure (nodes and connections)
+      const serializedContent = JSON.stringify({
+        name: "kostromai44-agent-workflow",
+        exportedAt: new Date().toISOString(),
+        nodes,
+        connections
+      }, null, 2);
+
+      const resp = await fetch('/api/github/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repo: repoToPush,
+          branch,
+          commitMessage,
+          filePath,
+          content: serializedContent
+        })
+      });
+
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        setGitFeedback(t.successPush);
+        setPushedFileUrl(data.html_url);
+      } else {
+        setGitFeedback(`Error: ${data.error || 'Failed to push file.'}`);
+      }
+    } catch (e: any) {
+      setGitFeedback(`Error: ${e.message}`);
+    } finally {
+      setPushing(false);
+    }
+  };
 
   const handleCreateSchedule = async () => {
     try {
@@ -286,11 +401,20 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
     }
   };
 
+  const onRepoSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedRepo(val);
+    const repoInfo = repos.find(r => r.full_name === val);
+    if (repoInfo) {
+      setBranch(repoInfo.default_branch || 'main');
+    }
+  };
+
   return (
     <div className="space-y-6" id="sync_hub_outer">
       {/* Alert banner */}
       {feedback && (
-        <div className="bg-emerald-950/30 border border-emerald-900 text-emerald-450 p-3 rounded-xl text-center text-xs font-bold leading-normal">
+        <div className="bg-emerald-950/30 border border-emerald-900 text-emerald-400 p-3 rounded-xl text-center text-xs font-bold leading-normal">
           {feedback}
         </div>
       )}
@@ -324,7 +448,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
                   {sch.stats && (
                     <div className="text-[9.5px] text-slate-500">
                       Called: <span className="text-slate-400">{sch.stats.runCount}</span> &bull; 
-                      Errors: <span className="text-rose-450">{sch.stats.failCount}</span>
+                      Errors: <span className="text-rose-400">{sch.stats.failCount}</span>
                     </div>
                   )}
                 </div>
@@ -333,14 +457,14 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
                   <button
                     id={`toggle_schedule_btn_${sch.id}`}
                     onClick={() => handleToggleSchedule(sch.id, sch.enabled)}
-                    className="text-slate-400 hover:text-sky-400 transition-all cursor-pointer"
+                    className="text-slate-400 hover:text-sky-400 transition-all cursor-pointer bg-transparent border-none"
                   >
                     {sch.enabled ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} />}
                   </button>
                   <button
                     id={`delete_schedule_btn_${sch.id}`}
                     onClick={() => handleDeleteSchedule(sch.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-850 transition-all cursor-pointer"
+                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-850 transition-all cursor-pointer bg-transparent border-none"
                   >
                     <Trash size={13} />
                   </button>
@@ -367,7 +491,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
           <button
             id="btn_create_schedule"
             onClick={handleCreateSchedule}
-            className="bg-emerald-600 hover:bg-emerald-555 text-white text-[11px] font-black rounded-lg px-4 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black rounded-lg px-4 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0 border-none"
           >
             <Plus size={12} /> {currentLang === 'ru' ? "Спланировать" : currentLang === 'zh' ? "添加任务" : "Add Timer"}
           </button>
@@ -377,7 +501,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
       {/* Webhooks */}
       <section className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-4">
         <div className="flex items-start gap-2.5">
-          <Globe size={15} className="text-sky-450 mt-1" />
+          <Globe size={15} className="text-sky-400 mt-1" />
           <div>
             <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-widest leading-none">
               {t.webhooksTitle}
@@ -408,14 +532,14 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
                   <button
                     id={`toggle_webhook_btn_${wh.id}`}
                     onClick={() => handleToggleWebhook(wh.id, wh.enabled)}
-                    className="text-slate-400 hover:text-sky-400 transition-all cursor-pointer"
+                    className="text-slate-400 hover:text-sky-400 transition-all cursor-pointer bg-transparent border-none"
                   >
                     {wh.enabled ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} />}
                   </button>
                   <button
                     id={`delete_webhook_btn_${wh.id}`}
                     onClick={() => handleDeleteWebhook(wh.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-850 transition-all cursor-pointer"
+                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-850 transition-all cursor-pointer bg-transparent border-none"
                   >
                     <Trash size={13} />
                   </button>
@@ -456,7 +580,7 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
               id="btn_create_webhook"
               onClick={handleCreateWebhook}
               disabled={!webhookUrl}
-              className="bg-sky-600 hover:bg-sky-555 text-white disabled:opacity-50 text-[11px] font-black rounded-lg px-4 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+              className="bg-sky-600 hover:bg-sky-500 text-white disabled:opacity-50 text-[11px] font-black rounded-lg px-4 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0 border-none"
             >
               <Plus size={12} /> {currentLang === 'ru' ? "Добавить" : currentLang === 'zh' ? "订阅推送" : "Subscribe"}
             </button>
@@ -467,159 +591,194 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
       {/* GitHub Integration Card */}
       <section className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-4" id="github_integration_section">
         <div className="flex items-start gap-2.5">
-          <Github size={15} className="text-purple-400 mt-1 animate-pulse" />
+          <Github size={15} className="text-purple-400 mt-1" />
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-widest leading-none">
-                {currentLang === 'ru' ? "Интеграция с GitHub" : currentLang === 'zh' ? "GitHub 仓库持续集成" : "GitHub Repository Sync"}
+                {t.githubTitle}
               </h4>
-              {gitConfig?.linked && (
+              {githubConnection.connected && (
                 <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                  {currentLang === 'ru' ? "СВЯЗАНО" : currentLang === 'zh' ? "已绑定" : "LINKED"}
+                  {currentLang === 'ru' ? "СВЯЗАНО" : currentLang === 'zh' ? "已绑定" : "CONNECTED"}
                 </span>
               )}
             </div>
             <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
-              {currentLang === 'ru' 
-                ? "Синхронизируйте код проекта напрямую с репозиторием GitHub и запускайте автоматическое развертывание." 
-                : currentLang === 'zh' 
-                  ? "将当前 KostromAi44 设计的工作流代码一键推送到您的 GitHub 存储库，配置自动部署策略与版本触发。" 
-                  : "Keep your workflow model code synced with your GitHub repository and trigger automatic web/container deployments."}
+              {t.githubDesc}
             </p>
           </div>
         </div>
 
         {gitFeedback && (
-          <div className="bg-purple-950/20 border border-purple-900/40 text-purple-300 p-2.5 rounded-lg text-center text-[11px] font-medium leading-normal animate-in fade-in duration-200">
+          <div className="bg-purple-950/25 border border-purple-900/40 text-purple-300 p-2.5 rounded-lg text-center text-[11px] font-medium leading-normal">
             {gitFeedback}
           </div>
         )}
 
-        {!gitConfig?.linked ? (
+        {pushedFileUrl && (
+          <div className="bg-emerald-950/20 border border-emerald-900/40 p-2.5 rounded-lg text-center">
+            <a 
+              href={pushedFileUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-1.5 font-bold decoration-none hover:underline"
+            >
+              <span>{t.viewOnGithub}</span>
+              <ExternalLink size={13} />
+            </a>
+          </div>
+        )}
+
+        {!githubConnection.connected ? (
           <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Repository (owner/repo)</label>
-                <input
-                  id="github_repo_input"
-                  type="text"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 placeholder-slate-600 outline-none"
-                  placeholder="e.g. owner/kostromai44-project"
-                  value={gitRepoUrl}
-                  onChange={(e) => setGitRepoUrl(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Target Branch</label>
-                <div className="relative">
-                  <GitBranch size={12} className="absolute left-2.5 top-2.5 text-slate-500" />
-                  <input
-                    id="github_branch_input"
-                    type="text"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 pl-7 text-xs text-slate-300 outline-none"
-                    placeholder="main"
-                    value={gitBranch}
-                    onChange={(e) => setGitBranch(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-slate-850">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-300">
-                  {currentLang === 'ru' ? "Автоматическое развертывание" : currentLang === 'zh' ? "触发自动化构建部署" : "Automated Deployment Trigger"}
-                </span>
-                <span className="text-[9px] text-slate-500 mt-0.5">
-                  {currentLang === 'ru' ? "Запускать сборку на Cloud Run при синхронизации" : "Rebuild Cloud Run container instances on push sync"}
-                </span>
-              </div>
-              <button
-                type="button"
-                id="btn_git_toggle_autodeploy"
-                onClick={() => setGitAutoDeploy(!gitAutoDeploy)}
-                className="text-slate-400 hover:text-purple-400 transition-all cursor-pointer"
-              >
-                {gitAutoDeploy ? <ToggleRight size={22} className="text-purple-400" /> : <ToggleLeft size={22} />}
-              </button>
-            </div>
-
             <button
               type="button"
-              id="btn_github_link_repo"
-              onClick={handleLinkGit}
-              disabled={!gitRepoUrl}
-              className="w-full bg-purple-600 hover:bg-purple-550 disabled:opacity-40 text-white font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+              id="btn_github_oauth_connect"
+              onClick={handleConnectGitHub}
+              className="w-full bg-purple-600 hover:bg-purple-550 text-white font-bold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 border-none"
             >
-              <Link size={12} />
-              {currentLang === 'ru' ? "Связать Репозиторий" : currentLang === 'zh' ? "绑定 GitHub 仓库" : "Link Repository"}
+              <Github size={14} />
+              <span>{t.connectGithub}</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="bg-slate-900 border border-slate-850 rounded-lg p-3 space-y-2.5">
-              <div className="flex items-center justify-between border-b border-slate-850 pb-2">
-                <div>
-                  <span className="text-[9px] text-slate-500 font-extrabold block uppercase tracking-wider">Linked Repository</span>
-                  <span className="text-xs text-slate-200 font-mono font-semibold">{gitConfig.repoUrl}</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-slate-500 font-extrabold block uppercase tracking-wider text-right">Branch</span>
-                  <span className="text-xs text-purple-400 font-mono font-bold flex items-center justify-end gap-1">
-                    <GitBranch size={11} /> {gitConfig.branch}
-                  </span>
+          <div className="space-y-4">
+            {/* Logged in GitHub Profile Card */}
+            <div className="flex items-center justify-between p-2 bg-slate-900/50 rounded-lg border border-slate-850">
+              <div className="flex items-center gap-2">
+                <img 
+                  src={githubConnection.avatarUrl || "https://github.com/identicons/dummy.png"} 
+                  alt={githubConnection.username} 
+                  className="w-7 h-7 rounded-full border border-slate-800" 
+                />
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-slate-500 font-semibold">{t.connectedAs}</span>
+                  <span className="text-xs font-bold text-slate-200">@{githubConnection.username}</span>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">
-                  {currentLang === 'ru' ? "Автодеплой:" : currentLang === 'zh' ? "持续部署触发:" : "Continuous Deployment:"}
-                </span>
-                <span className={`font-mono text-[10px] font-bold ${gitConfig.autoDeploy ? 'text-emerald-400' : 'text-slate-500'}`}>
-                  {gitConfig.autoDeploy ? 'ENABLED' : 'DISABLED'}
-                </span>
-              </div>
-
-              {gitConfig.lastSyncedAt && (
-                <div className="text-[10px] text-slate-500 flex items-center justify-between border-t border-slate-850/55 pt-2">
-                  <span>Last Code Sync:</span>
-                  <span className="font-mono text-slate-400">{new Date(gitConfig.lastSyncedAt).toLocaleString()}</span>
-                </div>
-              )}
+              <button
+                type="button"
+                id="btn_github_disconnect"
+                onClick={handleDisconnectGitHub}
+                className="bg-transparent hover:bg-rose-950/15 border border-slate-850 hover:border-rose-900/30 text-slate-500 hover:text-rose-400 text-[10px] font-bold px-2 py-1 rounded transition-all cursor-pointer"
+              >
+                {t.disconnectGithub}
+              </button>
             </div>
 
-            {/* Sync Console Output logs */}
-            {gitConfig.syncLogs && gitConfig.syncLogs.length > 0 && (
-              <div className="bg-slate-950/80 border border-slate-900 p-2.5 rounded-lg max-h-32 overflow-y-auto font-mono text-[9px] text-slate-400 space-y-1">
-                <span className="text-[8px] font-bold text-slate-500 block uppercase mb-1 tracking-wider">Sync Syncing Pipeline Console</span>
-                {gitConfig.syncLogs.map((log: string, idx: number) => (
-                  <div key={idx} className="leading-normal border-l border-slate-800 pl-1.5">
-                    {log}
+            {/* Repositories selection */}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                  {t.selectRepo}
+                </label>
+                {loadingRepos ? (
+                  <div className="text-xs text-slate-500 flex items-center gap-1.5 py-1">
+                    <Loader size={12} className="animate-spin text-purple-400" />
+                    <span>Loading repositories...</span>
                   </div>
-                ))}
+                ) : repos.length > 0 ? (
+                  <select
+                    id="github_repo_select"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 outline-none"
+                    value={selectedRepo}
+                    onChange={onRepoSelectChange}
+                  >
+                    {repos.map(r => (
+                      <option key={r.full_name} value={r.full_name}>
+                        {r.full_name} {r.private ? '🔒' : '🌐'}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-[10px] text-slate-600 italic">No repositories found. Ensure you have authorized write permission.</div>
+                )}
               </div>
-            )}
 
-            <div className="flex gap-2">
+              {/* Custom Repository manual override input */}
+              <div className="space-y-1">
+                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                  {t.customRepoLabel}
+                </label>
+                <input
+                  id="github_custom_repo_input"
+                  type="text"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 placeholder-slate-600 outline-none"
+                  placeholder="e.g. owner/kostromai44-repo"
+                  value={customRepo}
+                  onChange={(e) => setCustomRepo(e.target.value)}
+                />
+              </div>
+
+              {/* Target Branch and file path destination */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                    {t.branchLabel}
+                  </label>
+                  <div className="relative">
+                    <GitBranch size={11} className="absolute left-2.5 top-2.5 text-slate-500" />
+                    <input
+                      id="github_branch_input"
+                      type="text"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 pl-7 text-xs text-slate-300 outline-none font-mono"
+                      placeholder="main"
+                      value={branch}
+                      onChange={(e) => setBranch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                    {t.filePathLabel}
+                  </label>
+                  <input
+                    id="github_filepath_input"
+                    type="text"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 outline-none font-mono"
+                    placeholder="workflows/kostromai44-agent.json"
+                    value={filePath}
+                    onChange={(e) => setFilePath(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Commit Message */}
+              <div className="space-y-1">
+                <label className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                  {t.commitMessageLabel}
+                </label>
+                <input
+                  id="github_commit_input"
+                  type="text"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 outline-none"
+                  placeholder="Sync agent workflow from KostromAi44 editor"
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                />
+              </div>
+
+              {/* Push Action Button */}
               <button
                 type="button"
                 id="btn_github_sync_now"
-                onClick={handleSyncGit}
-                disabled={gitSyncing}
-                className="flex-1 bg-purple-600 hover:bg-purple-550 text-white disabled:opacity-50 font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98"
+                onClick={handlePushToGitHub}
+                disabled={pushing || (!selectedRepo && !customRepo)}
+                className="w-full bg-purple-600 hover:bg-purple-550 text-white disabled:opacity-50 font-bold text-xs py-2.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-98 border-none mt-2"
               >
-                {gitSyncing ? <Loader size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                {currentLang === 'ru' ? "Синхронизировать сейчас" : currentLang === 'zh' ? "开始代码同步" : "Sync Code Now"}
-              </button>
-              <button
-                type="button"
-                id="btn_github_unlink"
-                onClick={handleUnlinkGit}
-                className="bg-slate-950 hover:bg-rose-950/15 border border-slate-850 hover:border-rose-900 text-slate-400 hover:text-rose-400 font-bold text-xs px-3.5 rounded-lg transition-all cursor-pointer active:scale-98"
-                title="Unlink Repository"
-              >
-                Unlink
+                {pushing ? (
+                  <>
+                    <Loader size={12} className="animate-spin" />
+                    <span>{t.pushingState}</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={12} />
+                    <span>{t.pushBtn}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

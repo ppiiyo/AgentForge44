@@ -39,3 +39,43 @@ register.registerMetric(httpRequestCounter);
 register.registerMetric(httpRequestDuration);
 register.registerMetric(llmCallCounter);
 register.registerMetric(llmCallDuration);
+
+// 3. Sandbox Memory Metrics
+export const sandboxMemoryGauge = new client.Gauge({
+  name: 'sandbox_memory_bytes',
+  help: 'Memory used by code execution sandboxes in bytes',
+  labelNames: ['isolation_level', 'status']
+});
+register.registerMetric(sandboxMemoryGauge);
+
+// 4. Pipeline Execution Metrics
+export const pipelineExecutionsCounter = new client.Counter({
+  name: 'pipeline_executions_total',
+  help: 'Total number of pipeline executions',
+  labelNames: ['status']
+});
+register.registerMetric(pipelineExecutionsCounter);
+
+export const pipelineExecutionDuration = new client.Histogram({
+  name: 'pipeline_execution_duration_seconds',
+  help: 'Duration of pipeline executions in seconds',
+  buckets: [0.1, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300]
+});
+register.registerMetric(pipelineExecutionDuration);
+
+// 5. Node Execution Metrics
+export const pipelineNodeExecutionDuration = new client.Histogram({
+  name: 'pipeline_node_execution_duration_seconds',
+  help: 'Duration of individual pipeline node executions in seconds',
+  labelNames: ['node_type', 'node_id', 'status'],
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30]
+});
+register.registerMetric(pipelineNodeExecutionDuration);
+
+// 6. Circuit Breaker State Gauge
+export const circuitBreakerStateGauge = new client.Gauge({
+  name: 'circuit_breaker_state',
+  help: 'Circuit breaker state (0=Closed, 1=Half-Open, 2=Open)',
+  labelNames: ['breaker_name']
+});
+register.registerMetric(circuitBreakerStateGauge);
