@@ -13,7 +13,7 @@ import { logger } from '../utils/logger.js';
 import { slidingWindowRateLimiter } from '../middleware/rateLimit.js';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
 import { generateSecureId } from '../utils/idGenerator.js';
-import { requireRole } from './authRoutes.js';
+import { requireRole, authMiddleware } from './authRoutes.js';
 import { enqueuePipelineRun } from '../queue/executionQueue.js';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
@@ -764,7 +764,23 @@ router.get('/config/env-status', (req: Request, res: Response) => {
 });
 
 // Update JWT_SECRET and/or ENCRYPTION_MASTER_KEY
-router.post('/config/update-keys', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
+router.post('/config/update-keys', (req: Request, res: Response, next: any) => {
+  const jwt = process.env.JWT_SECRET || '';
+  const encryption = process.env.ENCRYPTION_MASTER_KEY || '';
+
+  const jwtInsecure = !jwt || jwt.length < 32 || jwt.toLowerCase().includes('fallback') || jwt.toLowerCase().includes('development');
+  const encryptionInsecure = !encryption || encryption.length < 32 || encryption.toLowerCase().includes('fallback') || encryption.toLowerCase().includes('development');
+
+  if (jwtInsecure || encryptionInsecure) {
+    // Current setup is insecure/unconfigured, bypass authentication to allow initial key generation
+    next();
+  } else {
+    // Current keys are already secure, enforce authentication and authorization
+    authMiddleware(req, res, () => {
+      requireRole(['editor', 'owner'])(req, res, next);
+    });
+  }
+}, (req: Request, res: Response) => {
   let { jwtSecret, encryptionKey } = req.body;
   const crypto = require('crypto');
 

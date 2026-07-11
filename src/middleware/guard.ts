@@ -14,7 +14,9 @@ const PUBLIC_PATHS_ALLOWLIST = [
   '/api/marketplace',
   '/api/marketplace/featured',
   '/api/test-payload',
-  '/api/config/status'
+  '/api/config/status',
+  '/api/config/env-status',
+  '/api/config/update-keys'
 ];
 
 export function unifiedGuardMiddleware(req: Request, res: Response, next: NextFunction): void {
