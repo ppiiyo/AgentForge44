@@ -492,7 +492,24 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     };
   }, [isPlaying, currentStepIndex, sessionDetails]);
 
-  const active        <button
+  const activeStep = sessionDetails?.snapshots?.[currentStepIndex] || null;
+
+  return (
+    <div className="space-y-4">
+      {/* Tab controls */}
+      <div className="flex gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-850">
+        <button
+          type="button"
+          onClick={() => setActiveTabSub('sync')}
+          className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-extrabold uppercase tracking-widest text-center cursor-pointer transition-all ${
+            activeTabSub === 'sync'
+              ? 'bg-sky-500/10 border border-sky-500/20 text-sky-400 font-black'
+              : 'text-slate-500 border border-transparent hover:text-slate-300'
+          }`}
+        >
+          {t.syncTab}
+        </button>
+        <button
           type="button"
           onClick={() => setActiveTabSub('async')}
           className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-extrabold uppercase tracking-widest text-center cursor-pointer transition-all ${
@@ -750,38 +767,6 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
               </div>
             )}
           </div>
-        )}
-      </div>�常启动的隐患，请参考详情修复。' : '⚠ Action required. Address the highlighted warnings to stabilize app boots.')}
-                </div>
-              </div>
-            ) : (
-              <div className="text-[10px] text-slate-650 p-3 italic text-center">
-                Failed to gather diagnostics.
-              </div>
-            )}
-          </div>
-        )}         'bg-slate-950 text-slate-500'
-                    }`}>
-                      {run.status === 'running' || pollingRunId === run.id ? t.polling : run.status}
-                    </span>
-                  </div>
-                  {run.error && (
-                    <p className="text-[9px] text-rose-450 truncate mt-0.5 font-mono italic">
-                      Err: {run.error}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-[8px] text-slate-550 font-mono mt-1 pt-1 border-t border-slate-950/50">
-                    <span>{run.stepCount} nodes completed</span>
-                    <span>{run.createdAt.split('T')[1]?.slice(0, 8) || 'Just now'}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-[10px] text-slate-650 p-3 italic text-center">
-              {t.noRuns}
-            </div>
-          )
         )}
       </div>
 
