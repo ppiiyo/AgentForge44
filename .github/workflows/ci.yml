@@ -5,6 +5,13 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run tmate session on failure to debug'
+        required: false
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,8 +41,13 @@ jobs:
         run: npm run lint
 
       - name: Run npm audit security scan
+         # Keep audit running but non-blocking on low-level issues
         run: npm audit --audit-level=high
         continue-on-error: true
+
+      - name: Setup tmate session for debugging static-analysis on failure
+        if: failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled == true
+        uses: mxschmitt/action-tmate@v3
 
   build-and-test:
     name: Compile & Run Tests
@@ -59,4 +71,9 @@ jobs:
 
       - name: Run Vitest Unit & Integration Suites
         run: npm run test
+
+      - name: Setup tmate session for debugging build-and-test on failure
+        if: failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled == true
+        uses: mxschmitt/action-tmate@v3
+
 
