@@ -147,26 +147,29 @@ export const AppHealthMonitor: React.FC<AppHealthMonitorProps> = ({ currentLang 
             <span className="text-[8.5px] text-slate-500 font-extrabold uppercase tracking-wider block">
               {currentLang === 'ru' ? 'LLM ПРОВАЙДЕРЫ' : currentLang === 'zh' ? '大模型连接' : 'LLM Providers'}
             </span>
-            {Object.entries(health.checks.providers).map(([name, prov]) => (
-              <div key={name} className="flex items-center justify-between gap-4 text-[10px]">
-                <span className="capitalize text-slate-400 font-bold font-mono">{name}</span>
-                <div className="flex items-center gap-1 font-mono text-[9.5px]">
-                  {prov.status === 'ok' ? (
-                    <span className="text-emerald-400 font-extrabold flex items-center gap-0.5">
-                      ● ONLINE {prov.latency !== undefined ? `(${prov.latency}ms)` : ''}
-                    </span>
-                  ) : prov.status === 'sandbox' ? (
-                    <span className="text-sky-400 font-extrabold">SANDBOX</span>
-                  ) : prov.status === 'missing' ? (
-                    <span className="text-slate-600 font-extrabold">MISSING</span>
-                  ) : prov.status === 'invalid_key' ? (
-                    <span className="text-rose-450 font-extrabold">INVALID KEY</span>
-                  ) : (
-                    <span className="text-rose-500 font-extrabold animate-pulse">OFFLINE</span>
-                  )}
+            {Object.entries(health.checks.providers).map(([name, val]) => {
+              const prov = val as { status: string; latency?: number };
+              return (
+                <div key={name} className="flex items-center justify-between gap-4 text-[10px]">
+                  <span className="capitalize text-slate-400 font-bold font-mono">{name}</span>
+                  <div className="flex items-center gap-1 font-mono text-[9.5px]">
+                    {prov.status === 'ok' ? (
+                      <span className="text-emerald-400 font-extrabold flex items-center gap-0.5">
+                        ● ONLINE {prov.latency !== undefined ? `(${prov.latency}ms)` : ''}
+                      </span>
+                    ) : prov.status === 'sandbox' ? (
+                      <span className="text-sky-400 font-extrabold">SANDBOX</span>
+                    ) : prov.status === 'missing' ? (
+                      <span className="text-slate-600 font-extrabold">MISSING</span>
+                    ) : prov.status === 'invalid_key' ? (
+                      <span className="text-rose-450 font-extrabold">INVALID KEY</span>
+                    ) : (
+                      <span className="text-rose-500 font-extrabold animate-pulse">OFFLINE</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -48,7 +48,15 @@ export function createDatabaseConnection(): IDatabaseAdapter {
 
   // Classify connection type cleanly
   let isPostgresScheme = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
-  let dbType = (isPostgresScheme || envDbType === 'postgres') ? 'postgres' : 'sqlite';
+  let dbType: 'sqlite' | 'postgres' = 'sqlite';
+
+  if (envDbType === 'postgres') {
+    dbType = 'postgres';
+  } else if (envDbType === 'sqlite') {
+    dbType = 'sqlite';
+  } else if (isPostgresScheme) {
+    dbType = 'postgres';
+  }
 
   logger.info(`Database connection factory resolving adapter type: "${dbType}" (requested env DB_TYPE: "${envDbType}").`);
 

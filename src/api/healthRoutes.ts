@@ -12,9 +12,12 @@ export function createHealthRoutes(): Router {
 
     const dbStart = Date.now();
     try {
-      // Polymorphic query check
-      await adapter.db.execute(adapter.type === 'postgres' ? 'SELECT 1' : 'SELECT 1');
-      dbLatency = Date.now() - dbStart;
+      const dbCheck = await adapter.healthCheck();
+      if (dbCheck.ok) {
+        dbLatency = Date.now() - dbStart;
+      } else {
+        dbStatus = 'error';
+      }
     } catch (err: any) {
       dbStatus = 'error';
     }
@@ -158,9 +161,12 @@ export function createHealthRoutes(): Router {
 
     const start = Date.now();
     try {
-      // Polymorphic query check
-      await adapter.db.execute(adapter.type === 'postgres' ? 'SELECT 1' : 'SELECT 1');
-      dbLatency = Date.now() - start;
+      const dbCheck = await adapter.healthCheck();
+      if (dbCheck.ok) {
+        dbLatency = Date.now() - start;
+      } else {
+        dbStatus = 'error';
+      }
     } catch (err: any) {
       dbStatus = 'error';
     }
