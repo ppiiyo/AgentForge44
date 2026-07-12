@@ -26,6 +26,7 @@
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
+    "db:seed": "npx tsx scripts/seed-db.ts",
     "db:studio": "drizzle-kit studio",
     "release": "standard-version"
   },
