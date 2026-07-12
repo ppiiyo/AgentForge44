@@ -78,7 +78,7 @@ Most LLM orchestration systems suffer from three fundamental flaws: **silent out
 *   **Hardened Sandbox Thread Execution**: Custom `Tool / Code` nodes execute in strictly isolated, sandboxed CPU/Memory threads completely detached from the host filesystem.
 
 ### 5. 📚 Multi-Document RAG & Interactive 3D Embedding Explorer
-*   **Multi-Format Ingestion**: Supports high-fidelity text, markdown, and PDF upload.
+*   **Multi-Format Binary Ingestion**: Supports high-fidelity text, markdown, and native binary parsed **PDF (.pdf) & Microsoft Word (.docx)** files. The backend ingestion engine processes files and indexes them into semantic vector chunks under-the-hood.
 *   **Chunk Cataloging & Deep Text Search**: Features a dedicated visual catalog where developers can search semantic databases, highlighted by exact chunk text previews.
 *   **3D Vector Visualizer**: Graphically map embedded document clusters and semantic relationships in a fully interactive 3D WebGL coordinate space.
 
@@ -93,6 +93,18 @@ Most LLM orchestration systems suffer from three fundamental flaws: **silent out
 ### 8. 📊 Integrated App Health & Service Topology Monitors
 *   **Live Microservice Status Indicator**: Head-up display (`AppHealthMonitor`) checking system microservice health (SQLite/PostgreSQL databases, Redis cache, and API Gateways) every 15 seconds. Tracks latency in milliseconds and exposes degradations transparently.
 *   **Telemetry Infrastructure**: Out-of-the-box support for OpenTelemetry spans and Prometheus metric scraping endpoints (`GET /metrics`).
+
+### 9. 🔌 Dynamic Model Context Protocol (MCP) Orchestration
+*   **Adaptive Tool Provisioning**: Register and manage local or remote Model Context Protocol (MCP) servers (e.g. SQLite database systems, system filesystems, Puppeteer automation scripts) with dynamic shell execution arguments directly from the Live Collaboration Hub.
+*   **Secured Protocol Boundaries**: Synchronizes tool schemas to active canvas agents instantly, allowing them to dynamically run allowed operating system commands under strict policy validation layers.
+
+### 10. ⏱️ Micro-Step Debugger On-the-Fly State Modification
+*   **Dynamic Variables Injection**: Halt or inspect executing snapshots inside the Visual Time-Travel Debugger to modify or override intermediate input and output state fields on-the-fly.
+*   **State Propagation Engine**: Edits instantly propagate to all subsequent execution memory frames, updating dry run canvas nodes to simulate corrected pipeline behaviors without full system restarts.
+
+### 11. 🔔 Intercepting Global Toast Notifications System
+*   **Fetch Middleware Guards**: Intercepts outgoing client HTTP fetch calls to automatically identify and catch server-side crashes, API connection drops, and pipeline runner errors.
+*   **Real-time Multilingual Feedback**: Automatically fires eye-catching animated visual overlays mapped in selected user languages (English, Russian, or Chinese), completely eliminating silent failures.
 
 ---
 
