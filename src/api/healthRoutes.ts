@@ -37,7 +37,7 @@ export function createHealthRoutes(): Router {
     const providers: Record<string, { status: string; latency?: number }> = {};
 
     // Helper to execute fetches with strict short timeouts
-    const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 1500) => {
+    const fetchWithTimeout = async (url: string, options: any, timeoutMs = 1500) => {
       const controller = new AbortController();
       const timerId = setTimeout(() => controller.abort(), timeoutMs);
       try {

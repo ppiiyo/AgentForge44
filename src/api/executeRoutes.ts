@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
 import { executePipeline } from './agentRun.js';
 import { validateBody, PipelineExecuteSchema } from '../utils/validation.js';
@@ -782,7 +783,6 @@ router.post('/config/update-keys', (req: Request, res: Response, next: any) => {
   }
 }, (req: Request, res: Response) => {
   let { jwtSecret, encryptionKey } = req.body;
-  const crypto = require('crypto');
 
   if (jwtSecret === 'generate_secure') {
     jwtSecret = crypto.randomBytes(32).toString('hex');

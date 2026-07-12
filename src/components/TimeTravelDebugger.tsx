@@ -290,6 +290,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
   const pausedNode = nodes.find(n => n.type === 'human_confirmation');
   const pausedNodeId = sessionDetails?.snapshots?.[sessionDetails.snapshots.length - 1]?.nodeId || pausedNode?.id;
   const pausedNodeTitle = sessionDetails?.snapshots?.[sessionDetails.snapshots.length - 1]?.nodeTitle || pausedNode?.title || "Operator Confirmation";
+  const activeAsyncRun = asyncRuns.find(r => r.id === activeRunId);
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
