@@ -18,34 +18,49 @@ const MAX_CONCURRENCY = 5;
 let queue: Queue | null = null;
 let worker: Worker | null = null;
 let dlqQueue: Queue | null = null;
+let redisConnection: Redis | null = null;
 
 // Initialize BullMQ if Redis is configured
 if (REDIS_URL) {
   try {
-    const connection = new Redis(REDIS_URL, {
+    redisConnection = new Redis(REDIS_URL, {
       maxRetriesPerRequest: null, // Required by BullMQ
     });
 
-    queue = new Queue(QUEUE_NAME, { connection: connection as any });
-    dlqQueue = new Queue(DLQ_QUEUE_NAME, { connection: connection as any });
+    redisConnection.on('error', (err) => {
+      logger.error(`[Queue] Redis connection error: ${err.message}`);
+    });
+
+    queue = new Queue(QUEUE_NAME, { connection: redisConnection as any });
+    dlqQueue = new Queue(DLQ_QUEUE_NAME, { connection: redisConnection as any });
 
     worker = new Worker(QUEUE_NAME, async (job) => {
       const { runId, nodes, connections, variables, tenantId, graphId } = job.data;
 
       try {
-        logger.info(`[Queue] Processing pipeline run asynchronously: ${runId}`);
+        logger.info(`[Queue] Processing pipeline run asynchronously: ${runId} (Attempt ${job.attemptsMade + 1}/${job.opts.attempts || 1})`);
         const result = await processPipelineRun(runId, nodes, connections, variables, tenantId, graphId);
         return result;
       } catch (err: any) {
-        logger.error(`[Queue] Job ${runId} failed: ${err.message}`);
-        // If job fails, push to Dead Letter Queue
-        if (dlqQueue) {
-          await dlqQueue.add('failed-job', { runId, error: err.message, nodes, connections });
+        logger.error(`[Queue] Job ${runId} failed (Attempt ${job.attemptsMade + 1}/${job.opts.attempts || 1}): ${err.message}`);
+        
+        // Only route to DLQ if all retries are exhausted (prevents polluting the DLQ during intermediate retries)
+        const maxAttempts = job.opts.attempts || 1;
+        if (job.attemptsMade + 1 >= maxAttempts && dlqQueue) {
+          logger.warn(`[Queue] Job ${runId} exhausted all ${maxAttempts} retry attempts. Route to DLQ.`);
+          await dlqQueue.add('failed-job', {
+            runId,
+            error: err.message,
+            nodes,
+            connections,
+            variables,
+            failedAt: new Date().toISOString()
+          });
         }
         throw err;
       }
     }, {
-      connection: connection as any,
+      connection: redisConnection as any,
       concurrency: MAX_CONCURRENCY,
     });
 
@@ -147,7 +162,19 @@ export async function enqueuePipelineRun(
 
   if (queue) {
     try {
-      await queue.add('execute', { runId, nodes, connections, variables, tenantId, graphId }, { jobId: runId });
+      // Configure exponential backoff retry policy (3 attempts, starting with a 2000ms delay)
+      await queue.add(
+        'execute',
+        { runId, nodes, connections, variables, tenantId, graphId },
+        {
+          jobId: runId,
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000
+          }
+        }
+      );
       logger.info(`[Queue] Job successfully added to Redis BullMQ: ${runId}`);
       return;
     } catch (err: any) {
@@ -159,4 +186,31 @@ export async function enqueuePipelineRun(
   memoryJobQueue.push({ runId, nodes, connections, variables, tenantId, graphId });
   logger.info(`[Queue] Job successfully added to in-memory queue: ${runId}`);
   setTimeout(processNextMemoryJob, 0);
+}
+
+/**
+ * Gracefully close active queue and worker connections on process termination
+ */
+export async function closeQueueSystem(): Promise<void> {
+  logger.info('[Queue] Shutting down queue systems gracefully...');
+  if (worker) {
+    await worker.close();
+    logger.info('[Queue] BullMQ Worker closed.');
+  }
+  if (queue) {
+    await queue.close();
+    logger.info('[Queue] BullMQ Queue closed.');
+  }
+  if (dlqQueue) {
+    await dlqQueue.close();
+    logger.info('[Queue] BullMQ DLQ Queue closed.');
+  }
+  if (redisConnection) {
+    try {
+      await redisConnection.quit();
+      logger.info('[Queue] Redis connection closed.');
+    } catch (err: any) {
+      logger.error(`[Queue] Error closing Redis connection: ${err.message}`);
+    }
+  }
 }

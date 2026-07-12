@@ -221,7 +221,14 @@ async function setupServer() {
   const collaborationServer = new CollaborationServer(httpServer);
 
   // Initialize production-grade Graceful Shutdown
-  new GracefulShutdown(httpServer, collaborationServer.io, adapter);
+  const shutdownManager = new GracefulShutdown(httpServer, collaborationServer.io, adapter);
+
+  // Register BullMQ dynamic services shutdown hook
+  const { closeQueueSystem } = await import('./src/queue/executionQueue.js');
+  shutdownManager.registerService({
+    name: 'BullMQ Queue System',
+    close: closeQueueSystem
+  });
 }
 
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {

@@ -4,7 +4,7 @@ import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import { CodeGenerator } from './codeGenerator.js';
 import { db, tables } from '../db/index.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { validateBody, GraphSaveSchema } from '../utils/validation.js';
 import { requireRole } from './authRoutes.js';
 import { logger } from '../utils/logger.js';
@@ -75,14 +75,31 @@ router.get('/projects', async (req: Request, res: Response) => {
       }
     }
 
-    // 5. Auto-seeding migration: Check if files contain older graphs not yet migrated to active DB
+    // 5. Pre-fetch ownership for files in bulk to solve the N+1 DB query problem
+    const fileIds = files
+      .filter(file => file.endsWith('.json'))
+      .map(file => file.replace('.json', ''));
+
+    const fileProjectsDb = fileIds.length > 0
+      ? await db.select().from(tables.projects).where(inArray(tables.projects.id, fileIds))
+      : [];
+
+    const projectTenantMap = new Map<string, string>();
+    for (const p of fileProjectsDb) {
+      projectTenantMap.set(p.id, p.tenantId);
+    }
+
+    // 6. Auto-seeding migration: Check if files contain older graphs not yet migrated to active DB
     for (const file of files) {
       if (file.endsWith('.json')) {
         const fileId = file.replace('.json', '');
         
         // Security check: Check if project is already registered by another workspace
-        const ownership = await checkProjectOwnership(fileId, workspaceId);
-        if (ownership.exists && !ownership.allowed) {
+        const dbTenantId = projectTenantMap.get(fileId);
+        const exists = dbTenantId !== undefined;
+        const allowed = !exists || dbTenantId === workspaceId;
+
+        if (exists && !allowed) {
           // Belongs to another workspace, exclude completely!
           continue;
         }
@@ -103,7 +120,7 @@ router.get('/projects', async (req: Request, res: Response) => {
             };
 
             // Auto-create project ownership in database with race-condition safety
-            if (!ownership.exists) {
+            if (!exists) {
               try {
                 const existingProj = await db.select().from(tables.projects).where(eq(tables.projects.id, fileId));
                 if (existingProj.length === 0) {
