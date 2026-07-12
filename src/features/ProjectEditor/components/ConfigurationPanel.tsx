@@ -95,6 +95,30 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
   const isLockedByOther = activeLock && activeLock.userId !== userId;
 
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState<string | null>(null);
+
+  const handleOptimizePrompt = async (nodeId: string, currentTemplate: string) => {
+    if (isOptimizingPrompt || !currentTemplate.trim()) return;
+    setIsOptimizingPrompt(nodeId);
+    try {
+      const response = await fetch('/api/copilot/optimize-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gemini-api-key': localStorage.getItem('kostromai44_gemini_api_key') || '',
+        },
+        body: JSON.stringify({ promptTemplate: currentTemplate })
+      });
+      const data = await response.json();
+      if (data.success && data.optimizedTemplate) {
+        onUpdateNodeField(nodeId, 'template', data.optimizedTemplate);
+      }
+    } catch (err) {
+      console.error('Failed to optimize prompt:', err);
+    } finally {
+      setIsOptimizingPrompt(null);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/llm-providers')
@@ -369,7 +393,19 @@ export const ConfigurationPanel: React.FC<ConfigurationPanelProps> = ({
               return (
                 <div className="space-y-3.5">
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase">Formula / Template Context</label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase">Formula / Template Context</label>
+                      <button
+                        type="button"
+                        onClick={() => handleOptimizePrompt(node.id, templateText)}
+                        disabled={isOptimizingPrompt === node.id || !templateText.trim()}
+                        className="text-[9px] font-extrabold text-amber-400 hover:text-amber-300 bg-amber-950/20 hover:bg-amber-950/40 border border-amber-900/30 px-2 py-0.5 rounded flex items-center gap-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="Rewrite and optimize this prompt template using Gemini AI while protecting curly variables"
+                      >
+                        <Sparkles size={10} className={isOptimizingPrompt === node.id ? "animate-spin" : ""} />
+                        <span>{isOptimizingPrompt === node.id ? 'Optimizing...' : 'AI Optimize'}</span>
+                      </button>
+                    </div>
                     <textarea
                       rows={5}
                       value={templateText}
