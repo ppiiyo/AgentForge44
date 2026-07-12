@@ -67,7 +67,7 @@ try {
 
 initTracing();
 
-if (process.env.SENTRY_DSN) {
+if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== 'your_sentry_dsn_here' && process.env.SENTRY_DSN.startsWith('http')) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 1.0,

@@ -161,7 +161,7 @@ async function bootstrapAuth() {
 bootstrapAuth();
 
 const sentryDsn = (import.meta as any).env.VITE_SENTRY_DSN;
-if (sentryDsn) {
+if (sentryDsn && sentryDsn !== 'your_sentry_dsn_here' && sentryDsn.startsWith('http')) {
   Sentry.init({
     dsn: sentryDsn,
     integrations: [
