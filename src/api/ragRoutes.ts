@@ -1,5 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ragService } from '../services/rag.service.js';
+// @ts-ignore
+import pdfParse from 'pdf-parse';
+// @ts-ignore
+import mammoth from 'mammoth';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -95,6 +100,42 @@ router.delete('/rag/document/:source', async (req: Request, res: Response, next:
     res.json({ success: true, message: `Document "${source}" deleted.` });
   } catch (err: any) {
     next(err);
+  }
+});
+
+router.post('/rag/upload-binary', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { fileName, fileType, base64 } = req.body;
+    if (!base64 || !fileName) {
+      res.status(400).json({ error: "Missing file name or base64 data" });
+      return;
+    }
+
+    logger.info(`Received binary upload request for ${fileName} (${fileType}), decoding base64...`);
+    const buffer = Buffer.from(base64, 'base64');
+    let extractedText = '';
+
+    if (fileName.endsWith('.pdf') || fileType === 'application/pdf') {
+      const parsedData = await pdfParse(buffer);
+      extractedText = parsedData.text;
+    } else if (fileName.endsWith('.docx') || fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const result = await mammoth.extractRawText({ buffer });
+      extractedText = result.value;
+    } else {
+      extractedText = buffer.toString('utf8');
+    }
+
+    if (!extractedText || !extractedText.trim()) {
+      res.status(400).json({ error: "Extracted text is empty or document format is unsupported." });
+      return;
+    }
+
+    logger.info(`Successfully parsed ${extractedText.length} characters of text from ${fileName}. Adding to vector store...`);
+    const ids = await ragService.addDocument(extractedText, { source: fileName });
+    res.json({ success: true, fileName, chunkCount: ids.length, ids });
+  } catch (err: any) {
+    logger.error(`Error parsing binary document: ${err.message || err}`);
+    res.status(500).json({ error: `Parsing failed: ${err.message || err}` });
   }
 });
 

@@ -3,7 +3,7 @@ import { createSchedule, deleteSchedule, toggleSchedule, listSchedules } from '.
 import { registerWebhook, removeWebhook, toggleWebhook, listWebhooks } from '../webhooks/index.js';
 import { importFromLangFlow, importFromFlowise } from '../utils/importer.js';
 import { LangChainExporter } from '../utils/langchainExporter.js';
-import { getDebugSession, listDebugSessions, clearDebugSessions } from '../utils/debugSessions.js';
+import { getDebugSession, listDebugSessions, clearDebugSessions, updateDebugSnapshot } from '../utils/debugSessions.js';
 
 const router = Router();
 
@@ -26,6 +26,24 @@ router.get('/debug/sessions/:id', (req, res) => {
 router.delete('/debug/sessions', (req, res) => {
   clearDebugSessions();
   res.json({ success: true, message: 'All debugging history cleared successfully' });
+});
+
+router.post('/debug/sessions/:id/step/:stepIndex', (req, res) => {
+  const { id, stepIndex } = req.params;
+  const { inputsState, outputsState } = req.body;
+  
+  const success = updateDebugSnapshot(
+    id,
+    parseInt(stepIndex),
+    inputsState,
+    outputsState
+  );
+  
+  if (success) {
+    res.json({ success: true, message: 'Step snapshot updated successfully.' });
+  } else {
+    res.status(404).json({ error: 'Session or step snapshot not found.' });
+  }
 });
 
 // Import from external platforms

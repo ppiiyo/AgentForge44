@@ -83,3 +83,29 @@ export function listDebugSessions(): DebugSession[] {
 export function clearDebugSessions() {
   debugSessions.clear();
 }
+
+export function updateDebugSnapshot(
+  sessionId: string,
+  stepIndex: number,
+  inputsState: string,
+  outputsState: string
+): boolean {
+  const session = debugSessions.get(sessionId);
+  if (!session) return false;
+  
+  const snapshot = session.snapshots.find(s => s.stepIndex === stepIndex);
+  if (!snapshot) return false;
+  
+  snapshot.inputsState = inputsState;
+  snapshot.outputsState = outputsState;
+  
+  // Propagate updated output to subsequent step snapshots
+  for (let idx = stepIndex; idx < session.snapshots.length; idx++) {
+    if (session.snapshots[idx].variableSnapshots) {
+      session.snapshots[idx].variableSnapshots[snapshot.nodeId] = outputsState;
+    }
+  }
+  
+  return true;
+}
+

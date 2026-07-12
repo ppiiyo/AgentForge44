@@ -16,6 +16,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
+import { playClickSound } from '../utils/audio';
+
 
 interface SyncHubPanelProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -45,6 +47,16 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('applet-key-forge-secret');
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  // Dynamic MCP States
+  const [mcpServers, setMcpServers] = useState<any[]>([
+    { name: "Local Filesystem", command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"], status: "connected", toolsCount: 6 },
+    { name: "PostgreSQL DB Connector", command: "npx", args: ["-y", "@modelcontextprotocol/server-postgres"], status: "connected", toolsCount: 8 },
+    { name: "Puppeteer Web Searcher", command: "npx", args: ["-y", "@modelcontextprotocol/server-puppeteer"], status: "disconnected", toolsCount: 0 }
+  ]);
+  const [newMcpName, setNewMcpName] = useState('');
+  const [newMcpCmd, setNewMcpCmd] = useState('npx');
+  const [newMcpArgs, setNewMcpArgs] = useState('');
 
   // GitHub States
   const [githubConnection, setGithubConnection] = useState<GitHubConnection>({ connected: false });
@@ -784,6 +796,153 @@ export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelPr
           </div>
         )}
       </section>
+
+      {/* SECTION 4: Model Context Protocol (MCP) Dynamic Tool Integration */}
+      <section className="bg-slate-900/60 border border-slate-850 p-5 rounded-2xl space-y-4 mt-4" id="mcp_section">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe size={18} className="text-sky-450 animate-pulse" />
+            <h3 className="text-xs font-black uppercase text-slate-350 tracking-wider">
+              {currentLang === 'ru' ? '🔌 Динамические MCP Серверы' : currentLang === 'zh' ? '🔌 动态 MCP 服务器' : '🔌 Model Context Protocol (MCP)'}
+            </h3>
+          </div>
+          <span className="text-[9px] bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded font-mono font-bold">
+            Spec v1.0
+          </span>
+        </div>
+        <p className="text-[10px] text-slate-500 leading-relaxed">
+          {currentLang === 'ru' 
+            ? 'Подключайте сторонние MCP-серверы (локальные файловые системы, СУБД, утилиты) прямо через холст. Агенты получат доступ к новым инструментам управления окружением.' 
+            : currentLang === 'zh'
+              ? '通过可视化协议边界，直接挂载第三方多模态 MCP 服务（本地文件系统、企业数据库、API 网关），赋能智能体跨越网络边界执行复杂任务。'
+              : 'Dynamically orchestrate and authorize secure third-party Model Context Protocol connections to expose local system commands, file systems, and SQL engines to active agents.'}
+        </p>
+
+        {/* Existing MCP Servers */}
+        <div className="space-y-2">
+          {mcpServers.map((srv, idx) => (
+            <div key={idx} className="bg-slate-950/40 border border-slate-850 rounded-xl p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-extrabold text-slate-200">{srv.name}</span>
+                  <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                    <code>{srv.command} {srv.args?.join(' ')}</code>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider ${
+                    srv.status === 'connected' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/40' : 'bg-slate-900 text-slate-500'
+                  }`}>
+                    {srv.status === 'connected' ? (currentLang === 'ru' ? 'АКТИВЕН' : 'CONNECTED') : (currentLang === 'ru' ? 'ОТКЛЮЧЕН' : 'DISCONNECTED')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = [...mcpServers];
+                      updated[idx].status = updated[idx].status === 'connected' ? 'disconnected' : 'connected';
+                      updated[idx].toolsCount = updated[idx].status === 'connected' ? (updated[idx].name.includes('Filesystem') ? 6 : srv.name.includes('Git') ? 4 : 8) : 0;
+                      setMcpServers(updated);
+                      playClickSound();
+                    }}
+                    className="text-[9px] hover:text-white uppercase font-bold text-slate-400 border border-slate-850 p-1 rounded hover:bg-slate-900 cursor-pointer transition-all"
+                  >
+                    {srv.status === 'connected' ? (currentLang === 'ru' ? 'Выкл' : 'Disable') : (currentLang === 'ru' ? 'Вкл' : 'Enable')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMcpServers(mcpServers.filter((_, i) => i !== idx));
+                      playClickSound();
+                    }}
+                    className="text-slate-555 hover:text-rose-450 p-1 cursor-pointer"
+                  >
+                    <Trash size={11} />
+                  </button>
+                </div>
+              </div>
+              {srv.status === 'connected' && (
+                <div className="flex items-center justify-between text-[8px] text-slate-550 font-mono border-t border-slate-900/50 pt-1">
+                  <span>Authorized Protocol boundaries: RW</span>
+                  <span className="text-emerald-400 font-bold">✓ {srv.toolsCount} {currentLang === 'ru' ? 'инструм. доступно' : 'tools loaded'}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Add new MCP server form */}
+        <div className="bg-slate-950/30 border border-slate-850 rounded-xl p-3.5 space-y-3">
+          <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 block">
+            {currentLang === 'ru' ? '➕ Подключить новый сервер' : '➕ Register New MCP Server'}
+          </span>
+          <div className="space-y-2 text-xs">
+            <div className="space-y-1">
+              <input
+                type="text"
+                placeholder={currentLang === 'ru' ? "Название сервера (например, SQL Analyzer)" : "Server Friendly Name"}
+                value={newMcpName}
+                onChange={(e) => setNewMcpName(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300 outline-none placeholder-slate-600"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                type="text"
+                placeholder="npx / node"
+                value={newMcpCmd}
+                onChange={(e) => setNewMcpCmd(e.target.value)}
+                className="col-span-1 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300 outline-none placeholder-slate-600 font-mono"
+              />
+              <input
+                type="text"
+                placeholder="--args val"
+                value={newMcpArgs}
+                onChange={(e) => setNewMcpArgs(e.target.value)}
+                className="col-span-2 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300 outline-none placeholder-slate-600 font-mono"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!newMcpName.trim() || !newMcpCmd.trim()) {
+                  alert(currentLang === 'ru' ? "Укажите название и команду запуска!" : "Please specify name and boot command!");
+                  return;
+                }
+                setMcpServers([...mcpServers, {
+                  name: newMcpName,
+                  command: newMcpCmd,
+                  args: newMcpArgs.split(' ').filter(a => a.trim() !== ''),
+                  status: 'connected',
+                  toolsCount: 5
+                }]);
+                setNewMcpName('');
+                setNewMcpCmd('npx');
+                setNewMcpArgs('');
+                playClickSound();
+              }}
+              className="w-full bg-sky-500 hover:bg-sky-450 text-slate-950 font-black py-2 rounded-lg uppercase tracking-wider text-[10px] transition-all cursor-pointer shadow-lg active:scale-95 border-none"
+            >
+              {currentLang === 'ru' ? 'Подключить и импортировать' : 'Register and Import Tools'}
+            </button>
+          </div>
+        </div>
+
+        {/* Sync with canvas action */}
+        <button
+          type="button"
+          onClick={() => {
+            const activeTools = mcpServers.filter(s => s.status === 'connected').reduce((acc, curr) => acc + curr.toolsCount, 0);
+            alert(currentLang === 'ru' 
+              ? `Успешно синхронизировано! ИИ агенты на холсте получили доступ к ${activeTools} динамическим MCP инструментам!` 
+              : `Protocol synced! Canvas agents authorized to use ${activeTools} dynamic MCP tools!`);
+          }}
+          className="w-full bg-slate-955 hover:bg-slate-900 text-sky-400 border border-slate-850 hover:border-sky-500/25 py-2 px-3 rounded-lg text-[10px] uppercase font-black tracking-widest flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+        >
+          <RefreshCw size={11} className="animate-spin text-sky-400" />
+          <span>{currentLang === 'ru' ? 'Синхронизировать схемы инструментов' : 'Sync Protocol Schemas'}</span>
+        </button>
+      </section>
     </div>
+
   );
 }

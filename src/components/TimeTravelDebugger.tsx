@@ -9,6 +9,7 @@ interface Snapshot {
   input: any;
   output: any;
   duration: number;
+  variableSnapshots?: Record<string, any>;
 }
 
 interface DebugSession {
@@ -84,6 +85,12 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
   const [isSendingChatMessage, setIsSendingChatMessage] = useState(false);
   const [gateEditValue, setGateEditValue] = useState('');
   const [isGateSubmitting, setIsGateSubmitting] = useState(false);
+
+  // Live variable/step modification states
+  const [isEditingStep, setIsEditingStep] = useState(false);
+  const [editedInput, setEditedInput] = useState('');
+  const [editedOutput, setEditedOutput] = useState('');
+
 
   const t = {
     en: {
@@ -460,6 +467,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
 
   // Sync session state to canvas node highlighting and simulator logs
   const handleStepChange = (index: number) => {
+    setIsEditingStep(false);
     if (!sessionDetails || !sessionDetails.snapshots || sessionDetails.snapshots.length === 0) return;
     const clampedIndex = Math.max(0, Math.min(index, sessionDetails.snapshots.length - 1));
     setCurrentStepIndex(clampedIndex);
@@ -467,6 +475,56 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     onHighlightNode(snap.nodeId);
     updateDryRunPreview(snap);
     playClickSound();
+  };
+
+  const handleSaveStepEdits = async () => {
+    if (!sessionDetails || !activeStep) return;
+    try {
+      const response = await fetch(`/api/debug/sessions/${sessionDetails.id}/step/${currentStepIndex}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inputsState: editedInput,
+          outputsState: editedOutput
+        })
+      });
+
+      if (response.ok) {
+        // Update local session details immediately
+        const updatedSnapshots = [...sessionDetails.snapshots];
+        updatedSnapshots[currentStepIndex] = {
+          ...updatedSnapshots[currentStepIndex],
+          input: editedInput,
+          output: editedOutput
+        };
+        
+        // Propagate variables in local state just like server
+        for (let idx = currentStepIndex; idx < updatedSnapshots.length; idx++) {
+          if (updatedSnapshots[idx].variableSnapshots) {
+            updatedSnapshots[idx].variableSnapshots[updatedSnapshots[currentStepIndex].nodeId] = editedOutput;
+          }
+        }
+
+        setSessionDetails({
+          ...sessionDetails,
+          snapshots: updatedSnapshots
+        });
+
+        // Push new value to dry run output on canvas
+        onSetDryRunOutput({ [updatedSnapshots[currentStepIndex].nodeId]: editedOutput });
+        
+        setIsEditingStep(false);
+        playClickSound();
+        alert(currentLang === 'ru' 
+          ? 'Состояние переменных успешно перезаписано в памяти на лету!' 
+          : 'Step variable state successfully modified in memory on-the-fly!');
+      } else {
+        const errData = await response.json();
+        alert(`Failed to save step edits: ${errData.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error saving edits: ${err.message}`);
+    }
   };
 
   const updateDryRunPreview = (snap: Snapshot) => {
@@ -980,17 +1038,62 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
           )}
 
           {/* Diagnostic values logs */}
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                {currentLang === 'ru' ? 'Состояние Памяти Шага' : currentLang === 'zh' ? '当前帧内存数据' : 'Step Memory State'}
+              </span>
+              {!isEditingStep ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingStep(true);
+                    setEditedInput(typeof activeStep.input === 'string' ? activeStep.input : JSON.stringify(activeStep.input, null, 2));
+                    setEditedOutput(typeof activeStep.output === 'string' ? activeStep.output : JSON.stringify(activeStep.output, null, 2));
+                  }}
+                  className="py-1 px-2.5 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase rounded cursor-pointer transition-all flex items-center gap-1"
+                >
+                  <span>✏️</span>
+                  <span>{currentLang === 'ru' ? 'Изменить на лету' : currentLang === 'zh' ? '在线编辑' : 'Modify State'}</span>
+                </button>
+              ) : (
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleSaveStepEdits}
+                    className="py-1 px-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[9px] font-extrabold uppercase rounded cursor-pointer transition-all"
+                  >
+                    {currentLang === 'ru' ? 'Применить' : currentLang === 'zh' ? '应用' : 'Apply'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingStep(false)}
+                    className="py-1 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-extrabold uppercase rounded cursor-pointer transition-all"
+                  >
+                    {currentLang === 'ru' ? 'Отмена' : currentLang === 'zh' ? '取消' : 'Cancel'}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Input logs */}
             <div className="space-y-1.5">
               <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-550 block">
                 {t.stepInput}
               </span>
-              <pre className="text-[10.5px] font-mono text-slate-300 bg-slate-900 border border-slate-850 p-2.5 rounded-lg overflow-x-auto max-h-[140px]">
-                {typeof activeStep.input === 'string' 
-                  ? activeStep.input 
-                  : JSON.stringify(activeStep.input, null, 2)}
-              </pre>
+              {isEditingStep ? (
+                <textarea
+                  value={editedInput}
+                  onChange={(e) => setEditedInput(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-[10.5px] font-mono text-slate-300 focus:outline-none focus:border-amber-500 min-h-[80px]"
+                />
+              ) : (
+                <pre className="text-[10.5px] font-mono text-slate-300 bg-slate-900 border border-slate-850 p-2.5 rounded-lg overflow-x-auto max-h-[140px]">
+                  {typeof activeStep.input === 'string' 
+                    ? activeStep.input 
+                    : JSON.stringify(activeStep.input, null, 2)}
+                </pre>
+              )}
             </div>
 
             {/* Output logs */}
@@ -998,11 +1101,19 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
               <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-550 block">
                 {t.stepOutput}
               </span>
-              <pre className="text-[10.5px] font-mono text-emerald-400 bg-slate-900 border border-slate-850 p-2.5 rounded-lg overflow-x-auto max-h-[160px]">
-                {typeof activeStep.output === 'string' 
-                  ? activeStep.output 
-                  : JSON.stringify(activeStep.output, null, 2)}
-              </pre>
+              {isEditingStep ? (
+                <textarea
+                  value={editedOutput}
+                  onChange={(e) => setEditedOutput(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-[10.5px] font-mono text-emerald-400 focus:outline-none focus:border-amber-500 min-h-[100px]"
+                />
+              ) : (
+                <pre className="text-[10.5px] font-mono text-emerald-400 bg-slate-900 border border-slate-850 p-2.5 rounded-lg overflow-x-auto max-h-[160px]">
+                  {typeof activeStep.output === 'string' 
+                    ? activeStep.output 
+                    : JSON.stringify(activeStep.output, null, 2)}
+                </pre>
+              )}
             </div>
 
             {/* Latencies metrics log */}

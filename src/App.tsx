@@ -13,6 +13,7 @@ import { ImportExportModal } from './components/ImportExportModal';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { FirstLaunchWizard } from './components/FirstLaunchWizard';
 import { EnvironmentSecurityModal } from './components/EnvironmentSecurityModal';
+import { ToastContainer } from './components/ToastContainer';
 import { PREBUILT_TEMPLATES } from './types';
 import posthog from 'posthog-js';
 
@@ -626,6 +627,9 @@ export default function App() {
             console.log('Cryptographic environment verified secure.');
           }}
         />
+
+        {/* Global Toast Notifications System */}
+        <ToastContainer currentLang={app.currentLang} />
       </div>
     </ErrorBoundary>
   );

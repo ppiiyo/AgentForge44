@@ -73,16 +73,56 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   };
 
   const handleFileRead = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setRagText(text);
-      const cleanName = file.name.replace(/\.[^/.]+$/, "");
-      setRagSource(cleanName);
-      // Automatically pop open pre-index visual drawer for verification!
-      setIsPreIndexDrawerOpen(true);
-    };
-    reader.readAsText(file);
+    const cleanName = file.name.replace(/\.[^/.]+$/, "");
+    setRagSource(cleanName);
+
+    if (file.name.endsWith('.pdf') || file.name.endsWith('.docx')) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target?.result as string;
+        const base64Data = dataUrl.split(',')[1];
+        
+        setRagText(`[Parsing and indexing binary file "${file.name}"... please wait]`);
+        setIsPreIndexDrawerOpen(false);
+        
+        try {
+          const response = await fetch('/api/rag/upload-binary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileType: file.type,
+              base64: base64Data
+            })
+          });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            setRagText("");
+            fetchChunks();
+            alert(currentLang === 'ru' 
+              ? `Файл "${file.name}" успешно проиндексирован на ${result.chunkCount} фрагментов!` 
+              : `File "${file.name}" successfully indexed into ${result.chunkCount} chunks!`);
+          } else {
+            throw new Error(result.error || "Upload failed");
+          }
+        } catch (err: any) {
+          console.error("Binary indexing error:", err);
+          alert(currentLang === 'ru'
+            ? `Ошибка при обработке файла: ${err.message}`
+            : `Error parsing binary file: ${err.message}`);
+          setRagText("");
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        setRagText(text);
+        setIsPreIndexDrawerOpen(true);
+      };
+      reader.readAsText(file);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -126,7 +166,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         copyContent: "Copy Content",
         closePreview: "Close Preview",
         createdAt: "Indexed on",
-        dropzoneText: "Drag & drop .txt or .md files here, or click to browse",
+        dropzoneText: "Drag & drop PDF, DOCX, TXT, or MD files here, or click to browse",
         btnPreviewDraft: "Inspect Draft Chunks Preview",
         preIndexHeader: "Pre-Indexing Document Inspection",
         preIndexDesc: "Review and inspect calculated semantic embeddings layout before committing them to PGVector.",
@@ -154,7 +194,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         copyContent: "Копировать текст",
         closePreview: "Закрыть предпросмотр",
         createdAt: "Индексировано",
-        dropzoneText: "Перетащите файлы .txt или .md сюда или нажмите для выбора",
+        dropzoneText: "Перетащите файлы PDF, DOCX, TXT или MD сюда или нажмите для выбора",
         btnPreviewDraft: "Инспектировать структуру фрагментов",
         preIndexHeader: "Инспекция документа перед индексацией",
         preIndexDesc: "Просмотрите и проверьте структуру семантических эмбеддингов перед отправкой в PGVector.",
@@ -182,7 +222,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         copyContent: "复制全部内容",
         closePreview: "关闭预览",
         createdAt: "索引时间",
-        dropzoneText: "拖拽 .txt 或 .md 文件至此，或点击浏览文件",
+        dropzoneText: "拖拽 PDF, DOCX, TXT 或 MD 文件至此，或点击浏览文件",
         btnPreviewDraft: "检查预览分块结构",
         preIndexHeader: "入库前分块检查预览",
         preIndexDesc: "在将文档提交到 PGVector 向量库之前，查看并分析生成的语义块结构布局。",
@@ -349,7 +389,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             type="file" 
             ref={fileInputRef} 
             onChange={handleFileSelect} 
-            accept=".txt,.md" 
+            accept=".txt,.md,.pdf,.docx" 
             className="hidden" 
           />
           <Upload size={18} className={`${isDragging ? 'text-teal-400 animate-bounce' : 'text-slate-500'}`} />
@@ -357,7 +397,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             {t.dropzoneText}
           </p>
           <p className="text-[8.5px] text-slate-500 font-medium font-mono select-none">
-            Accepts: Markdown (.md), plain text (.txt)
+            Accepts: PDF (.pdf), Word (.docx), Markdown (.md), plain text (.txt)
           </p>
         </div>
 

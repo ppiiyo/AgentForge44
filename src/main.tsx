@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import './i18n.ts';
+import { showErrorToast } from './utils/toast.ts';
 
 // Suppress benign ResizeObserver loop completed / limit exceeded notifications
 if (typeof window !== 'undefined') {
@@ -65,6 +66,9 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
     url = (input as any).url || '';
   }
 
+  let actualInput = input;
+  let actualInit = init;
+
   // Intercept requests targeting /api/
   if (url && url.includes('/api/') && token) {
     // If input is a Request object, create a new Request to avoid mutating readonly properties
@@ -74,8 +78,8 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
         if (!req.headers.has('Authorization')) {
           const newHeaders = new Headers(req.headers);
           newHeaders.set('Authorization', `Bearer ${token}`);
-          const newRequest = new Request(req, { headers: newHeaders });
-          return originalFetch(newRequest, init);
+          actualInput = new Request(req, { headers: newHeaders });
+          actualInit = undefined;
         }
       } catch (e) {
         console.warn('Failed to intercept Request object headers:', e);
@@ -89,14 +93,60 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
           headers.set('Authorization', `Bearer ${token}`);
           newInit.headers = headers;
         }
-        return originalFetch(input, newInit);
+        actualInit = newInit;
       } catch (e) {
         console.warn('Failed to intercept fetch init headers:', e);
       }
     }
   }
 
-  return originalFetch(input, init);
+  let response: Response;
+  try {
+    response = await originalFetch(actualInput, actualInit);
+  } catch (err: any) {
+    if (url && url.includes('/api/')) {
+      const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
+      const msg = err?.message || String(err);
+      showErrorToast(
+        isRu ? `Сетевой сбой при запросе к серверу: ${msg}` : `Network connection failure: ${msg}`,
+        isRu ? 'Ошибка сети' : 'Network Error'
+      );
+    }
+    throw err;
+  }
+
+  if (url && url.includes('/api/') && !response.ok) {
+    try {
+      const cloned = response.clone();
+      cloned.json().then(data => {
+        const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
+        const errorMsg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+        showErrorToast(
+          isRu ? `Запрос отклонен: ${errorMsg}` : `API request failed: ${errorMsg}`,
+          isRu ? 'Сбой операции' : 'API Failure'
+        );
+      }).catch(() => {
+        response.clone().text().then(text => {
+          const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
+          const errorMsg = text ? (text.length > 100 ? `${text.substring(0, 100)}...` : text) : `HTTP ${response.status}`;
+          showErrorToast(
+            isRu ? `Запрос отклонен: ${errorMsg}` : `API request failed: ${errorMsg}`,
+            isRu ? 'Сбой операции' : 'API Failure'
+          );
+        }).catch(() => {
+          const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
+          showErrorToast(
+            isRu ? `Запрос завершился со статусом ${response.status}` : `API request failed with status ${response.status}`,
+            isRu ? 'Ошибка API' : 'API Failure'
+          );
+        });
+      });
+    } catch (e) {
+      console.warn('Failed to clone and parse error response:', e);
+    }
+  }
+
+  return response;
 };
 
 try {
