@@ -12,7 +12,7 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "pretest": "drizzle-kit generate --config=drizzle.config.ts && drizzle-kit push --config=drizzle.config.ts",
+    "pretest": "drizzle-kit generate --config=drizzle.config.ts && drizzle-kit push --config=drizzle.config.ts --force",
     "test": "vitest run --exclude \"**/*.spec.ts\"",
     "test:e2e": "playwright test",
     "test:coverage": "vitest run --coverage --exclude \"**/*.spec.ts\"",
