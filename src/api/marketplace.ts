@@ -545,7 +545,14 @@ export class MarketplaceManager {
     }
   }
 
-  static async getItems(category?: string, tag?: string, search?: string, sortBy?: string): Promise<MarketplaceItem[]> {
+  static async getItems(
+    category?: string,
+    tag?: string,
+    search?: string,
+    sortBy?: string,
+    page?: number,
+    limit?: number
+  ): Promise<MarketplaceItem[] | { items: MarketplaceItem[]; total: number; page: number; pages: number; hasMore: boolean }> {
     await this.seedIfEmpty();
     let rows: any[] = [];
     try {
@@ -602,6 +609,21 @@ export class MarketplaceManager {
       items.sort((a, b) => b.rating - a.rating);
     } else {
       items.sort((a, b) => b.downloadsCount - a.downloadsCount);
+    }
+
+    const total = items.length;
+    if (page !== undefined && limit !== undefined) {
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedItems = items.slice(startIndex, endIndex);
+      const pages = Math.ceil(total / limit);
+      return {
+        items: paginatedItems,
+        total,
+        page,
+        pages,
+        hasMore: page < pages
+      };
     }
 
     return items;
@@ -778,7 +800,8 @@ export class MarketplaceManager {
   }
 
   static async getFeatured(): Promise<MarketplaceItem[]> {
-    const items = await this.getItems();
-    return items.sort((a, b) => b.rating - a.rating).slice(0, 3);
+    const res = await this.getItems();
+    const items = Array.isArray(res) ? res : res.items;
+    return [...items].sort((a, b) => b.rating - a.rating).slice(0, 3);
   }
 }

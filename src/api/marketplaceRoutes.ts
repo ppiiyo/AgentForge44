@@ -10,8 +10,11 @@ router.get('/marketplace', async (req: Request, res: Response) => {
     const tag = req.query.tag as string;
     const search = req.query.search as string;
     const sortBy = req.query.sortBy as string;
-    const items = await MarketplaceManager.getItems(category, tag, search, sortBy);
-    res.json(items);
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+    
+    const result = await MarketplaceManager.getItems(category, tag, search, sortBy, page, limit);
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

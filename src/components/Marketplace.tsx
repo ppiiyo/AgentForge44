@@ -189,6 +189,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('popular');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Selected details
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -215,15 +217,24 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const text = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
 
   // Load marketplace listings from server
-  const loadListings = async () => {
+  const loadListings = async (targetPage = page) => {
     setLoading(true);
     setError(null);
     try {
-      const url = `/api/marketplace?category=${category}&search=${encodeURIComponent(search)}&sortBy=${sortBy}`;
+      const url = `/api/marketplace?category=${category}&search=${encodeURIComponent(search)}&sortBy=${sortBy}&page=${targetPage}&limit=6`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to retrieve marketplace assets.');
       const data = await res.json();
-      setItems(data);
+      
+      if (data && typeof data === 'object' && Array.isArray(data.items)) {
+        setItems(data.items);
+        setTotalPages(data.pages || 1);
+        setPage(data.page || 1);
+      } else if (Array.isArray(data)) {
+        setItems(data);
+        setTotalPages(1);
+        setPage(1);
+      }
     } catch (err: any) {
       setError(err.message || String(err));
     } finally {
@@ -233,13 +244,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
   // Re-run search/filter lists on filter triggers
   useEffect(() => {
-    loadListings();
+    loadListings(1);
   }, [category, sortBy]);
 
   // Handle manual Enter keys on search queries
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      loadListings();
+      loadListings(1);
     }
   };
 
@@ -460,7 +471,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 />
                 {search && (
                   <button 
-                    onClick={() => { setSearch(''); setTimeout(() => loadListings()); }}
+                    onClick={() => { setSearch(''); setTimeout(() => loadListings(1)); }}
                     className="absolute right-3.5 text-[10px] font-bold text-slate-500 hover:text-slate-300"
                   >
                     Clear
@@ -496,7 +507,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 </select>
 
                 <button 
-                  onClick={loadListings}
+                  onClick={() => loadListings(1)}
                   className="cursor-pointer bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs px-3.5 py-1.5 rounded-xl border border-slate-850 font-bold transition-all"
                 >
                   Filter
@@ -528,68 +539,105 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 <p className="text-xs text-slate-400 font-bold max-w-sm">No listings found matching these specifications.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {items.map((item) => {
-                  return (
-                    <motion.div
-                      layoutId={`item-card-${item.id}`}
-                      key={item.id}
-                      onClick={() => handleViewDetails(item.id)}
-                      className="group cursor-pointer bg-slate-950 hover:bg-slate-900 rounded-2xl border border-slate-900 hover:border-slate-800 p-4.5 transition-all flex flex-col justify-between shadow-lg hover:shadow-2xl relative"
-                    >
-                      <div className="space-y-3.5 flex-1 pb-4">
-                        {/* Title and category tag */}
-                        <div className="flex justify-between items-start gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase inline-block border ${
-                            item.category === 'agent' ? 'bg-indigo-950/60 text-indigo-400 border-indigo-900/40' :
-                            item.category === 'tool' ? 'bg-amber-950/60 text-amber-400 border-amber-900/40' :
-                            item.category === 'rag-pipeline' ? 'bg-teal-950/60 text-teal-400 border-teal-900/40' :
-                            'bg-sky-950/60 text-sky-400 border-sky-900/40'
-                          }`}>
-                            {item.category}
-                          </span>
-                          
-                          {/* Rating & Downloads */}
-                          <div className="flex items-center gap-2 text-[9px] font-mono text-slate-500">
-                            <span className="flex items-center gap-0.5 text-amber-450 font-bold">
-                              <Star size={10} fill="currentColor" />
-                              {item.rating}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {items.map((item) => {
+                    return (
+                      <motion.div
+                        layoutId={`item-card-${item.id}`}
+                        key={item.id}
+                        onClick={() => handleViewDetails(item.id)}
+                        className="group cursor-pointer bg-slate-950 hover:bg-slate-900 rounded-2xl border border-slate-900 hover:border-slate-800 p-4.5 transition-all flex flex-col justify-between shadow-lg hover:shadow-2xl relative"
+                      >
+                        <div className="space-y-3.5 flex-1 pb-4">
+                          {/* Title and category tag */}
+                          <div className="flex justify-between items-start gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase inline-block border ${
+                              item.category === 'agent' ? 'bg-indigo-950/60 text-indigo-400 border-indigo-900/40' :
+                              item.category === 'tool' ? 'bg-amber-950/60 text-amber-400 border-amber-900/40' :
+                              item.category === 'rag-pipeline' ? 'bg-teal-950/60 text-teal-400 border-teal-900/40' :
+                              'bg-sky-950/60 text-sky-400 border-sky-900/40'
+                            }`}>
+                              {item.category}
                             </span>
-                            <span className="flex items-center gap-0.5 font-bold">
-                              <Download size={10} />
-                              {item.downloadsCount}
+                            
+                            {/* Rating & Downloads */}
+                            <div className="flex items-center gap-2 text-[9px] font-mono text-slate-505">
+                              <span className="flex items-center gap-0.5 text-amber-450 font-bold">
+                                <Star size={10} fill="currentColor" />
+                                {item.rating}
+                              </span>
+                              <span className="flex items-center gap-0.5 font-bold">
+                                <Download size={10} />
+                                {item.downloadsCount}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Text description */}
+                          <div className="space-y-1.5 focus:outline-none">
+                            <h4 className="font-bold text-slate-100 text-[13px] group-hover:text-sky-400 transition-colors line-clamp-1">{item.title}</h4>
+                            <p className="text-[11px] text-slate-450 leading-relaxed line-clamp-2 leading-relaxed">{item.description}</p>
+                          </div>
+
+                          {/* Interactive schema size details */}
+                          <div className="flex items-center gap-2.5 pt-1 font-mono text-[9px] text-slate-500">
+                            <span className="bg-slate-900 px-1.5 py-0.5 rounded">
+                              Nodes: {item.graphSnapshot.nodes?.length || 0}
+                            </span>
+                            <span className="bg-slate-900 px-1.5 py-0.5 rounded">
+                              Edges: {item.graphSnapshot.connections?.length || 0}
                             </span>
                           </div>
                         </div>
 
-                        {/* Text description */}
-                        <div className="space-y-1.5 focus:outline-none">
-                          <h4 className="font-bold text-slate-100 text-[13px] group-hover:text-sky-400 transition-colors line-clamp-1">{item.title}</h4>
-                          <p className="text-[11px] text-slate-450 leading-relaxed line-clamp-2 leading-relaxed">{item.description}</p>
+                        {/* Footer tags list */}
+                        <div className="border-t border-slate-900 pt-3 flex flex-wrap gap-1">
+                          {item.tags.slice(0, 3).map(tag => (
+                            <span key={tag} className="text-[9px] font-mono text-slate-505 bg-slate-900/40 px-2 py-0.5 rounded border border-slate-900/20">
+                              #{tag}
+                            </span>
+                          ))}
                         </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
 
-                        {/* Interactive schema size details */}
-                        <div className="flex items-center gap-2.5 pt-1 font-mono text-[9px] text-slate-500">
-                          <span className="bg-slate-900 px-1.5 py-0.5 rounded">
-                            Nodes: {item.graphSnapshot.nodes?.length || 0}
-                          </span>
-                          <span className="bg-slate-900 px-1.5 py-0.5 rounded">
-                            Edges: {item.graphSnapshot.connections?.length || 0}
-                          </span>
-                        </div>
-                      </div>
+                {/* Advanced Pagination Controller */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-900/40" id="marketplace-pagination-footer">
+                    <button
+                      disabled={page <= 1}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const prevPage = page - 1;
+                        setPage(prevPage);
+                        loadListings(prevPage);
+                      }}
+                      className="cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[10px] uppercase font-bold tracking-wider px-3.5 py-2 rounded-xl border border-slate-900 hover:border-slate-850 bg-slate-950/40 text-slate-400 hover:text-slate-100 transition-all"
+                    >
+                      {currentLang === 'ru' ? 'Назад' : currentLang === 'zh' ? '上一页' : 'Previous'}
+                    </button>
+                    
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      {currentLang === 'ru' ? `Страница ${page} из ${totalPages}` : currentLang === 'zh' ? `第 ${page} 页，共 ${totalPages} 页` : `Page ${page} of ${totalPages}`}
+                    </span>
 
-                      {/* Footer tags list */}
-                      <div className="border-t border-slate-900 pt-3 flex flex-wrap gap-1">
-                        {item.tags.slice(0, 3).map(tag => (
-                          <span key={tag} className="text-[9px] font-mono text-slate-505 bg-slate-900/40 px-2 py-0.5 rounded border border-slate-900/20">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                    <button
+                      disabled={page >= totalPages}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const nextPage = page + 1;
+                        setPage(nextPage);
+                        loadListings(nextPage);
+                      }}
+                      className="cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[10px] uppercase font-bold tracking-wider px-3.5 py-2 rounded-xl border border-slate-900 hover:border-slate-850 bg-slate-950/40 text-slate-400 hover:text-slate-100 transition-all"
+                    >
+                      {currentLang === 'ru' ? 'Вперед' : currentLang === 'zh' ? '下一页' : 'Next'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
