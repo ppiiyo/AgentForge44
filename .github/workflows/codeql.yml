@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: '30 4 * * 1' # Runs every Monday at 04:30 AM UTC
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: CodeQL Scan
@@ -41,7 +45,7 @@ jobs:
         cache: 'npm'
 
     - name: Install Dependencies
-      run: npm install --legacy-peer-deps
+      run: npm ci --legacy-peer-deps
 
     - name: Build Application
       run: npm run build

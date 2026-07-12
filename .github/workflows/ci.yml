@@ -6,10 +6,17 @@ on:
   pull_request:
     branches: [ main, master ]
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    name: Lint & Dependency Security Audit
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -21,22 +28,35 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Run npm audit security scan
-        run: npm audit --audit-level=high
-
-      - name: Run Snyk Dependency Scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: npm ci --legacy-peer-deps
 
       - name: Run TypeScript Linter Check
         run: npm run lint
+
+      - name: Run npm audit security scan
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  build-and-test:
+    name: Compile & Run Tests
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Application Dependencies
+        run: npm ci --legacy-peer-deps
 
       - name: Build Production Bundles
         run: npm run build
 
       - name: Run Vitest Unit & Integration Suites
         run: npm run test
+

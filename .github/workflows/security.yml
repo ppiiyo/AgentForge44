@@ -7,6 +7,13 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   security-scan:
     name: Dependency Audit & Snyk Scan
@@ -23,7 +30,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Run NPM Audit
         run: npm audit --audit-level=high

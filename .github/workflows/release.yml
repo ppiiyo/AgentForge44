@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Compile and Bundle Frontend & Backend Assets
         run: npm run build
@@ -35,13 +35,13 @@ jobs:
           cp package.json package-lock.json setup.sh docker-compose.yml Dockerfile .env.example README.md LICENSE dist-release/
           # Prune devDependencies inside production runtime container representation
           cd dist-release
-          npm install --omit=dev --legacy-peer-deps
+          npm ci --omit=dev --legacy-peer-deps
           cd ..
 
       - name: Generate Tar and Zip Bundles
         run: |
           tar -czf kostromai44-release-${{ github.ref_name }}.tar.gz -C dist-release .
-          zip -r kostromai44-release-${{ github.ref_name }}.zip -F dist-release/*
+          cd dist-release && zip -r ../kostromai44-release-${{ github.ref_name }}.zip . && cd ..
 
       - name: Draft Github Release and Upload Build Artifacts
         uses: softprops/action-gh-release@v2
