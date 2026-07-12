@@ -249,16 +249,16 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
       <main 
         className={`flex-1 relative select-none flex flex-col overflow-hidden min-w-0 min-h-0 transition-colors duration-500 ${
           currentTheme === 'monotropic' 
-            ? 'bg-black bg-[radial-gradient(#262626_1px,transparent_1px)] [background-size:24px_24px]' 
+            ? 'bg-black bg-[radial-gradient(#262626_1.2px,transparent_1.2px)] [background-size:24px_24px]' 
             : currentTheme === 'indigo' 
-              ? 'bg-[#0c0a21] bg-[radial-gradient(#4f46e5_1.2px,transparent_1.2px)] [background-size:28px_28px]' 
-              : 'bg-slate-950 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]'
+              ? 'bg-zinc-950 bg-[radial-gradient(#312e81_1.2px,transparent_1.2px)] [background-size:28px_28px]' 
+              : 'bg-black bg-[radial-gradient(#1c1917_1.2px,transparent_1.2px)] [background-size:24px_24px]'
         }`}
         id="canvas_stage"
       >
         {/* Legend indicator */}
-        <div className="absolute top-4 left-4 bg-slate-900/80 border border-slate-850 px-3 py-1.5 rounded-xl backdrop-blur text-[10.5px] text-slate-400 z-10 font-semibold flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>
+        <div className="absolute top-4 left-4 bg-black/90 border border-neutral-900 px-3 py-1.5 rounded-lg backdrop-blur text-[10px] text-zinc-400 z-10 font-medium flex items-center gap-2 shadow-volumetric-sm">
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
           <span>Flow Canvas Grid: Drag nodes to position. Left hand is input, Right hand is output.</span>
         </div>
 
@@ -292,70 +292,70 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
         />
 
         {/* Canvas Premium Controls Float Board */}
-        <div className="absolute bottom-6 left-6 bg-slate-900/95 border border-slate-800 px-4 py-2.5 rounded-2xl shadow-xl backdrop-blur-md flex items-center space-x-3.5 z-20" id="canvas_premium_controls">
-          <div className="flex items-center space-x-1 border-r border-slate-800 pr-3">
+        <div className="absolute bottom-6 left-6 bg-black/90 border border-neutral-900 px-4 py-2 rounded-xl shadow-volumetric-md backdrop-blur-md flex items-center space-x-3 z-20" id="canvas_premium_controls">
+          <div className="flex items-center space-x-1 border-r border-neutral-900 pr-3">
             <button 
               onClick={() => setCanvasZoom(z => Math.max(0.5, z - 0.1))} 
-              className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-slate-850"
+              className="text-zinc-400 hover:text-white p-1 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-zinc-900"
               title="Zoom Out"
               id="btn_zoom_out"
             >
-              <ZoomOut size={14} />
+              <ZoomOut size={13} />
             </button>
-            <span className="text-xs font-mono font-bold text-slate-300 w-12 text-center select-none">
+            <span className="text-[11px] font-mono font-bold text-zinc-300 w-10 text-center select-none">
               {Math.round(canvasZoom * 100)}%
             </span>
             <button 
               onClick={() => setCanvasZoom(z => Math.min(1.5, z + 0.1))} 
-              className="text-slate-400 hover:text-slate-100 p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-slate-850"
+              className="text-zinc-400 hover:text-white p-1 rounded-lg active:scale-95 transition-all cursor-pointer hover:bg-zinc-900"
               title="Zoom In"
               id="btn_zoom_in"
             >
-              <ZoomIn size={14} />
+              <ZoomIn size={13} />
             </button>
           </div>
           
           <button 
             id="btn_zoom_reset"
             onClick={() => setCanvasZoom(1.0)} 
-            className="text-slate-405 hover:text-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg hover:bg-slate-850 cursor-pointer transition-all"
+            className="text-zinc-500 hover:text-white text-[10px] font-bold px-2 py-1 rounded hover:bg-zinc-900 cursor-pointer transition-all"
           >
             Reset Scale
           </button>
 
-          <span className="text-slate-755">|</span>
+          <span className="text-zinc-800">|</span>
 
           <button 
             id="btn_auto_align_grid"
             onClick={handleAutoAlignNodes} 
-            className="text-sky-450 hover:text-sky-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-sky-500/10 border border-sky-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+            className="text-zinc-300 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
             title="Automatically arrange nodes sequentially by type"
           >
-            <LayoutGrid size={13} className="text-sky-400" />
+            <LayoutGrid size={11} className="text-zinc-500" />
             <span>Type Grid</span>
           </button>
 
           <button 
             id="btn_tiered_layout"
             onClick={handleTieredLayout} 
-            className="text-indigo-450 hover:text-indigo-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-indigo-500/10 border border-indigo-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+            className="text-zinc-300 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
             title="Organize nodes strictly into Input -> Processing -> Output tiers"
           >
-            <LayoutGrid size={13} className="text-indigo-400" />
+            <LayoutGrid size={11} className="text-zinc-500" />
             <span>Tiered Layout</span>
           </button>
 
           <button 
             id="btn_validate_flow"
             onClick={handleValidateFlow} 
-            className="text-amber-450 hover:text-amber-305 text-[11px] font-bold px-3 py-1.5 rounded-xl hover:bg-amber-500/10 border border-amber-500/20 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0 animate-pulse"
+            className="text-zinc-300 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
             title="Check flow graph for disconnected agents or invalid dynamic variables"
           >
-            <CheckSquare size={13} className="text-amber-400" />
+            <CheckSquare size={11} className="text-zinc-500" />
             <span>Validate Flow</span>
           </button>
 
-          <span className="text-slate-800">|</span>
+          <span className="text-zinc-800">|</span>
 
           {/* Undo/Redo history control block */}
           <div className="flex items-center space-x-1">
@@ -363,14 +363,14 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
               id="btn_undo"
               disabled={!canUndo}
               onClick={handleUndo}
-              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold ${
+              className={`p-1.5 rounded active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[10px] font-bold ${
                 canUndo 
-                  ? 'bg-slate-950/40 border-slate-800 text-slate-300 hover:text-slate-100 hover:bg-slate-850' 
-                  : 'border-slate-900 text-slate-700 cursor-not-allowed opacity-40 bg-slate-950/20'
+                  ? 'bg-zinc-950 border-neutral-900 text-zinc-300 hover:text-white hover:bg-zinc-900' 
+                  : 'border-zinc-950 text-zinc-700 cursor-not-allowed opacity-30 bg-transparent'
               }`}
               title="Undo change (Ctrl+Z)"
             >
-              <Undo2 size={13} />
+              <Undo2 size={11} />
               <span>Undo</span>
             </button>
             
@@ -378,14 +378,14 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
               id="btn_redo"
               disabled={!canRedo}
               onClick={handleRedo}
-              className={`p-1.5 rounded-lg active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[11px] font-bold ${
+              className={`p-1.5 rounded active:scale-95 transition-all cursor-pointer border flex items-center gap-1 text-[10px] font-bold ${
                 canRedo 
-                  ? 'bg-slate-950/40 border-slate-800 text-slate-300 hover:text-slate-100 hover:bg-slate-850' 
-                  : 'border-slate-900 text-slate-700 cursor-not-allowed opacity-40 bg-slate-950/20'
+                  ? 'bg-zinc-950 border-neutral-900 text-zinc-300 hover:text-white hover:bg-zinc-900' 
+                  : 'border-zinc-950 text-zinc-700 cursor-not-allowed opacity-30 bg-transparent'
               }`}
               title="Redo change (Ctrl+Y)"
             >
-              <Redo2 size={13} />
+              <Redo2 size={11} />
               <span>Redo</span>
             </button>
           </div>

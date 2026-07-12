@@ -347,7 +347,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
+      <div className="h-screen bg-black text-zinc-100 flex flex-col font-sans select-none overflow-hidden" id="app_root">
         
         {/* Dynamic Top Navigation HUD */}
         <AppHeader
@@ -375,7 +375,7 @@ export default function App() {
         />
 
         {/* Subheader Navigation Bar */}
-        <div className="bg-slate-900 border-b border-slate-850 px-6 py-2 flex items-center justify-between z-30 shrink-0" id="sub_navigation_bar">
+        <div className="bg-black border-b border-neutral-900 px-6 py-2 flex items-center justify-between z-30 shrink-0" id="sub_navigation_bar">
           <div className="flex space-x-1">
             {[
               { id: 'editor', label: app.currentLang === 'ru' ? '🛠️ Холст Конструктора' : app.currentLang === 'zh' ? '🛠️ 视觉画布' : '🛠️ Flow Editor', desc: app.currentLang === 'ru' ? 'Визуальный редактор' : 'Visual creator workspace' },
@@ -386,22 +386,22 @@ export default function App() {
                 key={tab.id}
                 id={`btn_view_nav_${tab.id}`}
                 onClick={() => app.setCurrentView(tab.id as any)}
-                className={`px-4 py-1.5 rounded-xl text-xs font-bold flex flex-col items-start transition-all cursor-pointer ${
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold flex flex-col items-start transition-all cursor-pointer ${
                   app.currentView === tab.id 
-                    ? 'bg-slate-950 text-sky-400 border border-slate-800 shadow-inner shadow-black/40' 
-                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                    ? 'bg-zinc-900 text-white border border-zinc-800 shadow-volumetric-sm font-extrabold' 
+                    : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className="text-[9px] text-slate-500 font-medium leading-none mt-0.5">{tab.desc}</span>
+                <span className="text-[9px] text-zinc-600 font-bold leading-none mt-0.5">{tab.desc}</span>
               </button>
             ))}
           </div>
           
-          <div className="hidden sm:flex items-center space-x-3 text-xs text-slate-500">
+          <div className="hidden sm:flex items-center space-x-3 text-xs text-zinc-500">
             <div className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse"></span>
-              <span className="font-mono text-[10px] font-bold">Node.JS Core Running</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-zinc-600">Core Running</span>
             </div>
           </div>
         </div>

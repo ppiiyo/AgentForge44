@@ -459,24 +459,24 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   };
 
   return (
-    <aside className="absolute md:relative left-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-64 lg:w-72 border-r border-slate-850 bg-slate-900/95 md:bg-slate-900/50 flex flex-col overflow-y-auto shrink-0 z-30 shadow-2xl md:shadow-none animate-[fadeIn_0.3s_ease-out]" id="left_toolbox">
-      <div className="p-4 border-b border-slate-850">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Plus size={14} className="text-sky-400" /> {t('toolboxHeader')}
+    <aside className="absolute md:relative left-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-64 lg:w-72 border-r border-neutral-900 bg-black/95 md:bg-black/50 flex flex-col overflow-y-auto shrink-0 z-30 shadow-volumetric-md md:shadow-none" id="left_toolbox">
+      <div className="p-4 border-b border-neutral-900">
+        <div className="flex items-center justify-between gap-2 mb-3.5">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+            <Plus size={14} className="text-zinc-400" /> {t('toolboxHeader')}
           </h3>
           {onClose && (
             <button 
               type="button"
               onClick={onClose}
-              className="md:hidden text-slate-500 hover:text-slate-200 p-1.5 hover:bg-slate-850 rounded-xl transition-all cursor-pointer active:scale-95"
+              className="md:hidden text-zinc-500 hover:text-white p-1.5 hover:bg-zinc-900 rounded-lg transition-all cursor-pointer active:scale-95"
               title="Close Toolbox"
             >
               <X size={14} />
             </button>
           )}
         </div>
-        <p className="text-xs text-slate-500 mb-3.5 leading-relaxed">
+        <p className="text-[10px] text-zinc-500 mb-3.5 leading-relaxed">
           {t('toolboxDesc')}
         </p>
 
@@ -487,12 +487,12 @@ export const Toolbox: React.FC<ToolboxProps> = ({
             placeholder={currentLang === 'ru' ? "Поиск инструментов..." : currentLang === 'zh' ? "快速搜索节点..." : "Filter action blocks..."}
             value={toolboxSearch}
             onChange={(e) => setToolboxSearch(e.target.value)}
-            className="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500/40 focus:ring-1 focus:ring-sky-500/20"
+            className="w-full bg-zinc-950 border border-neutral-900 rounded-lg px-3 py-1.5 text-[10px] text-zinc-350 placeholder-zinc-700 focus:outline-none focus:border-zinc-800 focus:ring-1 focus:ring-zinc-800"
           />
           {toolboxSearch && (
             <button 
               onClick={() => setToolboxSearch("")} 
-              className="absolute right-2.5 top-1.5 text-slate-500 hover:text-slate-300 text-xs cursor-pointer"
+              className="absolute right-2.5 top-1.5 text-zinc-500 hover:text-zinc-300 text-xs cursor-pointer"
             >
               &times;
             </button>
@@ -505,43 +505,43 @@ export const Toolbox: React.FC<ToolboxProps> = ({
               id={`btn-add-${tb.type}`}
               key={tb.type}
               onClick={() => onCreateNode(tb.type)}
-              className={`cursor-pointer border border-slate-800 bg-slate-950 text-slate-305 rounded-xl px-3 py-2 text-xs font-semibold text-left transition-all hover:scale-102 flex flex-col gap-1 ${tb.color}`}
+              className="cursor-pointer border border-neutral-900 bg-zinc-950 text-zinc-400 rounded-lg px-3 py-2 text-xs font-semibold text-left transition-all hover:border-zinc-800 hover:bg-zinc-900 shadow-volumetric-sm hover:scale-[1.01] flex flex-col gap-1"
             >
-              <span className="text-xs text-slate-100 flex items-center gap-1.5 capitalize">
-                {tb.type === 'input' && <Database size={11} className="text-blue-400" />}
-                {tb.type === 'prompt' && <Terminal size={11} className="text-purple-400" />}
-                {tb.type === 'gemini' && <Sparkles size={11} className="text-teal-400" />}
-                {tb.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
-                {tb.type === 'router' && <GitBranch size={11} className="text-sky-400" />}
-                {tb.type === 'tool' && <Globe size={11} className="text-rose-400" />}
-                {tb.type === 'webhook' && <Globe size={11} className="text-pink-400 animate-pulse" />}
-                {tb.type === 'rag' && <BookOpen size={11} className="text-teal-400" />}
-                {tb.type === 'vector-search' && <BookOpen size={11} className="text-cyan-400" />}
-                {tb.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
-                {tb.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
-                {tb.type === 'human_confirmation' && <Clock size={11} className="text-rose-400" />}
-                {tb.type === 'prompt_optimizer' && <Cpu size={11} className="text-emerald-400" />}
+              <span className="text-[10.5px] text-white flex items-center gap-1.5 capitalize">
+                {tb.type === 'input' && <Database size={11} className="text-zinc-500" />}
+                {tb.type === 'prompt' && <Terminal size={11} className="text-zinc-500" />}
+                {tb.type === 'gemini' && <Sparkles size={11} className="text-white animate-pulse" />}
+                {tb.type === 'reviewer' && <CheckSquare size={11} className="text-zinc-500" />}
+                {tb.type === 'router' && <GitBranch size={11} className="text-zinc-500" />}
+                {tb.type === 'tool' && <Globe size={11} className="text-zinc-500" />}
+                {tb.type === 'webhook' && <Globe size={11} className="text-zinc-500" />}
+                {tb.type === 'rag' && <BookOpen size={11} className="text-zinc-500" />}
+                {tb.type === 'vector-search' && <BookOpen size={11} className="text-zinc-500" />}
+                {tb.type === 'multimodal' && <Layers size={11} className="text-zinc-500" />}
+                {tb.type === 'output' && <FileCode size={11} className="text-zinc-500" />}
+                {tb.type === 'human_confirmation' && <Clock size={11} className="text-zinc-500" />}
+                {tb.type === 'prompt_optimizer' && <Cpu size={11} className="text-zinc-500" />}
                 {tb.label}
               </span>
-              <span className="text-[9px] text-slate-500">Add node</span>
+              <span className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider">Add block</span>
             </button>
           ))}
         </div>
 
         {/* Node Documentation collapsible/card UI block */}
-        <div className="mt-4 pt-3.5 border-t border-slate-850/80 bg-slate-950/20 p-2.5 rounded-xl border border-slate-850/50">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between gap-1.5 mb-2">
+        <div className="mt-4 pt-3.5 border-t border-neutral-900 bg-zinc-950/20 p-2.5 rounded-lg border border-neutral-900 shadow-volumetric-sm">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between gap-1.5 mb-2">
             <span className="flex items-center gap-1.5">
-              <BookOpen size={11} className="text-sky-400" />
+              <BookOpen size={11} className="text-zinc-400" />
               {currentLang === 'ru' ? "Справочник Блоков" : currentLang === 'zh' ? "节点参考文档" : "Node Documentation"}
             </span>
-            <span className="text-[8px] bg-sky-500/10 text-sky-400 px-1 py-0.5 rounded uppercase font-mono">Guide</span>
+            <span className="text-[8px] bg-zinc-900 text-zinc-400 px-1 py-0.5 rounded uppercase font-mono border border-neutral-800">Guide</span>
           </span>
           
           <select
             value={selectedDocType}
             onChange={(e) => setSelectedDocType(e.target.value as NodeType)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-[10px] text-slate-300 focus:outline-none focus:border-sky-500/40 font-bold mb-2 cursor-pointer"
+            className="w-full bg-zinc-950 border border-neutral-900 rounded-lg px-2 py-1.5 text-[10px] text-zinc-300 focus:outline-none focus:border-zinc-800 font-bold mb-2 cursor-pointer"
           >
             <option value="input">📥 {currentLang === 'ru' ? "Входные переменные" : currentLang === 'zh' ? "输入参数" : "Inputs"}</option>
             <option value="prompt">📝 {currentLang === 'ru' ? "Шаблон Промпта" : currentLang === 'zh' ? "提示词模板" : "Prompt Template"}</option>
@@ -558,38 +558,38 @@ export const Toolbox: React.FC<ToolboxProps> = ({
             <option value="output">📤 {currentLang === 'ru' ? "Результаты" : currentLang === 'zh' ? "输出视图" : "Outputs"}</option>
           </select>
 
-          <div className="space-y-2 text-[10px] bg-slate-950/40 p-2 rounded-lg border border-slate-900 leading-normal">
+          <div className="space-y-2 text-[10px] bg-zinc-950/40 p-2 rounded-lg border border-neutral-900 leading-normal">
             <div>
-              <span className="text-[9px] text-slate-500 font-extrabold uppercase block tracking-wider mb-0.5">
+              <span className="text-[9px] text-zinc-500 font-extrabold uppercase block tracking-wider mb-0.5">
                 {currentLang === 'ru' ? "Назначение" : currentLang === 'zh' ? "核心用途" : "Purpose"}
               </span>
-              <p className="text-slate-300 font-medium">{nodeDocMap[selectedDocType]?.purpose[currentLang] || nodeDocMap[selectedDocType]?.purpose['en']}</p>
+              <p className="text-zinc-300 font-medium">{nodeDocMap[selectedDocType]?.purpose[currentLang] || nodeDocMap[selectedDocType]?.purpose['en']}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-900">
               <div>
-                <span className="text-[8px] text-slate-500 font-extrabold uppercase block tracking-wider mb-0.5">
+                <span className="text-[8px] text-zinc-500 font-extrabold uppercase block tracking-wider mb-0.5">
                   {currentLang === 'ru' ? "Входы" : currentLang === 'zh' ? "接受输入" : "Inputs"}
                 </span>
-                <span className="text-slate-400 font-mono text-[9px] block leading-tight">{nodeDocMap[selectedDocType]?.inputs[currentLang] || nodeDocMap[selectedDocType]?.inputs['en']}</span>
+                <span className="text-zinc-400 font-mono text-[9px] block leading-tight">{nodeDocMap[selectedDocType]?.inputs[currentLang] || nodeDocMap[selectedDocType]?.inputs['en']}</span>
               </div>
               <div>
-                <span className="text-[8px] text-slate-500 font-extrabold uppercase block tracking-wider mb-0.5">
+                <span className="text-[8px] text-zinc-500 font-extrabold uppercase block tracking-wider mb-0.5">
                   {currentLang === 'ru' ? "Выходы" : currentLang === 'zh' ? "输出产物" : "Outputs"}
                 </span>
-                <span className="text-sky-400 font-mono text-[9px] block leading-tight">{nodeDocMap[selectedDocType]?.outputs[currentLang] || nodeDocMap[selectedDocType]?.outputs['en']}</span>
+                <span className="text-zinc-400 font-mono text-[9px] block leading-tight">{nodeDocMap[selectedDocType]?.outputs[currentLang] || nodeDocMap[selectedDocType]?.outputs['en']}</span>
               </div>
             </div>
-            <div className="pt-1.5 border-t border-slate-900">
-              <span className="text-[8.5px] text-amber-500/80 font-extrabold uppercase block tracking-wider mb-0.5">
+            <div className="pt-1.5 border-t border-neutral-900">
+              <span className="text-[8.5px] text-zinc-500 font-extrabold uppercase block tracking-wider mb-0.5">
                 💡 {currentLang === 'ru' ? "Секрет Мастерства" : currentLang === 'zh' ? "专家建议" : "Pro Tip"}
               </span>
-              <p className="text-slate-400 italic text-[9.5px] leading-relaxed">{nodeDocMap[selectedDocType]?.tip[currentLang] || nodeDocMap[selectedDocType]?.tip['en']}</p>
+              <p className="text-zinc-400 italic text-[9.5px] leading-relaxed">{nodeDocMap[selectedDocType]?.tip[currentLang] || nodeDocMap[selectedDocType]?.tip['en']}</p>
             </div>
           </div>
         </div>
 
         {/* Swagger Importer collapsible/card UI block */}
-        <div className="mt-4 pt-3.5 border-t border-slate-850/80">
+        <div className="mt-4 pt-3.5 border-t border-neutral-900">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
             <FileJson size={11} className="text-rose-400" /> Swagger Importer
           </span>

@@ -84,44 +84,44 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
     validationIssue
   } = data;
 
-  let borderStyle = 'border-slate-800 hover:border-slate-700 bg-slate-900';
+  let borderStyle = 'border-neutral-900 hover:border-zinc-800 bg-black shadow-volumetric-md';
   if (isHighlighted) {
-    borderStyle = 'border-amber-500 shadow-2xl shadow-amber-500/40 bg-slate-900 ring-2 ring-amber-500 animate-[pulse_2s_infinite]';
+    borderStyle = 'border-amber-500/80 shadow-glow-amber bg-black ring-1 ring-amber-500/30';
   } else if (isSelected) {
-    borderStyle = 'border-sky-500 shadow-2xl shadow-sky-500/10 bg-slate-900 ring-1 ring-sky-500/30';
+    borderStyle = 'border-sky-500 shadow-glow-sky bg-black ring-1 ring-sky-500/40';
   } else if (nodeStatus === 'idle' && validationIssue) {
     if (validationIssue === 'orphaned') {
-      borderStyle = 'border-amber-500/80 bg-slate-900 border-dashed ring-2 ring-amber-500/10 shadow-lg shadow-amber-500/5';
+      borderStyle = 'border-amber-500/60 bg-black border-dashed ring-1 ring-amber-500/10 shadow-volumetric-sm';
     } else {
-      borderStyle = 'border-rose-500/80 bg-slate-900 border-dashed ring-2 ring-rose-500/10 shadow-lg shadow-rose-500/5';
+      borderStyle = 'border-rose-500/60 bg-black border-dashed ring-1 ring-rose-500/10 shadow-volumetric-sm';
     }
   }
 
   if (nodeStatus === 'running') {
     if (node.type === 'rag') {
-      borderStyle = 'border-teal-400 shadow-xl shadow-teal-500/30 bg-slate-900 ring-2 ring-teal-400 animate-[pulse_1.5s_infinite]';
+      borderStyle = 'border-teal-400 shadow-glow-emerald bg-zinc-950 ring-1 ring-teal-400/40';
     } else {
-      borderStyle = 'border-amber-400 shadow-xl shadow-amber-500/20 bg-slate-900 ring-2 ring-amber-400 shadow-amber-500/10 animate-pulse';
+      borderStyle = 'border-amber-400 shadow-glow-amber bg-zinc-950 ring-1 ring-amber-400/40 animate-pulse';
     }
   } else if (nodeStatus === 'completed') {
     if (node.type === 'rag') {
-      borderStyle = 'border-teal-550 shadow-xl shadow-teal-500/10 bg-slate-900 ring-1 ring-teal-550/40';
+      borderStyle = 'border-teal-500/80 shadow-volumetric-md bg-black ring-1 ring-teal-500/20';
     } else {
-      borderStyle = 'border-emerald-500 shadow-xl shadow-emerald-500/10 bg-slate-900 ring-1 ring-emerald-500/40';
+      borderStyle = 'border-emerald-500/80 shadow-volumetric-md bg-black ring-1 ring-emerald-500/20';
     }
   } else if (nodeStatus === 'failed') {
-    borderStyle = 'border-rose-500 shadow-xl shadow-rose-500/20 bg-slate-900 ring-2 ring-rose-500/60';
+    borderStyle = 'border-rose-500 shadow-volumetric-lg bg-black ring-1 ring-rose-500/40';
   }
 
   return (
     <motion.div
       whileHover={{ 
-        scale: 1.025, 
-        y: -3, 
-        boxShadow: isSelected ? "0 15px 30px -10px rgba(14, 165, 233, 0.2)" : "0 12px 24px -10px rgba(0, 0, 0, 0.4)" 
+        scale: 1.015, 
+        y: -2, 
+        boxShadow: isSelected ? "var(--shadow-glow-sky)" : "var(--shadow-volumetric-lg)" 
       }}
-      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-      className={`w-48 rounded-2xl border text-left flex flex-col transition-all text-slate-100 cursor-pointer ${borderStyle}`}
+      transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+      className={`w-48 rounded-xl border text-left flex flex-col transition-all text-zinc-100 cursor-pointer ${borderStyle}`}
       style={{ minHeight: '140px' }}
     >
       {/* Input connector handle */}
@@ -131,11 +131,11 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
         id="input"
         style={{
           top: '21px',
-          left: '-6px',
-          width: '12px',
-          height: '12px',
-          backgroundColor: '#1e293b',
-          border: '2px solid #0f172a',
+          left: '-5px',
+          width: '10px',
+          height: '10px',
+          backgroundColor: '#09090b',
+          border: '1.5px solid #27272a',
           zIndex: 40,
         }}
       />
@@ -147,43 +147,43 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
         id="output"
         style={{
           top: '21px',
-          right: '-6px',
-          width: '12px',
-          height: '12px',
-          backgroundColor: '#1e293b',
-          border: '2px solid #0f172a',
+          right: '-5px',
+          width: '10px',
+          height: '10px',
+          backgroundColor: '#09090b',
+          border: '1.5px solid #27272a',
           zIndex: 40,
         }}
       />
 
       {/* Header */}
-      <div className="px-3 py-2 rounded-t-2xl bg-slate-950 border-b border-slate-850/60 flex items-center justify-between gap-1">
-        <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+      <div className="px-3 py-2.5 rounded-t-xl bg-zinc-950 border-b border-neutral-900/60 flex items-center justify-between gap-1">
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
           <span className="shrink-0">
-            {node.type === 'input' && <Database size={11} className="text-blue-400" />}
-            {node.type === 'prompt' && <Terminal size={11} className="text-purple-400" />}
-            {node.type === 'gemini' && <Sparkles size={11} className="text-teal-400 animate-pulse" />}
-            {node.type === 'reviewer' && <CheckSquare size={11} className="text-amber-400" />}
-            {node.type === 'output' && <FileCode size={11} className="text-indigo-400" />}
-            {node.type === 'router' && <GitBranch size={11} className="text-sky-450 animate-pulse" />}
-            {node.type === 'tool' && <Globe size={11} className="text-rose-455" />}
-            {node.type === 'webhook' && <Globe size={11} className="text-pink-400 animate-pulse" />}
-            {node.type === 'rag' && <BookOpen size={11} className="text-teal-455" />}
-            {node.type === 'multimodal' && <Layers size={11} className="text-amber-400" />}
-            {node.type === 'human_confirmation' && <Clock size={11} className="text-rose-400 animate-pulse" />}
-            {node.type === 'prompt_optimizer' && <Cpu size={11} className="text-emerald-400 animate-bounce" />}
+            {node.type === 'input' && <Database size={11} className="text-zinc-450" />}
+            {node.type === 'prompt' && <Terminal size={11} className="text-zinc-450" />}
+            {node.type === 'gemini' && <Sparkles size={11} className="text-white animate-pulse" />}
+            {node.type === 'reviewer' && <CheckSquare size={11} className="text-zinc-400" />}
+            {node.type === 'output' && <FileCode size={11} className="text-zinc-450" />}
+            {node.type === 'router' && <GitBranch size={11} className="text-zinc-450" />}
+            {node.type === 'tool' && <Globe size={11} className="text-zinc-450" />}
+            {node.type === 'webhook' && <Globe size={11} className="text-zinc-450" />}
+            {node.type === 'rag' && <BookOpen size={11} className="text-zinc-450" />}
+            {node.type === 'multimodal' && <Layers size={11} className="text-zinc-400" />}
+            {node.type === 'human_confirmation' && <Clock size={11} className="text-zinc-400" />}
+            {node.type === 'prompt_optimizer' && <Cpu size={11} className="text-zinc-400" />}
           </span>
-          <span className="font-bold text-xs text-slate-100 tracking-wide truncate flex-1">
+          <span className="font-bold text-[11px] text-white tracking-tight truncate flex-1">
             {node.title}
           </span>
         </div>
         
-        <div className="flex items-center space-x-1.5 shrink-0">
+        <div className="flex items-center space-x-1 shrink-0">
           {nodeStatus !== 'idle' && (
-            <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none ${
-              nodeStatus === 'running' ? 'bg-amber-950/80 text-amber-400 border border-amber-800/20' :
-              nodeStatus === 'completed' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/20' :
-              'bg-rose-950/80 text-rose-400 border border-rose-800/20'
+            <span className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded leading-none ${
+              nodeStatus === 'running' ? 'bg-amber-950/40 text-amber-400 border border-amber-900/20' :
+              nodeStatus === 'completed' ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/20' :
+              'bg-rose-950/40 text-rose-400 border border-rose-900/20'
             }`}>
               {nodeStatus === 'running' ? '• run' : nodeStatus === 'completed' ? '✓ ok' : '✗ err'}
             </span>
@@ -195,35 +195,35 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
               e.stopPropagation();
               onDeleteNode(node.id);
             }}
-            className="text-slate-600 hover:text-rose-400 p-0.5 rounded transition-transform cursor-pointer"
+            className="text-zinc-600 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
           >
-            <Trash size={11} />
+            <Trash size={10} />
           </button>
         </div>
       </div>
 
       {/* Description & dynamic stats/info */}
-      <div className="p-3 flex-1 flex flex-col justify-between bg-slate-900/60 rounded-b-2xl">
+      <div className="p-3 flex-1 flex flex-col justify-between bg-zinc-950/20 rounded-b-xl">
         <div>
           {node.fields?.tag && node.fields.tag !== 'none' && (
             <div className="mb-2">
-              <span className={`inline-block text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
-                node.fields.tag === 'drafting' ? 'bg-blue-950/80 text-blue-400 border border-blue-900/40' :
-                node.fields.tag === 'refining' ? 'bg-amber-950/80 text-amber-500 border border-amber-900/40' :
-                node.fields.tag === 'finalizer' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-900/40' :
-                'bg-slate-850 text-slate-400 border border-slate-800'
+              <span className={`inline-block text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                node.fields.tag === 'drafting' ? 'bg-zinc-900 text-zinc-300 border border-zinc-800' :
+                node.fields.tag === 'refining' ? 'bg-zinc-900 text-zinc-300 border border-zinc-800' :
+                node.fields.tag === 'finalizer' ? 'bg-zinc-900 text-zinc-300 border border-zinc-800' :
+                'bg-zinc-900 text-zinc-400 border border-zinc-800'
               }`}>
                 {node.fields.tag === 'drafting' ? '✍️ ' : node.fields.tag === 'refining' ? '⚡ ' : '✅ '}
                 {node.fields.tag}
               </span>
             </div>
           )}
-          <p className="text-[11px] text-slate-400 font-medium leading-relaxed mb-2 line-clamp-3">
+          <p className="text-[10px] text-zinc-400 font-medium leading-relaxed mb-2 line-clamp-3">
             {node.description}
           </p>
         </div>
 
-        <div className="space-y-1 pt-2 border-t border-slate-800/60">
+        <div className="space-y-1 pt-2 border-t border-neutral-900/40">
           {node.type === 'input' && (
             <span className="text-[10px] font-mono text-blue-400 font-bold bg-blue-950/30 px-1.5 py-0.5 rounded border border-blue-950/50 block w-max">
               {node.fields.variables?.length || 0} Key parameters

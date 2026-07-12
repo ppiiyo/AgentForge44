@@ -205,15 +205,15 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
   };
 
   return (
-    <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-slate-850 bg-slate-900/95 md:bg-slate-900/40 flex flex-col overflow-hidden shrink-0 z-30 shadow-2xl md:shadow-none" id="right_sidebar">
+    <section className="absolute md:relative right-0 top-0 h-full w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[420px] border-l border-neutral-900 bg-black/95 md:bg-black/90 flex flex-col overflow-hidden shrink-0 z-30 shadow-volumetric-md md:shadow-none animate-[fadeIn_0.2s_ease-out]" id="right_sidebar">
       
       {/* Section tab headers */}
-      <div className="flex border-b border-slate-850 bg-slate-900/95 overflow-x-auto items-center relative" id="tab_headers">
+      <div className="flex border-b border-neutral-900 bg-zinc-950 overflow-x-auto items-center relative shrink-0" id="tab_headers">
         {[
           { id: 'logs', label: currentLang === 'ru' ? '⚡ Запуск' : currentLang === 'zh' ? '⚡ 运行' : '⚡ Run', icon: RefreshCw },
           { id: 'copilot', label: currentLang === 'ru' ? '🤖 Копилот' : currentLang === 'zh' ? '🤖 智能助手' : '🤖 Copilot', icon: Sparkles },
           { id: 'sync', label: currentLang === 'ru' ? '🔄 Синхро' : currentLang === 'zh' ? '🔄 同步中心' : '🔄 Sync Hub', icon: Network },
-          { id: 'debug', label: currentLang === 'ru' ? '🐞 Дебаг' : currentLang === 'zh' ? '🐞 调试器' : '⏳ Debugger', icon: Terminal },
+          { id: 'debug', label: currentLang === 'ru' ? '🐞 Дебаг' : currentLang === 'zh' ? '🐞 调试器' : '⏳ Debug', icon: Terminal },
           { id: 'market', label: currentLang === 'ru' ? '🛒 Магазин' : currentLang === 'zh' ? '🛒 商店' : '🛒 Store', icon: ShoppingBag },
           { id: 'deploy', label: currentLang === 'ru' ? '🚀 Сервер' : currentLang === 'zh' ? '🚀 云部署' : '🚀 Cloud', icon: Globe },
           { id: 'metrics', label: currentLang === 'ru' ? '📊 Статы' : currentLang === 'zh' ? '📊 指标' : '📊 Stats', icon: TrendingUp },
@@ -227,13 +227,13 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
             id={`tab-btn-${tab.id}`}
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 font-bold text-[10px] uppercase tracking-wider py-3 px-2 flex items-center justify-center gap-1 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex-1 font-extrabold text-[9px] uppercase tracking-widest py-3 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === tab.id 
-                ? 'border-sky-500 text-sky-450 bg-slate-950/25 font-black' 
-                : 'border-transparent text-slate-500 hover:text-slate-300'
+                ? 'border-white text-white bg-zinc-900/60 font-extrabold' 
+                : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/20'
             }`}
           >
-            <tab.icon size={11} className={activeTab === tab.id ? 'animate-pulse' : ''} />
+            <tab.icon size={11} className={activeTab === tab.id ? 'animate-pulse text-white' : ''} />
             <span>{tab.label}</span>
           </button>
         ))}
@@ -242,7 +242,7 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
         <button
           type="button"
           onClick={() => setRightSidebarCollapsed(true)}
-          className="md:hidden sticky right-0 bg-slate-900/95 hover:bg-slate-800 text-slate-400 hover:text-slate-100 p-2.5 px-3.5 border-l border-slate-850 z-10 flex items-center justify-center shrink-0"
+          className="md:hidden sticky right-0 bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-white p-2.5 px-3.5 border-l border-neutral-900 z-10 flex items-center justify-center shrink-0"
           title="Close Panel Sidebar"
         >
           <X size={14} />

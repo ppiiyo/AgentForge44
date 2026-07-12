@@ -48,61 +48,61 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [langOpen, setLangOpen] = React.useState(false);
 
   return (
-    <header className="p-4 bg-slate-900/90 backdrop-blur border-b border-slate-800 flex items-center justify-between gap-4 z-40 relative">
-      <div className="flex items-center space-x-3.5">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <Workflow size={20} className="text-white animate-pulse" />
+    <header className="p-3 bg-black/90 backdrop-blur-md border-b border-neutral-900 flex items-center justify-between gap-4 z-40 relative">
+      <div className="flex items-center space-x-3">
+        <div className="h-9 w-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-volumetric-sm">
+          <Workflow size={16} className="text-white" />
         </div>
         <div>
-          <h1 className="text-sm font-black text-slate-100 tracking-wide uppercase flex items-center gap-1.5">
+          <h1 className="text-xs font-bold text-white tracking-tight uppercase flex items-center gap-1.5">
             {t('title')}
-            <span className="text-[9px] bg-sky-500/10 text-sky-400 font-extrabold px-1.5 py-0.5 rounded-full tracking-normal border border-sky-500/20">
+            <span className="text-[8px] bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded border border-zinc-800">
               v44
             </span>
             <AppHealthMonitor currentLang={currentLang} />
           </h1>
-          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+          <span className="text-[10px] text-zinc-500 font-medium block">
             {t('subtitle')}
           </span>
         </div>
       </div>
 
       {/* Network / Execution metrics bar */}
-      <div className="hidden lg:flex items-center space-x-6 bg-slate-950/40 px-5 py-2 rounded-2xl border border-slate-850">
+      <div className="hidden lg:flex items-center space-x-5 bg-zinc-950 px-4 py-1.5 rounded-lg border border-neutral-900">
         <div className="flex flex-col">
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">{t('metricsTotalNodes')}</span>
-          <span className="text-xs font-bold text-slate-200 mt-0.5 font-mono">{nodesCount} active blocks</span>
+          <span className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider">{t('metricsTotalNodes')}</span>
+          <span className="text-[11px] font-bold text-zinc-300 font-mono">{nodesCount} active blocks</span>
         </div>
-        <div className="h-6 w-px bg-slate-850"></div>
+        <div className="h-4 w-px bg-neutral-900"></div>
         <div className="flex flex-col">
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">{t('metricsActiveEdges')}</span>
-          <span className="text-xs font-bold text-slate-205 mt-0.5 font-mono">{connectionsCount} edges linked</span>
+          <span className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider">{t('metricsActiveEdges')}</span>
+          <span className="text-[11px] font-bold text-zinc-300 font-mono">{connectionsCount} edges linked</span>
         </div>
-        <div className="h-6 w-px bg-slate-850"></div>
+        <div className="h-4 w-px bg-neutral-900"></div>
         <div className="flex flex-col">
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">{t('complexityScore')}</span>
-          <span className="text-xs font-bold text-slate-205 mt-0.5 flex items-center gap-1">
-            <span className={`h-2 w-2 rounded-full ${nodesCount <= 3 ? 'bg-emerald-450' : nodesCount <= 7 ? 'bg-amber-450' : 'bg-rose-400'}`}></span>
+          <span className="text-[8px] text-zinc-600 font-bold uppercase tracking-wider">{t('complexityScore')}</span>
+          <span className="text-[11px] font-bold text-zinc-300 flex items-center gap-1">
+            <span className={`h-1.5 w-1.5 rounded-full ${nodesCount <= 3 ? 'bg-emerald-500' : nodesCount <= 7 ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
             {nodesCount <= 3 ? t('low') : nodesCount <= 7 ? t('medium') : t('high')}
           </span>
         </div>
       </div>
 
       {/* Project controls and triggers */}
-      <div className="flex items-center space-x-2.5">
+      <div className="flex items-center space-x-2">
         {autoSavingStatus && autoSavingStatus !== 'idle' && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-950/40 rounded-xl border border-slate-855 text-[10px] font-bold font-mono transition-all animate-[fadeIn_0.3s_ease-out]">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-zinc-950 rounded-lg border border-neutral-900 text-[9px] font-bold font-mono transition-all">
             {autoSavingStatus === 'saving' && (
               <>
-                <RefreshCw size={11} className="text-sky-400 animate-spin" />
-                <span className="text-sky-400 animate-pulse">
+                <RefreshCw size={10} className="text-zinc-500 animate-spin" />
+                <span className="text-zinc-500">
                   {currentLang === 'ru' ? "Автосохранение..." : currentLang === 'zh' ? "自动保存中..." : "Auto-saving..."}
                 </span>
               </>
             )}
             {autoSavingStatus === 'saved' && (
               <>
-                <Check size={11} className="text-emerald-400" />
+                <Check size={10} className="text-emerald-400" />
                 <span className="text-emerald-400">
                   {currentLang === 'ru' ? "Сохранено" : currentLang === 'zh' ? "保存完毕" : "Changes saved"}
                 </span>
@@ -110,8 +110,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             )}
             {autoSavingStatus === 'failed' && (
               <>
-                <X size={11} className="text-rose-450" />
-                <span className="text-rose-450">
+                <X size={10} className="text-rose-455" />
+                <span className="text-rose-455">
                   {currentLang === 'ru' ? "Ошибка" : currentLang === 'zh' ? "保存失败" : "Save failed"}
                 </span>
               </>
@@ -119,20 +119,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         )}
 
-        <div className="hidden md:flex items-center space-x-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-850">
+        <div className="hidden md:flex items-center space-x-1.5 bg-zinc-950 p-1 rounded-lg border border-neutral-900">
           <input
             type="text"
             placeholder={t('projectNameHolder')}
             value={projectNameInput}
             onChange={(e) => onProjectNameInputChange(e.target.value)}
-            className="bg-transparent border-0 font-bold font-mono text-[11px] text-slate-350 focus:outline-none focus:ring-0 w-28 px-2"
+            className="bg-transparent border-0 font-bold font-mono text-[10px] text-zinc-400 focus:outline-none focus:ring-0 w-24 px-2"
           />
           <button
             onClick={onSaveProject}
             disabled={savingProject}
-            className="flex items-center gap-1 text-[10px] font-extrabold uppercase px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white rounded-lg cursor-pointer transition-all border border-slate-700 hover:border-slate-600 disabled:opacity-50"
+            className="flex items-center gap-1 text-[9px] font-bold uppercase px-2 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all disabled:opacity-50 shadow-volumetric-sm"
           >
-            {savingProject ? <RefreshCw size={10} className="animate-spin" /> : <Database size={10} />}
+            {savingProject ? <RefreshCw size={9} className="animate-spin" /> : <Database size={9} />}
             {t('saveProjectBtn')}
           </button>
         </div>
@@ -141,27 +141,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           onClick={onAutoAlign}
           title={t('autoAlign')}
-          className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
+          className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
-          <LayoutGrid size={15} />
+          <LayoutGrid size={13} />
         </button>
 
         {/* Saved Snapshots history checkpoint marker */}
         <button
           onClick={onSaveSnapshot}
           title={t('saveSnapshot')}
-          className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
+          className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
-          <RefreshCcw size={15} />
+          <RefreshCcw size={13} />
         </button>
 
         {/* Import/Export buttons */}
         <button
           onClick={onShowImportExport}
           title={t('exportImport')}
-          className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
+          className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
-          <Upload size={15} />
+          <Upload size={13} />
         </button>
 
         {/* Shortcuts Cheat Sheet help button */}
@@ -169,9 +169,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           id="btn_show_shortcuts_header"
           onClick={onShowShortcuts}
           title={currentLang === 'ru' ? "Горячие клавиши" : currentLang === 'zh' ? "键盘快捷键" : "Keyboard Shortcuts"}
-          className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 hover:bg-slate-850 border border-slate-850 hover:border-slate-700/60 rounded-xl transition-all cursor-pointer"
+          className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
-          <HelpCircle size={15} />
+          <HelpCircle size={13} />
         </button>
 
         {/* Language selector */}
@@ -179,24 +179,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button 
             type="button"
             onClick={() => setLangOpen(!langOpen)}
-            className="p-2 text-slate-400 hover:text-slate-100 bg-slate-950/40 border border-slate-850 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-bold leading-none select-none"
+            className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold leading-none select-none shadow-volumetric-sm"
           >
-            <Globe size={14} />
+            <Globe size={12} />
             <span className="uppercase">{currentLang}</span>
           </button>
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1.5 flex flex-col bg-slate-900 border border-slate-800 rounded-xl p-1 shadow-2xl z-50 w-24">
+            <div className="absolute right-0 top-full mt-1.5 flex flex-col glass-dropdown border border-neutral-900 rounded-lg p-1 shadow-volumetric-md z-50 w-24">
               {(['en', 'ru', 'zh'] as const).map((lang) => (
                 <button
-                  key={lang}
-                  type="button"
-                  onClick={() => {
-                    onLanguageChange(lang);
-                    setLangOpen(false);
-                  }}
-                  className={`text-[10px] font-extrabold uppercase px-2 py-1.5 rounded-lg text-left transition-all ${
-                    currentLang === lang ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:bg-slate-850 hover:text-slate-100'
-                  }`}
+                   key={lang}
+                   type="button"
+                   onClick={() => {
+                     onLanguageChange(lang);
+                     setLangOpen(false);
+                   }}
+                   className={`text-[9px] font-bold uppercase px-2 py-1 rounded text-left transition-all ${
+                     currentLang === lang ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
+                   }`}
                 >
                   {lang === 'en' ? 'EN' : lang === 'ru' ? 'РУ' : 'ZH'}
                 </button>
@@ -210,9 +210,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           onClick={onValidateWorkflow}
           id="btn_validate_workflow_header"
           title={t('validateWorkflow')}
-          className="flex items-center space-x-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold text-[11px] px-3.5 py-2.5 rounded-xl border border-amber-500/20 shadow-sm transition-all cursor-pointer active:scale-95 shrink-0"
+          className="flex items-center space-x-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-bold text-[10px] px-3 py-2 rounded-lg border border-zinc-800 shadow-volumetric-sm transition-all cursor-pointer active:scale-95 shrink-0"
         >
-          <CheckSquare size={13} className="text-amber-400" />
+          <CheckSquare size={11} />
           <span>{t('validateWorkflow')}</span>
         </button>
 
@@ -221,16 +221,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           onClick={onRunPipeline}
           disabled={isRunning}
           id="btn-run-pipeline"
-          className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4.5 py-2.5 rounded-xl shadow-lg shadow-emerald-505 shadow-emerald-500/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50 border-0"
+          className="flex items-center space-x-1.5 bg-white hover:bg-zinc-200 text-black font-bold text-[11px] px-4 py-2 rounded-lg shadow-volumetric-md transition-all cursor-pointer active:scale-95 disabled:opacity-40 border-0"
         >
           {isRunning ? (
             <>
-              <RefreshCw size={13} className="animate-spin" />
+              <RefreshCw size={11} className="animate-spin" />
               <span>{t('runningPipeline')}</span>
             </>
           ) : (
             <>
-              <Play size={13} fill="currentColor" />
+              <Play size={11} fill="currentColor" />
               <span>{t('runPipeline')}</span>
             </>
           )}
@@ -239,3 +239,4 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     </header>
   );
 };
+

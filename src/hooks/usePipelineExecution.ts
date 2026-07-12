@@ -2,6 +2,7 @@ import React from 'react';
 import { FlowNode, FlowConnection, StepLog } from '../types';
 import posthog from 'posthog-js';
 import * as Sentry from '@sentry/react';
+import { showErrorToast, showSuccessToast, showWarningToast } from '../utils/toast';
 
 interface UsePipelineExecutionProps {
   nodes: FlowNode[];
@@ -25,6 +26,7 @@ interface UsePipelineExecutionProps {
   dryRunOutput: Record<string, string>;
   setDryRunOutput: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleValidateFlow?: () => { errors: string[]; warnings: string[] };
+  currentLang?: 'en' | 'ru' | 'zh';
 }
 
 export function usePipelineExecution({
@@ -49,6 +51,7 @@ export function usePipelineExecution({
   dryRunOutput,
   setDryRunOutput,
   handleValidateFlow,
+  currentLang = 'en',
 }: UsePipelineExecutionProps) {
 
   // Trace animator
@@ -107,13 +110,30 @@ export function usePipelineExecution({
           ? (nodeLog.output || "Completed with no text output.") 
           : `Execution failed:\n${nodeLog.output || "Unknown error"}`;
         setDryRunOutput(prev => ({ ...prev, [nodeId]: outputText }));
+        if (nodeLog.status === 'completed') {
+          showSuccessToast(
+            currentLang === 'ru' ? 'Блок успешно выполнен!' : 'Block executed successfully!',
+            currentLang === 'ru' ? 'Изолированный запуск' : 'Isolated Dry-run'
+          );
+        } else {
+          showErrorToast(
+            nodeLog.output || "Unknown error",
+            currentLang === 'ru' ? 'Ошибка выполнения блока' : 'Block Execution Failure'
+          );
+        }
       } else {
         setDryRunOutput(prev => ({ 
           ...prev, 
           [nodeId]: "Node was not executed. Ensure it is connected and input variables are populated correctly." 
         }));
+        showWarningToast(
+          currentLang === 'ru' ? 'Блок не был запущен. Проверьте связи.' : 'Block not executed. Verify connections.',
+          currentLang === 'ru' ? 'Предупреждение' : 'Warning'
+        );
       }
     } catch (err: any) {
+      const errorMsg = err.message || String(err);
+      showErrorToast(errorMsg, currentLang === 'ru' ? 'Ошибка запуска' : 'Isolated Dry-run Error');
       setDryRunOutput(prev => ({ 
         ...prev, 
         [nodeId]: `Dry-run failed:\n${err.message || String(err)}` 
@@ -181,13 +201,23 @@ export function usePipelineExecution({
         node_count: nodes.length
       });
 
+      showSuccessToast(
+        currentLang === 'ru' ? 'Конвейер успешно выполнен!' : 'Pipeline executed successfully!',
+        currentLang === 'ru' ? 'Запуск завершен' : 'Run Completed'
+      );
+
       // Play high-fidelity sequential execution tracer
       await animateNodeProgress(data.logs || []);
     } catch (err: any) {
       console.error(err);
-      setErrorText(err.message || String(err));
+      const errorMsg = err.message || String(err);
+      showErrorToast(
+        errorMsg,
+        currentLang === 'ru' ? 'Сбой выполнения' : 'Execution Failure'
+      );
+      setErrorText(errorMsg);
       posthog.capture('pipeline_run_failed', {
-        error: err.message || String(err)
+        error: errorMsg
       });
       Sentry.captureException(err);
     } finally {
@@ -260,10 +290,20 @@ export function usePipelineExecution({
         node_count: updatedNodes.length
       });
 
+      showSuccessToast(
+        currentLang === 'ru' ? 'Конвейер восстановлен и запущен!' : 'Pipeline successfully self-healed and executed!',
+        currentLang === 'ru' ? 'Авто-исправление' : 'Self-Healed Success'
+      );
+
       await animateNodeProgress(data.logs || []);
     } catch (err: any) {
       console.error(err);
-      setErrorText(err.message || String(err));
+      const errorMsg = err.message || String(err);
+      showErrorToast(
+        errorMsg,
+        currentLang === 'ru' ? 'Ошибка авто-исправления' : 'Self-heal Failure'
+      );
+      setErrorText(errorMsg);
       Sentry.captureException(err);
     } finally {
       setIsRunning(false);

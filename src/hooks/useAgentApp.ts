@@ -499,6 +499,7 @@ export function useAgentApp() {
     dryRunOutput,
     setDryRunOutput,
     handleValidateFlow,
+    currentLang,
   });
 
   // Run automated benchmark suite

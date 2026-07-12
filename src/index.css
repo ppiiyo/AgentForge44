@@ -1,9 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium Volumetric Design Tokens (Multi-layered physical shadows) */
+  --shadow-volumetric-sm: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-volumetric-md: 0 12px 24px -4px rgba(0, 0, 0, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  --shadow-volumetric-lg: 0 24px 48px -8px rgba(0, 0, 0, 0.7), 0 8px 24px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  
+  /* Tactical high-contrast focus rings and glow highlights */
+  --shadow-glow-sky: 0 0 20px 0 rgba(14, 165, 233, 0.15);
+  --shadow-glow-amber: 0 0 20px 0 rgba(245, 158, 11, 0.15);
+  --shadow-glow-emerald: 0 0 20px 0 rgba(16, 185, 129, 0.15);
 }
 
 @keyframes dash {
@@ -18,3 +28,31 @@
 .animate-dash {
   animation: dash 1.5s linear infinite;
 }
+
+/* Custom Scrollbar Minimalism */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Glassmorphism overlays */
+.glass-panel {
+  backdrop-filter: blur(12px);
+  background-color: rgba(9, 9, 11, 0.75);
+}
+
+.glass-dropdown {
+  backdrop-filter: blur(16px);
+  background-color: rgba(9, 9, 11, 0.85);
+}
+
