@@ -96,6 +96,8 @@ fi
 echo -e "\n🗄️ Bootstrapping database schema structure (SQLite Local Dev)..."
 npm run db:generate || echo -e "⚠️  Failed to generate SQLite migrations automatically. Ensure drizzle is available."
 npm run db:push || echo -e "⚠️  Failed to push schemas automatically. Setup will run auto-healing during server startup."
+echo -e "🌱 Seeding initial database tables..."
+npm run db:seed || echo -e "⚠️  Failed to seed database automatically. You can run it manually with 'npm run db:seed'"
 
 echo -e "\n============================================================================"
 echo -e "🎉 ${GREEN}Initialization complete! KostromAi44 is ready for launch.${NC}"
