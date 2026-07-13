@@ -147,26 +147,26 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden" id="first-launch-wizard-overlay">
-      {/* Dark Ambient Backdrop */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl pointer-events-auto"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden" id="first-launch-wizard-overlay">
+          {/* Dark Ambient Backdrop */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl pointer-events-auto"
+          />
 
-      {/* Main Glassmorphic Panel */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ type: "spring", duration: 0.5 }}
-        className="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-      >
+          {/* Main Glassmorphic Panel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: "spring", duration: 0.5 }}
+            className="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+          >
         {/* Glow Highlights */}
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-sky-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -236,9 +236,11 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
                       { id: 'ru', label: 'Русский', desc: 'Русскоязычная локализация Арены' },
                       { id: 'zh', label: '中文', desc: '中文多智能体可视化控制面板' }
                     ].map((l) => (
-                      <button
+                      <motion.button
                         key={l.id}
                         onClick={() => setLang(l.id as any)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         className={`p-4 rounded-2xl border text-left cursor-pointer transition-all ${
                           lang === l.id 
                             ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 font-black shadow-lg shadow-emerald-500/5'
@@ -252,7 +254,7 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
                         <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
                           {l.desc}
                         </p>
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </div>
@@ -526,9 +528,11 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
 
         {/* Footer Navigation Bar */}
         <div className="flex justify-between items-center border-t border-slate-800 pt-5 mt-6 shrink-0">
-          <button
+          <motion.button
             onClick={handleBack}
             disabled={step === 1}
+            whileHover={step === 1 ? {} : { scale: 1.05 }}
+            whileTap={step === 1 ? {} : { scale: 0.95 }}
             className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all border flex items-center gap-1 cursor-pointer select-none ${
               step === 1 
                 ? 'bg-transparent border-transparent text-slate-600 cursor-not-allowed' 
@@ -536,11 +540,13 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
             }`}
           >
             {translations.backStep}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={handleNext}
-            className="px-6 py-2.5 rounded-xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all flex items-center gap-1.5 shadow-lg hover:shadow-emerald-500/15 cursor-pointer active:scale-95 select-none"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="px-6 py-2.5 rounded-xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all flex items-center gap-1.5 shadow-lg hover:shadow-emerald-500/15 cursor-pointer select-none"
             title={step === 4 ? translations.launchBtn : translations.nextStep}
           >
             {step === 4 ? (
@@ -554,9 +560,11 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
                 <ArrowRight size={12} />
               </>
             )}
-          </button>
+          </motion.button>
         </div>
       </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 };

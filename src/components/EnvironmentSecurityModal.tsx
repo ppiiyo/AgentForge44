@@ -179,22 +179,24 @@ export const EnvironmentSecurityModal: React.FC<EnvironmentSecurityModalProps> =
     lengthHint: "Minimum 32 characters required for full cryptographic security."
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden" id="environment-security-modal-overlay">
-      {/* Dark blur backdrop */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl pointer-events-auto"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden" id="environment-security-modal-overlay">
+          {/* Dark blur backdrop */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl pointer-events-auto"
+          />
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-xl bg-slate-900/95 border border-rose-500/20 rounded-3xl p-6 md:p-8 relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto"
-      >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            className="w-full max-w-xl bg-slate-900/95 border border-rose-500/20 rounded-3xl p-6 md:p-8 relative z-10 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto"
+          >
         {/* Glow highlights */}
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-rose-500/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -379,18 +381,22 @@ export const EnvironmentSecurityModal: React.FC<EnvironmentSecurityModalProps> =
               </span>
 
               {/* Form submit button */}
-              <button
+              <motion.button
                 type="submit"
                 disabled={updating || jwtInput.length < 32 || encryptionInput.length < 32}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className="w-full py-3.5 rounded-xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-500/10 cursor-pointer disabled:opacity-50"
               >
                 {updating ? <RefreshCw size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
                 {translations.saveKeys}
-              </button>
+              </motion.button>
             </form>
           )}
         </div>
       </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 };

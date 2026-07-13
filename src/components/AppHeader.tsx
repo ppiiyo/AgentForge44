@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'motion/react';
 import { 
   Sparkles, Play, Database, Workflow, Check, Layers, RefreshCw, RefreshCcw, 
   HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X, CheckSquare
@@ -127,63 +128,75 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onChange={(e) => onProjectNameInputChange(e.target.value)}
             className="bg-transparent border-0 font-bold font-mono text-[10px] text-zinc-400 focus:outline-none focus:ring-0 w-24 px-2"
           />
-          <button
+          <motion.button
             onClick={onSaveProject}
             disabled={savingProject}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             className="flex items-center gap-1 text-[9px] font-bold uppercase px-2 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all disabled:opacity-50 shadow-volumetric-sm"
           >
             {savingProject ? <RefreshCw size={9} className="animate-spin" /> : <Database size={9} />}
             {t('saveProjectBtn')}
-          </button>
+          </motion.button>
         </div>
 
         {/* Alignment & Snap-to-Grid */}
-        <button
+        <motion.button
           onClick={onAutoAlign}
           title={t('autoAlign')}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
           <LayoutGrid size={13} />
-        </button>
+        </motion.button>
 
         {/* Saved Snapshots history checkpoint marker */}
-        <button
+        <motion.button
           onClick={onSaveSnapshot}
           title={t('saveSnapshot')}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
           <RefreshCcw size={13} />
-        </button>
+        </motion.button>
 
         {/* Import/Export buttons */}
-        <button
+        <motion.button
           onClick={onShowImportExport}
           title={t('exportImport')}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
           <Upload size={13} />
-        </button>
+        </motion.button>
 
         {/* Shortcuts Cheat Sheet help button */}
-        <button
+        <motion.button
           id="btn_show_shortcuts_header"
           onClick={onShowShortcuts}
           title={currentLang === 'ru' ? "Горячие клавиши" : currentLang === 'zh' ? "键盘快捷键" : "Keyboard Shortcuts"}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 hover:border-zinc-800 rounded-lg transition-all cursor-pointer shadow-volumetric-sm"
         >
           <HelpCircle size={13} />
-        </button>
+        </motion.button>
 
         {/* Language selector */}
         <div className="relative" onMouseLeave={() => setLangOpen(false)}>
-          <button 
+          <motion.button 
             type="button"
             onClick={() => setLangOpen(!langOpen)}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             className="p-1.5 text-zinc-400 hover:text-white bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[10px] font-bold leading-none select-none shadow-volumetric-sm"
           >
             <Globe size={12} />
             <span className="uppercase">{currentLang}</span>
-          </button>
+          </motion.button>
           {langOpen && (
             <div className="absolute right-0 top-full mt-1.5 flex flex-col glass-dropdown border border-neutral-900 rounded-lg p-1 shadow-volumetric-md z-50 w-24">
               {(['en', 'ru', 'zh'] as const).map((lang) => (
@@ -206,22 +219,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         {/* Validate Workflow button */}
-        <button
+        <motion.button
           onClick={onValidateWorkflow}
           id="btn_validate_workflow_header"
           title={t('validateWorkflow')}
-          className="flex items-center space-x-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-bold text-[10px] px-3 py-2 rounded-lg border border-zinc-800 shadow-volumetric-sm transition-all cursor-pointer active:scale-95 shrink-0"
+          whileHover={{ scale: 1.02, y: -0.5 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex items-center space-x-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-bold text-[10px] px-3 py-2 rounded-lg border border-zinc-800 shadow-volumetric-sm transition-all cursor-pointer shrink-0"
         >
           <CheckSquare size={11} />
           <span>{t('validateWorkflow')}</span>
-        </button>
+        </motion.button>
 
         {/* Active execution trigger */}
-        <button
+        <motion.button
           onClick={onRunPipeline}
           disabled={isRunning}
           id="btn-run-pipeline"
-          className="flex items-center space-x-1.5 bg-white hover:bg-zinc-200 text-black font-bold text-[11px] px-4 py-2 rounded-lg shadow-volumetric-md transition-all cursor-pointer active:scale-95 disabled:opacity-40 border-0"
+          whileHover={isRunning ? {} : { scale: 1.03, y: -0.5 }}
+          whileTap={isRunning ? {} : { scale: 0.97 }}
+          className="flex items-center space-x-1.5 bg-white hover:bg-zinc-200 text-black font-bold text-[11px] px-4 py-2 rounded-lg shadow-volumetric-md transition-all cursor-pointer disabled:opacity-40 border-0"
         >
           {isRunning ? (
             <>
@@ -234,7 +251,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span>{t('runPipeline')}</span>
             </>
           )}
-        </button>
+        </motion.button>
       </div>
     </header>
   );

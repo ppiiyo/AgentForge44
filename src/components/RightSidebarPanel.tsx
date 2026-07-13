@@ -223,10 +223,12 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
           { id: 'code', label: currentLang === 'ru' ? '💻 Код' : currentLang === 'zh' ? '💻 源码' : '💻 Code', icon: Code },
           { id: 'doc', label: currentLang === 'ru' ? '📝 Док' : currentLang === 'zh' ? '📝 说明文档' : '📝 README', icon: FileText }
         ].map(tab => (
-          <button
+          <motion.button
             id={`tab-btn-${tab.id}`}
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className={`flex-1 font-extrabold text-[9px] uppercase tracking-widest py-3 px-3 flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === tab.id 
                 ? 'border-white text-white bg-zinc-900/60 font-extrabold' 
@@ -235,18 +237,20 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
           >
             <tab.icon size={11} className={activeTab === tab.id ? 'animate-pulse text-white' : ''} />
             <span>{tab.label}</span>
-          </button>
+          </motion.button>
         ))}
 
         {/* Sticky close button for mobile screens */}
-        <button
+        <motion.button
           type="button"
           onClick={() => setRightSidebarCollapsed(true)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           className="md:hidden sticky right-0 bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-white p-2.5 px-3.5 border-l border-neutral-900 z-10 flex items-center justify-center shrink-0"
           title="Close Panel Sidebar"
         >
           <X size={14} />
-        </button>
+        </motion.button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5" id="tab_contents">
@@ -521,21 +525,25 @@ export const RightSidebarPanel: React.FC<RightSidebarPanelProps> = ({
                 </div>
 
                 <div className="flex gap-2.5 pt-1">
-                  <button
+                  <motion.button
                     onClick={handleCopyReadme}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     className="flex-1 bg-sky-500/10 hover:bg-sky-500/15 text-sky-400 border border-sky-500/20 rounded-xl py-2 px-3 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     {docCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{docCopied ? 'Copied!' : (currentLang === 'ru' ? 'Копировать' : currentLang === 'zh' ? '复制文档' : 'Copy README')}</span>
-                  </button>
+                  </motion.button>
 
-                  <button
+                  <motion.button
                     onClick={handleDownloadReadme}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     className="flex-1 bg-teal-500/10 hover:bg-teal-500/15 text-teal-400 border border-teal-500/20 rounded-xl py-2 px-3 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Download size={12} />
                     <span>{currentLang === 'ru' ? 'Скачать .md' : currentLang === 'zh' ? '下载文档' : 'Download .md'}</span>
-                  </button>
+                  </motion.button>
                 </div>
               </div>
 
