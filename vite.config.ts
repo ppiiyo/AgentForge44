@@ -49,6 +49,8 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     test: {
+      globals: true,
+      environment: 'jsdom',
       setupFiles: ['./src/tests/setup.ts'],
       testTimeout: 30000,
       exclude: [

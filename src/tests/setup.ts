@@ -49,3 +49,12 @@ Object.defineProperty(window, 'ResizeObserver', {
   value: ResizeObserverMock,
   writable: true,
 });
+
+// Mock DOMMatrix for pdf-parse/pdfjs-dist in jsdom environment
+if (typeof globalThis.DOMMatrix === 'undefined') {
+  class DOMMatrixMock {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+  }
+  (globalThis as any).DOMMatrix = DOMMatrixMock;
+}
+

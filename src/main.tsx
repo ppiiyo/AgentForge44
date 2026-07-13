@@ -52,6 +52,70 @@ import { PostHogProvider } from 'posthog-js/react';
 // Auto-authentication logic & fetch interceptor
 const originalFetch = window.fetch;
 
+// Async authentication bootstrap
+async function bootstrapAuth() {
+  const credentials = {
+    email: 'guest@kostromai44.ai',
+    password: 'GuestPassword123!'
+  };
+
+  try {
+    const existingToken = localStorage.getItem('kostromai44_auth_token');
+    if (existingToken) {
+      const verifyRes = await originalFetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${existingToken}` }
+      });
+      if (verifyRes.ok) {
+        return;
+      }
+      localStorage.removeItem('kostromai44_auth_token');
+    }
+
+    // Attempt login first
+    const loginRes = await originalFetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
+
+    if (loginRes.ok) {
+      const data = await loginRes.json();
+      if (data.token) {
+        localStorage.setItem('kostromai44_auth_token', data.token);
+        return;
+      }
+    }
+
+    // Attempt registration if login fails
+    let registerRes = await originalFetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...credentials, role: 'admin' })
+    });
+
+    if (!registerRes.ok) {
+      // If admin registration failed, retry as editor
+      registerRes = await originalFetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...credentials, role: 'editor' })
+      });
+    }
+
+    if (registerRes.ok) {
+      const data = await registerRes.json();
+      if (data.token) {
+        localStorage.setItem('kostromai44_auth_token', data.token);
+      }
+    }
+  } catch (err) {
+    console.warn('Auto-authentication failed:', err);
+  }
+}
+
+// Bootstrap auth on initial load
+bootstrapAuth();
+
 function sanitizeErrorMessage(msg: string, status: number, isRu: boolean): string {
   if (status === 500) {
     return isRu 
@@ -86,6 +150,7 @@ function sanitizeErrorMessage(msg: string, status: number, isRu: boolean): strin
 /* eslint-disable no-undef */
 const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit) {
   const token = localStorage.getItem('kostromai44_auth_token');
+  const tokenUsed = token;
   
   // Resolve the URL string safely
   let url = '';
@@ -146,6 +211,50 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
     throw err;
   }
 
+  // Auto-recovery: If we receive a 401 Unauthorized for an API call, try to re-authenticate and retry
+  if (url && url.includes('/api/') && response.status === 401 && !url.includes('/api/auth/')) {
+    localStorage.removeItem('kostromai44_auth_token');
+    await bootstrapAuth();
+    const newToken = localStorage.getItem('kostromai44_auth_token');
+    if (newToken && newToken !== tokenUsed) {
+      let retryInput = input;
+      let retryInit = init;
+
+      if (input && typeof input === 'object' && 'clone' in input) {
+        try {
+          const req = input as Request;
+          const newHeaders = new Headers(req.headers);
+          newHeaders.set('Authorization', `Bearer ${newToken}`);
+          retryInput = new Request(req, { headers: newHeaders });
+          retryInit = undefined;
+        } catch (e) {
+          console.warn('Failed to rebuild request on 401 retry:', e);
+        }
+      } else {
+        try {
+          const newInit = { ...init };
+          const headers = new Headers(newInit.headers || {});
+          headers.set('Authorization', `Bearer ${newToken}`);
+          newInit.headers = headers;
+          retryInit = newInit;
+        } catch (e) {
+          console.warn('Failed to rebuild fetch init on 401 retry:', e);
+        }
+      }
+
+      try {
+        const retriedResponse = await originalFetch(retryInput, retryInit);
+        if (retriedResponse.ok) {
+          return retriedResponse;
+        }
+        // If the retry also fails, let the flow continue to show error toast
+        response = retriedResponse;
+      } catch (retryErr) {
+        console.error('Retry after 401 failed:', retryErr);
+      }
+    }
+  }
+
   if (url && url.includes('/api/') && !response.ok) {
     try {
       const cloned = response.clone();
@@ -198,51 +307,7 @@ try {
   }
 }
 
-// Async authentication bootstrap
-async function bootstrapAuth() {
-  const credentials = {
-    email: 'guest@kostromai44.ai',
-    password: 'GuestPassword123!'
-  };
-
-  try {
-    const existingToken = localStorage.getItem('kostromai44_auth_token');
-    if (existingToken) return;
-
-    // Attempt login first
-    const loginRes = await originalFetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials)
-    });
-
-    if (loginRes.ok) {
-      const data = await loginRes.json();
-      if (data.token) {
-        localStorage.setItem('kostromai44_auth_token', data.token);
-        return;
-      }
-    }
-
-    // Attempt registration if login fails
-    const registerRes = await originalFetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...credentials, role: 'admin' })
-    });
-
-    if (registerRes.ok) {
-      const data = await registerRes.json();
-      if (data.token) {
-        localStorage.setItem('kostromai44_auth_token', data.token);
-      }
-    }
-  } catch (err) {
-    console.warn('Auto-authentication failed:', err);
-  }
-}
-
-bootstrapAuth();
+// Sentry initiation helper
 
 const sentryDsn = (import.meta as any).env.VITE_SENTRY_DSN;
 if (sentryDsn && sentryDsn !== 'your_sentry_dsn_here' && sentryDsn.startsWith('http')) {
