@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ragService } from '../services/rag.service.js';
-// @ts-ignore
-import pdfParse from 'pdf-parse';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 // @ts-ignore
 import mammoth from 'mammoth';
 import { logger } from '../utils/logger.js';
