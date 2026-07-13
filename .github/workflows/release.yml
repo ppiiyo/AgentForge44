@@ -9,12 +9,15 @@ jobs:
   release-package:
     name: Package Application for Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          timeout-minutes: 5
 
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
@@ -24,9 +27,11 @@ jobs:
 
       - name: Install Application Dependencies
         run: npm ci --legacy-peer-deps
+        timeout-minutes: 5
 
       - name: Compile and Bundle Frontend & Backend Assets
         run: npm run build
+        timeout-minutes: 5
 
       - name: Create Release Archive Directories
         run: |
@@ -52,5 +57,4 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}

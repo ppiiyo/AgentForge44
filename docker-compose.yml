@@ -3,6 +3,7 @@ version: '3.8'
 services:
   # 1. Frontend Web Service (Reverse Proxy & Static Asset server)
   kostromai44-frontend:
+    image: kostromai44-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -15,6 +16,7 @@ services:
 
   # 2. Backend REST & WebSocket API Service
   kostromai44-backend:
+    image: kostromai44-backend:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -42,6 +44,7 @@ services:
 
   # 3. Independent Pipeline Execution Worker (Scale out as needed)
   kostromai44-executor:
+    image: kostromai44-executor:latest
     build:
       context: .
       dockerfile: Dockerfile.executor

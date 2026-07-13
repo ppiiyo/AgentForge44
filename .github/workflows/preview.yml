@@ -18,29 +18,36 @@ jobs:
     name: Manage PR Preview Environment
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          timeout-minutes: 5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          timeout-minutes: 5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          timeout-minutes: 5
 
       - name: Configure AWS Credentials (Simulated/Mocked or Real via OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::123456789012:role/github-actions-preview-role
-          audience: sigstore
+          audience: sts.amazonaws.com
         continue-on-error: true # Safe fallback for forks and local forks without IAM Setup
 
       - name: Create PR Specific Namespace
         run: |
           echo "Simulating EKS connection..."
-          echo "kubectl create namespace kostromai44-pr-${{ github.event.number }} --dry-run=client -o yaml | kubectl apply -f -"
-          echo "Successfully configured namespace: kostromai44-pr-${{ github.event.number }}"
+          echo "kubectl create namespace kostromai44-pr-${{ github.event.pull_request.number }} --dry-run=client -o yaml | kubectl apply -f -"
+          echo "Successfully configured namespace: kostromai44-pr-${{ github.event.pull_request.number }}"
 
       - name: Build and Push Preview Docker Images
         uses: docker/build-push-action@v6
@@ -48,7 +55,7 @@ jobs:
           context: .
           file: Dockerfile.frontend
           push: false # Do not push without full registry credentials
-          tags: kostromai44-frontend:pr-${{ github.event.number }}
+          tags: kostromai44-frontend:pr-${{ github.event.pull_request.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -56,9 +63,9 @@ jobs:
         run: |
           mkdir -p .k8s-preview
           # Replace image tags and namespaces dynamically using envsubst
-          export PR_NUMBER=${{ github.event.number }}
-          export NAMESPACE="kostromai44-pr-${{ github.event.number }}"
-          export HOSTNAME="pr-${{ github.event.number }}.preview.kostromai.ai"
+          export PR_NUMBER=${{ github.event.pull_request.number }}
+          export NAMESPACE="kostromai44-pr-${{ github.event.pull_request.number }}"
+          export HOSTNAME="pr-${{ github.event.pull_request.number }}.preview.kostromai.ai"
           
           echo "Compiling Kubernetes manifests with namespace $NAMESPACE and host $HOSTNAME"
           # Here we would normally apply them to our cluster
@@ -67,15 +74,15 @@ jobs:
       - name: Post or Update Preview URL PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          number: ${{ github.event.number }}
+          number: ${{ github.event.pull_request.number }}
           header: pr-preview-deployment
           message: |
             ### 🚀 Pull Request Preview Environment Active!
             
             Our CI/CD pipelines have dynamically built and deployed a sandbox preview of your branch to our AWS EKS cluster.
             
-            * **Preview URL:** [https://pr-${{ github.event.number }}.preview.kostromai.ai](https://pr-${{ github.event.number }}.preview.kostromai.ai)
-            * **Kubernetes Namespace:** `kostromai44-pr-${{ github.event.number }}`
+            * **Preview URL:** [https://pr-${{ github.event.pull_request.number }}.preview.kostromai.ai](https://pr-${{ github.event.pull_request.number }}.preview.kostromai.ai)
+            * **Kubernetes Namespace:** `kostromai44-pr-${{ github.event.pull_request.number }}`
             * **Deployment Status:** `ACTIVE` (Auto-updated on push)
             
             *The preview environment will be completely dismantled and cleaned up automatically when this pull request is merged or closed.*
@@ -84,27 +91,28 @@ jobs:
     name: Teardown PR Preview Environment
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials (Simulated/Mocked)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::123456789012:role/github-actions-preview-role
-          audience: sigstore
+          audience: sts.amazonaws.com
         continue-on-error: true
 
       - name: Destroy PR Namespace and Release Resources
         run: |
-          echo "Tearing down preview environment for PR #${{ github.event.number }}..."
-          echo "kubectl delete namespace kostromai44-pr-${{ github.event.number }} --wait=false"
+          echo "Tearing down preview environment for PR #${{ github.event.pull_request.number }}..."
+          echo "kubectl delete namespace kostromai44-pr-${{ github.event.pull_request.number }} --wait=false"
           echo "Cleanup successfully completed."
 
       - name: Update PR Comment with Teardown Status
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          number: ${{ github.event.number }}
+          number: ${{ github.event.pull_request.number }}
           header: pr-preview-deployment
           message: |
             ### 🧹 Pull Request Preview Environment Dismantled
             
-            This pull request has been closed. The dynamic preview environment in namespace `kostromai44-pr-${{ github.event.number }}` and domain `pr-${{ github.event.number }}.preview.kostromai.ai` has been completely deleted and cloud resources have been reclaimed.
+            This pull request has been closed. The dynamic preview environment in namespace `kostromai44-pr-${{ github.event.pull_request.number }}` and domain `pr-${{ github.event.pull_request.number }}.preview.kostromai.ai` has been completely deleted and cloud resources have been reclaimed.

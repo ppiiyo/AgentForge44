@@ -51,18 +51,113 @@ export function useAgentApp() {
     const errList: string[] = [];
     const warnList: string[] = [];
 
-    // 1. Check for Orphan Nodes
+    // Helper: Find all reachable upstream node IDs
+    const getUpstreamNodes = (startId: string): Set<string> => {
+      const upstream = new Set<string>();
+      const queue: string[] = [startId];
+      const visited = new Set<string>();
+      visited.add(startId);
+
+      while (queue.length > 0) {
+        const curr = queue.shift()!;
+        connections.forEach(c => {
+          if (c.targetId === curr && !visited.has(c.sourceId)) {
+            visited.add(c.sourceId);
+            upstream.add(c.sourceId);
+            queue.push(c.sourceId);
+          }
+        });
+      }
+      return upstream;
+    };
+
+    // 1. Circular References Detection
+    const adj = new Map<string, string[]>();
+    nodes.forEach(n => adj.set(n.id, []));
+    connections.forEach(c => {
+      if (adj.has(c.sourceId)) {
+        adj.get(c.sourceId)!.push(c.targetId);
+      }
+    });
+
+    const visitedNodes = new Set<string>();
+    const recStack = new Set<string>();
+    const detectedCycles: string[][] = [];
+
+    const dfsCycle = (nodeId: string, path: string[]) => {
+      visitedNodes.add(nodeId);
+      recStack.add(nodeId);
+
+      const neighbors = adj.get(nodeId) || [];
+      for (const neighbor of neighbors) {
+        if (!visitedNodes.has(neighbor)) {
+          dfsCycle(neighbor, [...path, neighbor]);
+        } else if (recStack.has(neighbor)) {
+          const cycleStartIdx = path.indexOf(neighbor);
+          if (cycleStartIdx !== -1) {
+            detectedCycles.push([...path.slice(cycleStartIdx), neighbor]);
+          } else {
+            detectedCycles.push([neighbor, ...path, neighbor]);
+          }
+        }
+      }
+      recStack.delete(nodeId);
+    };
+
+    nodes.forEach(n => {
+      if (!visitedNodes.has(n.id)) {
+        dfsCycle(n.id, [n.id]);
+      }
+    });
+
+    const uniqueCycles: string[] = [];
+    const seenCycleKeys = new Set<string>();
+    detectedCycles.forEach(cycle => {
+      const nodeTitles = cycle.map(id => {
+        const matched = nodes.find(n => n.id === id);
+        return matched ? matched.title : id;
+      });
+      const cycleKey = [...cycle].sort().join(',');
+      if (!seenCycleKeys.has(cycleKey)) {
+        seenCycleKeys.add(cycleKey);
+        uniqueCycles.push(nodeTitles.join(' ➔ '));
+      }
+    });
+
+    uniqueCycles.forEach(cycleString => {
+      errList.push(`Circular Reference detected: ${cycleString}. Workflows must be directed acyclic graphs (DAG) to execute properly.`);
+    });
+
+    // 2. Unlinked Input Triggers / Dangling / Orphan Nodes
     const connectedNodeIds = new Set<string>();
+    const hasIncoming = new Set<string>();
+    const hasOutgoing = new Set<string>();
+
     connections.forEach(c => {
       connectedNodeIds.add(c.sourceId);
       connectedNodeIds.add(c.targetId);
+      hasIncoming.add(c.targetId);
+      hasOutgoing.add(c.sourceId);
     });
 
     nodes.forEach(node => {
       if (nodes.length > 1 && !connectedNodeIds.has(node.id)) {
-        errList.push(`Orphan Node detected: "${node.title || node.id}" has no incoming or outgoing connections in this flow.`);
+        errList.push(`Orphan Node: "${node.title || node.id}" is completely disconnected. It needs connections to trigger and pass data.`);
       }
 
+      // Check unlinked input triggers
+      if (node.type === 'input') {
+        if (!hasOutgoing.has(node.id)) {
+          warnList.push(`Unlinked Input Trigger: Input block "${node.title}" has no outgoing connections. It will not trigger any downstream agents.`);
+        }
+      } else {
+        // Non-input node with no incoming connections
+        if (!hasIncoming.has(node.id)) {
+          warnList.push(`Unlinked Trigger: Node "${node.title}" requires upstream connections to be triggered. It is currently unlinked.`);
+        }
+      }
+
+      // 3. Field & Dependency validations
       const f = node.fields as any;
       if (node.type === 'gemini') {
         if (!f?.systemInstruction?.trim()) {
@@ -79,12 +174,17 @@ export function useAgentApp() {
         errList.push(`Webhook Node "${node.title}" is missing the Outbound Endpoint URL.`);
       }
 
+      // Extract referenced variables
       const fieldsText = [
         f?.template || '',
         f?.systemInstruction || '',
         f?.body || '',
         f?.headers || '',
-        f?.url || ''
+        f?.url || '',
+        f?.searchQuery || '',
+        f?.analysisPrompt || '',
+        f?.originalPrompt || '',
+        f?.topic || '',
       ].join(' ');
 
       const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
@@ -93,20 +193,33 @@ export function useAgentApp() {
 
       referenced.forEach(v => {
         if (excluded.includes(v)) return;
-        const isDefined = nodes.some(n => {
-          if (n.type === 'input' && (n.fields as any)?.variables?.some((inputVar: any) => inputVar.name === v)) return true;
-          if (n.id === v) return true;
-          if (n.title?.toLowerCase() === v.toLowerCase()) return true;
-          return false;
+
+        // Find providers
+        const providers = nodes.filter(n => {
+          if (n.type === 'input') {
+            const vars = (n.fields as any)?.variables || [];
+            return vars.some((vItem: any) => vItem.key === v || vItem.name === v || vItem.label === v);
+          }
+          return n.id === v || n.title?.toLowerCase() === v.toLowerCase() || n.title?.replace(/\s+/g, '_').toLowerCase() === v.toLowerCase();
         });
 
-        if (!isDefined && nodes.length > 1) {
-          warnList.push(`Node "${node.title}" references variable "${v}" which is not defined by any input node on the active canvas.`);
+        if (providers.length === 0) {
+          if (nodes.length > 1) {
+            errList.push(`Missing Dependency: Node "${node.title}" references variable "${v}", but no node defines or exports this variable.`);
+          }
+        } else {
+          // Check if at least one provider is connected upstream
+          const upstreamIds = getUpstreamNodes(node.id);
+          const hasUpstreamProvider = providers.some(p => upstreamIds.has(p.id));
+          if (!hasUpstreamProvider) {
+            const providerNames = providers.map(p => `"${p.title}"`).join(', ');
+            errList.push(`Missing Connection: Node "${node.title}" references variable "${v}" defined in ${providerNames}, but those provider nodes are not connected upstream of this node.`);
+          }
         }
       });
     });
 
-    // 2. Check for Dangling Edges
+    // 4. Check for Dangling Edges (Connections referencing non-existent nodes)
     const nodeIds = new Set(nodes.map(n => n.id));
     connections.forEach((c, idx) => {
       const sourceExists = nodeIds.has(c.sourceId);

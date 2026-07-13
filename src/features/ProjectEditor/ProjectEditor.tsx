@@ -13,7 +13,13 @@ import {
   Undo2,
   Redo2,
   Map as MapIcon,
-  Palette
+  Palette,
+  CheckCircle,
+  AlertTriangle,
+  Boxes,
+  RefreshCw,
+  Unlink,
+  ShieldAlert
 } from 'lucide-react';
 import { Toolbox } from './components/Toolbox';
 import { AgentFlowCanvas } from './components/AgentFlowCanvas';
@@ -151,6 +157,7 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   handleValidateFlow
 }) => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
+  const [diagnosticTab, setDiagnosticTab] = React.useState<'all' | 'errors' | 'warnings'>('all');
 
   const [currentTheme, setCurrentTheme] = React.useState<'cosmic' | 'monotropic' | 'indigo'>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -346,13 +353,13 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
           </button>
 
           <button 
-            id="btn_validate_flow"
+            id="btn_validate_workflow"
             onClick={handleValidateFlow} 
             className="text-zinc-300 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded bg-zinc-950 hover:bg-zinc-900 border border-neutral-900 flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
-            title="Check flow graph for disconnected agents or invalid dynamic variables"
+            title="Check flow graph for circular references, unlinked triggers, or invalid variables"
           >
             <CheckSquare size={11} className="text-zinc-500" />
-            <span>Validate Flow</span>
+            <span>Validate Workflow</span>
           </button>
 
           <span className="text-zinc-800">|</span>
@@ -523,74 +530,189 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
         currentLang={currentLang}
       />
 
-      {/* Beautiful glassmorphism float-panel reporting validation status */}
+      {/* Beautiful Centered Overlay Modal reporting workflow validation status */}
       {validationReport && (
-        <div className="absolute top-16 right-6 w-96 bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl p-5 z-40 backdrop-blur-md max-h-[70vh] flex flex-col animate-[scaleUp_0.15s_ease-out]" id="validation_report_hud">
-          <div className="flex items-center justify-between border-b border-slate-850 pb-3 mb-3">
-            <div className="flex items-center space-x-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${validationReport.errors.length > 0 ? 'bg-rose-500 animate-ping' : validationReport.warnings.length > 0 ? 'bg-amber-400' : 'bg-emerald-500'}`}></span>
-              <h4 className="text-xs font-black uppercase tracking-wider text-slate-100">Flow Validation Report</h4>
-            </div>
-            <button 
-              onClick={() => setValidationReport(null)}
-              className="text-slate-500 hover:text-slate-200 cursor-pointer p-1 rounded-lg hover:bg-slate-800"
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
-            {validationReport.errors.length === 0 && validationReport.warnings.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-xs font-bold text-emerald-400 mb-1">✅ 0 Errors & Warnings Found</p>
-                <p className="text-[10.5px] text-slate-500">Your graph architecture has pristine logical alignment!</p>
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto" id="validation_report_overlay">
+          <div 
+            className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/40">
+              <div className="flex items-center space-x-3 text-left">
+                <div className={`p-2 rounded-xl ${validationReport.errors.length > 0 ? 'bg-rose-500/10 text-rose-400' : validationReport.warnings.length > 0 ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                  {validationReport.errors.length > 0 ? <ShieldAlert size={20} className="animate-pulse" /> : <CheckCircle size={20} />}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-zinc-100">Workflow Diagnostic Report</h3>
+                  <p className="text-[10px] text-zinc-500 font-medium">Static logical and architectural analysis of active agent graph</p>
+                </div>
               </div>
-            ) : (
-              <>
-                {validationReport.errors.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-rose-400">Critical Errors ({validationReport.errors.length})</p>
-                    {validationReport.errors.map((e, idx) => (
-                      <div key={idx} className="bg-rose-950/25 border border-rose-900/30 p-2.5 rounded-xl text-[10.5px] text-rose-300 leading-relaxed font-semibold flex items-start gap-2">
-                        <span className="text-rose-500 shrink-0 font-bold">•</span>
-                        <span>{e}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <button 
+                onClick={() => setValidationReport(null)}
+                className="text-zinc-500 hover:text-zinc-200 cursor-pointer p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+                id="btn_close_diagnostic_modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-                {validationReport.warnings.length > 0 && (
-                  <div className="space-y-1.5 pt-2">
-                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">Warnings & Tips ({validationReport.warnings.length})</p>
-                    {validationReport.warnings.map((w, idx) => (
-                      <div key={idx} className="bg-amber-955/40 border border-amber-900/30 p-2.5 rounded-xl text-[10.5px] text-amber-300 leading-relaxed font-semibold flex items-start gap-2">
-                        <span className="text-amber-500 shrink-0 font-bold">•</span>
-                        <span>{w}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+            {/* Modal Controls / Tabs */}
+            <div className="px-6 py-3 bg-zinc-950 border-b border-zinc-900/80 flex items-center justify-between text-xs">
+              <div className="flex space-x-1">
+                {[
+                  { id: 'all', label: 'All Issues', count: validationReport.errors.length + validationReport.warnings.length },
+                  { id: 'errors', label: 'Critical Errors', count: validationReport.errors.length, color: 'text-rose-400' },
+                  { id: 'warnings', label: 'Warnings & Tips', count: validationReport.warnings.length, color: 'text-amber-400' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setDiagnosticTab(tab.id as any)}
+                    className={`px-3 py-1 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                      diagnosticTab === tab.id
+                        ? 'bg-zinc-850 text-white'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    <span className={tab.color}>{tab.label}</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
+                      diagnosticTab === tab.id ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-900 text-zinc-500'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-          <div className="border-t border-slate-850 pt-3 mt-3 flex items-center justify-between">
-            <button
-              onClick={() => {
-                handleTieredLayout();
-                setTimeout(() => handleValidateFlow(), 500);
-              }}
-              className="text-[10px] font-extrabold text-sky-400 hover:text-sky-300 flex items-center gap-1 hover:underline cursor-pointer"
-            >
-              <LayoutGrid size={12} />
-              <span>Fix with Tiered Layout</span>
-            </button>
-            <button
-              onClick={() => setValidationReport(null)}
-              className="text-[10.5px] font-bold px-3 py-1 bg-slate-800 text-slate-200 hover:bg-slate-750 rounded-lg cursor-pointer transition-all"
-            >
-              Acknowledge
-            </button>
+              <div className="text-[10px] font-mono text-zinc-500">
+                Nodes: {nodes.length} | Connections: {connections.length}
+              </div>
+            </div>
+
+            {/* Modal Content List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-left bg-zinc-950 text-xs">
+              {validationReport.errors.length === 0 && validationReport.warnings.length === 0 ? (
+                <div className="text-center py-12 flex flex-col items-center justify-center space-y-3">
+                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <CheckCircle size={32} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-400">Pristine Architecture Validation Success</p>
+                    <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                      All connection paths, agent variables, and data pipelines are fully resolved. No missing dependencies, circular references, or unlinked triggers detected.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Circular References Group */}
+                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => e.includes('Circular Reference')) && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-rose-400">
+                        <RefreshCw size={12} className="animate-spin text-rose-500" style={{ animationDuration: '3s' }} />
+                        <span>Circular Reference Violations ({validationReport.errors.filter(e => e.includes('Circular Reference')).length})</span>
+                      </div>
+                      <div className="space-y-2">
+                        {validationReport.errors.filter(e => e.includes('Circular Reference')).map((err, i) => (
+                          <div key={i} className="bg-rose-950/10 border border-rose-900/40 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
+                            <span className="p-1 rounded-md bg-rose-500/10 text-rose-400 mt-0.5"><RefreshCw size={12} /></span>
+                            <div className="flex-1">
+                              <p className="font-bold text-rose-400 text-[11px] mb-1">Graph Cycle Detected</p>
+                              <p className="text-zinc-300 text-[11px] font-mono leading-relaxed">{err}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Dependencies Group */}
+                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => !e.includes('Circular Reference')) && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-rose-400">
+                        <Boxes size={12} className="text-rose-500" />
+                        <span>Missing Dependencies & Connections ({validationReport.errors.filter(e => !e.includes('Circular Reference')).length})</span>
+                      </div>
+                      <div className="space-y-2">
+                        {validationReport.errors.filter(e => !e.includes('Circular Reference')).map((err, i) => (
+                          <div key={i} className="bg-rose-950/10 border border-rose-900/40 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
+                            <span className="p-1 rounded-md bg-rose-500/10 text-rose-400 mt-0.5"><Boxes size={12} /></span>
+                            <div className="flex-1">
+                              <p className="font-bold text-rose-400 text-[11px] mb-1">Invalid Dynamic Reference</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{err}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Unlinked Triggers Group */}
+                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => w.includes('Unlinked')) && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-400">
+                        <Unlink size={12} className="text-amber-500" />
+                        <span>Unlinked Input Triggers ({validationReport.warnings.filter(w => w.includes('Unlinked')).length})</span>
+                      </div>
+                      <div className="space-y-2">
+                        {validationReport.warnings.filter(w => w.includes('Unlinked')).map((warn, i) => (
+                          <div key={i} className="bg-amber-950/10 border border-amber-900/30 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
+                            <span className="p-1 rounded-md bg-amber-500/10 text-amber-400 mt-0.5"><Unlink size={12} /></span>
+                            <div className="flex-1">
+                              <p className="font-bold text-amber-400 text-[11px] mb-1">Unlinked Flow Block</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{warn}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Configuration Warnings Group */}
+                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => !w.includes('Unlinked')) && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-400">
+                        <AlertTriangle size={12} className="text-amber-500" />
+                        <span>Configuration Warnings & Optimization Tips ({validationReport.warnings.filter(w => !w.includes('Unlinked')).length})</span>
+                      </div>
+                      <div className="space-y-2">
+                        {validationReport.warnings.filter(w => !w.includes('Unlinked')).map((warn, i) => (
+                          <div key={i} className="bg-amber-950/10 border border-amber-900/30 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
+                            <span className="p-1 rounded-md bg-amber-500/10 text-amber-400 mt-0.5"><AlertTriangle size={12} /></span>
+                            <div className="flex-1">
+                              <p className="font-bold text-amber-400 text-[11px] mb-1">Configuration Tip</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{warn}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/40 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  handleTieredLayout();
+                  setTimeout(() => handleValidateFlow(), 500);
+                }}
+                className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 hover:underline cursor-pointer transition-all"
+                id="btn_fix_tiered_layout"
+              >
+                <LayoutGrid size={14} />
+                <span>Fix with Tiered Layout</span>
+              </button>
+              <button
+                onClick={() => setValidationReport(null)}
+                className="text-xs font-bold px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg cursor-pointer transition-all border border-zinc-700/80 hover:border-zinc-600 animate-in fade-in duration-300"
+                id="btn_acknowledge_diagnostic"
+              >
+                Acknowledge & Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,16 +17,23 @@ jobs:
   docker-ci:
     name: Build and Test Dockerized Services
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          timeout-minutes: 5
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          timeout-minutes: 5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          timeout-minutes: 5
 
       - name: Verify Docker Compose Configuration
         run: docker compose config
@@ -37,6 +44,7 @@ jobs:
           context: .
           file: Dockerfile.frontend
           push: false
+          load: true
           tags: kostromai44-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -47,6 +55,7 @@ jobs:
           context: .
           file: Dockerfile.backend
           push: false
+          load: true
           tags: kostromai44-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -57,6 +66,7 @@ jobs:
           context: .
           file: Dockerfile.executor
           push: false
+          load: true
           tags: kostromai44-executor:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

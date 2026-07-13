@@ -18,10 +18,13 @@ jobs:
   security-scan:
     name: Dependency Audit & Snyk Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          timeout-minutes: 5
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -31,15 +34,16 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
+        timeout-minutes: 5
 
       - name: Run NPM Audit
         run: npm audit --audit-level=high
         continue-on-error: true # Keep workflow running to execute both scanners
 
       - name: Run Snyk Security Scan
-        uses: snyk/actions/node@master
+        uses: snyk/actions/node@v3
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
-        continue-on-error: true # Prevent blockages during testing phase, can be hard-failed if strict gating is requested
+        continue-on-error: true # Prevent blockages during testing phase
