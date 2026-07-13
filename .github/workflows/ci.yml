@@ -51,7 +51,7 @@ jobs:
 
       - name: Setup tmate session for debugging static-analysis on failure
         if: failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled == true
-        uses: mxschmitt/action-tmate@v3.18.0
+        uses: mxschmitt/action-tmate@v3
 
   build-and-test:
     name: Compile & Run Tests
@@ -82,6 +82,6 @@ jobs:
 
       - name: Setup tmate session for debugging build-and-test on failure
         if: failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled == true
-        uses: mxschmitt/action-tmate@v3.18.0
+        uses: mxschmitt/action-tmate@v3
 
 
