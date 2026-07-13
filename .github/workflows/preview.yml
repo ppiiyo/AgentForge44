@@ -26,12 +26,12 @@ jobs:
           timeout-minutes: 5
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v3.3.0
         with:
           timeout-minutes: 5
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.10.0
         with:
           timeout-minutes: 5
 

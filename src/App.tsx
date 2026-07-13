@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { validateApiKeys } from './utils/validateApiKeys';
-import { useTranslation } from 'react-i18next';
-import { useAgentApp } from './hooks/useAgentApp';
+import { useProjectLifecycle } from './hooks/useProjectLifecycle';
 import { AppHeader } from './components/AppHeader';
 import { ProjectEditor } from './features/ProjectEditor';
 import { Dashboard } from './features/Dashboard';
@@ -14,8 +12,6 @@ import { ShortcutsModal } from './components/ShortcutsModal';
 import { FirstLaunchWizard } from './components/FirstLaunchWizard';
 import { EnvironmentSecurityModal } from './components/EnvironmentSecurityModal';
 import { ToastContainer } from './components/ToastContainer';
-import { PREBUILT_TEMPLATES } from './types';
-import posthog from 'posthog-js';
 
 // Dynamically lazy-loaded sub-modules for bundle splitting optimization
 const Marketplace = React.lazy(() => import('./components/Marketplace').then(m => ({ default: m.Marketplace })));
@@ -226,124 +222,17 @@ if (typeof window !== 'undefined' && (window as any)._bypassUnused) {
 }
 
 export default function App() {
-  const { t, i18n: i18nInstance } = useTranslation();
-
-  // Dynamic localization dictionary proxy mapped to react-i18next resources
-  const translations: any = {
-    en: new Proxy({}, { get: (_, prop) => t(prop as string) }),
-    ru: new Proxy({}, { get: (_, prop) => t(prop as string) }),
-    zh: new Proxy({}, { get: (_, prop) => t(prop as string) })
-  };
-
-  const app = useAgentApp();
-
-  const [apiKeysMissing, setApiKeysMissing] = useState(false);
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [isFirstLaunchOpen, setIsFirstLaunchOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
-      const isInitialized = localStorage.getItem("kostromai44_initialized");
-      if (isInitialized !== 'true') {
-        setIsFirstLaunchOpen(true);
-      }
-    }
-  }, []);
-
-  const handleWizardComplete = async (config: {
-    lang: 'en' | 'ru' | 'zh';
-    geminiKey: string;
-    userName: string;
-    userColor: string;
-    selectedTemplateId: string;
-    generateWorkspaceFiles?: boolean;
-  }) => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem("kostromai44_initialized", "true");
-      localStorage.setItem("kostromai44_lang", config.lang);
-      
-      if (config.geminiKey) {
-        localStorage.setItem("kostromai44_gemini_api_key", config.geminiKey);
-      }
-      
-      localStorage.setItem("kostromai44_user_name", config.userName);
-      localStorage.setItem("kostromai44_user_color", config.userColor);
-    }
-
-    // Apply values to app state
-    app.setCurrentLang(config.lang);
-    i18nInstance.changeLanguage(config.lang);
-    
-    if (app.updateUserName) {
-      app.updateUserName(config.userName);
-    }
-    if ((app as any).updateUserColor) {
-      (app as any).updateUserColor(config.userColor);
-    }
-
-    // Load initial workflow template
-    if (config.selectedTemplateId === 'blank-canvas') {
-      app.setNodes([]);
-      app.setConnections([]);
-    } else {
-      const matched = PREBUILT_TEMPLATES.find(t => t.id === config.selectedTemplateId);
-      if (matched) {
-        app.setNodes(matched.nodes);
-        app.setConnections(matched.connections);
-      }
-    }
-
-    // Pre-generate and save files on backend if toggled
-    if (config.generateWorkspaceFiles) {
-      try {
-        await fetch('/api/config/setup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            geminiKey: config.geminiKey || 'sandbox_free_test_gemini',
-            openaiKey: 'sandbox_free_test_openai',
-            anthropicKey: 'sandbox_free_test_anthropic',
-            jwtSecret: 'sandbox_jwt_secret_token_signature_key_32_chars',
-            encryptionKey: 'sandbox_encryption_master_key_for_api_keys_32_chars'
-          }),
-        });
-      } catch (err) {
-        console.error('Error auto-generating workspace credentials:', err);
-      }
-    }
-
-    // Recheck API keys status
-    const recheck = async () => {
-      const res = await validateApiKeys();
-      setApiKeysMissing(res.geminiMissing);
-    };
-    recheck();
-
-    setIsFirstLaunchOpen(false);
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeEl = document.activeElement?.tagName;
-      const isInput = activeEl === 'INPUT' || activeEl === 'TEXTAREA';
-      if (!isInput && (e.key === '?' || (e.ctrlKey && e.key === '/'))) {
-        e.preventDefault();
-        setIsShortcutsOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    const checkKeys = async () => {
-      const res = await validateApiKeys();
-      setApiKeysMissing(res.geminiMissing);
-    };
-    checkKeys();
-  }, [app.currentView, isFirstLaunchOpen]);
+  const {
+    app,
+    apiKeysMissing,
+    isShortcutsOpen,
+    setIsShortcutsOpen,
+    isFirstLaunchOpen,
+    setIsFirstLaunchOpen,
+    handleWizardComplete,
+    handleLanguageChange,
+    translations,
+  } = useProjectLifecycle();
 
   return (
     <ErrorBoundary>
@@ -352,12 +241,7 @@ export default function App() {
         {/* Dynamic Top Navigation HUD */}
         <AppHeader
           currentLang={app.currentLang}
-          onLanguageChange={(lang) => {
-            app.setCurrentLang(lang);
-            i18nInstance.changeLanguage(lang);
-            localStorage.setItem("kostromai44_lang", lang);
-            posthog.capture('language_switched', { locale: lang });
-          }}
+          onLanguageChange={handleLanguageChange}
           projectNameInput={app.projectNameInput}
           onProjectNameInputChange={app.setProjectNameInput}
           onSaveProject={() => app.handleSaveProjectToServer(app.projectNameInput)}
@@ -497,12 +381,7 @@ export default function App() {
           ) : (
             <Settings
               currentLang={app.currentLang}
-              setCurrentLang={(lang) => {
-                app.setCurrentLang(lang);
-                i18nInstance.changeLanguage(lang);
-                localStorage.setItem("kostromai44_lang", lang);
-                posthog.capture('language_switched', { locale: lang });
-              }}
+              setCurrentLang={handleLanguageChange}
               snapToGrid={app.snapToGrid}
               setSnapToGrid={app.setSnapToGrid}
               canvasLocked={app.canvasLocked}

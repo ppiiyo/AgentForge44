@@ -39,7 +39,7 @@ export default defineConfig(() => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(process.cwd(), '.'),
+        '@': path.resolve(process.cwd(), './src'),
       },
     },
     server: {
@@ -49,6 +49,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     test: {
+      setupFiles: ['./src/tests/setup.ts'],
       testTimeout: 30000,
       exclude: [
         '**/node_modules/**',
