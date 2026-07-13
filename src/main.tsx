@@ -52,6 +52,37 @@ import { PostHogProvider } from 'posthog-js/react';
 // Auto-authentication logic & fetch interceptor
 const originalFetch = window.fetch;
 
+function sanitizeErrorMessage(msg: string, status: number, isRu: boolean): string {
+  if (status === 500) {
+    return isRu 
+      ? 'Внутренняя ошибка сервера. Пожалуйста, проверьте конфигурацию узлов конвейера и повторите попытку.' 
+      : 'Internal server error. Please check your pipeline node configuration and try again.';
+  }
+  
+  // Also check if the message contains technical trace patterns
+  const technicalPatterns = [
+    'at ',
+    'node_modules',
+    '/app/',
+    'sqlite',
+    'drizzle',
+    'syntax error',
+    'postgres',
+    'connection refused',
+    'stack trace',
+    'unhandled rejection'
+  ];
+  
+  const hasTechnicalKeywords = technicalPatterns.some(pattern => msg.toLowerCase().includes(pattern));
+  if (hasTechnicalKeywords) {
+    return isRu
+      ? 'Произошла системная ошибка при обработке запроса. Пожалуйста, проверьте корректность данных конвейера.'
+      : 'An unexpected system error occurred. Please contact support or verify your pipeline configuration.';
+  }
+  
+  return msg;
+}
+
 /* eslint-disable no-undef */
 const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit) {
   const token = localStorage.getItem('kostromai44_auth_token');
@@ -121,22 +152,25 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
       cloned.json().then(data => {
         const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
         const errorMsg = data?.error || data?.message || `HTTP ${response.status} ${response.statusText}`;
+        const sanitizedMsg = sanitizeErrorMessage(errorMsg, response.status, isRu);
         showErrorToast(
-          isRu ? `Запрос отклонен: ${errorMsg}` : `API request failed: ${errorMsg}`,
+          sanitizedMsg,
           isRu ? 'Сбой операции' : 'API Failure'
         );
       }).catch(() => {
         response.clone().text().then(text => {
           const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
           const errorMsg = text ? (text.length > 100 ? `${text.substring(0, 100)}...` : text) : `HTTP ${response.status}`;
+          const sanitizedMsg = sanitizeErrorMessage(errorMsg, response.status, isRu);
           showErrorToast(
-            isRu ? `Запрос отклонен: ${errorMsg}` : `API request failed: ${errorMsg}`,
+            sanitizedMsg,
             isRu ? 'Сбой операции' : 'API Failure'
           );
         }).catch(() => {
           const isRu = typeof window !== 'undefined' && localStorage.getItem('i18nextLng') === 'ru';
+          const sanitizedMsg = sanitizeErrorMessage(`HTTP ${response.status}`, response.status, isRu);
           showErrorToast(
-            isRu ? `Запрос завершился со статусом ${response.status}` : `API request failed with status ${response.status}`,
+            sanitizedMsg,
             isRu ? 'Ошибка API' : 'API Failure'
           );
         });

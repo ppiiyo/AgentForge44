@@ -715,7 +715,16 @@ export const Toolbox: React.FC<ToolboxProps> = ({
             </span>
 
             {loadingProjects ? (
-              <p className="text-[10px] text-slate-500 italic py-1 text-center">Loading server assets...</p>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {[1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    className="p-2 rounded-xl border bg-slate-950/40 border-slate-900 flex items-center justify-between gap-2 animate-pulse h-8"
+                  >
+                    <div className="h-2.5 bg-slate-900 rounded w-28"></div>
+                  </div>
+                ))}
+              </div>
             ) : serverProjects.length === 0 ? (
               <p className="text-[10px] text-slate-500 italic py-1 text-center">
                 {t('noSavedProjects')}

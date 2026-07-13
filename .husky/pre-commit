@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Executing pre-commit quality gate checks (Linter + Code standards)..."
+npm run lint

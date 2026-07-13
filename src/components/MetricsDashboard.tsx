@@ -777,68 +777,108 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
           {/* Observability Highlight Cards grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Total executions */}
-            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.totalRuns}</span>
-                <h3 className="text-xl font-black text-slate-100 font-mono">
-                  {summary?.totalRuns ?? 0}
-                </h3>
-                <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
-                  <TrendingUp size={10} className="text-emerald-400" />
-                  <span>{period === '24h' ? 'Past 24 hours' : period === '30d' ? 'Past 30 days' : 'Past 7 days'}</span>
-                </p>
-              </div>
-              <div className="bg-slate-900 p-2.5 rounded-2xl border border-slate-850 text-slate-400 shrink-0">
-                <Activity size={18} className="text-sky-450" />
-              </div>
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden min-h-[92px]">
+              {loading && !summary ? (
+                <div className="space-y-2 w-full">
+                  <div className="h-2.5 bg-slate-900 rounded-full w-24 animate-pulse"></div>
+                  <div className="h-5 bg-slate-900 rounded-lg w-16 animate-pulse"></div>
+                  <div className="h-2.5 bg-slate-900 rounded-full w-28 animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.totalRuns}</span>
+                  <h3 className="text-xl font-black text-slate-100 font-mono">
+                    {summary?.totalRuns ?? 0}
+                  </h3>
+                  <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
+                    <TrendingUp size={10} className="text-emerald-400" />
+                    <span>{period === '24h' ? 'Past 24 hours' : period === '30d' ? 'Past 30 days' : 'Past 7 days'}</span>
+                  </p>
+                </div>
+              )}
+              {(!loading || summary) && (
+                <div className="bg-slate-900 p-2.5 rounded-2xl border border-slate-850 text-slate-400 shrink-0">
+                  <Activity size={18} className="text-sky-450" />
+                </div>
+              )}
             </div>
 
             {/* Card 2: Cumulative Expense USD */}
-            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.totalCost}</span>
-                <h3 className="text-xl font-black text-emerald-400 font-mono">
-                  ${summary?.totalCostUsd ? summary.totalCostUsd.toFixed(5) : '0.00000'}
-                </h3>
-                <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
-                  <span>Weighted estimation</span>
-                </p>
-              </div>
-              <div className="bg-emerald-950/20 p-2.5 rounded-2xl border border-emerald-900/30 text-emerald-400 shrink-0">
-                <DollarSign size={18} />
-              </div>
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden min-h-[92px]">
+              {loading && !summary ? (
+                <div className="space-y-2 w-full">
+                  <div className="h-2.5 bg-slate-900 rounded-full w-24 animate-pulse"></div>
+                  <div className="h-5 bg-slate-900 rounded-lg w-28 animate-pulse"></div>
+                  <div className="h-2.5 bg-slate-900 rounded-full w-20 animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.totalCost}</span>
+                  <h3 className="text-xl font-black text-emerald-400 font-mono">
+                    ${summary?.totalCostUsd ? summary.totalCostUsd.toFixed(5) : '0.00000'}
+                  </h3>
+                  <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
+                    <span>Weighted estimation</span>
+                  </p>
+                </div>
+              )}
+              {(!loading || summary) && (
+                <div className="bg-emerald-950/20 p-2.5 rounded-2xl border border-emerald-900/30 text-emerald-400 shrink-0">
+                  <DollarSign size={18} />
+                </div>
+              )}
             </div>
 
             {/* Card 3: Performance Latency */}
-            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.avgLatency}</span>
-                <h3 className="text-xl font-black text-slate-100 font-mono">
-                  {summary?.averageLatencyMs ? (summary.averageLatencyMs / 1000).toFixed(2) : '0.00'}<span className="text-xs text-slate-450 font-normal font-sans ml-0.5">s</span>
-                </h3>
-                <p className="text-[9px] text-slate-500 leading-none mt-1">
-                  Per graph compiler execution
-                </p>
-              </div>
-              <div className="bg-slate-900 p-2.5 rounded-2xl border border-slate-850 text-slate-400 shrink-0">
-                <Clock size={18} className="text-amber-450" />
-              </div>
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden min-h-[92px]">
+              {loading && !summary ? (
+                <div className="space-y-2 w-full">
+                  <div className="h-2.5 bg-slate-900 rounded-full w-24 animate-pulse"></div>
+                  <div className="h-5 bg-slate-900 rounded-lg w-20 animate-pulse"></div>
+                  <div className="h-2.5 bg-slate-900 rounded-full w-28 animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.avgLatency}</span>
+                  <h3 className="text-xl font-black text-slate-100 font-mono">
+                    {summary?.averageLatencyMs ? (summary.averageLatencyMs / 1000).toFixed(2) : '0.00'}<span className="text-xs text-slate-450 font-normal font-sans ml-0.5">s</span>
+                  </h3>
+                  <p className="text-[9px] text-slate-500 leading-none mt-1">
+                    Per graph compiler execution
+                  </p>
+                </div>
+              )}
+              {(!loading || summary) && (
+                <div className="bg-slate-900 p-2.5 rounded-2xl border border-slate-850 text-slate-400 shrink-0">
+                  <Clock size={18} className="text-amber-450" />
+                </div>
+              )}
             </div>
 
             {/* Card 4: Quality Success Guard */}
-            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.successRate}</span>
-                <h3 className="text-xl font-black text-purple-400 font-mono">
-                  {summary?.successRate ?? 0}%
-                </h3>
-                <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
-                  <span>Compilation & Node integrity</span>
-                </p>
-              </div>
-              <div className="bg-purple-950/20 p-2.5 rounded-2xl border border-purple-900/30 text-purple-400 shrink-0">
-                <CheckCircle2 size={18} />
-              </div>
+            <div className="bg-slate-950 border border-slate-900 rounded-2xl p-4.5 flex items-center justify-between shadow-sm relative overflow-hidden min-h-[92px]">
+              {loading && !summary ? (
+                <div className="space-y-2 w-full">
+                  <div className="h-2.5 bg-slate-900 rounded-full w-24 animate-pulse"></div>
+                  <div className="h-5 bg-slate-900 rounded-lg w-16 animate-pulse"></div>
+                  <div className="h-2.5 bg-slate-900 rounded-full w-24 animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-505 tracking-wider">{text.successRate}</span>
+                  <h3 className="text-xl font-black text-purple-400 font-mono">
+                    {summary?.successRate ?? 0}%
+                  </h3>
+                  <p className="text-[9px] text-slate-500 flex items-center gap-1 leading-none mt-1">
+                    <span>Compilation & Node integrity</span>
+                  </p>
+                </div>
+              )}
+              {(!loading || summary) && (
+                <div className="bg-purple-950/20 p-2.5 rounded-2xl border border-purple-900/30 text-purple-400 shrink-0">
+                  <CheckCircle2 size={18} />
+                </div>
+              )}
             </div>
           </div>
 

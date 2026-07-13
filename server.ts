@@ -36,8 +36,12 @@ import patternsRouter from './src/api/patternsRoutes.js';
 import diagnosticsRouter from './src/api/diagnosticsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 import { unifiedGuardMiddleware } from './src/middleware/guard.js';
+import { runStartupEnvCheck } from './src/config/envValidator.ts';
 
 dotenv.config();
+
+// Run robust environment validation startup check
+runStartupEnvCheck();
 
 // Pre-flight database and secrets credential validation
 const isProd = process.env.NODE_ENV === 'production';
