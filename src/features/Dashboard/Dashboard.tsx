@@ -1,8 +1,7 @@
 import React, { Suspense } from 'react';
+import { MetricsDashboard } from '../../components/MetricsDashboard';
 // @ts-ignore
 import styles from './Dashboard.module.css';
-
-const MetricsDashboard = React.lazy(() => import('../../components/MetricsDashboard').then(m => ({ default: m.MetricsDashboard })));
 
 interface DashboardProps {
   currentLang: 'en' | 'ru' | 'zh';

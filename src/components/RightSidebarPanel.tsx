@@ -19,7 +19,7 @@ import { TimeTravelDebugger } from './TimeTravelDebugger';
 import { VersionHistory } from './VersionHistory';
 
 // Lazy-loaded heavy views for code-splitting
-const MetricsDashboard = React.lazy(() => import('./MetricsDashboard').then(m => ({ default: m.MetricsDashboard })));
+import { MetricsDashboard } from './MetricsDashboard';
 const Marketplace = React.lazy(() => import('./Marketplace').then(m => ({ default: m.Marketplace })));
 const CloudDeployer = React.lazy(() => import('./CloudDeployer').then(m => ({ default: m.CloudDeployer })));
 
