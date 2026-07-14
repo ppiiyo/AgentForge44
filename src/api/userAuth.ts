@@ -9,13 +9,21 @@ export function signToken(payload: any, expiresIn: number = 86400): string {
   // jsonwebtoken expects the expiration to be expressed as a string or number of seconds/ms
   // If payload already has 'exp', jsonwebtoken might warn or fail, so we strip any manually injected 'exp' or 'iat' first.
   const { exp, iat, ...safePayload } = payload;
-  return jwt.sign(safePayload, SECRETS.JWT_SECRET, { expiresIn, jwtid: crypto.randomUUID() });
+  return jwt.sign(safePayload, SECRETS.JWT_SECRET_PRIMARY, { expiresIn, jwtid: crypto.randomUUID() });
 }
 
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, SECRETS.JWT_SECRET);
+    return jwt.verify(token, SECRETS.JWT_SECRET_PRIMARY);
   } catch {
+    const secondaryKey = SECRETS.JWT_SECRET_SECONDARY;
+    if (secondaryKey) {
+      try {
+        return jwt.verify(token, secondaryKey);
+      } catch {
+        return null;
+      }
+    }
     return null;
   }
 }

@@ -128,10 +128,13 @@ except Exception as e:
       // --read-only: Ensure read-only core system to block filesystem persistence
       // --cap-drop ALL: Drop all kernel capabilities
       // --pids-limit 20: Limit process and thread count to prevent fork bombs
+      // --security-opt no-new-privileges: Stop privilege escalation inside container
       const dockerArgs = [
         'run', '--rm', '--network', 'none',
         '--memory', '64m', '--cpus', '0.5',
+        '--read-only',
         '--cap-drop', 'ALL', '--pids-limit', '20',
+        '--security-opt', 'no-new-privileges',
         '--name', containerName,
         image,
         ...runCommand

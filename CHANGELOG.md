@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-07-14
+### Added
+- **Dual-Key JWT Key Rotation**: Enhanced token verification in `src/api/userAuth.ts` to seamlessly support dual-key rotation via `JWT_SECRET_PRIMARY` and `JWT_SECRET_SECONDARY` fallbacks.
+- **Harden Sandbox Isolation**: Augmented container isolation parameters in `src/services/sandbox/DockerSandbox.ts` with `--read-only`, `--security-opt no-new-privileges`, and `--cap-drop ALL` configurations.
+- **ABAC Authorization Engine**: Added high-performance attribute-based authorization checks in `src/services/security/ABACManager.ts` incorporating user clearance, data classification, IP bounds, and resource status.
+- **State-Changing Mutation Audit**: Implemented `src/services/security/AuditLogger.ts` middleware tracking all state-changing mutations with user context, IP range, action signatures, and HTTP outcome mappings.
+- **LLM Safety Guardrails**: Created `src/services/security/LLMGuard.ts` providing prompt injection scanning and automatic leak sanitization (masks raw API keys, cards, tokens in generated outputs).
+- **ADR 0005**: Documented architectural trade-offs, threat modeling mapping, and security boundaries.
+
+---
+
 ## [0.4.0] - 2026-07-14
 ### Added
 - **Quality Gates & Coverage Enforcements**: Configured strict minimum coverage targets (Lines >= 75%, Branches >= 70%, Functions >= 75%, Statements >= 75%) to prevent regressions in production modules.
