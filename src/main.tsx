@@ -149,7 +149,10 @@ function sanitizeErrorMessage(msg: string, status: number, isRu: boolean): strin
 
 /* eslint-disable no-undef */
 const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit) {
-  const token = localStorage.getItem('kostromai44_auth_token');
+  let token = localStorage.getItem('kostromai44_auth_token');
+  if (token === 'undefined' || token === 'null' || !token) {
+    token = null;
+  }
   const tokenUsed = token;
   
   // Resolve the URL string safely
