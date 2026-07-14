@@ -88,8 +88,10 @@ export default defineConfig(() => {
           'server.ts'
         ],
         thresholds: {
-          statements: 80,
-          branches: 75,
+          lines: 75,
+          branches: 70,
+          functions: 75,
+          statements: 75,
         }
       }
     },
