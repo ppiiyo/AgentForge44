@@ -170,14 +170,17 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
 
   // Intercept requests targeting /api/
   if (url && url.includes('/api/') && token) {
-    // If input is a Request object, create a new Request to avoid mutating readonly properties
     if (input && typeof input === 'object' && 'clone' in input) {
       try {
         const req = input as Request;
-        if (!req.headers.has('Authorization')) {
-          const newHeaders = new Headers(req.headers);
-          newHeaders.set('Authorization', `Bearer ${token}`);
-          actualInput = new Request(req, { headers: newHeaders });
+        const reqHeaders = req.headers;
+        if (reqHeaders && typeof reqHeaders.get === 'function' && !reqHeaders.get('Authorization')) {
+          const headersObj: Record<string, string> = {};
+          reqHeaders.forEach((value, key) => {
+            headersObj[key] = value;
+          });
+          headersObj['Authorization'] = `Bearer ${token}`;
+          actualInput = new Request(req, { headers: headersObj });
           actualInit = undefined;
         }
       } catch (e) {
@@ -187,11 +190,28 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
       // input is a string or URL, so copy/modify init safely
       try {
         const newInit = { ...init };
-        const headers = new Headers(newInit.headers || {});
-        if (!headers.has('Authorization')) {
-          headers.set('Authorization', `Bearer ${token}`);
-          newInit.headers = headers;
+        const headersObj: Record<string, string> = {};
+        
+        if (newInit.headers) {
+          if (typeof (newInit.headers as any).forEach === 'function') {
+            (newInit.headers as any).forEach((value: string, key: string) => {
+              headersObj[key] = value;
+            });
+          } else if (Array.isArray(newInit.headers)) {
+            newInit.headers.forEach(([key, value]) => {
+              headersObj[key] = value;
+            });
+          } else {
+            Object.assign(headersObj, newInit.headers);
+          }
         }
+        
+        const hasAuth = Object.keys(headersObj).some(k => k.toLowerCase() === 'authorization');
+        if (!hasAuth) {
+          headersObj['Authorization'] = `Bearer ${token}`;
+        }
+        
+        newInit.headers = headersObj;
         actualInit = newInit;
       } catch (e) {
         console.warn('Failed to intercept fetch init headers:', e);
@@ -226,9 +246,14 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
       if (input && typeof input === 'object' && 'clone' in input) {
         try {
           const req = input as Request;
-          const newHeaders = new Headers(req.headers);
-          newHeaders.set('Authorization', `Bearer ${newToken}`);
-          retryInput = new Request(req, { headers: newHeaders });
+          const headersObj: Record<string, string> = {};
+          if (req.headers && typeof req.headers.forEach === 'function') {
+            req.headers.forEach((value, key) => {
+              headersObj[key] = value;
+            });
+          }
+          headersObj['Authorization'] = `Bearer ${newToken}`;
+          retryInput = new Request(req, { headers: headersObj });
           retryInit = undefined;
         } catch (e) {
           console.warn('Failed to rebuild request on 401 retry:', e);
@@ -236,9 +261,22 @@ const secureFetch = async function(input: RequestInfo | URL, init?: RequestInit)
       } else {
         try {
           const newInit = { ...init };
-          const headers = new Headers(newInit.headers || {});
-          headers.set('Authorization', `Bearer ${newToken}`);
-          newInit.headers = headers;
+          const headersObj: Record<string, string> = {};
+          if (newInit.headers) {
+            if (typeof (newInit.headers as any).forEach === 'function') {
+              (newInit.headers as any).forEach((value: string, key: string) => {
+                headersObj[key] = value;
+              });
+            } else if (Array.isArray(newInit.headers)) {
+              newInit.headers.forEach(([key, value]) => {
+                headersObj[key] = value;
+              });
+            } else {
+              Object.assign(headersObj, newInit.headers);
+            }
+          }
+          headersObj['Authorization'] = `Bearer ${newToken}`;
+          newInit.headers = headersObj;
           retryInit = newInit;
         } catch (e) {
           console.warn('Failed to rebuild fetch init on 401 retry:', e);
