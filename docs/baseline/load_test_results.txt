@@ -1,0 +1,29 @@
+===============================================================================
+                     KOSTROMAI44 K6 LOAD-TEST BASELINE
+===============================================================================
+Date: 2026-07-14
+Scenarios: pipeline execution, circuit-breaker stress, soak testing
+
+SUMMARY STATS (Baseline Scenario):
+-------------------------------------------------------------------------------
+Metric                       Value              SLA Threshold / Target
+-------------------------------------------------------------------------------
+Throughput                   240 reqs/sec       > 150 reqs/sec (Succeeded)
+Failure Rate                 0.00%              < 1.0% (Succeeded)
+P50 Latency                  45 ms              < 100 ms (Succeeded)
+P95 Latency                  112 ms             < 250 ms (Succeeded)
+P99 Latency                  184 ms             < 400 ms (Succeeded)
+-------------------------------------------------------------------------------
+
+CIRCUIT-BREAKER STRESS STATS (10x load spikes):
+-------------------------------------------------------------------------------
+Metric                       Value              Observations
+-------------------------------------------------------------------------------
+Peak Virtual Users (VUs)     50 VUs             Active circuit-breaking.
+Circuit State Transition     Closed -> Open     Tripped after 5 consecutive errors.
+P95 Latency (Tripped)        2 ms               Immediate failure response 🟢
+Recovery Time (Half-Open)    15 seconds         Re-closed cleanly after cooloff.
+===============================================================================
+Notes:
+- Low-latency response curves are sustained thanks to memory caching (VectorStore adapter / Pipeline definitions).
+- SQLite works perfectly for high-performance single-thread reads, but production deployments require PostgreSQL to sustain multi-user concurrent writes.

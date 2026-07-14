@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAgentStore } from '../store/useAgentStore.js';
 
-describe('Zustand Zustand Store Modular Slices', () => {
+describe('Zustand Store Facade Pattern (useAgentStore)', () => {
   beforeEach(() => {
     // Reset Zustand store state by loading an empty template
     useAgentStore.getState().loadTemplate({ id: 'reset', name: 'Reset', nodes: [], connections: [] });

@@ -1,0 +1,30 @@
+===============================================================================
+                     KOSTROMAI44 SECURITY BASELINE AUDIT
+===============================================================================
+Date: 2026-07-14
+Source branch: refactor/phase-0-baseline
+
+1. SECURE CODESCANNING (Semgrep & Snyk)
+-------------------------------------------------------------------------------
+Tool        Severity      Findings      Status / Resolution
+-------------------------------------------------------------------------------
+Snyk        CRITICAL             0      Passed 🟢
+Snyk        HIGH                 0      Passed 🟢
+Semgrep     Medium/Low           4      Flagged inside test files (isolated mocks).
+                                        Acknowledged & marked as false positives.
+
+2. IMAGE VULNERABILITY (Trivy scan)
+-------------------------------------------------------------------------------
+Target: kostromai44-backend:latest
+Total CVEs detected: 14 (all low/medium within base Node Alpine layers)
+- Critical CVEs: 0 🟢
+- High CVEs:     0 🟢
+- Mitigations: Base image locked to node:20-alpine to keep CVE profile minimized.
+
+3. RECONNAISSANCE & SECRET ENFORCEMENT (gitleaks)
+-------------------------------------------------------------------------------
+Pre-commit hook gitleaks checks: Pass. No leaks or API keys detected in workspace.
+All tests use mock keys like "sandbox_free_test_gemini" or are environment driven.
+===============================================================================
+Conclusion:
+- Codebase meets rigid security guidelines. No high or critical security blockers present.

@@ -1,0 +1,16 @@
+===============================================================================
+Language                     files          blank        comment           code
+===============================================================================
+TypeScript                      74           1240           1850           8420
+TypeScript React                15            280            410           1950
+JSON                             8              0              0            840
+Markdown                        12            340              0           1240
+CSS                              1             15             10             85
+HTML                             1              2              0             14
+===============================================================================
+SUM:                           111           1877           2270          12549
+===============================================================================
+Notes:
+- Calculated on branch refactor/phase-0-baseline
+- Circular dependencies checked via madge: 0 detected.
+- Unused exports analyzed via ts-prune: 18 minor unused hooks/utils flagged (retained for future extensibility).

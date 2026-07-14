@@ -14,7 +14,7 @@ import { errorHandler } from './src/middleware/errorHandler.js';
 import { GracefulShutdown } from './src/services/gracefulShutdown.js';
 import { adapter } from './src/db/index.js';
 import { validateDatabaseConfig } from './src/api/db.js';
-import { validateSecrets } from './src/config/secrets.ts';
+import { validateSecrets } from './src/config/secrets.js';
 import { runSchemaMigrations } from './src/api/migrate.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
@@ -36,7 +36,7 @@ import patternsRouter from './src/api/patternsRoutes.js';
 import diagnosticsRouter from './src/api/diagnosticsRoutes.js';
 import { enterpriseTenantContext } from './src/middleware/tenantIsolation.js';
 import { unifiedGuardMiddleware } from './src/middleware/guard.js';
-import { runStartupEnvCheck } from './src/config/envValidator.ts';
+import { runStartupEnvCheck } from './src/config/envValidator.js';
 
 dotenv.config();
 
@@ -85,7 +85,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 
 export const app = express();
 app.set('trust proxy', 1);
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 app.use(corsMiddleware);
 app.use(correlationIdMiddleware);

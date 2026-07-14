@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
-import { FlowNodeSchema, FlowConnectionSchema, PipelineExecuteSchema } from '../schemas/pipeline.schema.ts';
+import { FlowNodeSchema, FlowConnectionSchema, PipelineExecuteSchema } from '../schemas/pipeline.schema.js';
 
 export { FlowNodeSchema, FlowConnectionSchema, PipelineExecuteSchema };
 

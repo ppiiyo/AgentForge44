@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult } from "../types.js";
 import { validateDatabaseConfig } from "./db.js";
 import { PipelineExecutor } from "./engine/PipelineExecutor.js";
-import { classifyLLMError } from "./services/RetryService.js";
+import { classifyLLMError } from "../services/retry/RetryService.js";
 
 // Run pre-flight database config check immediately upon evaluation of this runner module
 validateDatabaseConfig(process.env.DB_TYPE || 'sqlite', process.env.DATABASE_URL || '');

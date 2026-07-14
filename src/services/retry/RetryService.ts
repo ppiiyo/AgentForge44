@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { cache, computeHash } from '../cache.js';
 import { chaosEngine } from '../chaosEngine.js';
-import { logger } from '../logger.js';
+import { logger } from '../../utils/logger.js';
 
 export interface RetryOptions {
   retries?: number;        // Max retry attempts (default: 3)

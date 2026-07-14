@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { generateWithRetry } from '../api/services/RetryService.js';
+import { generateWithRetry } from '../services/retry/RetryService.js';
 import { logger } from '../utils/logger.js';
 import { z } from 'zod';
 

@@ -1,9 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult, StepLog } from '../../types.js';
 import { StrategyFactory } from '../../api/strategies/index.js';
-import { logger } from '../logger.js';
+import { logger } from '../../utils/logger.js';
 import { chaosEngine } from '../chaosEngine.js';
-import { generateWithRetry } from '../../api/services/RetryService.js';
+import { generateWithRetry } from '../retry/RetryService.js';
 import { pipelineExecutionsCounter, pipelineExecutionDuration, pipelineNodeExecutionDuration } from '../metrics.js';
 
 export interface ExecutorOptions {

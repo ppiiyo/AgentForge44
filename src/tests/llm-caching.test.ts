@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateWithRetry } from '../api/services/RetryService.js';
+import { generateWithRetry } from '../services/retry/RetryService.js';
 import { cache } from '../services/cache.js';
 import { GoogleGenAI } from '@google/genai';
 

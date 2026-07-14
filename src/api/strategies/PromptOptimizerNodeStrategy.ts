@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Ticket #104: Dynamic workflow node execution and field mapping */
 import { NodeExecutionStrategy, ExecutionContext } from './NodeStrategy.js';
-import { generateWithRetry } from '../services/RetryService.js';
+import { generateWithRetry } from '../../services/retry/RetryService.js';
 
 export class PromptOptimizerNodeStrategy implements NodeExecutionStrategy {
   async execute(node: any, context: ExecutionContext): Promise<void> {

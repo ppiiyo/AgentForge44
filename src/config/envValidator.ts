@@ -1,10 +1,24 @@
 import { logger } from '../utils/logger.js';
+import { z } from 'zod';
 
 export interface EnvValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
 }
+
+const envSchema = z.object({
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  NODE_ENV: z.enum(['development', 'test', 'ci', 'staging', 'production']).default('development'),
+  JWT_SECRET: z.string().min(32).optional(),
+  ENCRYPTION_MASTER_KEY: z.string().min(32).optional(),
+  GEMINI_API_KEY: z.string().optional(),
+  DB_TYPE: z.enum(['sqlite', 'postgres']).default('sqlite'),
+  DATABASE_URL: z.string().optional(),
+  REDIS_URL: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
+  LOG_LEVEL: z.string().default('info'),
+});
 
 /**
  * Validates the presence and integrity of all required and optional environment variables
@@ -17,7 +31,31 @@ export function validateEnvironment(): EnvValidationResult {
   const isProd = process.env.NODE_ENV === 'production';
   const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
-  // 1. Port Options
+  // 1. Zod Schema parse
+  try {
+    envSchema.parse(process.env);
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      err.errors.forEach(zodErr => {
+        const path = zodErr.path.join('.');
+        const msg = `${path || 'Environment'}: ${zodErr.message}`;
+        if (isProd) {
+          errors.push(`[Zod Schema] ${msg}`);
+        } else {
+          warnings.push(`[Zod Schema] ${msg}`);
+        }
+      });
+    } else {
+      if (isProd) {
+        errors.push(`[Zod Schema] Parsing failed: ${err.message}`);
+      } else {
+        warnings.push(`[Zod Schema] Parsing failed: ${err.message}`);
+      }
+    }
+  }
+
+  // 2. Port Options
+
   if (process.env.PORT) {
     const portNum = parseInt(process.env.PORT, 10);
     if (isNaN(portNum) || portNum <= 0 || portNum > 65535) {
@@ -25,7 +63,7 @@ export function validateEnvironment(): EnvValidationResult {
     }
   }
 
-  // 2. JWT Secret Validation
+  // 3. JWT Secret Validation
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     if (isProd) {
@@ -41,7 +79,7 @@ export function validateEnvironment(): EnvValidationResult {
     }
   }
 
-  // 3. Encryption Master Key Validation
+  // 4. Encryption Master Key Validation
   const encryptionKey = process.env.ENCRYPTION_MASTER_KEY;
   if (!encryptionKey) {
     if (isProd) {
@@ -57,7 +95,7 @@ export function validateEnvironment(): EnvValidationResult {
     }
   }
 
-  // 4. Gemini API Key (Default agent runtime driving key)
+  // 5. Gemini API Key (Default agent runtime driving key)
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey) {
     if (isProd) {
@@ -69,7 +107,7 @@ export function validateEnvironment(): EnvValidationResult {
     warnings.push('GEMINI_API_KEY looks unusually short. Verify that it is copy-pasted correctly from Google AI Studio.');
   }
 
-  // 5. Database Configuration checks
+  // 6. Database Configuration checks
   const dbType = process.env.DB_TYPE || 'sqlite';
   const dbUrl = process.env.DATABASE_URL;
   if (dbType === 'postgres') {

@@ -9,7 +9,7 @@ import { StrategyFactory } from '../strategies/index.js';
 import { TelemetryService } from '../services/TelemetryService.js';
 import { db, tables } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
-import { generateWithRetry } from '../services/RetryService.js';
+import { generateWithRetry } from '../../services/retry/RetryService.js';
 
 export class PipelineExecutor {
   private backEdges = new Set<string>();
