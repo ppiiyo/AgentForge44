@@ -1,0 +1,108 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: kostromai4444-api
+  namespace: production
+  labels:
+    app: kostromai4444-api
+    tier: backend
+spec:
+  replicas: 5
+  strategy:
+    canary:
+      analysis:
+        templates:
+          - templateName: success-rate-analysis
+        args:
+          - name: service-name
+            value: kostromai4444-api-service
+      steps:
+        - setWeight: 5
+        - pause: { duration: 10m } # Pause for 10 minutes to gather Prometheus telemetry
+        - setWeight: 25
+        - pause: { duration: 15m } # Pause for 15 minutes to run full smoke/canary tests
+        - setWeight: 100
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: kostromai4444-api
+  template:
+    metadata:
+      labels:
+        app: kostromai4444-api
+    spec:
+      containers:
+      - name: api
+        image: kostromai4444/api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-credentials
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: auth-credentials
+              key: jwt-secret
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate-analysis
+  namespace: production
+spec:
+  metrics:
+  - name: success-rate
+    interval: 30s
+    successCondition: result[0] >= 0.999
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-k8s.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(http_requests_total{status_code!~"5..", service="{{args.service-name}}"}[2m])) 
+          / 
+          sum(rate(http_requests_total{service="{{args.service-name}}"}[2m]))

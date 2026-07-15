@@ -1,127 +1,160 @@
-# 🚀 Production Deployment Guide
+# 📖 KostromAi44 (AgentForge44) Reproducible Production Deployment & Platform Operations
 
-Deploying KostromAi44 into high-availability, enterprise-grade production environments requires configuring proper server resources, environment variables, state databases, and robust service layers. This guide outlines standard deployment architectures for Cloud VMs, Kubernetes (K8s), and Serverless Container environments (such as Google Cloud Run or AWS ECS).
-
----
-
-## 🏗️ 1. Production Architecture Overview
-
-A production-ready KostromAi44 cluster consists of the following components:
-
-```text
-               [ Public Internet Traffic ]
-                            │ (HTTPS 443 / WSS)
-                    ┌───────▼───────┐
-                    │ Reverse Proxy │ (Nginx / Cloudflare / GCP LB)
-                    └───────┬───────┘
-                            │ (HTTP 3000)
-    ┌───────────────────────┼───────────────────────┐
-    │                       ▼                       │ Private Network
-    │             ┌───────────────────┐             │ (VPC Subnets)
-    │             │   KostromAi44    │             │
-    │             │  Container Nodes  │             │
-    │             └─────────┬─────────┘             │
-    │                       │                       │
-    ├───────────────────────┼───────────────────────┤
-    │                       ▼                       │
-    │     ┌───────────────────────────────────┐     │
-    │     │   State, Cache & Scaling Layers   │     │
-    │     │  ┌──────────────┐ ┌─────────────┐  │     │
-    │     │  │  PostgreSQL  │ │ Redis Cache │  │     │
-    │     │  └──────────────┘ └─────────────┘  │     │
-    │     └───────────────────────────────────┘     │
-    └───────────────────────────────────────────────┘
-```
-
-1. **Gateway Layer**: A reliable Reverse Proxy (Nginx, Cloudflare, etc.) for TLS termination, routing WebSocket frames correctly (`ws://` / `wss://`), and protecting backend processes.
-2. **Compute Nodes**: Scalable KostromAi44 instances packaged as Docker containers running Node.js 18+.
-3. **Database Layer (Primary State Store)**: A highly available database instance (PostgreSQL) configured with connection pooling.
-4. **Caching & WebSocket Store (Redis)**: Optional but recommended layer for syncing multi-user Socket.io connections across clusters or executing distributed queue structures.
+This SRE-runbook serves as the single source of truth for building, provisioning, deploying, and validating the KostromAi44 orchestrator across local development, staging, and production Kubernetes clusters.
 
 ---
 
-## 🛠️ 2. Step-by-Step VM Deployment (Ubuntu / RedHat)
+## 🛠️ 1. Prerequisites & Host Validation
 
-Follow this recipe to deploy on a physical server or local VM:
+Before initiating any commands, ensure the following host CLI utilities are installed:
+- **Docker Engine v24.x+** and **Docker Compose v2.20.x+**
+- **Terraform v1.7.0+**
+- **Kubectl v1.29+** (matching cluster target)
+- **Helm v3.12+**
+- **Argo Rollouts CLI v1.6+** (for Canary validation)
 
-### Step 1: Install Node.js & Production Tools
-Ensure Node.js 18+ (LTS) is installed on the host machine:
-```bash
-# Add NodeSource GPG key and install Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
+---
 
-# Install PM2 globally to handle daemon lifecycle
-sudo npm install -y pm2 -g
+## ⚡ 2. Local Setup & Verification (Zero-Trust sandbox)
+
+To run the complete platform locally with automated database migration and verification:
+
+### Step 1: Supply Environment Configuration (`.env`)
+Create a local `.env` file containing:
+```env
+NODE_ENV=production
+PORT=3000
+DB_TYPE=postgres
+DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
+REDIS_URL=redis://kostromai44-redis:6379
+GEMINI_API_KEY=your_gemini_api_key_here
+JWT_SECRET=super_secure_random_jwt_token_key_development_32_bytes
+ENCRYPTION_MASTER_KEY=bc911854ea01d2c94bb507f308a0dfce9a6b8c7d8e9f0a1b2c3d4e5f6a7b8c9d
 ```
 
-### Step 2: Extract & Build Project Files
-Download the codebase and construct the production application bundle:
+### Step 2: One-Click Startup & Verification
+Run the unified container orchestration cycle:
 ```bash
-cd /var/www/kostromai44
-npm install --omit=dev
+# Launch database and cache with an automated readiness loop (Wait maximum 60s)
+docker compose up -d --wait --wait-timeout 60 kostromai44-db kostromai44-redis
 
-# Execute the production compilation bundling server and frontends
-npm run build
+# Trigger initial database seeding and migrations on startup
+docker compose run --rm kostromai44-backend npm run db:push
+docker compose run --rm kostromai44-backend npm run db:seed
+
+# Boot the remaining web, API and worker services
+docker compose up -d --build
 ```
 
-### Step 3: PM2 Process Management
-Create a PM2 system process configuration file (`ecosystem.config.cjs`):
-```javascript
-module.exports = {
-  apps: [{
-    name: 'kostromai44-server',
-    script: 'dist/server.cjs',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000,
-      DB_TYPE: 'postgres'
-    }
-  }]
-};
-```
-Launch the processes as daemon threads:
+Verify services status:
 ```bash
-pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup
+docker compose ps
+curl -s http://localhost:3000/api/health
 ```
 
 ---
 
-## 🐳 3. Container Deployment (Docker / Cloud Run)
+## 🏗️ 3. Cloud Provisioning via Modular Terraform
 
-KostromAi44 features a self-contained multi-stage `Dockerfile` making it trivial to run as a secure stateless container.
+Our AWS infrastructure is modularized under `terraform/modules/` to enforce strict isolation of responsibilities (VPC, KMS, EKS, RDS, ElastiCache Redis).
 
-### Building & Tagging the Image
 ```bash
-docker build -t gcr.io/my-project/kostromai44:v1.0.0 .
+cd terraform/
+
+# Initialize and lock the secure S3 remote state
+terraform init
+
+# Validate syntactic structure
+terraform validate
+
+# Run dry-run plan
+terraform plan -out=prod.tfplan
+
+# Apply configuration with enterprise-grade isolation
+terraform apply prod.tfplan
 ```
-
-### Environment Variables Checklist (.env)
-Apply these environment configurations inside your cloud runtime configuration:
-
-| Name | Type | Value | Purpose |
-|------|------|-------|---------|
-| `NODE_ENV` | String | `production` | Enables compilation caches and optimizations |
-| `PORT` | Integer | `3000` | Designated internal listener port |
-| `DB_TYPE` | String | `postgres` | Shifts internal database engine to PostgreSQL |
-| `DATABASE_URL` | String | `postgres://user:pwd@db-host:5432/db` | Connection endpoint credentials |
-| `GEMINI_API_KEY` | String | `AIzaSy...` | API key credential for running Gemini LLM actions |
 
 ---
 
-## 🏎️ 4. Enterprise Components: PostgreSQL & Redis
+## 🚀 4. Production Kubernetes & Deployment Pipelines
 
-To scale KostromAi44 seamlessly to cope with thousand-node graphs or high concurrent loads:
+### Step 1: Run Pre-Deployment Database Schema Migrations
+Production deployments **must not** run migrations on application container startup. Instead, run a dedicated Kubernetes `Job` connected to the RDS database:
 
-### 🐘 PostgreSQL Scaling
-* Disable cold starts by setting Drizzle adapter bounds properly.
-* Allocate a minimum database connection pool size of 20 connections per Compute Node to easily support microtask pipelines.
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-schema-migration
+  namespace: production
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrator
+        image: ghcr.io/yourorg/backend:latest
+        command: ["npm", "run", "db:migrate"]
+        envFrom:
+        - secretRef:
+            name: database-credentials
+      restartPolicy: OnFailure
+```
+Execute the migration job:
+```bash
+kubectl apply -f kubernetes/db-migration-job.yaml
+kubectl wait --for=condition=complete job/database-schema-migration -n production --timeout=300s
+```
 
-### 🔴 Redis integration (Multi-Instance WebSocket Scaling)
-When horizontal scaling is fully configured (multiple server nodes running in parallel behind a load balancer), Socket.io cursors rely on a central message broker to sync cursor moves accurately.
-1. Upgrade Socket.io inside `server.ts` to utilize the Redis Adapter (`@socket.io/redis-adapter`).
-2. Supply a Redis cluster connection string (e.g., `redis://redis-p-host:6379`) to coordinate live active cursor presences and shared blocking locks transparently.
+### Step 2: Deploy Pod Autoscale & Mesh
+Verify Linkerd/Istio mTLS and apply Horizontal Pod Autoscalers:
+```bash
+kubectl apply -f kubernetes/hpa-and-mesh.yaml -n production
+```
+
+### Step 3: Trigger Canary Releases via Argo Rollouts
+We utilize `Argo Rollouts` to manage canary deployments with metric analysis gates (5% → 25% → 100%).
+
+Apply the declaratively structured rollout config:
+```bash
+kubectl apply -f kubernetes/argo-rollout.yaml -n production
+```
+
+Monitor Canary progress and live traffic splits in real-time:
+```bash
+kubectl argo rollouts get rollout kostromai4444-api -n production
+```
+
+In case of error rate spikes (such as a drop in the `success-rate-analysis` Prometheus check), Argo Rollouts will trigger an automatic, zero-downtime rollback to the previous safe revision.
+
+---
+
+## 🎛️ 5. Dynamic Configuration & Feature Flags
+
+Feature flags are centralized via **OpenFeature Server SDK** and our custom `FeatureFlagService` which seamlessly bridges local testing overrides and production Unleash/LaunchDarkly adapters.
+
+### Built-in Flags Checklists:
+1. `enable-llm-guard`: Toggles strict regulatory filters and prompt injection sanitizers in `LLMGuard.ts`.
+2. `enable-chaos-engine`: Activates on-demand database and network fault injection testing.
+3. `enable-aggressive-caching`: Enables/disables real-time Redis layer content caching.
+4. `sandbox-memory-limit-mb`: Controls maximum V8 container sandbox execution limits.
+
+To override a flag locally without external servers, set its uppercase environment variable:
+```bash
+export ENABLE_CHAOS_ENGINE=true
+export SANDBOX_MEMORY_LIMIT_MB=512
+```
+
+---
+
+## 🔁 6. Immediate Incident Rollback Plan
+
+If an emergency incident is declared, execute the manual trigger rollback bypass:
+```bash
+# Via GitHub Actions trigger:
+gh workflow run deploy.yml --ref main -f action=rollback
+
+# Or manually on EKS using kubectl:
+kubectl rollout undo deployment/kostromai4444-api -n production
+kubectl rollout status deployment/kostromai4444-api -n production
+```
+Verify the health status metrics return to normal using the SRE Grafana Dashboard.

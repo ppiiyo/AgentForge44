@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2026-07-15
+### Added
+- **OpenFeature Feature Flags Service**: Integrated `@openfeature/server-sdk` in `src/services/featureFlags.ts` with local in-memory defaults and dynamic UNIX environment override mappings.
+- **Feature Flags Unit Tests**: Created comprehensive unit tests under `src/tests/feature-flags.test.ts` verifying flag lookups, defaults, and override behaviours.
+- **Modular Terraform Architecture**: Rewrote the monolithic AWS setup under `/terraform/main.tf` to instantiate modular VPC, KMS, EKS, RDS PostgreSQL, and ElastiCache Redis resources under `/terraform/modules/`.
+- **Argo Rollouts Canary Strategy**: Defined progressive traffic-shaping Canary release specs (5% → 25% → 100%) and Prometheus-analysis templates under `kubernetes/argo-rollout.yaml`.
+- **Reproducible SRE Operations One-Pager**: Transformed the operations layout into an SRE-grade, step-by-step master operations doc in `docs/deployment.md`.
+- **Pre-deployment Database Schema Job**: Added repeatable Kubernetes database schema migration Job specs to isolate migration processes from application startups.
+- **Rollback Runbook Instruction**: Added emergency resolution guidelines under `docs/runbooks/RB011_Deployment_Canary_Or_Rollback_Failed.md`.
+- **ADR 0007**: Created Architecture Decision Record for Phase 6 delivery pipelines.
+
 ## [0.6.0] - 2026-07-15
 ### Added
 - **OpenTelemetry Jaeger/Tempo Exporter**: Wired the `@opentelemetry/exporter-trace-otlp-http` into the system in `src/services/tracing.ts` to export traces over standard OTLP to Tempo/Jaeger collector targets. Deleted the insecure `/traces` file-reading API endpoint.

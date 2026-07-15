@@ -18,6 +18,7 @@ Welcome to the KostromAi44 On-Call Runbooks directory. This directory contains p
 | **RB008** | Webhook / SSRF Request Blockages | `http_requests_total` failure | Medium | Allow list custom private IPs in SSRF validator config |
 | **RB009** | Socket.io Socket / Memory Leak | `sandbox_memory_bytes` | High | Force garbage collection, recycle ws node processes |
 | **RB010** | Host Disk Exhaustion via Log Rotation | Disk usage alerts | High | Truncate `logs/combined.log`, trigger Winston rotators |
+| **RB011** | Canary Deployment Failure / Block | `CanaryAnalysisFailed` | High | Promote manual override or execute dynamic undo rollback |
 
 ---
 
@@ -29,6 +30,7 @@ To view a detailed runbook, refer to the corresponding files:
 - **[RB002: DB Connection Pool Exhausted](./RB002_Database_Connection_Pool_Exhausted.md)**
 - **[RB003: Sandbox Container Out-Of-Memory](./RB003_Sandbox_Container_Out_Of_Memory.md)**
 - **[RB004: BullMQ Backlog & Job Stalls](./RB004_BullMQ_Queue_Stuck_Or_Slow.md)**
+- **[RB011: Deployment Canary / Rollback Failed](./RB011_Deployment_Canary_Or_Rollback_Failed.md)**
 
 ---
 
