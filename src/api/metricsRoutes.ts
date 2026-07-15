@@ -244,6 +244,53 @@ router.post('/metrics/stop-pipelines', (req: Request, res: Response) => {
   res.json({ success: true, simulated: false, stopped: true });
 });
 
+// Onboarding Funnel Telemetry State
+const funnelStats = {
+  step1_welcome: 1240,
+  step2_profile: 1080,
+  step3_key_setup: 850,
+  step4_template: 620,
+  step5_complete: 480
+};
+
+// Retrieve onboarding activation funnel telemetry
+router.get('/telemetry/funnel', (req: Request, res: Response) => {
+  try {
+    const total = funnelStats.step1_welcome || 1;
+    const rates = [
+      { step: 1, name: 'Welcome & Lang', count: funnelStats.step1_welcome, percent: 100 },
+      { step: 2, name: 'Identity & Nickname', count: funnelStats.step2_profile, percent: Math.round((funnelStats.step2_profile / total) * 100) },
+      { step: 3, name: 'Credentials Configuration', count: funnelStats.step3_key_setup, percent: Math.round((funnelStats.step3_key_setup / total) * 100) },
+      { step: 4, name: 'Initial Template Choice', count: funnelStats.step4_template, percent: Math.round((funnelStats.step4_template / total) * 100) },
+      { step: 5, name: 'Wizard Activation Success', count: funnelStats.step5_complete, percent: Math.round((funnelStats.step5_complete / total) * 100) }
+    ];
+    res.json({
+      totalUsers: funnelStats.step1_welcome,
+      completedUsers: funnelStats.step5_complete,
+      overallActivationRate: Number(((funnelStats.step5_complete / total) * 100).toFixed(1)),
+      funnel: rates
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Increment onboarding activation funnel steps
+router.post('/telemetry/funnel', (req: Request, res: Response) => {
+  try {
+    const { step } = req.body;
+    if (step === 1) funnelStats.step1_welcome++;
+    else if (step === 2) funnelStats.step2_profile++;
+    else if (step === 3) funnelStats.step3_key_setup++;
+    else if (step === 4) funnelStats.step4_template++;
+    else if (step === 5 || step === 'complete') funnelStats.step5_complete++;
+    
+    res.json({ success: true, stats: funnelStats });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Endpoint to proxy or fall back query real-time Prometheus data
 router.get('/metrics/prometheus', async (req: Request, res: Response) => {
   try {

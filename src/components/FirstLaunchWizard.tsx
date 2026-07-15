@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
   Sparkles, 
@@ -125,10 +125,28 @@ export const FirstLaunchWizard: React.FC<FirstLaunchWizardProps> = ({
     }
   }[lang];
 
+  useEffect(() => {
+    if (isOpen) {
+      // Send onboarding telemetry transition metrics
+      fetch('/api/telemetry/funnel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step })
+      }).catch(() => {});
+    }
+  }, [step, isOpen]);
+
   const handleNext = () => {
     if (step < 4) {
       setStep((prev) => (prev + 1) as any);
     } else {
+      // Track successful final wizard completion (Step 5)
+      fetch('/api/telemetry/funnel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 5 })
+      }).catch(() => {});
+
       const finalKey = useSimulation ? 'sandbox_free_test_gemini' : geminiKey;
       onClose({
         lang,

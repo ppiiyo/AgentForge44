@@ -503,6 +503,701 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
         { id: "deb-c9", sourceId: "deb-judge-agent", targetId: "deb-output" }
       ]
     }
+  },
+  {
+    id: "task-planner-orchestrator",
+    title: "Task Planner & Orchestrator",
+    description: "Splits complex user requests into discrete, ordered tasks using a planning agent, resolves them individually, and synthesizes the finalized results.",
+    authorId: "kostromai44_core",
+    category: "agent",
+    tags: ["planner", "orchestrator", "multi-step", "coordination"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 720,
+    rating: 4.8,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Task Planner & Orchestrator",
+      nodes: [
+        {
+          id: "planner-input",
+          type: "input",
+          title: "Complex Goal Input",
+          x: 60,
+          y: 200,
+          description: "Define a high-level creative or technical goal.",
+          fields: {
+            variables: [
+              { key: "goal", value: "Design a launch campaign structure for a visual node workflow editor named AgentForge.", label: "Primary Goal" }
+            ]
+          }
+        },
+        {
+          id: "planner-prompt",
+          type: "prompt",
+          title: "Planning Prompt Builder",
+          x: 280,
+          y: 100,
+          description: "Instructs the AI to decompose the goal into 3 sub-tasks.",
+          fields: {
+            template: "Analyze this objective: {goal}.\n\nDecompose it into exactly 3 sequential actions:\n1. Target Audience Identification\n2. Channel Selection\n3. Core Messaging Strategy.\n\nBe highly analytical."
+          }
+        },
+        {
+          id: "planner-agent",
+          type: "gemini",
+          title: "AI Project Planner",
+          x: 480,
+          y: 100,
+          description: "Generates the step-by-step roadmap.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.3,
+            useSearchGrounding: false,
+            systemInstruction: "You are an expert Project Management Officer (PMO)."
+          }
+        },
+        {
+          id: "planner-compile",
+          type: "prompt",
+          title: "Synthesis Compiler",
+          x: 680,
+          y: 200,
+          description: "Injects original goal and plan into a copywriter prompt.",
+          fields: {
+            template: "Target Goal: {goal}\nPlan generated:\n{planner-agent}\n\nDraft a complete, comprehensive marketing plan implementing this exact roadmap."
+          }
+        },
+        {
+          id: "planner-executor",
+          type: "gemini",
+          title: "Creative Copywriter",
+          x: 880,
+          y: 200,
+          description: "Generates final high-fidelity campaign copy.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.75,
+            useSearchGrounding: false,
+            systemInstruction: "You are an award-winning marketing copywriter."
+          }
+        },
+        {
+          id: "planner-output",
+          type: "output",
+          title: "Final Strategy Document",
+          x: 1080,
+          y: 200,
+          description: "Renders the campaign strategy report.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "planner-c1", sourceId: "planner-input", targetId: "planner-prompt" },
+        { id: "planner-c2", sourceId: "planner-prompt", targetId: "planner-agent" },
+        { id: "planner-c3", sourceId: "planner-agent", targetId: "planner-compile" },
+        { id: "planner-c4", sourceId: "planner-input", targetId: "planner-compile" },
+        { id: "planner-c5", sourceId: "planner-compile", targetId: "planner-executor" },
+        { id: "planner-c6", sourceId: "planner-executor", targetId: "planner-output" }
+      ]
+    }
+  },
+  {
+    id: "semantic-router-guard",
+    title: "Semantic Router & Safety Guard",
+    description: "Evaluates incoming requests for category and safety intent, routing requests dynamically to domain-specific instructions while filtering bad behavior.",
+    authorId: "kostromai44_core",
+    category: "template",
+    tags: ["router", "safety", "intent", "classification"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 510,
+    rating: 4.7,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Semantic Router & Safety Guard",
+      nodes: [
+        {
+          id: "sr-input",
+          type: "input",
+          title: "Raw User Inquiry",
+          x: 60,
+          y: 220,
+          description: "Incoming user prompt.",
+          fields: {
+            variables: [
+              { key: "query", value: "Help! How do I configure PostgreSQL with foreign key database indices?", label: "Query Text" }
+            ]
+          }
+        },
+        {
+          id: "sr-classify-prompt",
+          type: "prompt",
+          title: "Intent Classifier Spec",
+          x: 260,
+          y: 220,
+          description: "Prepares query classification criteria.",
+          fields: {
+            template: "Categorize this query: '{query}' into one of: 'DATABASE_TECHNICAL', 'GENERAL_ASSISTANT', or 'SECURITY_POLICY_VIOLATION'. Return only the category label."
+          }
+        },
+        {
+          id: "sr-classifier",
+          type: "gemini",
+          title: "Intent Discriminator",
+          x: 460,
+          y: 220,
+          description: "Runs high-precision zero-shot classification.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.1,
+            useSearchGrounding: false,
+            systemInstruction: "You are a routing microservice. You output strictly the category matching the text."
+          }
+        },
+        {
+          id: "sr-router",
+          type: "router",
+          title: "Semantic Route Splitter",
+          x: 660,
+          y: 220,
+          description: "Evaluates intent labels and activates the correct downstream path.",
+          fields: {
+            conditions: [
+              { id: "cond-db", type: "contains", value: "DATABASE_TECHNICAL", targetNodeId: "sr-db-prompt", label: "DB Path" },
+              { id: "cond-violation", type: "contains", value: "SECURITY_POLICY_VIOLATION", targetNodeId: "sr-violation-prompt", label: "Violation Path" }
+            ],
+            defaultTargetNodeId: "sr-gen-prompt"
+          }
+        },
+        {
+          id: "sr-db-prompt",
+          type: "prompt",
+          title: "DB Expert Prompt",
+          x: 880,
+          y: 100,
+          description: "Specific database DBA instructions.",
+          fields: {
+            template: "You are a world-class Postgres DBA. Solve the user's database indexing query with explicit query code templates: {query}"
+          }
+        },
+        {
+          id: "sr-violation-prompt",
+          type: "prompt",
+          title: "Polite Rejection Prompt",
+          x: 880,
+          y: 340,
+          description: "Standard safety warning message template.",
+          fields: {
+            template: "Draft a polite, secure denial response stating we cannot execute prompt injection or policy breaches."
+          }
+        },
+        {
+          id: "sr-gen-prompt",
+          type: "prompt",
+          title: "General Expert Prompt",
+          x: 880,
+          y: 220,
+          description: "Generalist helper instructions.",
+          fields: {
+            template: "Answer this query elegantly: {query}"
+          }
+        },
+        {
+          id: "sr-responder",
+          type: "gemini",
+          title: "Grounded Responder",
+          x: 1100,
+          y: 220,
+          description: "Compiles the designated response.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.2,
+            useSearchGrounding: false,
+            systemInstruction: "Provide professional, structured responses."
+          }
+        },
+        {
+          id: "sr-output",
+          type: "output",
+          title: "Safe Routed Output",
+          x: 1300,
+          y: 220,
+          description: "Displays the final routed result safely.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "sr-c1", sourceId: "sr-input", targetId: "sr-classify-prompt" },
+        { id: "sr-c2", sourceId: "sr-classify-prompt", targetId: "sr-classifier" },
+        { id: "sr-c3", sourceId: "sr-classifier", targetId: "sr-router" },
+        { id: "sr-c4", sourceId: "sr-router", targetId: "sr-db-prompt" },
+        { id: "sr-c5", sourceId: "sr-router", targetId: "sr-gen-prompt" },
+        { id: "sr-c6", sourceId: "sr-router", targetId: "sr-violation-prompt" },
+        { id: "sr-c7", sourceId: "sr-db-prompt", targetId: "sr-responder" },
+        { id: "sr-c8", sourceId: "sr-gen-prompt", targetId: "sr-responder" },
+        { id: "sr-c9", sourceId: "sr-violation-prompt", targetId: "sr-responder" },
+        { id: "sr-c10", sourceId: "sr-responder", targetId: "sr-output" }
+      ]
+    }
+  },
+  {
+    id: "dev-tester-pair",
+    title: "Developer & Tester Coding Loop",
+    description: "One agent writes a TypeScript function from the specifications, another writes exhaustive unit tests, and a senior reviewer evaluates overall coverage.",
+    authorId: "kostromai44_core",
+    category: "agent",
+    tags: ["coding", "jest", "unit-test", "pair-programming"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 890,
+    rating: 4.9,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Developer & Tester Coding Loop",
+      nodes: [
+        {
+          id: "dev-input",
+          type: "input",
+          title: "Code Specification",
+          x: 60,
+          y: 200,
+          description: "Provide the target functionality.",
+          fields: {
+            variables: [
+              { key: "feature", value: "A function to calculate Jaccard Similarity between two arrays of strings, returning a score from 0 to 1.", label: "Target Feature" }
+            ]
+          }
+        },
+        {
+          id: "dev-prompt",
+          type: "prompt",
+          title: "Developer Prompt Builder",
+          x: 280,
+          y: 100,
+          description: "Formulates direct programming constraints.",
+          fields: {
+            template: "Write a high-performance, edge-case-safe TypeScript function for:\n{feature}.\nReturn ONLY clean TypeScript code."
+          }
+        },
+        {
+          id: "dev-coder",
+          type: "gemini",
+          title: "Principal Developer Agent",
+          x: 480,
+          y: 100,
+          description: "Generates the implementation.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.15,
+            useSearchGrounding: false,
+            systemInstruction: "You are an elite, performance-focused software engineer."
+          }
+        },
+        {
+          id: "dev-test-prompt",
+          type: "prompt",
+          title: "Tester Prompt Builder",
+          x: 680,
+          y: 200,
+          description: "Instructs testing framework setup.",
+          fields: {
+            template: "Write comprehensive unit tests in Vitest/Jest for the following implementation:\n\n{dev-coder}\n\nCover boundary values, empty arrays, and duplicate items."
+          }
+        },
+        {
+          id: "dev-tester",
+          type: "gemini",
+          title: "QA Test Automator",
+          x: 880,
+          y: 200,
+          description: "Produces comprehensive testing scripts.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.2,
+            useSearchGrounding: false,
+            systemInstruction: "You are a meticulous Software Engineer in Test (SDET)."
+          }
+        },
+        {
+          id: "dev-output",
+          type: "output",
+          title: "Production Ready Package",
+          x: 1080,
+          y: 200,
+          description: "Outputs completed code and test specs together.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "dev-c1", sourceId: "dev-input", targetId: "dev-prompt" },
+        { id: "dev-c2", sourceId: "dev-prompt", targetId: "dev-coder" },
+        { id: "dev-c3", sourceId: "dev-coder", targetId: "dev-test-prompt" },
+        { id: "dev-c4", sourceId: "dev-test-prompt", targetId: "dev-tester" },
+        { id: "dev-c5", sourceId: "dev-tester", targetId: "dev-output" }
+      ]
+    }
+  },
+  {
+    id: "financial-analyst-agent",
+    title: "Grounded Financial Analyst",
+    description: "Uses Google Search Grounding to fetch recent financial news, compiles profit summaries, and performs fundamental valuation reporting.",
+    authorId: "kostromai44_core",
+    category: "agent",
+    tags: ["finance", "valuation", "grounding", "report"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 640,
+    rating: 4.8,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Grounded Financial Analyst",
+      nodes: [
+        {
+          id: "fin-input",
+          type: "input",
+          title: "Stock Ticker Input",
+          x: 60,
+          y: 200,
+          description: "Target company stock ticker symbol.",
+          fields: {
+            variables: [
+              { key: "ticker", value: "AAPL", label: "Ticker Symbol" }
+            ]
+          }
+        },
+        {
+          id: "fin-research-prompt",
+          type: "prompt",
+          title: "Market Search Criteria",
+          x: 280,
+          y: 200,
+          description: "Builds live financial research questions.",
+          fields: {
+            template: "Search for the latest quarterly earnings reports, net margins, and PE ratio for {ticker}. Check 2026 guidelines."
+          }
+        },
+        {
+          id: "fin-search-agent",
+          type: "gemini",
+          title: "Stock Market Scout",
+          x: 480,
+          y: 200,
+          description: "Fetches live market trends and references.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.1,
+            useSearchGrounding: true,
+            systemInstruction: "You are an elite stock market researcher."
+          }
+        },
+        {
+          id: "fin-analysis-prompt",
+          type: "prompt",
+          title: "Valuation Briefing",
+          x: 680,
+          y: 200,
+          description: "Instructs fundamental valuation and multiples.",
+          fields: {
+            template: "Based on the gathered market information:\n\n{fin-search-agent}\n\nDraft a comprehensive investment analyst report. Calculate estimated margins, list key risks, and outline buy/hold rating."
+          }
+        },
+        {
+          id: "fin-analyst",
+          type: "gemini",
+          title: "Equity Analyst (CFA)",
+          x: 880,
+          y: 200,
+          description: "Drafts the high-fidelity investment thesis.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.3,
+            useSearchGrounding: false,
+            systemInstruction: "You are a senior chartered financial analyst."
+          }
+        },
+        {
+          id: "fin-output",
+          type: "output",
+          title: "Equity Research Report",
+          x: 1080,
+          y: 200,
+          description: "Renders the finished report.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "fin-c1", sourceId: "fin-input", targetId: "fin-research-prompt" },
+        { id: "fin-c2", sourceId: "fin-research-prompt", targetId: "fin-search-agent" },
+        { id: "fin-c3", sourceId: "fin-search-agent", targetId: "fin-analysis-prompt" },
+        { id: "fin-c4", sourceId: "fin-analysis-prompt", targetId: "fin-analyst" },
+        { id: "fin-c5", sourceId: "fin-analyst", targetId: "fin-output" }
+      ]
+    }
+  },
+  {
+    id: "customer-support-triage",
+    title: "Support Triage & Email Drafter",
+    description: "Evaluates support tickets for classification, severity score, and urgency, drafting a custom policy-grounded email reply.",
+    authorId: "kostromai44_core",
+    category: "template",
+    tags: ["support", "triage", "automation", "draft"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1521791136368-1a46827d3ad1?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 480,
+    rating: 4.6,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Support Triage & Email Drafter",
+      nodes: [
+        {
+          id: "sup-input",
+          type: "input",
+          title: "Customer Email Ticket",
+          x: 60,
+          y: 200,
+          description: "The raw support text sent by user.",
+          fields: {
+            variables: [
+              { key: "ticket", value: "I purchased the enterprise tier 3 hours ago but my workspace quota is still showing the development tier limit. This is urgent as we are launching a project now!", label: "Customer Email" }
+            ]
+          }
+        },
+        {
+          id: "sup-triage-prompt",
+          type: "prompt",
+          title: "Classifier Instructions",
+          x: 280,
+          y: 100,
+          description: "Assembles triage classification prompt.",
+          fields: {
+            template: "Analyze the customer request: '{ticket}'.\n\nIdentify:\n1. Severity (HIGH, MEDIUM, LOW)\n2. Category (BILLING, TECHNICAL, GENERAL)\n3. Sentiment score."
+          }
+        },
+        {
+          id: "sup-classifier",
+          type: "gemini",
+          title: "Triage Intelligence Unit",
+          x: 480,
+          y: 100,
+          description: "Evaluates severity and routes category metadata.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.1,
+            useSearchGrounding: false,
+            systemInstruction: "You are a helpful customer support triage officer."
+          }
+        },
+        {
+          id: "sup-reply-prompt",
+          type: "prompt",
+          title: "Drafter Instructions",
+          x: 680,
+          y: 200,
+          description: "Assembles reply email prompt with triage context.",
+          fields: {
+            template: "Original email: {ticket}\n\nTriage assessment:\n{sup-classifier}\n\nDraft an empathetic, professional support response addressing the quota delay, assuring them we are solving it instantly."
+          }
+        },
+        {
+          id: "sup-composer",
+          type: "gemini",
+          title: "Support Success Specialist",
+          x: 880,
+          y: 200,
+          description: "Drafts the final response email.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.5,
+            useSearchGrounding: false,
+            systemInstruction: "You are an empathetic customer success lead."
+          }
+        },
+        {
+          id: "sup-output",
+          type: "output",
+          title: "Completed Ticket Draft",
+          x: 1080,
+          y: 200,
+          description: "Renders the support email draft.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "sup-c1", sourceId: "sup-input", targetId: "sup-triage-prompt" },
+        { id: "sup-c2", sourceId: "sup-triage-prompt", targetId: "sup-classifier" },
+        { id: "sup-c3", sourceId: "sup-classifier", targetId: "sup-reply-prompt" },
+        { id: "sup-c4", sourceId: "sup-input", targetId: "sup-reply-prompt" },
+        { id: "sup-c5", sourceId: "sup-reply-prompt", targetId: "sup-composer" },
+        { id: "sup-c6", sourceId: "sup-composer", targetId: "sup-output" }
+      ]
+    }
+  },
+  {
+    id: "text-summarization-translation",
+    title: "Parallel Multi-Language Translator",
+    description: "Summarizes standard texts and translates them in parallel to French, Spanish, and German before assembling a localized markdown report.",
+    authorId: "kostromai44_core",
+    category: "template",
+    tags: ["parallel", "translation", "localization", "multilingual"],
+    thumbnailUrl: "https://images.unsplash.com/photo-1444653389962-8149286c578a?auto=format&fit=crop&w=150&q=80",
+    downloadsCount: 570,
+    rating: 4.8,
+    createdAt: new Date().toISOString(),
+    graphSnapshot: {
+      name: "Parallel Multi-Language Translator",
+      nodes: [
+        {
+          id: "tr-input",
+          type: "input",
+          title: "Source Document",
+          x: 60,
+          y: 260,
+          description: "Input the original text to translate.",
+          fields: {
+            variables: [
+              { key: "source", value: "Our zero-trust visualization playground enables software architects to orchestrate multi-agent microservices visually.", label: "Source Text" }
+            ]
+          }
+        },
+        {
+          id: "tr-fr-prompt",
+          type: "prompt",
+          title: "French Prompt Builder",
+          x: 280,
+          y: 100,
+          description: "French localization instructions.",
+          fields: {
+            template: "Translate this text into elegant Parisian French: {source}"
+          }
+        },
+        {
+          id: "tr-es-prompt",
+          type: "prompt",
+          title: "Spanish Prompt Builder",
+          x: 280,
+          y: 260,
+          description: "Spanish localization instructions.",
+          fields: {
+            template: "Translate this text into premium Castilian Spanish: {source}"
+          }
+        },
+        {
+          id: "tr-de-prompt",
+          type: "prompt",
+          title: "German Prompt Builder",
+          x: 280,
+          y: 420,
+          description: "German localization instructions.",
+          fields: {
+            template: "Translate this text into precise German: {source}"
+          }
+        },
+        {
+          id: "tr-fr-agent",
+          type: "gemini",
+          title: "French Translator",
+          x: 480,
+          y: 100,
+          description: "Generates French translation.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.2,
+            useSearchGrounding: false,
+            systemInstruction: "You are a professional French linguist."
+          }
+        },
+        {
+          id: "tr-es-agent",
+          type: "gemini",
+          title: "Spanish Translator",
+          x: 480,
+          y: 260,
+          description: "Generates Spanish translation.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.2,
+            useSearchGrounding: false,
+            systemInstruction: "You are a professional Spanish linguist."
+          }
+        },
+        {
+          id: "tr-de-agent",
+          type: "gemini",
+          title: "German Translator",
+          x: 480,
+          y: 420,
+          description: "Generates German translation.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.2,
+            useSearchGrounding: false,
+            systemInstruction: "You are a professional German linguist."
+          }
+        },
+        {
+          id: "tr-combine-prompt",
+          type: "prompt",
+          title: "Report Assembler",
+          x: 720,
+          y: 260,
+          description: "Gathers original and translated strings.",
+          fields: {
+            template: "Assemble a premium markdown localized report.\n\nOriginal Text:\n{source}\n\nTranslations:\n- **French**: {tr-fr-agent}\n- **Spanish**: {tr-es-agent}\n- **German**: {tr-de-agent}"
+          }
+        },
+        {
+          id: "tr-compiler",
+          type: "gemini",
+          title: "Markdown Document Compiler",
+          x: 920,
+          y: 260,
+          description: "Fires final synthesis loop.",
+          fields: {
+            model: "gemini-3.5-flash",
+            temperature: 0.1,
+            useSearchGrounding: false,
+            systemInstruction: "Format a clean multilingual report."
+          }
+        },
+        {
+          id: "tr-output",
+          type: "output",
+          title: "Multilingual Localized Report",
+          x: 1120,
+          y: 260,
+          description: "Renders completed localized markdown file.",
+          fields: {
+            format: "markdown",
+            value: ""
+          }
+        }
+      ],
+      connections: [
+        { id: "tr-c1", sourceId: "tr-input", targetId: "tr-fr-prompt" },
+        { id: "tr-c2", sourceId: "tr-input", targetId: "tr-es-prompt" },
+        { id: "tr-c3", sourceId: "tr-input", targetId: "tr-de-prompt" },
+        { id: "tr-c4", sourceId: "tr-fr-prompt", targetId: "tr-fr-agent" },
+        { id: "tr-c5", sourceId: "tr-es-prompt", targetId: "tr-es-agent" },
+        { id: "tr-c6", sourceId: "tr-de-prompt", targetId: "tr-de-agent" },
+        { id: "tr-c7", sourceId: "tr-fr-agent", targetId: "tr-combine-prompt" },
+        { id: "tr-c8", sourceId: "tr-es-agent", targetId: "tr-combine-prompt" },
+        { id: "tr-c9", sourceId: "tr-de-agent", targetId: "tr-combine-prompt" },
+        { id: "tr-c10", sourceId: "tr-input", targetId: "tr-combine-prompt" },
+        { id: "tr-c11", sourceId: "tr-combine-prompt", targetId: "tr-compiler" },
+        { id: "tr-c12", sourceId: "tr-compiler", targetId: "tr-output" }
+      ]
+    }
   }
 ];
 
