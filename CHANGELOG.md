@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2026-07-15
+### Added
+- **OpenTelemetry Jaeger/Tempo Exporter**: Wired the `@opentelemetry/exporter-trace-otlp-http` into the system in `src/services/tracing.ts` to export traces over standard OTLP to Tempo/Jaeger collector targets. Deleted the insecure `/traces` file-reading API endpoint.
+- **Enforced Zod Log Schema**: Created strict Winston log schema validation in `src/utils/logger.ts` validating log lines against `LogSchema` (Zod structure).
+- **Grafana Loki Logger Transport**: Designed a lightweight, high-performance, asynchronous Winston transport to stream JSON-validated structured logs directly to the Grafana Loki API.
+- **Domain-Specific Grafana Dashboards**: Provisioned JSON layouts in `/monitoring/grafana-dashboards/` tracking five specific monitoring domains: Pipeline executions, LLM Costs and Tokens, Database connections/latency, BullMQ queues, and HTTP API Performance.
+- **SRE Alerting & SLO Rules**: Established alert thresholds in `/monitoring/alerts.yml` covering 99.9% availability, latency targets (P95 < 500ms for API, P95 < 30s for pipeline), and error budget burn-rate alarms.
+- **On-Call Runbooks Index & Guides**: Created `/docs/runbooks/INDEX.md` and detailed action plans for the top 10 potential production incident classes.
+- **ADR 0006**: Documented architectural decisions and consequences for Phase 5 (Observability & Ops).
+
+---
+
 ## [0.5.0] - 2026-07-14
 ### Added
 - **Dual-Key JWT Key Rotation**: Enhanced token verification in `src/api/userAuth.ts` to seamlessly support dual-key rotation via `JWT_SECRET_PRIMARY` and `JWT_SECRET_SECONDARY` fallbacks.

@@ -1,5 +1,6 @@
 import { trace, SpanStatusCode, Tracer } from '@opentelemetry/api';
 import { BasicTracerProvider, SimpleSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { logger } from '../utils/logger.js';
 
 let tracer: Tracer | null = null;
@@ -9,9 +10,15 @@ export function initTracing() {
   if (isInitialized) return { tracer };
 
   try {
+    const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces';
+    const otlpExporter = new OTLPTraceExporter({
+      url: otlpEndpoint,
+    });
+
     const provider = new BasicTracerProvider({
       spanProcessors: [
-        new SimpleSpanProcessor(new ConsoleSpanExporter())
+        new SimpleSpanProcessor(new ConsoleSpanExporter()),
+        new SimpleSpanProcessor(otlpExporter)
       ]
     });
     
@@ -20,7 +27,7 @@ export function initTracing() {
     // Fetch tracer from global trace context register
     tracer = trace.getTracer('kostromai4444-core');
     isInitialized = true;
-    logger.info('OpenTelemetry Tracing service initialized successfully with ConsoleSpanExporter');
+    logger.info(`OpenTelemetry Tracing service initialized with OTLP exporter pointing to: ${otlpEndpoint}`);
   } catch (err: any) {
     logger.warn(`OpenTelemetry SDK initialization failed: ${err.message}. Falling back to clean mocked logger traces.`);
     isInitialized = true; // Still marked initialized so we don't try loop triggering

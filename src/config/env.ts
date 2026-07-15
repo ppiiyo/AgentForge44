@@ -11,6 +11,8 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.string().default('info'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  LOKI_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -41,5 +43,7 @@ export const ENV = {
   get REDIS_URL(): string | undefined { return validatedEnv.REDIS_URL || process.env.REDIS_URL; },
   get SENTRY_DSN(): string | undefined { return validatedEnv.SENTRY_DSN || process.env.SENTRY_DSN; },
   get LOG_LEVEL(): string { return validatedEnv.LOG_LEVEL || process.env.LOG_LEVEL || 'info'; },
+  get OTEL_EXPORTER_OTLP_ENDPOINT(): string | undefined { return validatedEnv.OTEL_EXPORTER_OTLP_ENDPOINT || process.env.OTEL_EXPORTER_OTLP_ENDPOINT; },
+  get LOKI_URL(): string | undefined { return validatedEnv.LOKI_URL || process.env.LOKI_URL; },
 };
 export default ENV;

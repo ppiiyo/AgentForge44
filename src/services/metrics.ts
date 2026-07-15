@@ -79,3 +79,44 @@ export const circuitBreakerStateGauge = new client.Gauge({
   labelNames: ['breaker_name']
 });
 register.registerMetric(circuitBreakerStateGauge);
+
+// 7. LLM Token & Cost Tracking Metrics
+export const llmTokenCounter = new client.Counter({
+  name: 'llm_tokens_total',
+  help: 'Total number of LLM tokens processed',
+  labelNames: ['provider', 'model', 'type'] // type can be 'prompt' or 'completion'
+});
+register.registerMetric(llmTokenCounter);
+
+export const llmCostCounter = new client.Counter({
+  name: 'llm_cost_usd_total',
+  help: 'Estimated LLM consumption cost in USD',
+  labelNames: ['provider', 'model']
+});
+register.registerMetric(llmCostCounter);
+
+// 8. Database Performance Metrics
+export const databaseQueryDuration = new client.Histogram({
+  name: 'db_query_duration_seconds',
+  help: 'Duration of database query execution in seconds',
+  labelNames: ['operation', 'table'],
+  buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2]
+});
+register.registerMetric(databaseQueryDuration);
+
+// 9. BullMQ Queue Performance Metrics
+export const queueJobsGauge = new client.Gauge({
+  name: 'bullmq_queue_jobs_total',
+  help: 'Total number of jobs in BullMQ queues by status',
+  labelNames: ['queue_name', 'status'] // status: waiting, active, completed, failed
+});
+register.registerMetric(queueJobsGauge);
+
+export const queueJobDuration = new client.Histogram({
+  name: 'bullmq_job_duration_seconds',
+  help: 'Processing duration of BullMQ jobs in seconds',
+  labelNames: ['queue_name', 'job_name', 'status'],
+  buckets: [0.1, 0.5, 1, 2.5, 5, 10, 30, 60]
+});
+register.registerMetric(queueJobDuration);
+

@@ -1,5 +1,5 @@
 groups:
-  - name: pipeline_alerts
+  - name: pipeline_and_api_alerts
     rules:
       - alert: HighPipelineErrorRate
         expr: rate(pipeline_errors_total[5m]) / rate(pipeline_executions_total[5m]) > 0.05
@@ -11,13 +11,13 @@ groups:
           description: "Pipeline error rate is above 5% over the last 5 minutes."
 
       - alert: SlowPipelineExecutions
-        expr: histogram_quantile(0.95, sum(rate(pipeline_execution_duration_seconds_bucket[5m])) by (le)) > 10
+        expr: histogram_quantile(0.95, sum(rate(pipeline_execution_duration_seconds_bucket[5m])) by (le)) > 30
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "Slow 95th percentile pipeline execution (instance {{ $labels.instance }})"
-          description: "95% of pipeline executions are taking longer than 10 seconds over the last 5 minutes."
+          description: "95% of pipeline executions are taking longer than 30 seconds (SLO limit of 30s) over the last 5 minutes. Current P95: {{ $value }}s"
 
       - alert: ExecutorContainerDead
         expr: up{job="agentforge-executor"} == 0
@@ -36,3 +36,40 @@ groups:
         annotations:
           summary: "Database connection pool is almost exhausted"
           description: "Active database connections are above 85% of max connections."
+
+      - alert: HighAPIErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) > 0.001
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API Error Rate exceeds availability SLO"
+          description: "HTTP 5xx error rate is above 0.1% (SLO limit for 99.9% availability) over the last 5 minutes. Current rate: {{ $value }}"
+
+      - alert: SlowAPIResponse
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P95 response time exceeds latency SLO"
+          description: "API P95 response time is above 500ms (SLO limit) over the last 5 minutes. Current P95: {{ $value }}s"
+
+      - alert: QueueJobFailureRateHigh
+        expr: rate(bullmq_jobs_failed_total[5m]) / rate(bullmq_jobs_completed_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "BullMQ queue job failure rate is high"
+          description: "Over 5% of BullMQ jobs are failing in the last 5 minutes. Current failure rate: {{ $value }}"
+
+      - alert: APIAvailabilityBudgetBurnRateHigh
+        expr: (sum(rate(http_requests_total{status=~"5.."}[1h])) / sum(rate(http_requests_total[1h]))) > 0.0144
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API Error Budget burn rate is extremely high"
+          description: "API availability error budget burn rate is > 14.4 over the last hour (consuming 2% of budget per hour). Current rate: {{ $value }}"
+
