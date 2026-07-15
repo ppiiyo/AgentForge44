@@ -106,10 +106,30 @@ export const ToastContainer: React.FC<{ currentLang?: 'en' | 'ru' | 'zh' }> = ({
               {styles.icon}
               <div className="flex-1 min-w-0 pr-2">
                 <span className="text-[11px] font-black uppercase tracking-wider block mb-0.5 text-slate-100">
-                  {toast.title || getDefaultTitle(toast.type)}
+                  {(() => {
+                    const val = toast.title || getDefaultTitle(toast.type);
+                    if (val && typeof val === 'object') {
+                      try {
+                        return JSON.stringify(val);
+                      } catch (_) {
+                        return "[Complex/Circular Object]";
+                      }
+                    }
+                    return String(val);
+                  })()}
                 </span>
                 <p className="text-[10.5px] font-medium leading-relaxed text-slate-300 break-words">
-                  {toast.message}
+                  {(() => {
+                    const val = toast.message;
+                    if (val && typeof val === 'object') {
+                      try {
+                        return JSON.stringify(val);
+                      } catch (_) {
+                        return "[Complex/Circular Object]";
+                      }
+                    }
+                    return String(val);
+                  })()}
                 </p>
               </div>
               <button
