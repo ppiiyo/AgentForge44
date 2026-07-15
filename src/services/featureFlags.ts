@@ -1,4 +1,7 @@
-import { OpenFeature, Provider, Client, EvaluationContext, ResolutionDetails, ErrorCode, JsonValue } from "@openfeature/server-sdk";
+import { OpenFeature } from "@openfeature/server-sdk";
+import type { Provider, Client } from "@openfeature/server-sdk";
+import { ErrorCode } from "@openfeature/core";
+import type { EvaluationContext, ResolutionDetails, JsonValue } from "@openfeature/core";
 
 /**
  * Standard Environment & InMemory Fallback Provider for OpenFeature
