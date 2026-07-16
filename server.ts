@@ -206,7 +206,7 @@ async function setupServer() {
   });
 }
 
-if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+if (!process.env.VITEST) {
   setupServer().catch(err => {
     logger.error("Failed to start server:", { error: err.message || err });
   });

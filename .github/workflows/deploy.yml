@@ -55,6 +55,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercased repository name
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
       - name: Verify Docker Compose Configuration
         run: docker compose config
 
@@ -66,9 +70,9 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
-            ghcr.io/${{ github.repository }}/frontend:latest
-            ghcr.io/${{ github.repository }}/frontend:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository }}/frontend:${{ github.ref_name }}
+            ghcr.io/${{ env.REPO_LOWER }}/frontend:latest
+            ghcr.io/${{ env.REPO_LOWER }}/frontend:sha-${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/frontend:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -80,9 +84,9 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
-            ghcr.io/${{ github.repository }}/backend:latest
-            ghcr.io/${{ github.repository }}/backend:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository }}/backend:${{ github.ref_name }}
+            ghcr.io/${{ env.REPO_LOWER }}/backend:latest
+            ghcr.io/${{ env.REPO_LOWER }}/backend:sha-${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/backend:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -94,9 +98,9 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
-            ghcr.io/${{ github.repository }}/executor:latest
-            ghcr.io/${{ github.repository }}/executor:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository }}/executor:${{ github.ref_name }}
+            ghcr.io/${{ env.REPO_LOWER }}/executor:latest
+            ghcr.io/${{ env.REPO_LOWER }}/executor:sha-${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/executor:${{ github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
