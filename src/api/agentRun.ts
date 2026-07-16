@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { FlowNode, FlowConnection, PipelineExecutionResult } from "../types.js";
 import { validateDatabaseConfig } from "./db.js";
-import { PipelineExecutor } from "./engine/PipelineExecutor.js";
+import { PipelineExecutor } from "../services/pipeline/PipelineExecutor.js";
 import { classifyLLMError } from "../services/retry/RetryService.js";
 
 // Run pre-flight database config check immediately upon evaluation of this runner module
@@ -19,6 +19,11 @@ export async function executePipeline(
   connections: FlowConnection[],
   customGeminiApiKey?: string
 ): Promise<PipelineExecutionResult> {
+  const hasInputNode = nodes.some(n => n.type === 'input');
+  if (!hasInputNode) {
+    throw new Error('No Input node found in the workflow!');
+  }
+
   const apiKey = customGeminiApiKey || process.env.GEMINI_API_KEY || "";
   const ai = new GoogleGenAI({
     apiKey: apiKey,
@@ -29,6 +34,6 @@ export async function executePipeline(
     }
   });
 
-  const executor = new PipelineExecutor(nodes, connections, ai, apiKey);
+  const executor = new PipelineExecutor(nodes, connections, ai, { apiKey });
   return executor.execute();
 }

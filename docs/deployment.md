@@ -56,10 +56,10 @@ curl -s http://localhost:3000/api/health
 
 ## 🏗️ 3. Cloud Provisioning via Modular Terraform
 
-Our AWS infrastructure is modularized under `terraform/modules/` to enforce strict isolation of responsibilities (VPC, KMS, EKS, RDS, ElastiCache Redis).
+Our AWS infrastructure is modularized under `infra/terraform/modules/` to enforce strict isolation of responsibilities (VPC, KMS, EKS, RDS, ElastiCache Redis).
 
 ```bash
-cd terraform/
+cd infra/terraform/
 
 # Initialize and lock the secure S3 remote state
 terraform init

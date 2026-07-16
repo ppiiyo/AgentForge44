@@ -10,15 +10,18 @@ export interface ExecutorOptions {
   concurrencyLimit?: number;
   apiKey?: string;
   model?: string;
+  runId?: string;
+  tenantId?: string;
+  graphId?: string;
 }
 
 export class PipelineExecutor {
   private inDegrees: Map<string, number> = new Map();
   private adjacencyList: Map<string, string[]> = new Map();
-  private nodeOutputs: Record<string, any> = {};
+  public nodeOutputs: Record<string, any> = {};
   private globalVariables: Record<string, string> = {};
   private activeValueRef = { value: {} as any };
-  private logs: StepLog[] = [];
+  public logs: StepLog[] = [];
   private concurrencyLimit: number;
   private model: string;
   private readonly GLOBAL_TIMEOUT = 300000; // 5 минут
@@ -106,7 +109,7 @@ export class PipelineExecutor {
     }
 
     if (readyQueue.length === 0 && this.nodes.length > 0) {
-      throw new Error("No start nodes with 0 in-degree. Cycle detected or invalid graph!");
+      throw new Error("Parallel execution failed: No start nodes with 0 in-degree. Cycle detected or invalid graph!");
     }
 
     const runningTasks = new Set<Promise<void>>();
@@ -157,7 +160,7 @@ export class PipelineExecutor {
 
         // If no nodes are running and the queue is empty, but we haven't visited all nodes, there is a cycle.
         if (runningTasks.size === 0 && readyQueue.length === 0) {
-          reject(new Error("Graph contains a cycle or has unresolved dependencies. Kahn's topological sort failed."));
+          reject(new Error("Parallel execution failed: Graph contains a cycle or has unresolved dependencies. Kahn's topological sort failed."));
           return;
         }
 
@@ -270,6 +273,9 @@ export class PipelineExecutor {
       const duration = (Date.now() - stepStart) / 1000;
       pipelineNodeExecutionDuration.observe({ node_type: node.type, node_id: node.id, status: 'success' }, duration);
     } catch (err: any) {
+      if (err.message?.startsWith('PAUSED_FOR_CONFIRMATION:')) {
+        throw err;
+      }
       const healed = await this.attemptSelfHealing(node, err, localValue, stepStart);
       if (healed) {
         logger.info(`[Self-Healing] Successfully recovered node "${node.title}" (${node.id}) at runtime.`);

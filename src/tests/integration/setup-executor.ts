@@ -1,4 +1,4 @@
-import { PipelineExecutor } from '../../api/engine/PipelineExecutor.js';
+import { PipelineExecutor } from '../../services/pipeline/PipelineExecutor.js';
 import { GoogleGenAI } from '@google/genai';
 import { tables } from '../../db/index.js';
 import { eq } from 'drizzle-orm';

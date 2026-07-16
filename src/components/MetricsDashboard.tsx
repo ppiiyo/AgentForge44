@@ -9,7 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Legend, Cell 
 } from 'recharts';
-import { useEditorStore } from '../store/useEditorStore';
+import { useEditorStore } from '../store/useAgentStore';
 
 interface ExecutionDetail {
   id: string;

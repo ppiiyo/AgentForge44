@@ -19,7 +19,7 @@ import {
   BookOpen, Layers, Trash, Clock, Cpu
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../../../types';
-import { useUIStore } from '../../../store/useUIStore';
+import { useUIStore } from '../../../store/useAgentStore';
 import { playClickSound, playConnectSound } from '../../../utils/audio';
 
 // Helper functions to check if a line segment intersects a bounding box

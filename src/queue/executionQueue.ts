@@ -1,7 +1,7 @@
 import { Queue, Worker } from 'bullmq';
 import Redis from 'ioredis';
 import { GoogleGenAI } from '@google/genai';
-import { PipelineExecutor } from '../api/engine/PipelineExecutor.js';
+import { PipelineExecutor } from '../services/pipeline/PipelineExecutor.js';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 import { logger } from '../utils/logger.js';
@@ -119,9 +119,108 @@ async function processPipelineRun(
     }
   });
 
-  const executor = new PipelineExecutor(nodes, connections, ai, apiKey, runId, tenantId, graphId);
-  const result = await executor.execute();
-  return result;
+  const executor = new PipelineExecutor(nodes, connections, ai, { apiKey, runId, tenantId, graphId });
+
+  // Load existing run state to merge outputs
+  let existingOutputs: Record<string, any> = {};
+  let existingCompleted: string[] = [];
+  try {
+    const existing = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    if (existing.length > 0) {
+      existingOutputs = JSON.parse(existing[0].nodeOutputs || '{}');
+      existingCompleted = JSON.parse(existing[0].completedNodes || '[]');
+      // Pre-seed executor's nodeOutputs with already completed nodes' outputs
+      for (const [nId, val] of Object.entries(existingOutputs)) {
+        executor.nodeOutputs[nId] = val;
+      }
+    }
+  } catch (err: any) {
+    logger.error(`[Queue] Failed to load existing outputs for run ${runId}: ${err.message}`);
+  }
+
+  // Update run status in DB to 'running'
+  try {
+    await db.update(tables.pipelineRuns).set({
+      status: 'running',
+      updatedAt: new Date().toISOString()
+    }).where(eq(tables.pipelineRuns.id, runId));
+  } catch (err: any) {
+    logger.error(`[Queue] Failed to update run status to running: ${err.message}`);
+  }
+
+  try {
+    const result = await executor.execute();
+
+    // Succeeded! Build outputs
+    const finalOutputs = { ...existingOutputs, ...executor.nodeOutputs };
+    const logs = executor.logs;
+
+    // Determine completed node IDs
+    // All nodes that finished successfully (either newly or pre-existing)
+    const completedNodeIds = new Set<string>([
+      ...existingCompleted,
+      ...nodes.filter(n => executor.nodeOutputs[n.id] !== undefined).map(n => n.id)
+    ]);
+
+    await db.update(tables.pipelineRuns).set({
+      status: 'completed',
+      nodeOutputs: JSON.stringify(finalOutputs),
+      completedNodes: JSON.stringify(Array.from(completedNodeIds)),
+      activatedNodes: JSON.stringify([]),
+      logs: JSON.stringify(logs),
+      updatedAt: new Date().toISOString()
+    }).where(eq(tables.pipelineRuns.id, runId));
+
+    return result;
+
+  } catch (err: any) {
+    const isPaused = err.message?.startsWith('PAUSED_FOR_CONFIRMATION:');
+    const logs = executor.logs;
+    const finalOutputs = { ...existingOutputs, ...executor.nodeOutputs };
+
+    if (isPaused) {
+      const pausedNodeId = err.message.split(':')[1];
+      
+      // Determine completed node IDs so far
+      const completedNodeIds = new Set<string>([
+        ...existingCompleted,
+        ...nodes.filter(n => executor.nodeOutputs[n.id] !== undefined).map(n => n.id)
+      ]);
+
+      // Activated nodes is the paused node
+      const activatedNodes = [pausedNodeId];
+
+      await db.update(tables.pipelineRuns).set({
+        status: 'paused',
+        nodeOutputs: JSON.stringify(finalOutputs),
+        completedNodes: JSON.stringify(Array.from(completedNodeIds)),
+        activatedNodes: JSON.stringify(activatedNodes),
+        logs: JSON.stringify(logs),
+        updatedAt: new Date().toISOString()
+      }).where(eq(tables.pipelineRuns.id, runId));
+
+      logger.info(`[Queue] Pipeline ${runId} paused at confirmation gate node ${pausedNodeId}`);
+      throw err;
+    } else {
+      // Failed!
+      const completedNodeIds = new Set<string>([
+        ...existingCompleted,
+        ...nodes.filter(n => executor.nodeOutputs[n.id] !== undefined).map(n => n.id)
+      ]);
+
+      await db.update(tables.pipelineRuns).set({
+        status: 'failed',
+        error: err.message || "Execution failed",
+        nodeOutputs: JSON.stringify(finalOutputs),
+        completedNodes: JSON.stringify(Array.from(completedNodeIds)),
+        logs: JSON.stringify(logs),
+        updatedAt: new Date().toISOString()
+      }).where(eq(tables.pipelineRuns.id, runId));
+
+      logger.error(`[Queue] Pipeline ${runId} failed: ${err.message}`);
+      throw err;
+    }
+  }
 }
 
 /**

@@ -10,9 +10,7 @@ import {
 import { useCollaboration } from './useCollaboration';
 import { useHotkeys } from './useHotkeys';
 import { usePipelineExecution } from './usePipelineExecution';
-import { useEditorStore } from '../store/useEditorStore';
-import { useUIStore } from '../store/useUIStore';
-import { usePipelineStore } from '../store/usePipelineStore';
+import { useEditorStore, useUIStore, usePipelineStore } from '../store/useAgentStore';
 
 // Import translations just for default snapshot names
 const translationsLocal = {
