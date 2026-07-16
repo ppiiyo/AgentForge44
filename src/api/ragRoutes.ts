@@ -1,8 +1,15 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ragService } from '../services/rag.service.js';
 import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+
+// Use standard CJS require if available, otherwise fall back to createRequire in ESM
+const getRequire = () => {
+  if (typeof require !== 'undefined') return require;
+  return createRequire(import.meta.url);
+};
+
+const safeRequire = getRequire();
+const pdfParse = safeRequire('pdf-parse');
 // @ts-ignore
 import mammoth from 'mammoth';
 import { logger } from '../utils/logger.js';

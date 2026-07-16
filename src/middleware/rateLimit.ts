@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { checkSlidingWindow } from '../services/usage-tracker.js';
 import { verifyToken } from '../api/userAuth.js';
 import rateLimit, { Store } from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
+import { RedisStore as RedisStoreClass } from 'rate-limit-redis';
+import DefaultRedisStore from 'rate-limit-redis';
+
+// Bulletproof compatibility pattern for both ES module default export and CJS named/default exports
+const RedisStore = RedisStoreClass || (DefaultRedisStore as any).RedisStore || DefaultRedisStore;
+
 import { cache } from '../services/cache.js';
 import { logger } from '../utils/logger.js';
 
