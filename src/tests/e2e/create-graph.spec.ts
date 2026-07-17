@@ -13,7 +13,7 @@ test.describe('E2E Canvas Operations Suite', () => {
     await page.goto('/');
 
     // 2. Clear any lingering states or modal layers
-    const titleLocator = page.locator('span:has-text("KostromAi44")');
+    const titleLocator = page.getByRole('heading', { name: /KostromAi44/i });
     await expect(titleLocator).toBeVisible();
 
     // 3. Locate and press Add Node action or specific toolboxes buttons

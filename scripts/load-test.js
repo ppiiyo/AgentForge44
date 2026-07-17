@@ -17,7 +17,7 @@ export const options = {
 };
 
 export default function () {
-  const host = __ENV.TARGET_HOST || 'http://localhost:3000';
+  const host = __ENV.TARGET_URL || __ENV.TARGET_HOST || 'http://localhost:3000';
   
   // Hit metrics endpoint representing highly concurrent analytic workloads
   const url = `${host}/api/metrics/summary`;

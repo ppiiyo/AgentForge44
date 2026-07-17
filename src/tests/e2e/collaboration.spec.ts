@@ -12,7 +12,7 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     });
     await page1.goto('/');
 
-    const title1 = page1.locator('span:has-text("KostromAi44")');
+    const title1 = page1.getByRole('heading', { name: /KostromAi44/i });
     await expect(title1).toBeVisible();
 
     // Ensure we are in a default shared workflow room
@@ -32,7 +32,7 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     });
     await page2.goto('/');
 
-    const title2 = page2.locator('span:has-text("KostromAi44")');
+    const title2 = page2.getByRole('heading', { name: /KostromAi44/i });
     await expect(title2).toBeVisible();
 
     const roomLocator2 = page2.locator('input[placeholder*="Room"], input[placeholder*="Комната"]').first();

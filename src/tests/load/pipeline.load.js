@@ -21,7 +21,7 @@ export const options = {
   }
 };
 
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:3000';
 const AUTH_TOKEN = __ENV.AUTH_TOKEN || 'test_token';
 
 export default function() {

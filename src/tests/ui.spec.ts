@@ -12,7 +12,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
     // Navigate to homepage before each scenario
     await page.goto('/');
     // Check initial loading
-    await expect(page.locator('span:has-text("KostromAi44")').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /KostromAi44/i }).first()).toBeVisible();
   });
 
   test('1. should load the workspace page, render canvas, and trigger template switching', async ({ page }) => {
