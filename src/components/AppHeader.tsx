@@ -56,7 +56,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
         <div>
           <h1 className="text-xs font-bold text-white tracking-tight uppercase flex items-center gap-1.5">
-            {t('title')}
+            <span>{t('title')}</span>
             <span className="text-[8px] bg-zinc-900 text-zinc-400 font-bold px-1.5 py-0.5 rounded border border-zinc-800">
               v44
             </span>

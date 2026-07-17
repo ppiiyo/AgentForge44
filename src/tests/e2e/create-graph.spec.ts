@@ -2,6 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('E2E Canvas Operations Suite', () => {
   test('should load visual constructor, create nodes, link them and save graph project', async ({ page }) => {
+    // Seed localStorage to skip the onboarding/first launch setup wizard
+    await page.addInitScript(() => {
+      window.localStorage.setItem('kostromai44_initialized', 'true');
+      window.localStorage.setItem('kostromai44_lang', 'en');
+      window.localStorage.setItem('kostromai44_user_name', 'KostromAiDev');
+    });
+
     // 1. Navigate to main UI container port route
     await page.goto('/');
 

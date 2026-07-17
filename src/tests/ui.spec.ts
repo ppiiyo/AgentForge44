@@ -3,6 +3,12 @@ import { test, expect } from '@playwright/test';
 test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test.beforeEach(async ({ page }) => {
+    // Seed localStorage to skip the onboarding/first launch setup wizard
+    await page.addInitScript(() => {
+      window.localStorage.setItem('kostromai44_initialized', 'true');
+      window.localStorage.setItem('kostromai44_lang', 'en');
+      window.localStorage.setItem('kostromai44_user_name', 'KostromAiDev');
+    });
     // Navigate to homepage before each scenario
     await page.goto('/');
     // Check initial loading

@@ -5,6 +5,11 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     // 1. Establish first client workspace
     const context1 = await browser.newContext();
     const page1 = await context1.newPage();
+    await page1.addInitScript(() => {
+      window.localStorage.setItem('kostromai44_initialized', 'true');
+      window.localStorage.setItem('kostromai44_lang', 'en');
+      window.localStorage.setItem('kostromai44_user_name', 'KostromAiDev1');
+    });
     await page1.goto('/');
 
     const title1 = page1.locator('span:has-text("KostromAi44")');
@@ -20,6 +25,11 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     // 2. Establish second client workspace
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
+    await page2.addInitScript(() => {
+      window.localStorage.setItem('kostromai44_initialized', 'true');
+      window.localStorage.setItem('kostromai44_lang', 'en');
+      window.localStorage.setItem('kostromai44_user_name', 'KostromAiDev2');
+    });
     await page2.goto('/');
 
     const title2 = page2.locator('span:has-text("KostromAi44")');
