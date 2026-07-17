@@ -1,6 +1,6 @@
 {
   "name": "KostromAi44",
-  "description": "Visual AI Agent builder, prompt engineering playground, and code generator featuring secure isolated Node/Python sandboxes and multimodal PDF/Audio/Excel processing.",
+  "description": "Visual AI Agent builder, prompt engineering playground, and code generator featuring secure isolated Node/Python sandboxes, multimodal processing, and integrated Playwright E2E and CI/CD validation pipelines.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
