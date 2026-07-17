@@ -35,7 +35,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('3. should support adding custom node elements from the action Toolbox', async ({ page }) => {
     // Verify Toolbox toggle button or layout panel
-    const toolboxHeader = page.locator('h3:has-text("Toolbox"), h3:has-text("Панель"), text=Toolbox Actions').first();
+    const toolboxHeader = page.locator('h3:has-text("Toolbox"), h3:has-text("Панель"), h3:has-text("Toolbox Actions"), h3:has-text("Добавить модули"), h3:has-text("算子工具箱")').first();
     await expect(toolboxHeader).toBeVisible();
 
     // Click on input node card button in the toolbox
