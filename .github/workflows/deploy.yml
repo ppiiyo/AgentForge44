@@ -64,7 +64,7 @@ jobs:
       - name: Set lowercased repository and sanitized branch names
         run: |
           REPO_LOWER=$(echo "${GITHUB_REPOSITORY}" | tr 'A-Z' 'a-z')
-          REF_LOWER=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr 'A-Z' 'a-z')
+          REF_LOWER=$(echo "${{ replace(github.ref_name, '/', '-') }}" | tr 'A-Z' 'a-z')
           echo "REPO_LOWER=${REPO_LOWER}" >> $GITHUB_ENV
           echo "REF_LOWER=${REF_LOWER}" >> $GITHUB_ENV
 
@@ -82,7 +82,7 @@ jobs:
             kostromai44-frontend:latest
             ghcr.io/${{ env.REPO_LOWER }}/frontend:latest
             ghcr.io/${{ env.REPO_LOWER }}/frontend:sha-${{ github.sha }}
-            ghcr.io/${{ env.REPO_LOWER }}/frontend:${{ env.REF_LOWER }}
+            ghcr.io/${{ env.REPO_LOWER }}/frontend:${{ replace(github.ref_name, '/', '-') }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -97,7 +97,7 @@ jobs:
             kostromai44-backend:latest
             ghcr.io/${{ env.REPO_LOWER }}/backend:latest
             ghcr.io/${{ env.REPO_LOWER }}/backend:sha-${{ github.sha }}
-            ghcr.io/${{ env.REPO_LOWER }}/backend:${{ env.REF_LOWER }}
+            ghcr.io/${{ env.REPO_LOWER }}/backend:${{ replace(github.ref_name, '/', '-') }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -112,7 +112,7 @@ jobs:
             kostromai44-executor:latest
             ghcr.io/${{ env.REPO_LOWER }}/executor:latest
             ghcr.io/${{ env.REPO_LOWER }}/executor:sha-${{ github.sha }}
-            ghcr.io/${{ env.REPO_LOWER }}/executor:${{ env.REF_LOWER }}
+            ghcr.io/${{ env.REPO_LOWER }}/executor:${{ replace(github.ref_name, '/', '-') }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

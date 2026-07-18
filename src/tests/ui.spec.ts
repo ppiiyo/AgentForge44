@@ -33,7 +33,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('2. should clear canvas and allow creating a new empty flow graph', async ({ page }) => {
     // Find Clear / Reset Button
-    const clearBtn = page.locator('button:has-text("Clear"), button:has-text("Clear Canvas"), button:has-text("Очистить")').first();
+    const clearBtn = page.getByRole('button', { name: /clear|очистить/i }).first();
     if (await clearBtn.isVisible()) {
       await clearBtn.click();
     }
@@ -41,11 +41,11 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('3. should support adding custom node elements from the action Toolbox', async ({ page }) => {
     // Verify Toolbox toggle button or layout panel
-    const toolboxHeader = page.locator('h3:has-text("Toolbox"), h3:has-text("Панель"), h3:has-text("Toolbox Actions"), h3:has-text("Добавить модули"), h3:has-text("算子工具箱")').first();
+    const toolboxHeader = page.getByRole('heading', { name: /toolbox|панель|добавить/i }).first();
     await expect(toolboxHeader).toBeVisible();
 
     // Click on input node card button in the toolbox
-    const addInputNodeBtn = page.locator('button:has-text("Input"), button:has-text("Ввод")').first();
+    const addInputNodeBtn = page.getByRole('button', { name: /input|ввод/i }).first();
     if (await addInputNodeBtn.isVisible()) {
       await addInputNodeBtn.click();
     }
@@ -53,7 +53,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('4. should enable saving current flow layout snapshot checkpoints', async ({ page }) => {
     // Tracing snapshot logging and checkpoint save system
-    const snapshotBtn = page.locator('button:has-text("Snapshot"), button:has-text("Snapshot Node"), button:has-text("Снимок")').first();
+    const snapshotBtn = page.getByRole('button', { name: /snapshot|снимок/i }).first();
     if (await snapshotBtn.isVisible()) {
       await snapshotBtn.click();
     }
@@ -61,7 +61,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('5. should load and configure real-time collaboration sessions', async ({ page }) => {
     // Open SyncHub / Collaboration Panel
-    const syncHubBtn = page.locator('button:has-text("Collaboration"), button:has-text("Совместная"), button:has-text("SyncHub")').first();
+    const syncHubBtn = page.getByRole('button', { name: /collaboration|совместная|synchub/i }).first();
     if (await syncHubBtn.isVisible()) {
       await syncHubBtn.click();
       
