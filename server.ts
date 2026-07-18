@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import compression from 'compression';
 import { corsMiddleware } from './src/middleware/cors.js';
 import { setupSecurity } from './src/middleware/security.js';
 import { sanitizeRequestBody } from './src/middleware/sanitize.js';
@@ -84,6 +85,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 }
 
 export const app = express();
+app.use(compression());
 app.set('trust proxy', 1);
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
