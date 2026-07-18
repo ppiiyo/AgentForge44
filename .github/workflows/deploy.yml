@@ -37,6 +37,12 @@ jobs:
         with:
           timeout-minutes: 5
 
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3.3.0
         with:
@@ -58,7 +64,7 @@ jobs:
       - name: Set lowercased repository name
         run: |
           echo "REPO_LOWER=$(echo "${GITHUB_REPOSITORY}" | tr 'A-Z' 'a-z')" >> ${GITHUB_ENV}
-          echo "REF_LOWER=$(echo "${GITHUB_REF_NAME}" | tr 'A-Z' 'a-z')" >> ${GITHUB_ENV}
+          echo "REF_LOWER=$(echo "${GITHUB_REF_NAME}" | tr 'A-Z' 'a-z' | tr '/' '-')" >> ${GITHUB_ENV}
 
       - name: Verify Docker Compose Configuration
         run: docker compose config
