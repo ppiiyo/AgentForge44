@@ -48,7 +48,7 @@ jobs:
         cache: 'npm'
 
     - name: Install Dependencies
-      run: npm ci --legacy-peer-deps
+      run: npm ci --legacy-peer-deps --ignore-scripts
       timeout-minutes: 10
 
     - name: Build Application
