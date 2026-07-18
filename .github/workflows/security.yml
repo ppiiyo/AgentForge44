@@ -14,6 +14,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  HUSKY: '0'
+
 jobs:
   security-scan:
     name: Dependency Audit & Snyk Scan
@@ -33,7 +36,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci --legacy-peer-deps --ignore-scripts
+        run: npm ci --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Run NPM Audit

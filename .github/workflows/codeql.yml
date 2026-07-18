@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HUSKY: '0'
+
 jobs:
   analyze:
     name: CodeQL Scan
@@ -48,7 +51,7 @@ jobs:
         cache: 'npm'
 
     - name: Install Dependencies
-      run: npm ci --legacy-peer-deps --ignore-scripts
+      run: npm ci --legacy-peer-deps
       timeout-minutes: 10
 
     - name: Build Application

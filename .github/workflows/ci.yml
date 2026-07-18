@@ -20,6 +20,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  HUSKY: '0'
+
 jobs:
   static-analysis:
     name: Lint & Dependency Security Audit
@@ -43,7 +46,7 @@ jobs:
           git diff --exit-code package-lock.json || (echo "❌ package-lock.json is out of sync! Run 'npm install' locally and commit." && exit 1)
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps --ignore-scripts
+        run: npm ci --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Run TypeScript Linter Check
@@ -76,7 +79,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps --ignore-scripts
+        run: npm ci --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Build Production Bundles
@@ -130,7 +133,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps --ignore-scripts
+        run: npm ci --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Install Playwright Browsers

@@ -21,7 +21,7 @@ export const options = {
   }
 };
 
-const targetUrl = __ENV.TARGET_URL || 'http://localhost:3000';
+const BASE_URL = __ENV.TARGET_URL || 'http://localhost:3000';
 const AUTH_TOKEN = __ENV.AUTH_TOKEN || 'test_token';
 
 export default function() {
@@ -40,7 +40,7 @@ export default function() {
   };
 
   const startTime = Date.now();
-  const res = http.post(`${targetUrl}/api/execute`, payload, params);
+  const res = http.post(`${BASE_URL}/api/execute`, payload, params);
   const duration = Date.now() - startTime;
 
   pipelineDuration.add(duration);
