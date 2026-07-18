@@ -19,18 +19,25 @@ interface LogsTabProps {
 }
 
 const Sparkline: React.FC<{ data: number[]; steps: string[] }> = ({ data, steps }) => {
-  if (data.length === 0) return null;
+  const cleanData = data.map(val => {
+    const num = Number(val);
+    return isNaN(num) || !isFinite(num) ? 0 : num;
+  });
+
+  if (cleanData.length === 0) return null;
   const height = 28;
   const width = 140;
   const padding = 2;
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min;
+  const max = Math.max(...cleanData, 1);
+  const min = Math.min(...cleanData, 0);
+  const range = (max - min) || 1;
 
-  const points = data.map((val, index) => {
-    const x = padding + (index / Math.max(data.length - 1, 1)) * (width - padding * 2);
+  const points = cleanData.map((val, index) => {
+    const x = padding + (index / Math.max(cleanData.length - 1, 1)) * (width - padding * 2);
     const y = height - (padding + ((val - min) / range) * (height - padding * 2));
-    return `${x},${y}`;
+    const safeX = isNaN(x) || !isFinite(x) ? 0 : x;
+    const safeY = isNaN(y) || !isFinite(y) ? 0 : y;
+    return `${safeX},${safeY}`;
   }).join(' ');
 
   return (
@@ -39,13 +46,13 @@ const Sparkline: React.FC<{ data: number[]; steps: string[] }> = ({ data, steps 
       <div className="flex items-center gap-1.5">
         <span className="text-[7.5px] font-mono text-slate-500">{min}ms</span>
         <svg width={width} height={height} className="overflow-visible">
-          {data.length > 1 && (
+          {cleanData.length > 1 && (
             <path
               d={`M ${padding},${height} L ${points} L ${width - padding},${height} Z`}
               className="fill-sky-500/10"
             />
           )}
-          {data.length > 1 ? (
+          {cleanData.length > 1 ? (
             <polyline
               fill="none"
               stroke="#0ea5e9"
@@ -55,14 +62,16 @@ const Sparkline: React.FC<{ data: number[]; steps: string[] }> = ({ data, steps 
           ) : (
             <circle cx={width / 2} cy={height / 2} r="2" fill="#0ea5e9" />
           )}
-          {data.map((val, idx) => {
-            const x = padding + (idx / Math.max(data.length - 1, 1)) * (width - padding * 2);
+          {cleanData.map((val, idx) => {
+            const x = padding + (idx / Math.max(cleanData.length - 1, 1)) * (width - padding * 2);
             const y = height - (padding + ((val - min) / range) * (height - padding * 2));
+            const safeX = isNaN(x) || !isFinite(x) ? 0 : x;
+            const safeY = isNaN(y) || !isFinite(y) ? 0 : y;
             return (
               <circle
                 key={idx}
-                cx={x}
-                cy={y}
+                cx={safeX}
+                cy={safeY}
                 r="1.75"
                 className="fill-sky-400 stroke-slate-950 stroke-[0.75px] hover:r-3.5 transition-all cursor-crosshair"
               >

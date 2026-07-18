@@ -611,14 +611,23 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 
   // Approximate Stacked data chart calculation
   const chartData = summary?.daily ? summary.daily.map(day => {
+    const runsRaw = Number(day.runs);
+    const runs = isNaN(runsRaw) || !isFinite(runsRaw) ? 0 : runsRaw;
+
+    const costRaw = Number(day.cost);
+    const cost = isNaN(costRaw) || !isFinite(costRaw) ? 0 : costRaw;
+
+    const tokensRaw = Number(day.tokens);
+    const tokens = isNaN(tokensRaw) || !isFinite(tokensRaw) ? 0 : tokensRaw;
+
     return {
-      name: day.date,
-      runs: day.runs,
-      cost: Number(day.cost.toFixed(5)),
+      name: day.date || '',
+      runs,
+      cost: Number(cost.toFixed(5)),
       // Artificially distribute token classification weight cleanly based on aggregate tokens
-      geminiTokens: Math.round(day.tokens * 0.65),
-      reviewerTokens: Math.round(day.tokens * 0.25),
-      otherTokens: Math.round(day.tokens * 0.1)
+      geminiTokens: Math.round(tokens * 0.65),
+      reviewerTokens: Math.round(tokens * 0.25),
+      otherTokens: Math.round(tokens * 0.1)
     };
   }) : [];
 

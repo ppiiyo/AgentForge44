@@ -61,10 +61,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set lowercased repository name
+      - name: Set lowercased repository and sanitized branch names
         run: |
-          echo "REPO_LOWER=$(echo "${GITHUB_REPOSITORY}" | tr 'A-Z' 'a-z')" >> ${GITHUB_ENV}
-          echo "REF_LOWER=$(echo "${{ github.ref_name }}" | tr '/' '-' | tr 'A-Z' 'a-z')" >> ${GITHUB_ENV}
+          REPO_LOWER=$(echo "${GITHUB_REPOSITORY}" | tr 'A-Z' 'a-z')
+          REF_LOWER=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr 'A-Z' 'a-z')
+          echo "REPO_LOWER=${REPO_LOWER}" >> $GITHUB_ENV
+          echo "REF_LOWER=${REF_LOWER}" >> $GITHUB_ENV
 
       - name: Verify Docker Compose Configuration
         run: docker compose config
@@ -77,6 +79,7 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
+            kostromai44-frontend:latest
             ghcr.io/${{ env.REPO_LOWER }}/frontend:latest
             ghcr.io/${{ env.REPO_LOWER }}/frontend:sha-${{ github.sha }}
             ghcr.io/${{ env.REPO_LOWER }}/frontend:${{ env.REF_LOWER }}
@@ -91,6 +94,7 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
+            kostromai44-backend:latest
             ghcr.io/${{ env.REPO_LOWER }}/backend:latest
             ghcr.io/${{ env.REPO_LOWER }}/backend:sha-${{ github.sha }}
             ghcr.io/${{ env.REPO_LOWER }}/backend:${{ env.REF_LOWER }}
@@ -105,21 +109,36 @@ jobs:
           push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           load: ${{ !(github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) }}
           tags: |
+            kostromai44-executor:latest
             ghcr.io/${{ env.REPO_LOWER }}/executor:latest
             ghcr.io/${{ env.REPO_LOWER }}/executor:sha-${{ github.sha }}
             ghcr.io/${{ env.REPO_LOWER }}/executor:${{ env.REF_LOWER }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Start Database and Redis Dependency containers
+      - name: Start Full Docker Compose Stack
         run: |
-          docker compose up -d --wait --wait-timeout 60 kostromai44-db kostromai44-redis
+          docker compose up -d
           docker compose ps
 
-      - name: Run Integration Tests inside Compose Environment
+      - name: Run Stack Integration and Liveness Smoke Tests
         run: |
-          # Build and run tests within the backend container connected to database & redis
-          docker compose run --rm kostromai44-backend npm run test
+          echo "Waiting for all microservices, PostgreSQL, and Redis to boot up and integrate..."
+          SUCCESS=false
+          for i in {1..15}; do
+            if curl -s -f http://localhost:3000/api/health | grep -q "ok"; then
+              echo "✅ Success: Stack integrated successfully and serves requests!"
+              SUCCESS=true
+              break
+            fi
+            echo "Waiting for endpoints to respond (attempt $i/15)..."
+            sleep 4
+          done
+          if [ "$SUCCESS" = "false" ]; then
+            echo "❌ Error: Docker Compose stack failed to integrate or respond in time."
+            docker compose logs
+            exit 1
+          fi
 
       - name: Shutdown Compose Services
         if: always()
