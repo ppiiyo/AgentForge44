@@ -11,6 +11,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:3000';
+const AUTH_TOKEN = __ENV.AUTH_TOKEN || 'test_token';
 
 export default function() {
   // Simulate failures for circuit breaker
@@ -18,7 +19,10 @@ export default function() {
     blueprintId: 'failing-1',
     inputs: {}
   }), {
-    headers: { 'Content-Type': 'application/json' }
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AUTH_TOKEN}`
+    }
   });
 
   check(res, {

@@ -24,6 +24,37 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Application Dependencies
+        run: npm ci --legacy-peer-deps
+        timeout-minutes: 5
+
+      - name: Prepare Local Database
+        run: |
+          npm run db:generate
+          npm run db:push
+        env:
+          NODE_ENV: test
+
+      - name: Start Application Server
+        run: |
+          npm run dev &
+          for i in {1..30}; do
+            curl -s http://localhost:3000/api/health && break
+            sleep 2
+          done
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          JWT_SECRET: supersecretjwtkeymustbe32charslong!
+          ENCRYPTION_MASTER_KEY: supersecretencryptionkeymustbe32chars!
+          AGENTFORGE_API_KEY: test_token
+
       - name: Install k6
         run: |
           sudo mkdir -p /usr/share/keyrings
@@ -35,7 +66,8 @@ jobs:
       - name: Execute Pipeline Load Test
         run: |
           k6 run src/tests/load/pipeline.load.js \
-            -e TARGET_URL=${{ github.event.inputs.target_environment || 'https://staging.agentforge.dev' }}
+            -e TARGET_URL=${{ github.event.inputs.target_environment || 'http://localhost:3000' }} \
+            -e AUTH_TOKEN=test_token
         env:
           K6_STATSD_ENABLE: "true"
           K6_STATSD_ADDR: "localhost:8125"
@@ -43,7 +75,8 @@ jobs:
       - name: Execute Circuit Breaker Resilience Test
         run: |
           k6 run src/tests/load/circuit-breaker.load.js \
-            -e TARGET_URL=${{ github.event.inputs.target_environment || 'https://staging.agentforge.dev' }}
+            -e TARGET_URL=${{ github.event.inputs.target_environment || 'http://localhost:3000' }} \
+            -e AUTH_TOKEN=test_token
 
       - name: Check Performance SLA Latency Regressions
         run: |
