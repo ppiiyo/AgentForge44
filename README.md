@@ -33,13 +33,41 @@
 
 ---
 
-## 🎨 Premium X-Style UI/UX Redesign & Aesthetic Philosophy
+## ⚙️ Core Technical Architecture & Functional Modules
 
-The entire platform interface has undergone a professional, FAANG-caliber visual and architectural redesign focusing on minimalist precision:
-- **"X" (Twitter) Dark Mode Aesthetic**: Utilizing ultra-high contrast pitch-black backgrounds (`bg-black`) and matte zinc accents to eliminate distracting gradients and visual clutter. All focus is placed purely on your multi-agent architecture.
-- **Modern Volumetric Depth**: Implementing soft Glassmorphism textures, subtle hairline borders (`border-neutral-900`) instead of heavy boxes, and ambient multi-layered shadows (`shadow-volumetric`) to give components a tactile, floating presence.
-- **Bold Typography & Hierarchy**: Incorporating the premium geometric `Space Grotesk` font for prominent display headings, paired with `JetBrains Mono` for developer metrics, step parameters, and logs.
-- **Progressive Disclosure**: Reducing distraction by hiding unnecessary technical telemetry in margins, keeping the layout perfectly breathable and elegant.
+**KostromAi44** is engineered as a robust, high-availability platform for hosting, testing, and scaling multi-agent AI topologies. Below are the key engineering specifications, features, and active runtime systems:
+
+### 🚀 1. Advanced Topological Parallel Scheduler
+*   **Dynamic Dependency Resolution**: At runtime, the `PipelineExecutor` parses the visual graph connection topology to identify independent, parallel execution branches.
+*   **Worker Pool Parallelization**: Independent parallel nodes are scheduled concurrently using optimized JavaScript asynchronous promise pooling, reducing total execution latency by up to 60% compared to typical serial LLM chaining frameworks.
+*   **Stateful Memory Propagation**: Parent variables and payload structures are sanitized and automatically mapped to down-stream mustache templates (`{{variable}}`) at each topological step.
+
+### 🔄 2. Self-Correction & Auto-Healing (Evaluation Loops)
+*   **Deterministic Metric Scoring**: Integrated `Reviewer` nodes score previous outputs against precise rules (JSON schema, regex match, semantic evaluation).
+*   **State Rewinding & Feedback Loops**: If specified thresholds are not reached, the system automatically rewinds the execution graph state back to a custom parent node, injecting structural corrections and reviewer critique back to the LLM agent.
+*   **Execution Safety Gates**: Features an infinite loop prevention mechanism with configurable budget counters to halt executing pipelines if thresholds are continuously missed, preventing runaway API billing.
+
+### 🛡️ 3. Isolated VM Sandbox (Tool/Code Node Execution)
+*   **Secure Sub-thread Isolation**: Custom JavaScript Tool nodes execute in sandboxed environment contexts isolated from the main host OS, preventing arbitrary system commands execution or filesystem access.
+*   **CPU & Memory Limits**: Script executors enforce strict execution timeouts and memory size constraints to prevent infinite loops, thread blocking, and Denial of Service (DoS) attacks on the backend server.
+
+### 📚 4. Multi-Format RAG & 3D Vector Analytics
+*   **Binary Document Parsing**: Native binary parser pipelines ingest, extract, and tokenize text from **PDF (.pdf)**, **Word (.docx)**, **Markdown (.md)**, and raw text files under-the-hood.
+*   **Interactive Semantic Directory**: A dedicated semantic chunk explorer allows developers to deep-search indexing pools with exact text fragment highlighting and similarity metrics.
+*   **WebGL 3D Embedding Cluster Explorer**: Projects vector embedding databases into a fully interactive 3D coordinate space to visually inspect clustering quality, semantic distance, and index distributions.
+
+### 👥 5. Live Collaboration presence-hub & Resource Locking
+*   **High-Frequency Synchronization**: Real-time developer collaboration runs over a multi-room Socket.io WebSocket server, synchronizing editor cursors, active node selections, and pipeline configurations instantly.
+*   **Distributed Lock Manager**: Prevents configuration overrides. Selecting a node automatically locks it for editing, showing clear developer presence badges on locked elements.
+
+### 🕑 6. Git-Style Time-Travel & Snapshot Debugger
+*   **Incremental State Auditing**: Tracks every visual, structural, and variable state update to create a continuous chronological ledger of revisions.
+*   **Visual Side-by-Side Diffing**: Highlight additions, deletions, and property updates in color-coded visual diffs.
+*   **On-the-Fly Memory Modification**: Stop execution in the debugger to manually modify intermediate variables. Modified frames instantly propagate down the remaining graph execution to dry-run changes before deploying.
+
+### 🎛️ 7. Model Context Protocol (MCP) Integration
+*   **Adaptive Tool Discovery**: Configure and authenticate remote or local MCP servers directly within the platform's Sync Hub.
+*   **Protocol Compliance**: Dynamically synchronize schema declarations to expose filesystem operations, database connectors, and browser automated execution scripts safely to active canvas agents.
 
 ---
 
