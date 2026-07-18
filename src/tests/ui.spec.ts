@@ -17,7 +17,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('1. should load the workspace page, render canvas, and trigger template switching', async ({ page }) => {
     // Validate template drawer toggle Button is present
-    const templatesBtn = page.locator('button:has-text("Templates"), button:has-text("Шаблоны")').first();
+    const templatesBtn = page.getByRole('button', { name: /шаблон|template/i }).first();
     await expect(templatesBtn).toBeVisible();
     await templatesBtn.click();
 

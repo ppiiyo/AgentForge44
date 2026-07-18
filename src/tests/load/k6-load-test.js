@@ -22,7 +22,7 @@ export const options = {
 };
 
 export default function () {
-  const baseUrl = __ENV.BASE_URL || 'http://localhost:3000';
+  const baseUrl = __ENV.TARGET_URL || __ENV.BASE_URL || 'http://localhost:3000';
   const url = `${baseUrl}/api/run-pipeline`;
 
   // Standard mock self-correcting agent pipeline
