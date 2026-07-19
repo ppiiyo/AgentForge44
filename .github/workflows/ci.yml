@@ -42,7 +42,7 @@ jobs:
 
       - name: Verify package-lock.json is in sync
         run: |
-          npm install --package-lock-only --legacy-peer-deps --ignore-scripts
+          npm install --ignore-scripts --prefer-offline
           git diff --exit-code package-lock.json || (echo "❌ package-lock.json is out of sync! Run 'npm install' locally and commit." && exit 1)
 
       - name: Install Application Dependencies
@@ -62,10 +62,13 @@ jobs:
         uses: mxschmitt/action-tmate@v3
 
   build-and-test:
-    name: Compile & Run Tests
+    name: Compile & Run Tests (Node ${{ matrix.node-version }})
     needs: static-analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [20, 22]
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -75,7 +78,7 @@ jobs:
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install Application Dependencies
