@@ -9,33 +9,6 @@ export default defineConfig(() => {
     plugins: [
       react(), 
       tailwindcss(),
-      {
-        name: 'api-server-middleware',
-        configureServer(server) {
-          server.middlewares.use((req, res, next) => {
-            if (req.url === '/api/run-pipeline' && req.method === 'POST') {
-              let body = '';
-              req.on('data', chunk => {
-                body += chunk;
-              });
-              req.on('end', async () => {
-                try {
-                  const { nodes, connections } = JSON.parse(body);
-                  const { executePipeline } = await import('./src/api/agentRun.js');
-                  const result = await executePipeline(nodes, connections);
-                  res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify(result));
-                } catch (err: any) {
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ error: err.message || String(err) }));
-                }
-              });
-            } else {
-              next();
-            }
-          });
-        }
-      }
     ],
     resolve: {
       alias: {
@@ -50,7 +23,7 @@ export default defineConfig(() => {
     },
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: 'jsdom' as const,
       setupFiles: ['./src/tests/setup.ts'],
       testTimeout: 30000,
       exclude: [
@@ -61,8 +34,8 @@ export default defineConfig(() => {
       ],
       fileParallelism: false,
       coverage: {
-        provider: 'v8',
-        reporter: ['text', 'json', 'html'],
+        provider: 'v8' as const,
+        reporter: ['text', 'json', 'html'] as string[],
         exclude: [
           'node_modules/**',
           'dist/**',

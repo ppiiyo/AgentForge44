@@ -29,7 +29,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Compile and Bundle Frontend & Backend Assets
@@ -43,7 +43,7 @@ jobs:
           cp package.json package-lock.json setup.sh docker-compose.yml Dockerfile .env.example README.md LICENSE dist-release/
           # Prune devDependencies inside production runtime container representation
           cd dist-release
-          npm ci --omit=dev --legacy-peer-deps
+          npm install --omit=dev --legacy-peer-deps
           cd ..
 
       - name: Generate Tar and Zip Bundles

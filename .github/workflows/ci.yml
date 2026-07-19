@@ -45,7 +45,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Run Dependency Integrity Check
-        run: ./scripts/dependency-integrity-check.sh
+        run: bash ./scripts/dependency-integrity-check.sh
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 

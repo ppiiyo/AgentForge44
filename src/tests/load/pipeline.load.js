@@ -40,13 +40,11 @@ export default function() {
   };
 
   let res;
-  let success = false;
   const startTime = Date.now();
 
   for (let attempt = 0; attempt < 3; attempt++) {
     res = http.post(`${BASE_URL}/api/execute`, payload, params);
     if (res.status === 200 || res.status === 401 || res.status === 201) {
-      success = true;
       break;
     }
     sleep(1); // Wait 1 second before retrying
