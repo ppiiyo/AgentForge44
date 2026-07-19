@@ -220,8 +220,8 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
     }
   },
   {
-    id: "code-reviewer-agent",
-    title: "Code Reviewer Agent",
+    id: "multi-agent-coder",
+    title: "Self-Correcting Multi-Agent Coder",
     description: "Self-correcting multi-agent loop that generates code, critisizes it with custom rules, and applies feedback automatically.",
     authorId: "kostromai44_core",
     category: "agent",
@@ -231,7 +231,7 @@ const SEED_TEMPLATES: MarketplaceItem[] = [
     rating: 4.7,
     createdAt: new Date().toISOString(),
     graphSnapshot: {
-      name: "Code Reviewer Agent",
+      name: "Self-Correcting Multi-Agent Coder",
       nodes: [
         {
           id: "code-input",
@@ -1214,10 +1214,9 @@ export class MarketplaceManager {
         });
       }
 
-      const list = await db.select().from(tables.marketplaceItems);
-      const count = list.length;
-      if (count === 0) {
-        for (const t of SEED_TEMPLATES) {
+      for (const t of SEED_TEMPLATES) {
+        const itemCheck = await db.select().from(tables.marketplaceItems).where(eq(tables.marketplaceItems.id, t.id)).limit(1);
+        if (itemCheck.length === 0) {
           await db.insert(tables.marketplaceItems).values({
             id: t.id,
             name: t.title,
@@ -1233,6 +1232,21 @@ export class MarketplaceManager {
             reviews: '[]',
             createdAt: t.createdAt
           });
+        } else {
+          const existing = itemCheck[0];
+          if (existing.name !== t.title) {
+            await db.update(tables.marketplaceItems)
+              .set({
+                name: t.title,
+                description: t.description,
+                type: t.category,
+                data: JSON.stringify({
+                  ...t.graphSnapshot,
+                  tags: t.tags
+                })
+              })
+              .where(eq(tables.marketplaceItems.id, t.id));
+          }
         }
       }
     } catch (err: any) {
