@@ -49,6 +49,18 @@ jobs:
         run: npm ci --legacy-peer-deps
         timeout-minutes: 5
 
+      - name: Run Dependency Integrity Check
+        run: ./scripts/dependency-integrity-check.sh
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Debug Dependency Failure
+        if: failure()
+        run: |
+          echo "=== Debug Dependency Failure ==="
+          npm list --depth=0 || true
+          df -h
+
       - name: Run TypeScript Linter Check
         run: npm run lint
 
