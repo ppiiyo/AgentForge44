@@ -48,6 +48,16 @@ export async function enterpriseTenantContext(
   next: NextFunction
 ): Promise<void> {
   try {
+    const path = req.baseUrl + req.path;
+    if (path.startsWith('/api/resilience')) {
+      // Bypass database lookup for resilience endpoints to prevent deadlocks when DB failure is simulated
+      (req as any).workspaceId = 'default-workspace';
+      (req as any).workspaceRole = 'owner';
+      (req as any).tenantId = 'default-workspace';
+      next();
+      return;
+    }
+
     // 1. Resolve user ID from req.user or parse JWT from Authorization header
     let userId = (req as any).user?.id;
     if (!userId && req.headers.authorization) {

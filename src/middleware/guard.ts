@@ -16,7 +16,10 @@ const PUBLIC_PATHS_ALLOWLIST = [
   '/api/test-payload',
   '/api/config/status',
   '/api/config/env-status',
-  '/api/config/update-keys'
+  '/api/config/update-keys',
+  '/api/resilience/chaos-config',
+  '/api/resilience/chaos-reset',
+  '/api/resilience/circuit-breakers'
 ];
 
 export function unifiedGuardMiddleware(req: Request, res: Response, next: NextFunction): void {
