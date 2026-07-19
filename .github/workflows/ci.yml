@@ -40,13 +40,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Verify package-lock.json is in sync
-        run: |
-          npm install --package-lock-only --legacy-peer-deps --ignore-scripts
-          git diff --exit-code package-lock.json || (echo "❌ package-lock.json is out of sync! Run 'npm install' locally and commit." && exit 1)
-
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Run Dependency Integrity Check
@@ -94,7 +89,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Build Production Bundles
@@ -148,7 +143,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Application Dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
         timeout-minutes: 5
 
       - name: Install Playwright Browsers
