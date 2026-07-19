@@ -15,8 +15,8 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<10000'], // 95% requests < 10s (permissive for cold-starts/latency)
-    http_req_failed: ['rate<0.99'],    // < 99% failed requests (highly tolerant of cold starts)
-    errors: ['rate<0.99'],             // < 99% error rate
+    http_req_failed: ['rate<0.05'],    // < 5% failed requests
+    errors: ['rate<0.1'],             // < 10% error rate
     pipeline_duration: ['p(95)<15000']  // 95% pipelines < 15s
   }
 };
