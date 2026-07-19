@@ -17,7 +17,7 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
 
   test('1. should load the workspace page, render canvas, and trigger template switching', async ({ page }) => {
     // Validate template drawer toggle Button is present
-    const templatesBtn = page.getByRole('button', { name: /шаблон|template/i }).first();
+    const templatesBtn = page.locator('#tab-btn-market, [id="tab-btn-market"]').first();
     await expect(templatesBtn).toBeVisible();
     await templatesBtn.click();
 
@@ -26,9 +26,14 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
     await expect(coderTemplate).toBeVisible();
     await coderTemplate.click();
 
+    // Click the actual Install into Workspace button inside detail view
+    const installBtn = page.getByRole('button', { name: /install|установить|导入/i }).first();
+    await expect(installBtn).toBeVisible();
+    await installBtn.click();
+
     // Canvas node containers must become visible
-    const firstNode = page.locator('[id^="node-"]').first();
-    await expect(firstNode).toBeDefined();
+    const firstNode = page.locator('[id^="node-"], [class*="react-flow__node"]').first();
+    await expect(firstNode).toBeVisible();
   });
 
   test('2. should clear canvas and allow creating a new empty flow graph', async ({ page }) => {

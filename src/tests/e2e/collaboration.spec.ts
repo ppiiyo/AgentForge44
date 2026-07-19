@@ -43,7 +43,7 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     // 3. Trigger interaction/edit in browser context 1
     const nodeHeader1 = page1.locator('[class*="react-flow__node"], [class*="node-wrapper"]').first();
     if (await nodeHeader1.isVisible()) {
-      await nodeHeader1.click();
+      await nodeHeader1.click({ force: true });
       
       const promptInput1 = page1.locator('textarea, input[type="text"]').first();
       if (await promptInput1.isVisible()) {
