@@ -72,7 +72,7 @@ jobs:
         run: docker compose config
 
       - name: Build and Push Frontend Service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.frontend
@@ -87,7 +87,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and Push Backend Service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.backend
@@ -102,7 +102,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and Push Executor Service
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.executor
