@@ -2,10 +2,13 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ragService } from '../services/rag.service.js';
 import { createRequire } from 'module';
 
+import { pathToFileURL } from 'url';
+
 // Use standard CJS require if available, otherwise fall back to createRequire in ESM
 const getRequire = () => {
   if (typeof require !== 'undefined') return require;
-  return createRequire(import.meta.url);
+  const baseUrl = (typeof __filename !== 'undefined' ? pathToFileURL(__filename).href : pathToFileURL(process.cwd() + '/package.json').href);
+  return createRequire(baseUrl);
 };
 
 const safeRequire = getRequire();

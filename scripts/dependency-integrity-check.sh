@@ -32,7 +32,7 @@ else
 fi
 
 echo "4. Disk Space Information..."
-df -h
+df -h || true
 
 echo "5. Verifying Accessible Environment Variables..."
 if [ -n "$GEMINI_API_KEY" ]; then
