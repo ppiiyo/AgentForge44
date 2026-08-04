@@ -602,7 +602,9 @@ router.post('/runs/:id/chat', async (req: Request, res: Response) => {
                       apiKey === "your_gemini_api_key_here" || 
                       apiKey.startsWith("sandbox_") || 
                       apiKey.includes("sandbox") || 
-                      process.env.NODE_ENV === "test";
+                      process.env.NODE_ENV === "test" ||
+                      process.env.VITEST === "true" ||
+                      process.env.SIMULATION_MODE === "true";
 
     if (isSandbox) {
       res.json({

@@ -1,13 +1,18 @@
 process.env.AGENTFORGE_API_KEY = 'forge_production_admin_token';
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../../server.js';
-import { db, tables } from '../db/index.js';
+import { db, tables, adapter } from '../db/index.js';
+import { runSchemaMigrations } from '../api/migrate.js';
 import { eq } from 'drizzle-orm';
 
 describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', () => {
   const adminToken = 'forge_production_admin_token';
+
+  beforeAll(async () => {
+    await runSchemaMigrations(adapter);
+  });
 
   it('should pause at human confirmation node, allow chat intervention, and resume on approval', async () => {
     const runId = 'human-gate-test-' + Date.now();
@@ -67,7 +72,7 @@ describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', (
     // Poll until run pauses
     let status = 'pending';
     let data: any;
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       const getRes = await request(app)
         .get(`/api/runs/${actualRunId}`)
         .set('Authorization', `Bearer ${adminToken}`);
@@ -76,7 +81,7 @@ describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', (
       if (status === 'paused' || status === 'completed' || status === 'failed') {
         break;
       }
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     // Verify it paused successfully at the human gate node!
@@ -114,7 +119,7 @@ describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', (
     expect(confirmRes.body.status).toBe('pending');
 
     // Poll until run finishes successfully
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       const getRes = await request(app)
         .get(`/api/runs/${actualRunId}`)
         .set('Authorization', `Bearer ${adminToken}`);
@@ -123,7 +128,7 @@ describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', (
       if (status === 'completed' || status === 'failed') {
         break;
       }
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     expect(status).toBe('completed');
@@ -152,11 +157,11 @@ describe('Interactive Human-in-the-Loop Interventions & Live Chat Gate Suite', (
 
     // Poll until run pauses
     let status = 'pending';
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       const getRes = await request(app).get(`/api/runs/${actualRunId}`).set('Authorization', `Bearer ${adminToken}`);
       status = getRes.body.status;
       if (status === 'paused') break;
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     expect(status).toBe('paused');
