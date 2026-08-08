@@ -1,15 +1,16 @@
 import { defineConfig } from 'drizzle-kit';
 
-const dbType = process.env.DB_TYPE || 'sqlite';
+const dbUrl = process.env.DATABASE_URL || '';
+const isPostgres = process.env.DB_TYPE === 'postgres' || dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://');
 
 export default defineConfig(
-  dbType === 'postgres'
+  isPostgres
     ? {
         schema: './src/db/postgres-schema.ts',
         out: './drizzle/postgres',
         dialect: 'postgresql',
         dbCredentials: {
-          url: process.env.DATABASE_URL || 'postgres://localhost:5432/kostromai44',
+          url: dbUrl || 'postgres://localhost:5432/kostromai44',
         },
       }
     : {
@@ -21,3 +22,4 @@ export default defineConfig(
         },
       }
 );
+

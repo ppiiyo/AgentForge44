@@ -43,22 +43,20 @@ export function validateDatabaseConfig(dbType: string, databaseUrl: string): voi
  * conducting strict config checks and returning high-resilience adapters.
  */
 export function createDatabaseConnection(): IDatabaseAdapter {
-  let envDbType = process.env.DB_TYPE || 'sqlite';
+  let rawEnvDbType = process.env.DB_TYPE;
   let databaseUrl = process.env.DATABASE_URL || '';
 
   // Classify connection type cleanly
   let isPostgresScheme = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
   let dbType: 'sqlite' | 'postgres' = 'sqlite';
 
-  if (envDbType === 'postgres') {
+  if (rawEnvDbType === 'postgres' || (!rawEnvDbType && isPostgresScheme)) {
     dbType = 'postgres';
-  } else if (envDbType === 'sqlite') {
+  } else {
     dbType = 'sqlite';
-  } else if (isPostgresScheme) {
-    dbType = 'postgres';
   }
 
-  logger.info(`Database connection factory resolving adapter type: "${dbType}" (requested env DB_TYPE: "${envDbType}").`);
+  logger.info(`Database connection factory resolving adapter type: "${dbType}" (requested env DB_TYPE: "${rawEnvDbType || 'default: sqlite'}").`);
 
   try {
     validateDatabaseConfig(dbType, databaseUrl);

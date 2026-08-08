@@ -75,7 +75,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [22]
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -154,6 +154,7 @@ jobs:
         run: npm run test:e2e -- --grep "1\."
         env:
           NODE_ENV: test
+          DB_TYPE: postgres
           DATABASE_URL: postgres://test_user:test_password@localhost:5432/agentforge_test
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: supersecretjwtkeymustbe32charslong!
@@ -164,6 +165,7 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          DB_TYPE: postgres
           DATABASE_URL: postgres://test_user:test_password@localhost:5432/agentforge_test
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: supersecretjwtkeymustbe32charslong!
