@@ -7,7 +7,7 @@
 # Test info
 
 - Name: ui.spec.ts >> KostromAi44 E2E Orchestrator Suit >> 1. should load the workspace page, render canvas, and trigger template switching
-- Location: src/tests/ui.spec.ts:12:3
+- Location: src/tests/ui.spec.ts:18:3
 
 # Error details
 

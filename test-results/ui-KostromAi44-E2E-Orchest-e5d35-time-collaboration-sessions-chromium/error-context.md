@@ -7,7 +7,7 @@
 # Test info
 
 - Name: ui.spec.ts >> KostromAi44 E2E Orchestrator Suit >> 5. should load and configure real-time collaboration sessions
-- Location: src/tests/ui.spec.ts:56:3
+- Location: src/tests/ui.spec.ts:67:3
 
 # Error details
 

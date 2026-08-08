@@ -45,12 +45,16 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     if (await nodeHeader1.isVisible()) {
       await nodeHeader1.click({ force: true });
       
-      const promptInput1 = page1.locator('textarea, input[type="text"]').first();
+      const promptInput1 = page1.locator('textarea').first();
       if (await promptInput1.isVisible()) {
         await promptInput1.fill('Shared Collaboration Prompt Text Value');
         
-        // 4. Validate context 2 matches the value propagated via socket.io
-        const promptInput2 = page2.locator('textarea, input[type="text"]').first();
+        // 4. Validate context 2 matches the value propagated via collaboration broadcast
+        const nodeHeader2 = page2.locator('[class*="react-flow__node"], [class*="node-wrapper"]').first();
+        if (await nodeHeader2.isVisible()) {
+          await nodeHeader2.click({ force: true });
+        }
+        const promptInput2 = page2.locator('textarea').first();
         await expect(promptInput2).toHaveValue('Shared Collaboration Prompt Text Value');
       }
     }

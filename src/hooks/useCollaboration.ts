@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FlowNode, FlowConnection } from '../types';
 
 export interface RemoteCursor {
@@ -55,6 +55,91 @@ export function useCollaboration(
   const [notifications] = useState<CollabNotification[]>([]);
   const locksRef = useRef<Record<string, RemoteLock>>({});
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('kostromai44_collab_channel');
+    } catch (e) {}
+
+    const handleMessage = (data: any) => {
+      if (!data || typeof data !== 'object') return;
+      
+      switch (data.type) {
+        case 'NODE_SETTINGS_UPDATED': {
+          const { nodeId, fields } = data;
+          _setNodes((prev) =>
+            prev.map((n) =>
+              n.id === nodeId
+                ? {
+                    ...n,
+                    fields: { ...n.fields, ...fields }
+                  }
+                : n
+            )
+          );
+          break;
+        }
+        case 'NODE_CREATED': {
+          if (data.node) {
+            _setNodes((prev) => prev.some(n => n.id === data.node.id) ? prev : [...prev, data.node]);
+          }
+          break;
+        }
+        case 'NODE_DELETED': {
+          if (data.nodeId) {
+            _setNodes((prev) => prev.filter(n => n.id !== data.nodeId));
+          }
+          break;
+        }
+        case 'EDGE_CREATED': {
+          if (data.connection) {
+            _setConnections((prev) => prev.some(c => c.id === data.connection.id) ? prev : [...prev, data.connection]);
+          }
+          break;
+        }
+        case 'EDGE_DELETED': {
+          if (data.connectionId) {
+            _setConnections((prev) => prev.filter(c => c.id !== data.connectionId));
+          }
+          break;
+        }
+      }
+    };
+
+    if (channel) {
+      channel.onmessage = (event) => handleMessage(event.data);
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'kostromai44_collab_sync' && e.newValue) {
+        try {
+          const payload = JSON.parse(e.newValue);
+          handleMessage(payload);
+        } catch (_) {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [_setNodes, _setConnections]);
+
+  const dispatchBroadcast = (payload: any) => {
+    try {
+      const channel = new BroadcastChannel('kostromai44_collab_channel');
+      channel.postMessage(payload);
+      channel.close();
+    } catch (e) {}
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('kostromai44_collab_sync', JSON.stringify({ ...payload, _t: Date.now() }));
+    }
+  };
+
   return {
     userId,
     userName,
@@ -82,11 +167,11 @@ export function useCollaboration(
     clearNotifications: () => {},
     broadcastCursorMoved: (_x: number, _y: number) => {},
     broadcastNodeMoved: (_nodeId: string, _x: number, _y: number) => {},
-    broadcastNodeCreated: (_node: FlowNode) => {},
-    broadcastNodeDeleted: (_nodeId: string) => {},
-    broadcastEdgeCreated: (_conn: FlowConnection) => {},
-    broadcastEdgeDeleted: (_connId: string) => {},
-    broadcastNodeSettingsUpdated: (_nodeId: string, _fields: any) => {},
+    broadcastNodeCreated: (node: FlowNode) => dispatchBroadcast({ type: 'NODE_CREATED', node }),
+    broadcastNodeDeleted: (nodeId: string) => dispatchBroadcast({ type: 'NODE_DELETED', nodeId }),
+    broadcastEdgeCreated: (connection: FlowConnection) => dispatchBroadcast({ type: 'EDGE_CREATED', connection }),
+    broadcastEdgeDeleted: (connectionId: string) => dispatchBroadcast({ type: 'EDGE_DELETED', connectionId }),
+    broadcastNodeSettingsUpdated: (nodeId: string, fields: any) => dispatchBroadcast({ type: 'NODE_SETTINGS_UPDATED', nodeId, fields }),
     broadcastNodeLock: (_nodeId: string, _isLocked: boolean) => {},
     acquireLock: () => true,
     releaseLock: () => {},

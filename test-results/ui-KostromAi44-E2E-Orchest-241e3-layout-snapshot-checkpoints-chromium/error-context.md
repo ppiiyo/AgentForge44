@@ -7,7 +7,7 @@
 # Test info
 
 - Name: ui.spec.ts >> KostromAi44 E2E Orchestrator Suit >> 4. should enable saving current flow layout snapshot checkpoints
-- Location: src/tests/ui.spec.ts:48:3
+- Location: src/tests/ui.spec.ts:59:3
 
 # Error details
 

@@ -7,7 +7,7 @@
 # Test info
 
 - Name: ui.spec.ts >> KostromAi44 E2E Orchestrator Suit >> 3. should support adding custom node elements from the action Toolbox
-- Location: src/tests/ui.spec.ts:36:3
+- Location: src/tests/ui.spec.ts:47:3
 
 # Error details
 

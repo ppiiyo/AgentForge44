@@ -7,7 +7,7 @@
 # Test info
 
 - Name: ui.spec.ts >> KostromAi44 E2E Orchestrator Suit >> 2. should clear canvas and allow creating a new empty flow graph
-- Location: src/tests/ui.spec.ts:28:3
+- Location: src/tests/ui.spec.ts:39:3
 
 # Error details
 

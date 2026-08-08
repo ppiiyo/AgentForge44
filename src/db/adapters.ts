@@ -25,10 +25,14 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
     const resolvedPath = dbPath || path.join(process.cwd(), 'kostromai44.db');
     this.sqliteInstance = new Database(resolvedPath, { timeout: 10000 });
     
-    // WAL mode
-    this.sqliteInstance.pragma('journal_mode = WAL');
-    this.sqliteInstance.pragma('busy_timeout = 5000');
-    this.sqliteInstance.pragma('foreign_keys = ON');
+    // WAL mode safely initialized
+    try {
+      this.sqliteInstance.pragma('journal_mode = WAL');
+    } catch (_) {}
+    try {
+      this.sqliteInstance.pragma('busy_timeout = 5000');
+      this.sqliteInstance.pragma('foreign_keys = ON');
+    } catch (_) {}
 
     this.db = drizzleSqlite(this.sqliteInstance, { schema: sqliteSchema });
 
@@ -42,7 +46,7 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
         );
         CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY,
-          email TEXT NOT NULL UNIQUE,
+          email TEXT NOT NULL,
           password_hash TEXT NOT NULL,
           role TEXT NOT NULL DEFAULT 'viewer',
           created_at TEXT NOT NULL,
@@ -128,7 +132,7 @@ export class SqliteDatabaseAdapter implements IDatabaseAdapter {
         CREATE TABLE IF NOT EXISTS api_keys (
           id TEXT PRIMARY KEY,
           user_id TEXT NOT NULL,
-          key_hash TEXT NOT NULL UNIQUE,
+          key_hash TEXT NOT NULL,
           name TEXT NOT NULL,
           scopes TEXT NOT NULL,
           last_used_at TEXT,

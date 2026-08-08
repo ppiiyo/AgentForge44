@@ -16,11 +16,14 @@ export const LogSchema = z.object({
   timestamp: z.string(),
   execution_id: z.string().optional(),
   correlationId: z.string().optional(),
-  error: z.object({
-    message: z.string(),
-    stack: z.string().optional(),
-    name: z.string().optional()
-  }).optional()
+  error: z.union([
+    z.string(),
+    z.object({
+      message: z.string().optional(),
+      stack: z.string().optional(),
+      name: z.string().optional()
+    })
+  ]).optional()
 }).catchall(z.any()); // Accept extra arbitrary metadata
 
 export type LogEntry = z.infer<typeof LogSchema>;
