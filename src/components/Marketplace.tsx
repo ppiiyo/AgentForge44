@@ -547,7 +547,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         layoutId={`item-card-${item.id}`}
                         key={item.id}
                         onClick={() => handleViewDetails(item.id)}
-                        className="group cursor-pointer bg-slate-950 hover:bg-slate-900 rounded-2xl border border-slate-900 hover:border-slate-800 p-4.5 transition-all flex flex-col justify-between shadow-lg hover:shadow-2xl relative"
+                        className="template-item group cursor-pointer bg-slate-950 hover:bg-slate-900 rounded-2xl border border-slate-900 hover:border-slate-800 p-4.5 transition-all flex flex-col justify-between shadow-lg hover:shadow-2xl relative"
                       >
                         <div className="space-y-3.5 flex-1 pb-4">
                           {/* Title and category tag */}

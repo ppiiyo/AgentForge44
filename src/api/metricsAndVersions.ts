@@ -298,7 +298,13 @@ export class MetricsCollector {
       totalCostUsd: Number(totalCost.toFixed(4)),
       averageLatencyMs: avgLatency,
       daily: dailyMetrics,
-      executions: filtered.sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()).slice(0, 30)
+      executions: filtered.sort((a,b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()).slice(0, 30),
+      summary: {
+        totalRuns,
+        successRate,
+        totalCostUsd: Number(totalCost.toFixed(4)),
+        averageLatencyMs: avgLatency
+      }
     };
   }
 

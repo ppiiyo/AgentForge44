@@ -22,6 +22,8 @@ test.describe('KostromAi44 E2E Orchestrator Suit', () => {
     await templatesBtn.click();
 
     // Confirm template items list is loaded
+    await page.waitForLoadState('networkidle');
+    await page.locator('.template-item').first().waitFor({ state: 'visible', timeout: 15000 });
     const coderTemplate = page.locator('text=Self-Correcting Multi-Agent Coder').first();
     await expect(coderTemplate).toBeVisible();
     await coderTemplate.click();

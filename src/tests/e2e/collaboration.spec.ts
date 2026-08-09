@@ -41,20 +41,20 @@ test.describe('E2E Real-Time Collaboration Sync Suite', () => {
     }
 
     // 3. Trigger interaction/edit in browser context 1
-    const nodeHeader1 = page1.locator('[class*="react-flow__node"], [class*="node-wrapper"]').first();
-    if (await nodeHeader1.isVisible()) {
-      await nodeHeader1.click({ force: true });
+    const promptNode1 = page1.locator('[class*="react-flow__node"], [class*="node-wrapper"]').filter({ hasText: /Prompt|Coder/i }).first();
+    if (await promptNode1.isVisible()) {
+      await promptNode1.click({ force: true });
       
-      const promptInput1 = page1.locator('textarea').first();
+      const promptInput1 = page1.locator('#right_config_panel textarea').first();
       if (await promptInput1.isVisible()) {
         await promptInput1.fill('Shared Collaboration Prompt Text Value');
         
         // 4. Validate context 2 matches the value propagated via collaboration broadcast
-        const nodeHeader2 = page2.locator('[class*="react-flow__node"], [class*="node-wrapper"]').first();
-        if (await nodeHeader2.isVisible()) {
-          await nodeHeader2.click({ force: true });
+        const promptNode2 = page2.locator('[class*="react-flow__node"], [class*="node-wrapper"]').filter({ hasText: /Prompt|Coder/i }).first();
+        if (await promptNode2.isVisible()) {
+          await promptNode2.click({ force: true });
         }
-        const promptInput2 = page2.locator('textarea').first();
+        const promptInput2 = page2.locator('#right_config_panel textarea').first();
         await expect(promptInput2).toHaveValue('Shared Collaboration Prompt Text Value');
       }
     }
