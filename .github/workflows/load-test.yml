@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       target_environment:
-        description: 'Staging target to load-test'
-        required: true
-        default: 'https://staging.agentforge.dev'
+        description: 'Target URL to load-test'
+        required: false
+        default: 'http://localhost:3000'
 
 permissions:
   contents: read
@@ -65,8 +65,12 @@ jobs:
 
       - name: Execute Pipeline Load Test
         run: |
+          TARGET="${{ github.event.inputs.target_environment }}"
+          if [ -z "$TARGET" ]; then
+            TARGET="http://localhost:3000"
+          fi
           k6 run src/tests/load/pipeline.load.js \
-            -e TARGET_URL=${{ github.event.inputs.target_environment || 'http://localhost:3000' }} \
+            -e TARGET_URL="$TARGET" \
             -e AUTH_TOKEN=test_token
         env:
           K6_STATSD_ENABLE: "true"
@@ -74,8 +78,12 @@ jobs:
 
       - name: Execute Circuit Breaker Resilience Test
         run: |
+          TARGET="${{ github.event.inputs.target_environment }}"
+          if [ -z "$TARGET" ]; then
+            TARGET="http://localhost:3000"
+          fi
           k6 run src/tests/load/circuit-breaker.load.js \
-            -e TARGET_URL=${{ github.event.inputs.target_environment || 'http://localhost:3000' }} \
+            -e TARGET_URL="$TARGET" \
             -e AUTH_TOKEN=test_token
 
       - name: Check Performance SLA Latency Regressions
