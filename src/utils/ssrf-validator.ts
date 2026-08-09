@@ -56,7 +56,7 @@ dns.lookup = function(hostname, options, callback) {
     }
   }
   
-  return originalLookup(hostname, options, callback);
+  return (originalLookup as any)(hostname, options, callback);
 };
 
 const originalPromisesLookup = dns.promises.lookup;
@@ -222,7 +222,9 @@ export async function validateURLForSSRF(urlInput: string): Promise<boolean> {
         }
       }
       // Pin IP address to prevent TOCTOU / DNS Rebinding
-      cacheIp(host, lookupResult[0].address);
+      if (lookupResult[0]) {
+        cacheIp(host, lookupResult[0].address);
+      }
     } catch {
       // If we can't resolve the hostname, block it for safety or let it fail
       if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
@@ -297,7 +299,9 @@ export async function validateUrl(url: string): Promise<void> {
         }
       }
       // Pin IP address to prevent TOCTOU / DNS Rebinding
-      cacheIp(host, lookupResult[0].address);
+      if (lookupResult[0]) {
+        cacheIp(host, lookupResult[0].address);
+      }
     }
   } catch (err: any) {
     if (err.message && err.message.startsWith('SSRF attempt blocked:')) {

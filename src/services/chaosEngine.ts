@@ -59,7 +59,7 @@ class ChaosEngine {
   }
 
   async checkLlmChaos(providerName: string): Promise<void> {
-    const cleanProviderName = providerName.split(' ')[0]; // E.g. "Gemini" from "Gemini (gemini-3.5-flash)"
+    const cleanProviderName = (providerName || 'default').split(' ')[0] || 'default'; // E.g. "Gemini" from "Gemini (gemini-3.5-flash)"
     const failureActive = this.config.llmFailureActive[cleanProviderName] || this.config.llmFailureActive['all'];
     
     if (failureActive) {

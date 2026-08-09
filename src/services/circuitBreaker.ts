@@ -20,14 +20,15 @@ export class CircuitBreaker extends EventEmitter {
   private successCount = 0;
   private lastFailureTime: number | null = null;
   private nextAttempt: number | null = null;
+  private options: CircuitBreakerOptions;
 
-  constructor(private options: CircuitBreakerOptions) {
+  constructor(options: CircuitBreakerOptions) {
     super();
     this.options = {
-      failureThreshold: 5,
-      resetTimeout: 30000,
-      monitoringPeriod: 60000,
-      ...options
+      failureThreshold: options.failureThreshold ?? 5,
+      resetTimeout: options.resetTimeout ?? 30000,
+      monitoringPeriod: options.monitoringPeriod ?? 60000,
+      name: options.name ?? 'default'
     };
   }
 
@@ -154,16 +155,18 @@ export class CircuitBreakerRegistry {
 
   getBreaker(name: string, options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
     // Standardize naming (e.g. "Gemini" from "Gemini (gemini-3.5-flash)")
-    const cleanName = name.split(' ')[0];
-    if (!this.breakers.has(cleanName)) {
-      this.breakers.set(cleanName, new CircuitBreaker({
+    const cleanName = (name || 'default').split(' ')[0] || 'default';
+    let breaker = this.breakers.get(cleanName);
+    if (!breaker) {
+      breaker = new CircuitBreaker({
         name: cleanName,
         failureThreshold: options?.failureThreshold ?? 3, // Highly sensitive for demonstration/testing
         resetTimeout: options?.resetTimeout ?? 10000,     // 10s timeout to retry
         monitoringPeriod: options?.monitoringPeriod ?? 30000,
-      }));
+      });
+      this.breakers.set(cleanName, breaker);
     }
-    return this.breakers.get(cleanName)!;
+    return breaker;
   }
 
   getAllBreakers(): CircuitBreaker[] {

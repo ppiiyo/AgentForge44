@@ -119,7 +119,7 @@ export class PipelineExecutor {
       const originalResolve = resolve;
       const originalReject = reject;
 
-      resolve = (val: PipelineExecutionResult) => {
+      resolve = (val: PipelineExecutionResult | PromiseLike<PipelineExecutionResult>) => {
         const duration = (Date.now() - startTime) / 1000;
         pipelineExecutionsCounter.inc({ status: 'success' });
         pipelineExecutionDuration.observe(duration);
@@ -225,7 +225,7 @@ export class PipelineExecutor {
     // Prepare node inputs
     const incoming = this.connections.filter(c => c.targetId === node.id);
     let localValue: any = this.activeValueRef.value;
-    if (incoming.length === 1) {
+    if (incoming.length === 1 && incoming[0]) {
       localValue = this.nodeOutputs[incoming[0].sourceId];
     } else if (incoming.length > 1) {
       let mergedVars: Record<string, any> = {};

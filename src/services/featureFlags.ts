@@ -22,7 +22,7 @@ class LocalFallbackProvider implements Provider {
   async resolveBooleanEvaluation(
     flagKey: string,
     defaultValue: boolean,
-    context: EvaluationContext
+    _context: EvaluationContext
   ): Promise<ResolutionDetails<boolean>> {
     const envValue = process.env[flagKey.toUpperCase().replace(/-/g, "_")];
     if (envValue !== undefined) {
@@ -35,7 +35,7 @@ class LocalFallbackProvider implements Provider {
   async resolveStringEvaluation(
     flagKey: string,
     defaultValue: string,
-    context: EvaluationContext
+    _context: EvaluationContext
   ): Promise<ResolutionDetails<string>> {
     const envValue = process.env[flagKey.toUpperCase().replace(/-/g, "_")];
     if (envValue !== undefined) {
@@ -48,7 +48,7 @@ class LocalFallbackProvider implements Provider {
   async resolveNumberEvaluation(
     flagKey: string,
     defaultValue: number,
-    context: EvaluationContext
+    _context: EvaluationContext
   ): Promise<ResolutionDetails<number>> {
     const envValue = process.env[flagKey.toUpperCase().replace(/-/g, "_")];
     if (envValue !== undefined) {
@@ -62,7 +62,7 @@ class LocalFallbackProvider implements Provider {
   async resolveObjectEvaluation<T extends JsonValue>(
     flagKey: string,
     defaultValue: T,
-    context: EvaluationContext
+    _context: EvaluationContext
   ): Promise<ResolutionDetails<T>> {
     const envValue = process.env[flagKey.toUpperCase().replace(/-/g, "_")];
     if (envValue !== undefined) {

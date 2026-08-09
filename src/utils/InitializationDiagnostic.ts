@@ -46,7 +46,7 @@ export interface DiagnosticResult {
 function checkPort(port: number, host: string = '0.0.0.0'): Promise<'free' | 'busy'> {
   return new Promise((resolve) => {
     const server = net.createServer();
-    server.once('error', (err: any) => {
+    server.once('error', (_err: any) => {
       resolve('busy');
     });
     server.once('listening', () => {

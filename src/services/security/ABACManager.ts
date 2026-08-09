@@ -1,5 +1,4 @@
 import { rolesPriority, UserRole } from '../../api/rbac.js';
-import { logger } from '../../utils/logger.js';
 
 export interface ABACSubject {
   id: string;
@@ -44,7 +43,7 @@ export class ABACManager {
     }
 
     // 2. Role Priority Gate Checks
-    const userPriority = rolesPriority[subject.role] || 0;
+    const _userPriority = rolesPriority[subject.role] || 0;
     
     // Viewer can only read
     if (subject.role === 'viewer' && action !== 'read') {

@@ -111,7 +111,7 @@ export function handleSimulatedRequest(data: any) {
   // 4. If it's summarizing or text expansion
   else {
     const subjectMatch = contents.match(/(?:about|for|subject|topic|input|welcome to|welcome|hello)\s+([\w\sа-яА-ЯёЁ\-]{1,50})/i);
-    const subject = subjectMatch ? subjectMatch[1].trim() : "KostromAi44 Workspace Workflow";
+    const subject = subjectMatch && subjectMatch[1] ? subjectMatch[1].trim() : "KostromAi44 Workspace Workflow";
     
     text = `[Simulated LLM Output - API Quota Exceeded Fallback]
 

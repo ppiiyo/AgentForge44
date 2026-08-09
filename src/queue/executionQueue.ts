@@ -105,7 +105,7 @@ async function processPipelineRun(
   runId: string,
   nodes: any[],
   connections: any[],
-  variables: any,
+  _variables: any,
   tenantId?: string,
   graphId?: string
 ) {

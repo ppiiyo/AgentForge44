@@ -1,5 +1,4 @@
 import { logger } from '../../utils/logger.js';
-import { validateRegex } from '../../utils/safe-regex.js';
 
 export interface GuardAnalysisResult {
   isSafe: boolean;

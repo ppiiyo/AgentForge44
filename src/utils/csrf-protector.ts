@@ -27,7 +27,7 @@ export class CSRFProtector {
     
     // Constant-time comparison to prevent timing attacks
     try {
-      return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expectedHash));
+      return typeof hash === 'string' && crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expectedHash));
     } catch {
       return false;
     }

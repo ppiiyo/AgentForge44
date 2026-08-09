@@ -114,10 +114,10 @@ export async function enterpriseTenantContext(
       }
 
       // Ensure target workspace actually exists in the workspaces table
-      const wsRows = await db.select().from(tables.workspaces).where(eq(tables.workspaces.id, wsId)).limit(1);
+      const wsRows = await db.select().from(tables.workspaces).where(eq(tables.workspaces.id, wsId || 'default-workspace')).limit(1);
       if (wsRows.length === 0) {
         await db.insert(tables.workspaces).values({
-          id: wsId,
+          id: wsId || 'default-workspace',
           name: wsId === 'default-workspace' ? 'Default Workspace' : `${userId}'s Workspace`,
           createdAt: new Date().toISOString()
         });
@@ -129,8 +129,8 @@ export async function enterpriseTenantContext(
         .from(tables.memberships)
         .where(
           and(
-            eq(tables.memberships.userId, userId),
-            eq(tables.memberships.workspaceId, wsId)
+            eq(tables.memberships.userId, userId || ''),
+            eq(tables.memberships.workspaceId, wsId || 'default-workspace')
           )
         )
         .limit(1);

@@ -71,7 +71,11 @@ export class AuditLogger {
         let clientIp = req.ip || 'unknown';
         if (req.headers['x-forwarded-for']) {
           const forwarded = req.headers['x-forwarded-for'];
-          clientIp = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
+          if (Array.isArray(forwarded) && forwarded[0]) {
+            clientIp = forwarded[0];
+          } else if (typeof forwarded === 'string') {
+            clientIp = forwarded.split(',')[0]?.trim() || 'unknown';
+          }
         }
 
         const userAgent = req.headers['user-agent'] || 'unknown';

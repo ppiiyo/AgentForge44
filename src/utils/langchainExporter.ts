@@ -187,9 +187,10 @@ def execute_langchain_pipeline(initial_inputs=None):
     });
 
     connections.forEach(conn => {
-      if (adj[conn.sourceId] && inDegree[conn.targetId] !== undefined) {
-        adj[conn.sourceId].push(conn.targetId);
-        inDegree[conn.targetId]++;
+      const sourceList = adj[conn.sourceId];
+      if (sourceList && inDegree[conn.targetId] !== undefined) {
+        sourceList.push(conn.targetId);
+        inDegree[conn.targetId] = (inDegree[conn.targetId] ?? 0) + 1;
       }
     });
 
@@ -206,7 +207,7 @@ def execute_langchain_pipeline(initial_inputs=None):
       sortedIds.push(current);
 
       (adj[current] || []).forEach(neighbor => {
-        inDegree[neighbor]--;
+        inDegree[neighbor] = (inDegree[neighbor] ?? 1) - 1;
         if (inDegree[neighbor] === 0) {
           queue.push(neighbor);
         }

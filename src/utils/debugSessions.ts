@@ -4,9 +4,9 @@ export interface DebugSnapshot {
   stepIndex: number;
   nodeId: string;
   nodeTitle: string;
-  inputsState: string;
-  outputsState: string;
-  duration: number;
+  inputsState?: string;
+  outputsState?: string;
+  duration?: number;
   variableSnapshots: Record<string, any>;
   timestamp: Date;
 }
@@ -35,7 +35,10 @@ export function recordDebugSession(
     // Generate active simulated variable state snapshots sequentially
     const variablesAccum: Record<string, any> = {};
     for (let c = 0; c <= idx; c++) {
-      variablesAccum[logs[c].nodeId] = logs[c].output;
+      const step = logs[c];
+      if (step) {
+        variablesAccum[step.nodeId] = step.output;
+      }
     }
 
     return {
@@ -101,8 +104,9 @@ export function updateDebugSnapshot(
   
   // Propagate updated output to subsequent step snapshots
   for (let idx = stepIndex; idx < session.snapshots.length; idx++) {
-    if (session.snapshots[idx].variableSnapshots) {
-      session.snapshots[idx].variableSnapshots[snapshot.nodeId] = outputsState;
+    const snap = session.snapshots[idx];
+    if (snap && snap.variableSnapshots) {
+      snap.variableSnapshots[snapshot.nodeId] = outputsState;
     }
   }
   

@@ -31,7 +31,7 @@ export class SecureSandbox {
       jail.setSync('log', logCallback);
 
       // Safe fetch callback with whitelist check
-      const fetchCallback = new ivm.Callback((url: string, options?: any) => {
+      const fetchCallback = new ivm.Callback((url: string, _options?: any) => {
         try {
           const allowedDomains = ['api.openai.com', 'api.anthropic.com', 'api.google.com', 'api.cohere.com', 'localhost'];
           const urlObj = new URL(url);

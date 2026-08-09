@@ -35,7 +35,7 @@ export async function checkSlidingWindow(key: string, limit: number = MAX_REQUES
       }
       
       // results[1][1] holds the zcard result before zadd runs or in pipeline sequence
-      const cardResult = results[1][1] as number;
+      const cardResult = (results[1] && results[1][1] !== undefined) ? (results[1][1] as number) : 0;
       if (cardResult >= limit) {
         await client.zrem(redisKey, member);
         return false;

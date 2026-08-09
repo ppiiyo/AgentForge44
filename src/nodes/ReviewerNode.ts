@@ -142,8 +142,8 @@ Ensure the response is valid JSON.`;
     const scoreMatch = text.match(/"score"\s*:\s*(\d+)/);
     const feedbackMatch = text.match(/"feedback"\s*:\s*"([^"]+)"/);
     return {
-      score: scoreMatch ? Math.min(Math.max(Number(scoreMatch[1]), 0), 100) : 80,
-      feedback: feedbackMatch ? feedbackMatch[1].substring(0, 2000) : text.substring(0, 2000)
+      score: scoreMatch && scoreMatch[1] ? Math.min(Math.max(Number(scoreMatch[1]), 0), 100) : 80,
+      feedback: feedbackMatch && feedbackMatch[1] ? feedbackMatch[1].substring(0, 2000) : text.substring(0, 2000)
     };
   }
 

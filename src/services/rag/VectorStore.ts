@@ -45,7 +45,7 @@ export class VectorStore {
         logger.info('[PGVectorStore] Model loaded successfully.');
       } catch (err: any) {
         logger.warn(`[PGVectorStore] Transformers model loading skipped or failed (${err.message}). Activating local simulation fallback for indexing/retrieval.`);
-        VectorStore.embedder = async (text: string, options: any) => {
+        VectorStore.embedder = async (text: string, _options?: any) => {
           // Generate a deterministic hash-like pseudo-embedding based on the text contents
           const arr = new Float32Array(384);
           let hash = 0;
@@ -176,7 +176,7 @@ export class VectorStore {
     const insertedIds: string[] = [];
 
     for (let i = 0; i < chunks.length; i++) {
-      const chunkText = chunks[i];
+      const chunkText = chunks[i] ?? '';
       const embedding = await this.generateEmbedding(chunkText);
       const chunkId = `chk_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`;
       const createdAt = Date.now();
@@ -304,9 +304,11 @@ export class VectorStore {
     let normA = 0;
     let normB = 0;
     for (let i = 0; i < v1.length; i++) {
-      dotProduct += v1[i] * v2[i];
-      normA += v1[i] * v1[i];
-      normB += v2[i] * v2[i];
+      const val1 = v1[i] ?? 0;
+      const val2 = v2[i] ?? 0;
+      dotProduct += val1 * val2;
+      normA += val1 * val1;
+      normB += val2 * val2;
     }
     if (normA === 0 || normB === 0) return 0;
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
