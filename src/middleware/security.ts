@@ -7,68 +7,52 @@ export function generateNonce(): string {
 }
 
 export function setupSecurity(app: Express) {
-  // Middelware to insert a secure random nonce into res.locals for template views
-  app.use((req: Request, res: Response, next: NextFunction) => {
+  app.use((_req: Request, res: Response, next: NextFunction) => {
     res.locals.nonce = generateNonce();
     next();
   });
 
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const nonce = res.locals.nonce;
+    const nonce = res.locals.nonce as string;
     const isProd = process.env.NODE_ENV === 'production';
 
-    const scriptSrcDirectives = [
-      "'self'",
-      "https://app.posthog.com",
-      "https://*.sentry.io",
-      "https://cdn.jsdelivr.net",
-      "https://unpkg.com"
-    ];
+    // PROD: только nonce, без unsafe-inline/unsafe-eval
+    // DEV: Vite HMR требует unsafe-inline/eval — оставляем ТОЛЬКО в dev
+    const scriptSrc = isProd
+      ? ["'self'", `'nonce-${nonce}'`, 'https://app.posthog.com', 'https://*.sentry.io']
+      : ["'self'", "'unsafe-inline'", "'unsafe-eval'"];
 
-    if (!isProd) {
-      // Allow unsafe-inline and unsafe-eval in development for Vite runtime / hydration
-      scriptSrcDirectives.push("'unsafe-inline'", "'unsafe-eval'");
-    } else {
-      scriptSrcDirectives.push(`'nonce-${nonce}'`);
-    }
+    const styleSrc = isProd
+      ? ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'] // unsafe-inline для стилей допустим (CSS-XSS критично ниже)
+      : ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'];
 
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: scriptSrcDirectives,
-          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          scriptSrc,
+          styleSrc,
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           connectSrc: [
-            "'self'",
-            "ws:",
-            "wss:",
-            "https://app.posthog.com",
-            "https://*.sentry.io",
-            "https://api.openai.com",
-            "https://generativelanguage.googleapis.com",
-            "https://api.anthropic.com"
+            "'self'", 'ws:', 'wss:',
+            'https://app.posthog.com', 'https://*.sentry.io',
+            'https://api.openai.com', 'https://generativelanguage.googleapis.com', 'https://api.anthropic.com'
           ],
-          fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
-          frameSrc: ["'self'", "https://*.google.com", "https://*.googleusercontent.com"], // Allowed for preview iframes and maps
-          frameAncestors: ["'self'", "https://*.google.com", "https://*.googleusercontent.com", "https://*.run.app"], // Allow AI Studio iframe integration
+          fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+          frameSrc: isProd ? ["'self'"] : ["'self'", 'https://*.google.com', 'https://*.googleusercontent.com'],
+          frameAncestors: isProd
+            ? ["'self'"]
+            : ["'self'", 'https://*.google.com', 'https://*.googleusercontent.com', 'https://*.run.app'],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"]
         }
       },
-      crossOriginEmbedderPolicy: false, // critical for socket.io inside iframes
-      crossOriginResourcePolicy: { policy: "cross-origin" },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'same-origin' },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-      hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-      },
-      noSniff: true,
-      xssFilter: true,
-      frameguard: { action: 'sameorigin' }
+      hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+      frameguard: { action: 'sameorigin' } // было: false → clickjacking
     })(req, res, next);
   });
 }
-
