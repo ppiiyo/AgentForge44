@@ -1295,6 +1295,10 @@ export class MarketplaceManager {
       };
     });
 
+    if (items.length === 0) {
+      items = [...SEED_TEMPLATES];
+    }
+
     if (category && category !== 'all') {
       items = items.filter(item => item.category === category);
     }

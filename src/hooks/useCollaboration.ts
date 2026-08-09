@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { FlowNode, FlowConnection } from '../types';
 
 export interface RemoteCursor {
@@ -54,9 +55,61 @@ export function useCollaboration(
   const [locks] = useState<Record<string, RemoteLock>>({});
   const [notifications] = useState<CollabNotification[]>([]);
   const locksRef = useRef<Record<string, RemoteLock>>({});
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    let socket: Socket | null = null;
+    try {
+      socket = io({
+        autoConnect: true,
+        transports: ['websocket', 'polling']
+      });
+      socketRef.current = socket;
+
+      const graphId = _graphId || 'default-workspace';
+      socket.emit('room:join', {
+        graphId,
+        user: { id: userId, name: userName, color: userColor }
+      });
+
+      socket.on('node:settings:updated', ({ nodeId, fields }: { nodeId: string; fields: any }) => {
+        _setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId
+              ? { ...n, fields: { ...n.fields, ...fields } }
+              : n
+          )
+        );
+      });
+
+      socket.on('node:created', ({ node }: { node: FlowNode }) => {
+        if (node) {
+          _setNodes((prev) => (prev.some((n) => n.id === node.id) ? prev : [...prev, node]));
+        }
+      });
+
+      socket.on('node:deleted', ({ nodeId }: { nodeId: string }) => {
+        if (nodeId) {
+          _setNodes((prev) => prev.filter((n) => n.id !== nodeId));
+        }
+      });
+
+      socket.on('edge:created', ({ connection }: { connection: FlowConnection }) => {
+        if (connection) {
+          _setConnections((prev) => (prev.some((c) => c.id === connection.id) ? prev : [...prev, connection]));
+        }
+      });
+
+      socket.on('edge:deleted', ({ connectionId }: { connectionId: string }) => {
+        if (connectionId) {
+          _setConnections((prev) => prev.filter((c) => c.id !== connectionId));
+        }
+      });
+    } catch (e) {
+      console.warn('Socket.io initialization warning:', e);
+    }
 
     let channel: BroadcastChannel | null = null;
     try {
@@ -124,12 +177,29 @@ export function useCollaboration(
     window.addEventListener('storage', handleStorage);
 
     return () => {
+      if (socket) {
+        socket.disconnect();
+      }
       if (channel) channel.close();
       window.removeEventListener('storage', handleStorage);
     };
-  }, [_setNodes, _setConnections]);
+  }, [_graphId, _setNodes, _setConnections, userId, userName, userColor]);
 
   const dispatchBroadcast = (payload: any) => {
+    if (socketRef.current && socketRef.current.connected) {
+      if (payload.type === 'NODE_SETTINGS_UPDATED') {
+        socketRef.current.emit('node:settings:updated', { nodeId: payload.nodeId, fields: payload.fields });
+      } else if (payload.type === 'NODE_CREATED') {
+        socketRef.current.emit('node:created', { node: payload.node });
+      } else if (payload.type === 'NODE_DELETED') {
+        socketRef.current.emit('node:deleted', { nodeId: payload.nodeId });
+      } else if (payload.type === 'EDGE_CREATED') {
+        socketRef.current.emit('edge:created', { connection: payload.connection });
+      } else if (payload.type === 'EDGE_DELETED') {
+        socketRef.current.emit('edge:deleted', { connectionId: payload.connectionId });
+      }
+    }
+
     try {
       const channel = new BroadcastChannel('kostromai44_collab_channel');
       channel.postMessage(payload);
