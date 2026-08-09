@@ -83,3 +83,34 @@ export function safeDeepMerge(target: any, source: any): any {
 
   return output;
 }
+
+/**
+ * Safe JSON stringify utility that prevents "TypeError: JSON.stringify cannot serialize cyclic structures"
+ * and gracefully converts UI events or circular references.
+ */
+export function safeJsonStringify(obj: any, space?: number | string): string {
+  if (obj === undefined) return '';
+  if (typeof obj === 'string') return obj;
+  const seen = new WeakSet();
+  try {
+    return JSON.stringify(
+      obj,
+      (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (value._reactName || value.nativeEvent || value.target || value.preventDefault) {
+            return '[UI Event]';
+          }
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        return value;
+      },
+      space
+    );
+  } catch (_) {
+    return '[Unserializable]';
+  }
+}
+

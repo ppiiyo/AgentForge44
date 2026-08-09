@@ -1350,7 +1350,11 @@ export class MarketplaceManager {
     } catch (err: any) {
       console.warn(`Failed to fetch marketplace item "${id}":`, err.message);
     }
-    if (rows.length === 0) return null;
+    if (rows.length === 0) {
+      const seedMatch = SEED_TEMPLATES.find(t => t.id === id);
+      if (seedMatch) return seedMatch;
+      return null;
+    }
     
     const row = rows[0];
     let parsedData: any = {};

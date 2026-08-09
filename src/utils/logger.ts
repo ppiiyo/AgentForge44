@@ -61,12 +61,27 @@ export function maskSecrets(obj: any, seen = new WeakSet()): any {
     try {
       const parsed = JSON.parse(obj);
       if (typeof parsed === 'object' && parsed !== null) {
-        return JSON.stringify(maskSecrets(parsed));
+        return safeStringifyLog(maskSecrets(parsed));
       }
     } catch {}
   }
   
   return obj;
+}
+
+function safeStringifyLog(obj: any): string {
+  const seen = new WeakSet();
+  try {
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    });
+  } catch (_) {
+    return '[Unserializable]';
+  }
 }
 
 // Custom Winston Formatters
@@ -123,7 +138,7 @@ export class LokiTransport extends Transport {
             level,
           },
           values: [
-            [String(logTimeNano), JSON.stringify({ message, ...meta })]
+            [String(logTimeNano), safeStringifyLog({ message, ...meta })]
           ]
         }
       ]

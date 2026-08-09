@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { FlowNode, FlowConnection } from '../types';
+import { safeJsonStringify } from '../utils/safe-json';
 
 export interface RemoteCursor {
   userId: string;
@@ -206,7 +207,9 @@ export function useCollaboration(
       channel.close();
     } catch (e) {}
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('kostromai44_collab_sync', JSON.stringify({ ...payload, _t: Date.now() }));
+      try {
+        localStorage.setItem('kostromai44_collab_sync', safeJsonStringify({ ...payload, _t: Date.now() }));
+      } catch (_) {}
     }
   };
 

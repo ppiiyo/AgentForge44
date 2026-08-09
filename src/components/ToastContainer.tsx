@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { ToastMessage, ToastType } from '../utils/toast';
+import { safeJsonStringify } from '../utils/safe-json';
 
 function renderSafeChild(val: any): string {
   if (val === null || val === undefined) return '';
@@ -11,11 +12,7 @@ function renderSafeChild(val: any): string {
     if (val._reactName || val.nativeEvent || val.target || val.preventDefault) {
       return '[UI Event]';
     }
-    try {
-      return JSON.stringify(val);
-    } catch (_) {
-      return '[Complex Object]';
-    }
+    return safeJsonStringify(val);
   }
   return String(val);
 }

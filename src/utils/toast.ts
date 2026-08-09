@@ -1,3 +1,5 @@
+import { safeJsonStringify } from './safe-json';
+
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastMessage {
@@ -16,11 +18,7 @@ function safeFormatString(val: any): string {
     if (val._reactName || val.nativeEvent || val.target || val.preventDefault) {
       return '[UI Event]';
     }
-    try {
-      return JSON.stringify(val);
-    } catch {
-      return '[Complex Object]';
-    }
+    return safeJsonStringify(val);
   }
   return String(val);
 }

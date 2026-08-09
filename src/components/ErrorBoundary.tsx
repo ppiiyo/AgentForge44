@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCcw, Copy, Check } from 'lucide-react';
+import { safeJsonStringify } from '../utils/safe-json';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -73,11 +74,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
                 <div className="bg-slate-950 border border-slate-850 rounded-xl p-4 font-mono text-[10px] text-slate-400 space-y-2 overflow-auto max-h-[240px]">
                   <div className="text-rose-400 font-bold">
-                    {this.state.error?.name}: {this.state.error?.message}
+                    {typeof this.state.error?.name === 'string' ? this.state.error.name : 'Error'}: {typeof this.state.error?.message === 'string' ? this.state.error.message : (typeof this.state.error?.message === 'object' ? safeJsonStringify(this.state.error.message) : String(this.state.error || 'Unknown Error'))}
                   </div>
-                  {this.state.error?.stack && (
+                  {this.state.error?.stack && typeof this.state.error.stack === 'string' && (
                     <pre className="text-slate-500 text-[9px] leading-relaxed select-text whitespace-pre-wrap">
-                      {this.state.error?.stack}
+                      {this.state.error.stack}
                     </pre>
                   )}
                 </div>
