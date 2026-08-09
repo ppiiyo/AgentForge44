@@ -38,8 +38,10 @@ services:
     volumes:
       - kostromai44-projects:/usr/src/app/projects
     depends_on:
-      - kostromai44-db
-      - kostromai44-redis
+      kostromai44-db:
+        condition: service_healthy
+      kostromai44-redis:
+        condition: service_started
     restart: unless-stopped
 
   # 3. Independent Pipeline Execution Worker (Scale out as needed)
@@ -64,8 +66,10 @@ services:
     volumes:
       - kostromai44-projects:/usr/src/app/projects
     depends_on:
-      - kostromai44-db
-      - kostromai44-redis
+      kostromai44-db:
+        condition: service_healthy
+      kostromai44-redis:
+        condition: service_started
     restart: unless-stopped
 
   # 4. Redis Queue & Cache Backend
@@ -87,6 +91,11 @@ services:
       - POSTGRES_DB=kostromai44_db
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kostromai44 -d kostromai44_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
 volumes:
