@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
+import { safeJsonStringify } from '../../utils/safe-json';
 // @ts-ignore
 import quickStartMd from '../../docs/QuickStart.md?raw';
 
@@ -462,7 +463,7 @@ export const Settings: React.FC<SettingsProps> = ({
               {importError && (
                 <div className="p-3 bg-rose-950/30 border border-rose-900/40 rounded-xl text-xs text-rose-300 flex items-center gap-2">
                   <AlertCircle size={14} className="shrink-0" />
-                  <span className="font-semibold leading-relaxed">{importError}</span>
+                  <span className="font-semibold leading-relaxed">{typeof importError === 'string' ? importError : safeJsonStringify(importError)}</span>
                 </div>
               )}
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, ChevronLeft, ChevronRight, Terminal, Clock, RefreshCw, Trash2, ShieldAlert, Zap, RotateCcw, Send, Check, X, MessageSquare } from 'lucide-react';
 import { playClickSound } from '../utils/audio';
+import { safeJsonStringify } from '../utils/safe-json';
 
 interface Snapshot {
   nodeId: string;
@@ -685,7 +686,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                   </div>
                   {run.error && (
                     <p className="text-[9px] text-rose-450 truncate mt-0.5 font-mono italic">
-                      Err: {run.error}
+                      Err: {typeof run.error === 'string' ? run.error : safeJsonStringify(run.error)}
                     </p>
                   )}
                   <div className="flex items-center justify-between text-[8px] text-slate-550 font-mono mt-1 pt-1 border-t border-slate-950/50">
@@ -752,7 +753,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                             <div className="text-right">
                               <span className="text-rose-450 font-bold text-[9px]">✗ missing</span>
                               <p className="text-[8.5px] text-slate-500 max-w-[180px] break-words leading-tight mt-0.5">
-                                {dep.error}
+                                {typeof dep.error === 'string' ? dep.error : safeJsonStringify(dep.error)}
                               </p>
                             </div>
                           )}
@@ -785,7 +786,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                             <div className="text-right">
                               <span className="text-rose-450 font-bold text-[9px]">✗ Syntax Error</span>
                               <p className="text-[8.5px] text-slate-500 max-w-[180px] break-words leading-tight mt-0.5">
-                                {json.error}
+                                {typeof json.error === 'string' ? json.error : safeJsonStringify(json.error)}
                               </p>
                             </div>
                           )}
@@ -908,7 +909,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
                     {t.failPoint}
                   </h4>
                   <p className="text-[10px] text-slate-400 mt-1 leading-normal font-mono">
-                    {activeAsyncRun.error || "Workflow processing interrupted."}
+                    {typeof activeAsyncRun.error === 'string' ? activeAsyncRun.error : (activeAsyncRun.error ? safeJsonStringify(activeAsyncRun.error) : "Workflow processing interrupted.")}
                   </p>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import {
   PREBUILT_TEMPLATES, FlowNode, FlowConnection, 
   Workflow as WorkflowType, StepLog, NodeType 
 } from '../types';
+import { safeClone, safeJsonStringify } from '../utils/safe-json';
 import { useCollaboration } from './useCollaboration';
 import { useHotkeys } from './useHotkeys';
 import { usePipelineExecution } from './usePipelineExecution';
@@ -509,8 +510,8 @@ export function useAgentApp() {
   // Helper to record actions before mutating properties (Undo/Redo)
   const recordAction = (customNodes = nodes, customConnections = connections) => {
     setPast(prev => [...prev.slice(-49), { 
-      nodes: JSON.parse(JSON.stringify(customNodes)), 
-      connections: JSON.parse(JSON.stringify(customConnections)) 
+      nodes: safeClone(customNodes), 
+      connections: safeClone(customConnections) 
     }]);
     setFuture([]); // Clear redo stack on manual interactive changes
   };
@@ -521,8 +522,8 @@ export function useAgentApp() {
     const remainingPast = past.slice(0, past.length - 1);
 
     setFuture(prev => [{ 
-      nodes: JSON.parse(JSON.stringify(nodes)), 
-      connections: JSON.parse(JSON.stringify(connections)) 
+      nodes: safeClone(nodes), 
+      connections: safeClone(connections) 
     }, ...prev]);
     setNodes(previousState.nodes);
     setConnections(previousState.connections);
@@ -535,8 +536,8 @@ export function useAgentApp() {
     const remainingFuture = future.slice(1);
 
     setPast(prev => [...prev, { 
-      nodes: JSON.parse(JSON.stringify(nodes)), 
-      connections: JSON.parse(JSON.stringify(connections)) 
+      nodes: safeClone(nodes), 
+      connections: safeClone(connections) 
     }]);
     setNodes(nextState.nodes);
     setConnections(nextState.connections);
@@ -551,13 +552,13 @@ export function useAgentApp() {
       id: `snap-${Date.now()}`,
       name,
       timestamp: time,
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      connections: JSON.parse(JSON.stringify(connections))
+      nodes: safeClone(nodes),
+      connections: safeClone(connections)
     };
 
     const updated = [newSnapshot, ...savedSnapshots];
     setSavedSnapshots(updated);
-    localStorage.setItem("kostromai44_snapshots", JSON.stringify(updated));
+    localStorage.setItem("kostromai44_snapshots", safeJsonStringify(updated));
 
     setCopiedText(dict.saveSuccess);
     setTimeout(() => setCopiedText(null), 2500);
@@ -878,8 +879,8 @@ export function useAgentApp() {
       title: `${nodeToClone.title} (Copy)`,
       x: Math.min(1000, nodeToClone.x + 40),
       y: Math.min(700, nodeToClone.y + 45),
-      fields: JSON.parse(JSON.stringify(nodeToClone.fields))
-    };
+      fields: safeClone(nodeToClone.fields) as any
+    } as FlowNode;
 
     setNodes(prev => [...prev, clonedNode]);
     setSelectedNodeId(cloneId);
@@ -900,7 +901,7 @@ export function useAgentApp() {
         title: `${nodeToClone.title} (Copy)`,
         x: Math.min(4000, nodeToClone.x + 40),
         y: Math.min(4000, nodeToClone.y + 45),
-        fields: JSON.parse(JSON.stringify(nodeToClone.fields))
+        fields: safeClone(nodeToClone.fields)
       } as FlowNode;
     });
 

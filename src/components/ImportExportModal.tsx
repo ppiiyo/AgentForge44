@@ -1,6 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FileJson, X, AlertCircle, Download, Copy, Upload } from 'lucide-react';
+import { safeJsonStringify } from '../utils/safe-json';
 
 interface ImportExportModalProps {
   isImportExportModalOpen: boolean;
@@ -70,7 +71,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             {importError && (
               <div className="mx-6 mt-4 p-3.5 bg-rose-955/30 border border-rose-900/40 rounded-xl text-xs text-rose-300 flex items-center gap-2 font-sans">
                 <AlertCircle size={14} className="shrink-0" />
-                <span className="font-semibold leading-relaxed">{importError}</span>
+                <span className="font-semibold leading-relaxed">{typeof importError === 'string' ? importError : safeJsonStringify(importError)}</span>
               </div>
             )}
 

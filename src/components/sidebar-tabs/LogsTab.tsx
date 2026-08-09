@@ -5,6 +5,7 @@ import {
   Search, Filter, X
 } from 'lucide-react';
 import { StepLog } from '../../types';
+import { safeJsonStringify } from '../../utils/safe-json';
 
 interface LogsTabProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -163,16 +164,16 @@ export const LogsTab: React.FC<LogsTabProps> = ({
             <div className="flex items-center gap-2 font-bold text-rose-200">
               <AlertCircle size={15} /> Error Interrupted Execution:
             </div>
-            <p className="font-mono leading-normal pl-5">{errorText}</p>
+            <p className="font-mono leading-normal pl-5">{typeof errorText === 'string' ? errorText : safeJsonStringify(errorText)}</p>
           </div>
 
           {/* Interactive Self-Healing Wizard */}
-          {(errorText.includes("503") || 
+          {(typeof errorText === 'string' && (errorText.includes("503") || 
             errorText.toLocaleLowerCase().includes("demand") || 
             errorText.toLocaleLowerCase().includes("unavailable") || 
             errorText.toLocaleLowerCase().includes("overloaded") || 
             errorText.toLocaleLowerCase().includes("rate limit") || 
-            errorText.toLocaleLowerCase().includes("resource")) && (
+            errorText.toLocaleLowerCase().includes("resource"))) && (
             <div className="bg-slate-900 border border-amber-900/50 p-4 rounded-xl space-y-3" id="self_healing_wizard">
               <div className="flex items-start gap-2.5">
                 <Sparkles className="text-amber-400 shrink-0 mt-0.5" size={16} />

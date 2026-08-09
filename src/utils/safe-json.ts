@@ -91,13 +91,26 @@ export function safeDeepMerge(target: any, source: any): any {
 export function safeJsonStringify(obj: any, space?: number | string): string {
   if (obj === undefined) return '';
   if (typeof obj === 'string') return obj;
+  if (obj instanceof Error) return obj.message || String(obj);
   const seen = new WeakSet();
   try {
     return JSON.stringify(
       obj,
       (key, value) => {
+        if (typeof value === 'bigint') {
+          return value.toString();
+        }
+        if (typeof value === 'function') {
+          return '[Function]';
+        }
+        if (typeof value === 'symbol') {
+          return value.toString();
+        }
+        if (value instanceof Error) {
+          return value.message || String(value);
+        }
         if (typeof value === 'object' && value !== null) {
-          if (value._reactName || value.nativeEvent || value.target || value.preventDefault) {
+          if (value._reactName || value._targetInst || value.nativeEvent || value.target || value.preventDefault || value.currentTarget) {
             return '[UI Event]';
           }
           if (seen.has(value)) {
@@ -111,6 +124,19 @@ export function safeJsonStringify(obj: any, space?: number | string): string {
     );
   } catch (_) {
     return '[Unserializable]';
+  }
+}
+
+/**
+ * Deep clone utility that handles cyclic references safely without throwing.
+ */
+export function safeClone<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  try {
+    return safeJsonParse(safeJsonStringify(obj));
+  } catch (_) {
+    return obj;
   }
 }
 

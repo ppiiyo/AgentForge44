@@ -1,4 +1,5 @@
 import { FlowNode, FlowConnection } from '../../types.js';
+import { safeClone } from '../../utils/safe-json.js';
 
 export interface OptimizationIssue {
   severity: 'high' | 'medium' | 'low';
@@ -128,8 +129,8 @@ export class TopologyOptimizer {
    */
   static optimize(nodes: FlowNode[], connections: FlowConnection[]): { nodes: FlowNode[]; connections: FlowConnection[]; report: string } {
     const _analysis = this.analyze(nodes, connections);
-    const optimizedNodes = JSON.parse(JSON.stringify(nodes)) as FlowNode[];
-    const optimizedConnections = JSON.parse(JSON.stringify(connections)) as FlowConnection[];
+    const optimizedNodes = safeClone(nodes) as FlowNode[];
+    const optimizedConnections = safeClone(connections) as FlowConnection[];
     
     let enhancementsReport = `### AUTONOMOUS WORKFLOW TOPOLOGY OPTIMIZATION REPORT\n\n`;
     let changesInjectedCount = 0;

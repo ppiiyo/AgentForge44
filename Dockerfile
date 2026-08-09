@@ -19,7 +19,7 @@ COPY package.json package-lock.json ./
 ENV PYTHON=/usr/bin/python3
 
 # Install all workspace dependencies
-RUN npm ci --include=dev
+RUN npm ci --include=dev --legacy-peer-deps
 
 # Copy full-source codebase
 COPY . .
@@ -47,7 +47,7 @@ COPY --from=builder /usr/src/app/drizzle.config.json ./drizzle.config.json
 COPY --from=builder /usr/src/app/tsconfig.json ./tsconfig.json
 
 # Install production-only dependencies
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --omit=dev --ignore-scripts --legacy-peer-deps
 
 # Create a storage volume directory for projects saved on server filesystems
 RUN mkdir -p projects && chown -R node:node /usr/src/app

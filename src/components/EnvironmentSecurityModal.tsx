@@ -5,6 +5,7 @@ import {
   Sparkles, Eye, EyeOff, ShieldCheck, ArrowRight, Lock 
 } from 'lucide-react';
 import { validateEnvironment, updateEnvironmentKeys, EnvironmentValidationResult } from '../utils/setup_environment';
+import { safeJsonStringify } from '../utils/safe-json';
 
 interface EnvironmentSecurityModalProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -272,7 +273,7 @@ export const EnvironmentSecurityModal: React.FC<EnvironmentSecurityModalProps> =
           {/* Setup triggers / manual form */}
           {errorMessage && (
             <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold leading-normal">
-              {errorMessage}
+              {typeof errorMessage === 'string' ? errorMessage : safeJsonStringify(errorMessage)}
             </div>
           )}
 

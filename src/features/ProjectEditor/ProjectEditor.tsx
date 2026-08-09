@@ -26,6 +26,7 @@ import { AgentFlowCanvas } from './components/AgentFlowCanvas';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { CommandPalette } from './components/CommandPalette';
 import { FlowNode, FlowConnection } from '../../types';
+import { safeJsonStringify } from '../../utils/safe-json';
 
 interface ProjectEditorProps {
   currentLang: 'en' | 'ru' | 'zh';
@@ -606,19 +607,19 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
               ) : (
                 <>
                   {/* Circular References Group */}
-                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => e.includes('Circular Reference')) && (
+                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => (typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')) && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-rose-400">
                         <RefreshCw size={12} className="animate-spin text-rose-500" style={{ animationDuration: '3s' }} />
-                        <span>Circular Reference Violations ({validationReport.errors.filter(e => e.includes('Circular Reference')).length})</span>
+                        <span>Circular Reference Violations ({validationReport.errors.filter(e => (typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')).length})</span>
                       </div>
                       <div className="space-y-2">
-                        {validationReport.errors.filter(e => e.includes('Circular Reference')).map((err, i) => (
+                        {validationReport.errors.filter(e => (typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')).map((err, i) => (
                           <div key={i} className="bg-rose-950/10 border border-rose-900/40 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
                             <span className="p-1 rounded-md bg-rose-500/10 text-rose-400 mt-0.5"><RefreshCw size={12} /></span>
                             <div className="flex-1">
                               <p className="font-bold text-rose-400 text-[11px] mb-1">Graph Cycle Detected</p>
-                              <p className="text-zinc-300 text-[11px] font-mono leading-relaxed">{err}</p>
+                              <p className="text-zinc-300 text-[11px] font-mono leading-relaxed">{typeof err === 'string' ? err : safeJsonStringify(err)}</p>
                             </div>
                           </div>
                         ))}
@@ -627,19 +628,19 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
                   )}
 
                   {/* Missing Dependencies Group */}
-                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => !e.includes('Circular Reference')) && (
+                  {(diagnosticTab === 'all' || diagnosticTab === 'errors') && validationReport.errors.some(e => !(typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')) && (
                     <div className="space-y-2 pt-2">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-rose-400">
                         <Boxes size={12} className="text-rose-500" />
-                        <span>Missing Dependencies & Connections ({validationReport.errors.filter(e => !e.includes('Circular Reference')).length})</span>
+                        <span>Missing Dependencies & Connections ({validationReport.errors.filter(e => !(typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')).length})</span>
                       </div>
                       <div className="space-y-2">
-                        {validationReport.errors.filter(e => !e.includes('Circular Reference')).map((err, i) => (
+                        {validationReport.errors.filter(e => !(typeof e === 'string' ? e : safeJsonStringify(e)).includes('Circular Reference')).map((err, i) => (
                           <div key={i} className="bg-rose-950/10 border border-rose-900/40 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
                             <span className="p-1 rounded-md bg-rose-500/10 text-rose-400 mt-0.5"><Boxes size={12} /></span>
                             <div className="flex-1">
                               <p className="font-bold text-rose-400 text-[11px] mb-1">Invalid Dynamic Reference</p>
-                              <p className="text-zinc-300 text-[11px] leading-relaxed">{err}</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{typeof err === 'string' ? err : safeJsonStringify(err)}</p>
                             </div>
                           </div>
                         ))}
@@ -648,19 +649,19 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
                   )}
 
                   {/* Unlinked Triggers Group */}
-                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => w.includes('Unlinked')) && (
+                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => (typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')) && (
                     <div className="space-y-2 pt-2">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-400">
                         <Unlink size={12} className="text-amber-500" />
-                        <span>Unlinked Input Triggers ({validationReport.warnings.filter(w => w.includes('Unlinked')).length})</span>
+                        <span>Unlinked Input Triggers ({validationReport.warnings.filter(w => (typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')).length})</span>
                       </div>
                       <div className="space-y-2">
-                        {validationReport.warnings.filter(w => w.includes('Unlinked')).map((warn, i) => (
+                        {validationReport.warnings.filter(w => (typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')).map((warn, i) => (
                           <div key={i} className="bg-amber-950/10 border border-amber-900/30 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
                             <span className="p-1 rounded-md bg-amber-500/10 text-amber-400 mt-0.5"><Unlink size={12} /></span>
                             <div className="flex-1">
                               <p className="font-bold text-amber-400 text-[11px] mb-1">Unlinked Flow Block</p>
-                              <p className="text-zinc-300 text-[11px] leading-relaxed">{warn}</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{typeof warn === 'string' ? warn : safeJsonStringify(warn)}</p>
                             </div>
                           </div>
                         ))}
@@ -669,19 +670,19 @@ export const ProjectEditor: React.FC<ProjectEditorProps> = ({
                   )}
 
                   {/* Configuration Warnings Group */}
-                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => !w.includes('Unlinked')) && (
+                  {(diagnosticTab === 'all' || diagnosticTab === 'warnings') && validationReport.warnings.some(w => !(typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')) && (
                     <div className="space-y-2 pt-2">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-400">
                         <AlertTriangle size={12} className="text-amber-500" />
-                        <span>Configuration Warnings & Optimization Tips ({validationReport.warnings.filter(w => !w.includes('Unlinked')).length})</span>
+                        <span>Configuration Warnings & Optimization Tips ({validationReport.warnings.filter(w => !(typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')).length})</span>
                       </div>
                       <div className="space-y-2">
-                        {validationReport.warnings.filter(w => !w.includes('Unlinked')).map((warn, i) => (
+                        {validationReport.warnings.filter(w => !(typeof w === 'string' ? w : safeJsonStringify(w)).includes('Unlinked')).map((warn, i) => (
                           <div key={i} className="bg-amber-950/10 border border-amber-900/30 p-3.5 rounded-xl text-zinc-300 leading-relaxed font-semibold flex items-start gap-3">
                             <span className="p-1 rounded-md bg-amber-500/10 text-amber-400 mt-0.5"><AlertTriangle size={12} /></span>
                             <div className="flex-1">
                               <p className="font-bold text-amber-400 text-[11px] mb-1">Configuration Tip</p>
-                              <p className="text-zinc-300 text-[11px] leading-relaxed">{warn}</p>
+                              <p className="text-zinc-300 text-[11px] leading-relaxed">{typeof warn === 'string' ? warn : safeJsonStringify(warn)}</p>
                             </div>
                           </div>
                         ))}

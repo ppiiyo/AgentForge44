@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FlowNode } from '../../../types';
 import { Globe, Settings, Terminal, Play, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import { safeJsonStringify } from '../../../utils/safe-json';
 
 interface ToolNodeSettingsProps {
   node: FlowNode;
@@ -333,7 +334,7 @@ export const ToolNodeSettings: React.FC<ToolNodeSettingsProps> = ({
                         <AlertCircle size={16} className="shrink-0 mt-0.5" />
                         <div>
                           <h4 className="font-bold text-rose-300 uppercase shrink-0">Request Connect Terminated</h4>
-                          <p className="mt-1">{testResult.error}</p>
+                          <p className="mt-1">{typeof testResult.error === 'string' ? testResult.error : safeJsonStringify(testResult.error)}</p>
                         </div>
                       </div>
                     ) : (
