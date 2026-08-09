@@ -101,27 +101,33 @@ describe('KostromAi44 Comprehensive Resilience & Chaos Engineering Suite', () =>
   // 2. Chaos Engineering: Database Outage & Latency Simulation
   // -------------------------------------------------------------
   it('should inject DB latency and crash when DB Outage is active under Chaos Engineering', async () => {
-    // A. Inject DB Latency
-    chaosEngine.updateConfig({ dbLatencyMs: 20 });
-    const start = Date.now();
-    
-    // Perform standard db select
-    await db.select().from(tables.projects).where(eq(tables.projects.id, 'non-existent-id'));
-    const duration = Date.now() - start;
-    
-    expect(duration).toBeGreaterThanOrEqual(15); // should take at least ~20ms
+    const origChaosEnv = process.env.CHAOS_ENGINEERING_ENABLED;
+    process.env.CHAOS_ENGINEERING_ENABLED = 'true';
+    try {
+      // A. Inject DB Latency
+      chaosEngine.updateConfig({ dbLatencyMs: 20 });
+      const start = Date.now();
+      
+      // Perform standard db select
+      await db.select().from(tables.projects).where(eq(tables.projects.id, 'non-existent-id'));
+      const duration = Date.now() - start;
+      
+      expect(duration).toBeGreaterThanOrEqual(15); // should take at least ~20ms
 
-    // B. Inject DB Outage / Failure
-    chaosEngine.updateConfig({ dbFailureActive: true });
-    
-    expect(() => {
-      db.select().from(tables.projects);
-    }).toThrow('ChaosEngine: Simulated database connection outage.');
+      // B. Inject DB Outage / Failure
+      chaosEngine.updateConfig({ dbFailureActive: true });
+      
+      expect(() => {
+        db.select().from(tables.projects);
+      }).toThrow('ChaosEngine: Simulated database connection outage.');
 
-    // Reset chaos
-    chaosEngine.reset();
-    const healthyCheck = await db.select().from(tables.projects).where(eq(tables.projects.id, 'non-existent-id'));
-    expect(healthyCheck).toBeDefined();
+      // Reset chaos
+      chaosEngine.reset();
+      const healthyCheck = await db.select().from(tables.projects).where(eq(tables.projects.id, 'non-existent-id'));
+      expect(healthyCheck).toBeDefined();
+    } finally {
+      process.env.CHAOS_ENGINEERING_ENABLED = origChaosEnv;
+    }
   });
 
   // -------------------------------------------------------------

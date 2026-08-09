@@ -31,21 +31,26 @@ export type LogEntry = z.infer<typeof LogSchema>;
 /**
  * Recursively scans and masks keys resembling api_key, password, secret, token, credentials
  */
-export function maskSecrets(obj: any): any {
+export function maskSecrets(obj: any, seen = new WeakSet()): any {
   if (obj === null || obj === undefined) return obj;
   
-  if (Array.isArray(obj)) {
-    return obj.map(item => maskSecrets(item));
-  }
-  
   if (typeof obj === 'object') {
+    if (seen.has(obj)) {
+      return '[Circular]';
+    }
+    seen.add(obj);
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => maskSecrets(item, seen));
+    }
+
     const cloned: any = {};
     for (const key of Object.keys(obj)) {
       const isSensitive = /api[_-]?key|password|secret|token|authorization|credential/i.test(key);
       if (isSensitive) {
         cloned[key] = '***MASKED***';
       } else {
-        cloned[key] = maskSecrets(obj[key]);
+        cloned[key] = maskSecrets(obj[key], seen);
       }
     }
     return cloned;

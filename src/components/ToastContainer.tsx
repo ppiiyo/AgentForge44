@@ -3,6 +3,23 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { ToastMessage, ToastType } from '../utils/toast';
 
+function renderSafeChild(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (val instanceof Error) return val.message || String(val);
+  if (typeof val === 'object') {
+    if (val._reactName || val.nativeEvent || val.target || val.preventDefault) {
+      return '[UI Event]';
+    }
+    try {
+      return JSON.stringify(val);
+    } catch (_) {
+      return '[Complex Object]';
+    }
+  }
+  return String(val);
+}
+
 export const ToastContainer: React.FC<{ currentLang?: 'en' | 'ru' | 'zh' }> = ({ currentLang = 'en' }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -106,30 +123,10 @@ export const ToastContainer: React.FC<{ currentLang?: 'en' | 'ru' | 'zh' }> = ({
               {styles.icon}
               <div className="flex-1 min-w-0 pr-2">
                 <span className="text-[11px] font-black uppercase tracking-wider block mb-0.5 text-slate-100">
-                  {(() => {
-                    const val = toast.title || getDefaultTitle(toast.type);
-                    if (val && typeof val === 'object') {
-                      try {
-                        return JSON.stringify(val);
-                      } catch (_) {
-                        return "[Complex/Circular Object]";
-                      }
-                    }
-                    return String(val);
-                  })()}
+                  {renderSafeChild(toast.title || getDefaultTitle(toast.type))}
                 </span>
                 <p className="text-[10.5px] font-medium leading-relaxed text-slate-300 break-words">
-                  {(() => {
-                    const val = toast.message;
-                    if (val && typeof val === 'object') {
-                      try {
-                        return JSON.stringify(val);
-                      } catch (_) {
-                        return "[Complex/Circular Object]";
-                      }
-                    }
-                    return String(val);
-                  })()}
+                  {renderSafeChild(toast.message)}
                 </p>
               </div>
               <button

@@ -84,7 +84,7 @@ export async function runInitializationDiagnostic(): Promise<DiagnosticResult> {
     if (fs.existsSync(pkgPath)) {
       packageJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     }
-  } catch (err: any) {
+  } catch {
     // handled in json check
   }
 

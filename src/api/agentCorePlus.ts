@@ -25,12 +25,17 @@ export class AgentSwarmTeam {
    * then aggregates their separate findings into a master solution.
    */
   async delegateAndExecute(task: string): Promise<string> {
+    if (!this.specialists || this.specialists.length === 0) {
+      return `Error: no specialist agents available in the swarm team.`;
+    }
+
     // 1. Ask supervisor which specialist agent fits best
-    const specialistsDesc = this.specialists
-      .map(s => `Agent: ${s.name} | Role: ${s.role} | System Instructions: ${s.systemInstruction}`)
+    const specialistsDesc = (this.specialists || [])
+      .map(s => `Agent: ${s?.name} | Role: ${s?.role} | System Instructions: ${s?.systemInstruction}`)
       .join("\n");
 
-    const supervisorPrompt = `You are the Lead Coordinator: ${this.supervisor.name}.
+    const supervisorName = this.supervisor?.name ?? "Supervisor";
+    const supervisorPrompt = `You are the Lead Coordinator: ${supervisorName}.
 Your job is to read the user task and delegate it to the single best specialist agent from this team:
 ${specialistsDesc}
 
@@ -52,7 +57,7 @@ INSTRUCTIONS: <Specific task constraints>`;
     const specialistInstructions = instructionsMatch?.[1]?.trim() || task;
 
     const specialist =
-      this.specialists.find(s => s.name.toLowerCase() === selectedName.toLowerCase()) ||
+      this.specialists.find(s => s?.name?.toLowerCase() === selectedName.toLowerCase()) ||
       this.specialists[0];
 
     if (!specialist) {
@@ -74,7 +79,7 @@ ${specialistText}
 """`;
 
     const finalResult = await this.provider.generate(synthesisPrompt, {
-      systemInstruction: this.supervisor.systemInstruction
+      systemInstruction: this.supervisor?.systemInstruction ?? ""
     });
 
     return finalResult.text || specialistText;
