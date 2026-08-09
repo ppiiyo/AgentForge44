@@ -94,7 +94,7 @@ app.use(correlationIdMiddleware);
 
 setupSecurity(app);
 
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
   next();
 });
@@ -117,7 +117,7 @@ app.post(['/api/test-payload', '/api/v1/test-payload'], (req: express.Request, r
 setupSwagger(app);
 
 // Mount Modular API Routers
-app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Response) => {
+app.get('/metrics', authMiddleware, async (_req: express.Request, res: express.Response) => {
   try {
     res.set('Content-Type', register.contentType);
     res.end(await register.metrics());
@@ -174,7 +174,7 @@ async function setupServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
