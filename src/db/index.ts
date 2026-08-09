@@ -17,7 +17,9 @@ const rawDb = adapter.db;
 
 async function executeWithCaching(target: any, originalThen: any, onfulfilled: any, onrejected: any): Promise<any> {
   try {
-    await chaosEngine.simulateDbAccess();
+    if (process.env.CHAOS_ENGINEERING_ENABLED === 'true') {
+      await chaosEngine.simulateDbAccess();
+    }
 
     let isSelect = false;
     let sqlObj: any = null;
@@ -92,7 +94,7 @@ export const db = new Proxy(rawDb, {
     const value = Reflect.get(target, prop, receiver);
     if (typeof value === 'function' && ['select', 'insert', 'update', 'delete', 'execute', 'selectDistinct'].includes(prop as string)) {
       return function(this: any, ...args: any[]) {
-        if (chaosEngine.getConfig().dbFailureActive) {
+        if (process.env.CHAOS_ENGINEERING_ENABLED === 'true' && chaosEngine.getConfig().dbFailureActive) {
           throw new Error('ChaosEngine: Simulated database connection outage.');
         }
 

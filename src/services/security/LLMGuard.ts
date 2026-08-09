@@ -39,22 +39,28 @@ export class LLMGuard {
     const flags: string[] = [];
     let riskScore = 0;
 
+    // Unicode normalization (NFKC) to prevent homoglyph/unicode bypasses
+    const normalizedPrompt = prompt.normalize('NFKC');
+
     for (const pattern of this.injectionPatterns) {
-      if (pattern.test(prompt)) {
+      if (pattern.test(normalizedPrompt)) {
         flags.push(`Matched injection pattern: ${pattern.source}`);
         riskScore = Math.min(1.0, riskScore + 0.6);
       }
     }
 
     // Capture generic prompt override cues
-    const lowerPrompt = prompt.toLowerCase();
-    if (lowerPrompt.includes('system prompt') && lowerPrompt.includes('ignore')) {
+    const lowerPrompt = normalizedPrompt.toLowerCase();
+    if (
+      (lowerPrompt.includes('system prompt') || lowerPrompt.includes('system instruction') || lowerPrompt.includes('previous instruction')) &&
+      (lowerPrompt.includes('ignore') || lowerPrompt.includes('disregard') || lowerPrompt.includes('forget') || lowerPrompt.includes('override'))
+    ) {
       flags.push('Prompt instructions contain keywords targeting the system configuration.');
-      riskScore = Math.min(1.0, riskScore + 0.3);
+      riskScore = Math.min(1.0, riskScore + 0.4);
     }
 
     return {
-      isSafe: riskScore < 0.6,
+      isSafe: riskScore < 0.5,
       score: riskScore,
       flags
     };

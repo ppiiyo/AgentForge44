@@ -37,24 +37,27 @@ ARG PORT=3000
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 
-# Copy compiled bundles and static assets from builder container
+# Copy compiled bundles, static assets and required package manifests
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/drizzle ./drizzle
 COPY --from=builder /usr/src/app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /usr/src/app/drizzle-postgres.config.ts ./drizzle-postgres.config.ts
 COPY --from=builder /usr/src/app/drizzle.config.json ./drizzle.config.json
 COPY --from=builder /usr/src/app/tsconfig.json ./tsconfig.json
-COPY --from=builder /usr/src/app/vite.config.ts ./vite.config.ts
-COPY --from=builder /usr/src/app/server.ts ./server.ts
-COPY --from=builder /usr/src/app/src ./src
+
+# Install production-only dependencies
+RUN npm ci --omit=dev --ignore-scripts
 
 # Create a storage volume directory for projects saved on server filesystems
 RUN mkdir -p projects && chown -R node:node /usr/src/app
 
 # Relinquish superuser privileges to the default node user for maximum sandbox security
 USER node
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 # Open internal routing interface
 EXPOSE 3000

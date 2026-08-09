@@ -86,7 +86,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 
 export const app = express();
 app.use(compression());
-app.set('trust proxy', 1);
+app.set('trust proxy', process.env.TRUST_PROXY || 1);
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 app.use(corsMiddleware);

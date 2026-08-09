@@ -19,15 +19,16 @@ export function setupSecurity(app: Express) {
 
     const scriptSrcDirectives = [
       "'self'",
-      "'unsafe-inline'", // Kept for Vite client runtime hydration compatibility
-      "'unsafe-eval'",   // Kept for isolated-vm or Vite local bundling
       "https://app.posthog.com",
       "https://*.sentry.io",
       "https://cdn.jsdelivr.net",
       "https://unpkg.com"
     ];
 
-    if (isProd) {
+    if (!isProd) {
+      // Allow unsafe-inline and unsafe-eval in development for Vite runtime / hydration
+      scriptSrcDirectives.push("'unsafe-inline'", "'unsafe-eval'");
+    } else {
       scriptSrcDirectives.push(`'nonce-${nonce}'`);
     }
 
@@ -66,7 +67,7 @@ export function setupSecurity(app: Express) {
       },
       noSniff: true,
       xssFilter: true,
-      frameguard: false // allow iframe framing for AI Studio
+      frameguard: { action: 'sameorigin' }
     })(req, res, next);
   });
 }
