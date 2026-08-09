@@ -44,7 +44,6 @@ export async function runEvaluationSuite(
     }
   });
 
-  const startTimeSuite = Date.now();
   const items: EvalResultItem[] = [];
   let totalScore = 0;
   let totalLatency = 0;
@@ -124,7 +123,8 @@ Actual Result Generated: "${actualOutput.substring(0, 1500)}"`;
         score = typeof parsed.score === 'number' ? Math.max(0, Math.min(10, parsed.score)) : 5;
         rationale = parsed.rationale || "Evaluated successfully but missing description details.";
       } else {
-        score = actualOutput.toLowerCase().includes(test.expected.toLowerCase().split(" ")[0]) ? 9 : 6;
+        const firstExpectedWord = test.expected.toLowerCase().split(" ")[0] ?? "";
+        score = actualOutput.toLowerCase().includes(firstExpectedWord) ? 9 : 6;
         rationale = "Mock evaluation completed without live Gemini Key config.";
       }
     } catch (err: any) {

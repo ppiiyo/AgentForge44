@@ -13,11 +13,6 @@ import { FirstLaunchWizard } from './components/FirstLaunchWizard';
 import { EnvironmentSecurityModal } from './components/EnvironmentSecurityModal';
 import { ToastContainer } from './components/ToastContainer';
 
-// Dynamically lazy-loaded sub-modules for bundle splitting optimization
-const Marketplace = React.lazy(() => import('./components/Marketplace').then(m => ({ default: m.Marketplace })));
-const MetricsDashboard = React.lazy(() => import('./components/MetricsDashboard').then(m => ({ default: m.MetricsDashboard })));
-const CloudDeployer = React.lazy(() => import('./components/CloudDeployer').then(m => ({ default: m.CloudDeployer })));
-
 // Multi-language localization dictionaries
 const translationsStatic = {
   en: {

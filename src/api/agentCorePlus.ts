@@ -48,10 +48,16 @@ INSTRUCTIONS: <Specific task constraints>`;
     const delegateMatch = text.match(/DELEGATE:\s*(\w+)/i);
     const instructionsMatch = text.match(/INSTRUCTIONS:\s*([\s\S]+)/i);
 
-    const selectedName = delegateMatch ? delegateMatch[1].trim() : this.specialists[0].name;
-    const specialistInstructions = instructionsMatch ? instructionsMatch[1].trim() : task;
+    const selectedName = delegateMatch?.[1]?.trim() || this.specialists[0]?.name || "";
+    const specialistInstructions = instructionsMatch?.[1]?.trim() || task;
 
-    const specialist = this.specialists.find(s => s.name.toLowerCase() === selectedName.toLowerCase()) || this.specialists[0];
+    const specialist =
+      this.specialists.find(s => s.name.toLowerCase() === selectedName.toLowerCase()) ||
+      this.specialists[0];
+
+    if (!specialist) {
+      return `Error: no specialist agents available in the swarm team.`;
+    }
 
     // 3. Execute specialist model call
     const executionResult = await this.provider.generate(specialistInstructions, {
