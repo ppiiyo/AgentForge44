@@ -50,9 +50,9 @@ dns.lookup = function(hostname, options, callback) {
     if (cachedIp) {
       const family = cachedIp.includes(':') ? 6 : 4;
       if (options && (options as any).all) {
-        return callback(null, [{ address: cachedIp, family }], family);
+        return (callback as any)(null, [{ address: cachedIp, family }], family);
       }
-      return callback(null, cachedIp, family);
+      return (callback as any)(null, cachedIp, family);
     }
   }
   
@@ -102,11 +102,14 @@ export function isPrivateIP(ip: string): boolean {
 
   if (ipv4Match) {
     const octets = ipv4Match.slice(1, 5).map(Number);
-    if (octets.some(octet => octet < 0 || octet > 255)) {
+    if (octets.some(octet => octet < 0 || octet > 255) || octets.length < 4) {
       return true; // Invalid IPv4 -> unsafe
     }
 
-    const [o1, o2, o3, o4] = octets;
+    const o1 = octets[0]!;
+    const o2 = octets[1]!;
+    const o3 = octets[2]!;
+    const o4 = octets[3]!;
 
     // Localhost / Loopback (127.0.0.0/8)
     if (o1 === 127) return true;

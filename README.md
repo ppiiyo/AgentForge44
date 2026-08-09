@@ -1,105 +1,90 @@
+<div align="center">
+
 # 🌌 KostromAi44
 
-**Production‑Grade Visual Low‑Code Orchestrator for Resilient, Self‑Correcting Multi‑Agent AI Networks**
+### **Production-Grade Visual Low-Code Orchestrator for Resilient, Self-Correcting Multi-Agent AI Networks**
 
-Design complex reasoning topologies on an interactive vector canvas. Execute them with a parallel topological scheduler, self‑healing evaluation loops, sandboxed code execution and multi‑user sync — and serve everything as a robust, versioned, secure REST API.
+[![CI Build](https://img.shields.io/github/actions/workflow/status/ppiiyo/AgentForge44/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI%20Build)](https://github.com/ppiiyo/AgentForge44/actions)
+[![Node Version](https://img.shields.io/badge/Node.js-%E2%89%A522.0.0-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Hardened-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-![CI](https://github.com/ppiiyo/AgentForge44/actions/workflows/ci.yml/badge.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-yellow)
-![Coverage gate](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen)
-![Security](https://img.shields.io/badge/security-hardened-blue)
-![API](https://img.shields.io/badge/API-%2Fapi%2Fv1-green)
+[**English**](README.md) | [**Русский**](README.ru.md) | [**简体中文**](README.zh.md)
 
----
-
-## 📑 Table of Contents
-
-- [Key Features](#-key-features)
-- [Architecture](#️-architecture)
-- [Tech Stack](#️-tech-stack)
-- [Quick Start](#-quick-start)
-- [Configuration](#️-configuration)
-- [Database](#-database)
-- [Docker Deployment](#-docker-deployment)
-- [Kubernetes & Terraform](#-kubernetes--terraform)
-- [Observability](#-observability)
-- [Security Model](#️-security-model)
-- [API](#-api)
-- [Testing](#-testing)
-- [CI/CD](#-cicd)
-- [Project Structure](#-project-structure)
-- [Troubleshooting](#-troubleshooting)
-- [Production Checklist](#️-production-checklist)
-- [Documentation](#-documentation)
-- [Contributing](#-contributing)
-- [License](#-license)
+</div>
 
 ---
 
-## ✨ Key Features
+## 📖 Overview
 
-| Capability | Details |
-|---|---|
-| 🚀 **Topological Parallel Scheduler** | Kahn's algorithm level‑scheduling with configurable concurrency; independent branches run in parallel promise‑pooling |
-| 🔄 **Self‑Healing with Honest Telemetry** | Failed nodes recover via LLM repair (max 2 attempts) and are marked `completed_with_warning` — errors are never silently masked |
-| 🛡️ **Hardened Code Sandbox** | Docker isolation: `--cap-drop ALL`, `--network none`, `--read-only`, `--pids-limit 20`, `no-new-privileges`, 64 MB RAM / 0.5 CPU caps; fail‑closed when Docker is absent |
-| 📚 **Multi‑Format RAG** | Native parsers for PDF, DOCX, Markdown and raw text; local or remote vector stores (Pinecone / Weaviate / Qdrant) |
-| 👥 **Live Collaboration** | Multi‑room Socket.io presence hub: live cursors, selections, cross‑tab sync |
-| 🕑 **Time‑Travel Debugger** | Incremental chronological ledger of every graph/variable mutation with replay snapshots |
-| 🎛️ **MCP Integration** | Configure and authenticate local/remote Model Context Protocol servers from the Sync Hub |
-| 🧑⚖️ **Human‑in‑the‑Loop Gates** | `human_confirmation` nodes pause runs; approve/edit/reject via API or UI |
-| 🗳️ **Debate & Reviewer Nodes** | Deterministic metric scoring (JSON schema / regex / semantic) with state rewind and critique feedback loops |
-| 🏢 **RBAC & Multi‑Tenancy** | Workspace‑scoped roles (`owner`, `editor`, `viewer`, `api_user`), tenant isolation middleware, JWT `jti` revocation |
-| 🧩 **Marketplace & Copilot** | Paginated template marketplace with seeding; AI prompt optimizer preserving `{{variables}}` |
+**KostromAi44** is an enterprise-grade visual AI orchestration framework that empowers developers to design, simulate, debug, and deploy complex autonomous multi-agent topologies. Built on top of Kahn's topological scheduler, Docker code sandboxing, live multi-user collaboration via Socket.io, and self-healing evaluation loops, KostromAi44 bridges the gap between drag-and-drop workflow builders and mission-critical production backend infrastructure.
 
 ---
 
-## 🏗️ Architecture
+## ✨ Key Architectural Highlights
+
+| Feature | Technical Implementation | Value Proposition |
+| :--- | :--- | :--- |
+| 🚀 **Topological Parallel Scheduler** | Kahn's DAG level-scheduling algorithm with promise-pooling concurrency controls | Executes independent agent branches in parallel with zero deadlocks |
+| 🔄 **Self-Healing Telemetry** | Automated LLM repair routines with honest state marking (`completed_with_warning`) | Prevents silent failures while attempting automated node auto-recovery |
+| 🛡️ **Hardened Code Sandbox** | Non-root Docker containers with `--cap-drop ALL`, `--network none`, `--read-only`, and 64MB RAM limits | Safely executes untrusted Python/JS user code without host compromise |
+| 👥 **Real-Time Collaboration** | Room-scoped Socket.io presence hub with vector cursor broadcasting and state lock | Enables multi-engineer co-design of complex AI DAG topologies |
+| 📚 **Multi-Format RAG Pipeline** | PDF/DOCX/MD chunking parser coupled with Pinecone, Weaviate, Qdrant, or Local Stores | Contextualizes model reasoning with hybrid semantic vector search |
+| 🕑 **Time-Travel Replay Engine** | Immutable state ledger tracking node-level variable mutations | Step backwards and forwards through pipeline execution snapshots |
+| 🔒 **Enterprise Security Architecture** | Nonce-based CSP, SSRF IP-pinning validator, JWT with Redis `jti` revocation list, and AES-256 GCM encryption at rest | Complies with strict security and privacy standards |
+
+---
+
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
     subgraph Client["🖥️ Web Client (React 19 + Vite)"]
         Canvas[ReactFlow Canvas]
-        Presence[Presence & Live Cursors]
-        Obs[Recharts Dashboards]
+        Presence[Presence Hub & Live Cursors]
+        Obs[Recharts Analytics Dashboard]
         Health[AppHealthMonitor]
     end
 
-    subgraph Gateway["🛡️ API Gateway /api/v1"]
+    subgraph Gateway["🛡️ Security & API Gateway (/api & /api/v1)"]
         CSP[Nonce CSP + Helmet + HSTS]
         RL[Tiered Rate Limiter]
-        Guard[Unified Auth Guard · JWT + jti blacklist]
+        Guard[Unified Auth Guard · JWT + jti Blacklist]
         Tenant[Tenant Isolation Context]
-        SSRF[SSRF DNS/IP Validator + IP pinning]
+        SSRF[SSRF DNS/IP Validator + IP Pinning]
     end
 
     subgraph Engine["🧠 Execution Engine"]
-        Sched[Kahn Topology Scheduler]
-        Exec[PipelineExecutor · per-node timeouts]
-        CB[LLM Circuit Breakers + Exponential Backoff]
+        Sched[Kahn Topology Parallel Scheduler]
+        Exec[PipelineExecutor · Per-Node Timeouts]
+        CB[LLM Circuit Breakers + Backoff]
         Heal[Self-Healing · completed_with_warning]
-        SB[Docker Sandbox / isolated-vm]
+        SB[Hardened Docker Code Sandbox]
     end
 
-    subgraph Queue["📮 BullMQ"]
-        W[Workers · 3 attempts · exponential backoff]
-        DLQ[Dead Letter Queue + admin retry]
+    subgraph Queue["📮 Async Queue (BullMQ)"]
+        W[Workers · Exponential Retries]
+        DLQ[Dead Letter Queue + Admin Recovery]
     end
 
-    subgraph Storage["💾 Polymorphic Storage"]
+    subgraph Storage["💾 Storage Layer"]
         DB[(Drizzle ORM · SQLite / PostgreSQL)]
-        RAG[(Embedding Chunk Stores)]
+        Vector[(Vector Index · Pinecone/Weaviate/Qdrant/Local)]
     end
 
-    subgraph Providers["🤖 Provider Matrix"]
-        G[Gemini] O[OpenAI] C[Claude] L[Ollama]
+    subgraph Providers["🤖 LLM Matrix"]
+        Gemini[Google Gemini]
+        OpenAI[OpenAI GPT-4o]
+        Claude[Anthropic Claude]
+        Ollama[Ollama Local]
     end
 
     Client <-->|HTTP / Socket.io| Gateway
     Gateway --> Engine
     Engine <--> Queue
-    W --> DLQ
+    Queue --> DLQ
     Engine --> Storage
     Engine --> Providers
 ```
@@ -108,286 +93,147 @@ flowchart TD
 
 ## 🛠️ Tech Stack
 
-| Layer | Technologies |
-|---|---|
-| Frontend | React 19, Vite, Tailwind CSS v4, ReactFlow v11, Zustand, Framer Motion, Recharts, i18next |
-| Backend | Node.js ≥ 22, Express, Socket.io, Winston, TSX |
-| Database | Drizzle ORM — SQLite (zero‑config) / PostgreSQL (production) |
-| Cache & Queue | Redis (ioredis) with capped memory fallback · BullMQ with DLQ |
-| Sandbox | Docker (hardened flags) / isolated‑vm |
-| Observability | OpenTelemetry OTLP, Prometheus (`/metrics`), Sentry, Grafana Loki |
-| Quality | TypeScript **strict**, ESLint, Prettier, Vitest (coverage gates ≥ 70 %), Playwright E2E, k6 load tests |
-| Shipping | Multi‑stage Docker (non‑root, prod‑only deps), GitHub Actions, standard‑version |
+```
+Frontend    : React 19 · Vite · Tailwind CSS v4 · ReactFlow v11 · Zustand · Framer Motion · Recharts
+Backend     : Node.js >= 22 · Express 4 · Socket.io · Winston Logger · Swagger / OpenAPI
+Database    : Drizzle ORM (SQLite for Zero-Config / PostgreSQL for Enterprise Scale)
+Messaging   : Redis (ioredis) · BullMQ with Dead Letter Queue
+Sandbox     : Isolated Docker Containers (--cap-drop ALL, --read-only, --network none)
+Security    : Helmet · Nonce CSP · SSRF IP-Pinning · AES-256-GCM · JWT with JTI Revocation
+Quality     : TypeScript Strict · ESLint · Vitest (Coverage >= 70%) · Playwright E2E · k6 Load Testing
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 1. Prerequisites
+- **Node.js**: `v22.0.0` or higher
+- **npm**: `v10.0.0` or higher
+- **Docker** *(Optional, recommended for Code Nodes)*: Docker Daemon running locally
 
-- Node.js **≥ 22** and npm **≥ 10**
-- (Optional) Docker — required only for sandboxed code nodes
-- (Optional) Redis — required for multi‑instance deployments
-- (Optional) PostgreSQL — recommended for production scale
-- At least one LLM key (Gemini recommended)
-
-### 1. Install
-
+### 2. Installation
 ```bash
+# Clone repository
 git clone https://github.com/ppiiyo/AgentForge44.git kostromai44
 cd kostromai44
+
+# Install dependencies
 npm install
 ```
 
-### 2. Configure
-
+### 3. Environment Configuration
 ```bash
 cp .env.example .env
-# Generate mandatory secrets (min 32 chars):
-#   openssl rand -base64 48  →  JWT_SECRET
-#   openssl rand -base64 48  →  ENCRYPTION_MASTER_KEY
+
+# Generate high-entropy secrets (min 32 characters)
+# UNIX:
+export JWT_SECRET=$(openssl rand -base64 48)
+export ENCRYPTION_MASTER_KEY=$(openssl rand -base64 48)
 ```
 
-### 3. Database
+### 4. Database Initialization & Startup
+```bash
+# Push database schema (SQLite by default)
+npm run db:push
+
+# Seed template marketplace
+npm run db:seed
+
+# Start development server
+npm run dev
+```
+Open **`http://localhost:3000`** in your browser. The first registered account automatically grants Administrator privileges.
+
+---
+
+## ⚙️ Environment Configuration
+
+| Key | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `PORT` | `number` | `3000` | Application HTTP port |
+| `NODE_ENV` | `string` | `development` | Deployment environment (`development` / `production` / `test`) |
+| `JWT_SECRET` | `string` | *Required* | Min 32-char secret used for JWT token signing |
+| `ENCRYPTION_MASTER_KEY` | `string` | *Required* | Min 32-char key for encrypting provider keys at rest |
+| `DB_TYPE` | `string` | `sqlite` | Database engine (`sqlite` / `postgres`) |
+| `DATABASE_URL` | `string` | — | Connection string when `DB_TYPE=postgres` |
+| `REDIS_URL` | `string` | — | Redis connection string for BullMQ and multi-node caching |
+| `GEMINI_API_KEY` | `string` | — | Google Gemini API Key |
+| `OPENAI_API_KEY` | `string` | — | OpenAI API Key |
+| `ANTHROPIC_API_KEY` | `string` | — | Anthropic Claude API Key |
+| `OLLAMA_HOST` | `string` | `http://localhost:11434` | Ollama service endpoint |
+
+---
+
+## 🔌 API Endpoints Reference
+
+All API routes are versioned under **`/api/v1`** (with backward-compatible alias at **`/api`**).
+
+| HTTP Method | Route | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/v1/auth/register` | Register new user (first user gets `admin` role) | No |
+| `POST` | `/api/v1/auth/login` | Authenticate user and issue JWT | No |
+| `POST` | `/api/v1/auth/logout` | Revoke JWT via Redis JTI blacklist | Yes |
+| `POST` | `/api/v1/execute/graph` | Synchronously execute raw DAG nodes & connections | Yes |
+| `POST` | `/api/v1/execute/blueprint` | Execute stored blueprint pipeline by ID | Yes |
+| `POST` | `/api/v1/runs` | Submit asynchronous background run job | Yes |
+| `GET` | `/api/v1/runs/:id` | Query execution status & step logs | Yes |
+| `GET` | `/api/v1/health` | Multi-component system health status | No |
+| `GET` | `/metrics` | Prometheus metrics scrape endpoint | Yes |
+
+Detailed OpenAPI / Swagger documentation is served interactively at **`/api-docs`**.
+
+---
+
+## 🧪 Quality & Testing Strategy
+
+KostromAi44 maintains rigorous quality gates across the entire pipeline:
 
 ```bash
-npm run db:push     # create schema (SQLite by default)
-npm run db:seed     # seed marketplace templates
+# Run unit & integration test suite
+npm test
+
+# Check code coverage against thresholds (Lines >= 70%, Functions >= 70%, Branches >= 60%)
+npm run test:coverage
+
+# Run Playwright End-to-End browser tests
+npm run test:e2e
+
+# Run k6 API performance and load tests
+npm run test:load
+
+# Execute strict TypeScript typecheck and Linter
+npm run lint
 ```
 
-### 4. Run
+---
+
+## 🐳 Container Deployment
+
+KostromAi44 ships with multi-stage Dockerfiles optimized for minimal attack surface and small image footprints.
 
 ```bash
-npm run dev         # development (Vite middleware mode)
-# — or —
-npm run build && npm start   # production bundle
+# Build multi-stage production image
+docker build -t kostromai44:latest .
+
+# Run container with isolated networking and non-root execution
+docker run -d \
+  --name kostromai44 \
+  -p 3000:3000 \
+  --env-file .env \
+  kostromai44:latest
 ```
-
-Open `http://localhost:3000`. The first registered user automatically becomes **admin** (bootstrap rule, transaction‑safe).
-
----
-
-## ⚙️ Configuration
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PORT` | — | `3000` | HTTP port |
-| `NODE_ENV` | — | — | `production` enables strict CSP, static serving, strict startup checks |
-| `APP_URL` | — | `http://localhost:3000` | Self‑referential base URL for webhooks/callbacks |
-| `GEMINI_API_KEY` | ✅* | — | Default provider for visual agents (*at least one LLM key required) |
-| `OPENAI_API_KEY` | — | — | OpenAI provider |
-| `ANTHROPIC_API_KEY` | — | — | Anthropic provider |
-| `OLLAMA_HOST` | — | `http://localhost:11434` | Local offline provider |
-| `TAVILY_API_KEY` | — | — | Web‑search tool node |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | — | — | GitHub integration |
-| `AGENTFORGE_API_KEY` | — | — | Master key for headless clients (timing‑safe compared) |
-| `JWT_SECRET` | ✅ | — | JWT signing key, ≥ 32 chars |
-| `JWT_SECRET_PREVIOUS` | — | — | Previous key for zero‑downtime rotation |
-| `ENCRYPTION_MASTER_KEY` | ✅ | — | At‑rest encryption key for stored API keys |
-| `DB_TYPE` | — | `sqlite` | `sqlite` or `postgres` |
-| `DATABASE_URL` | if postgres | — | `postgres://…` connection string |
-| `REDIS_URL` | — | — | `redis://…`; without it a capped in‑memory fallback is used |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | — | — | OTLP trace exporter (Tempo/Jaeger) |
-| `LOKI_URL` | — | — | Grafana Loki log ingestion |
-| `SENTRY_DSN` / `VITE_SENTRY_DSN` | — | — | Error tracking |
-| `VITE_POSTHOG_KEY` / `VITE_POSTHOG_HOST` | — | — | Product analytics |
-| `VECTOR_STORE_PROVIDER` | — | `local` | `local` / `pinecone` / `weaviate` / `qdrant` |
-| `CHAOS_ENGINEERING_ENABLED` | — | `false` | Fault injection; **must stay false in production** |
-
-In `NODE_ENV=production` the server **refuses to start** with missing/invalid `JWT_SECRET`, `ENCRYPTION_MASTER_KEY` or malformed Postgres URLs (fail‑fast). In development it degrades with warnings.
-
----
-
-## 💾 Database
-
-- **SQLite** (`better-sqlite3`) — zero‑config, ideal for single‑node deployments and tests.
-- **PostgreSQL** — pooled client for production scale; set `DB_TYPE=postgres` + `DATABASE_URL`.
-- Schema auto‑migrations run on boot; Drizzle Kit manages generation:
-
-```bash
-npm run db:generate   # generate migrations
-npm run db:migrate    # apply migrations
-npm run db:push       # push schema directly
-npm run db:studio     # Drizzle Studio GUI
-```
-
----
-
-## 🐳 Docker Deployment
-
-Multi‑stage build: production image contains **only** runtime artifacts and production dependencies, runs as non‑root `node` user, and ships a built‑in healthcheck.
-
-```bash
-docker build -t kostromai44 .
-docker run -d -p 3000:3000 --env-file .env \
-  -v $(pwd)/projects:/usr/src/app/projects \
-  --name kostromai44 kostromai44
-```
-
-Health probe: `GET /api/v1/health` → `200 {"status":"ok"}` with per‑component detail (db / redis / disk / llm providers).
-
----
-
-## ☸️ Kubernetes & Terraform
-
-- `kubernetes/` — manifests for deployment, service, HPA and probes wired to `/api/v1/health`.
-- `infra/terraform/` — reference infrastructure provisioning.
-- `monitoring/` — Grafana dashboards, Loki/Prometheus/Tempo stack.
-
----
-
-## 📈 Observability
-
-| Signal | Endpoint / Sink |
-|---|---|
-| Metrics | `GET /metrics` (Prometheus, auth‑protected): pipeline counters, node durations, execution histograms |
-| Traces | OpenTelemetry OTLP (`OTEL_EXPORTER_OTLP_ENDPOINT`) |
-| Logs | Winston structured logs → stdout + optional Grafana Loki (`LOKI_URL`) |
-| Errors | Sentry (backend + React), with self‑healing events logged at `error` level |
-
----
-
-## 🛡️ Security Model
-
-| Threat | Mechanism |
-|---|---|
-| XSS | **Nonce‑only CSP in production** (no `unsafe-inline`/`unsafe-eval`), Helmet, DOMPurify template rendering |
-| Clickjacking | `X-Frame-Options: SAMEORIGIN` + restrictive `frame-ancestors` |
-| SSRF / DNS rebinding | Protocol allowlist, RFC1918/loopback/CGNAT/IPv6 private ranges, DNS resolution check with **IP pinning** |
-| Prompt injection | `LLMGuard`: NFKC normalization, zero‑width stripping, multi‑language patterns, base64 payload decoding, canary tokens, risk threshold 0.4 |
-| Code execution escape | Docker: `--cap-drop ALL`, `--network none`, `--read-only`, `--pids-limit 20`, `no-new-privileges`, memory/CPU caps; **fail‑closed** without Docker |
-| Auth abuse | JWT with mandatory `jti` + Redis blacklist revocation; master key via `crypto.timingSafeEqual`; transaction‑safe admin bootstrap; unique email index |
-| Brute force / DoS | Tiered rate limiting (anonymous 100/15 min, authenticated 1000/15 min) + sliding window 30/min on execution; Redis store with memory fallback |
-| Secret leakage | At‑rest encryption of stored provider keys (`ENCRYPTION_MASTER_KEY`), zero‑downtime JWT rotation via `JWT_SECRET_PREVIOUS` |
-| Supply chain | Dependabot, CodeQL, blocking `npm audit --audit-level=high` in CI |
-| Transport | HSTS (1y, includeSubDomains, preload), strict referrer policy |
-
-Security reports: **do not open public issues** — contact the maintainers privately (see `docs/SECURITY.md`).
-
----
-
-## 🔌 API
-
-- Base path: **`/api/v1`** (legacy `/api` still routed but responds with `Deprecation: true` header).
-- Interactive docs: **`/api-docs`** (Swagger UI), schema at `/swagger.json`.
-- Auth: `Authorization: Bearer <jwt|master-key>`.
-
-| Method & Path | Purpose |
-|---|---|
-| `POST /api/v1/auth/register` | Register (first user → admin, transaction‑safe) |
-| `POST /api/v1/auth/login` / `logout` | Issue / revoke (`jti` blacklist) tokens |
-| `POST /api/v1/execute/graph` | Synchronous run of `nodes` + `connections` (Zod‑validated) |
-| `POST /api/v1/execute/blueprint` | Run a stored blueprint by id |
-| `POST /api/v1/run-pipeline` | Run with webhooks, metrics, debug replay session |
-| `POST /api/v1/runs` | Async headless run (202 + `runId`) |
-| `GET /api/v1/runs/:id` · `POST …/resume` · `…/confirm` | Status / resume failed / human‑gate decision |
-| `POST /api/v1/admin/dead-letter/:id/retry` | Re‑enqueue a dead‑letter job (admin) |
-| `GET /api/v1/health` | Component‑level health |
-| `GET /metrics` | Prometheus scrape (auth) |
-
-All graph payloads are validated before execution: known node types, per‑type Zod field schemas, 64 KB field caps, connection integrity, no self‑loops, ≤ 500 nodes.
-
----
-
-## 🧪 Testing
-
-```bash
-npm test                 # unit + integration (Vitest)
-npm run test:coverage    # with gates: lines/funcs ≥ 70%, branches ≥ 60%
-npm run test:e2e         # Playwright (Postgres + Redis services)
-npm run test:load        # k6 pipeline load
-npm run test:load:stress # circuit-breaker stress
-npm run test:load:soak   # soak
-npm run lint             # ESLint + tsc --noEmit (strict)
-```
-
----
-
-## 🔁 CI/CD
-
-| Workflow | Purpose |
-|---|---|
-| `ci.yml` | Blocking lint + `tsc --noEmit` + blocking `npm audit` + build + coverage‑gated tests + E2E (PR: critical flows, main: full) |
-| `security.yml` / `codeql.yml` | Dependency & code analysis |
-| `load-test.yml` | k6 performance gates |
-| `preview.yml` / `deploy.yml` | Preview environments & tagged deployments |
-| `release.yml` | standard‑version releases |
-
----
-
-## 🗂️ Project Structure
-
-```
-├── server.ts               # Bootstrap: env checks → security → guards → /api/v1 routers
-├── src/
-│   ├── api/                # Route modules + strategies (14 node types)
-│   │   ├── engine/         # CycleDetector, ParallelRunner
-│   │   └── strategies/     # One strategy per node type
-│   ├── components/         # React UI (canvas, dashboards, library)
-│   ├── db/                 # Adapters (SQLite/Postgres), polymorphic connection factory
-│   ├── middleware/         # guard, tenantIsolation, rateLimit, security, sanitize
-│   ├── queue/              # BullMQ + dead letter handling
-│   ├── schemas/            # Zod graph/node validation
-│   ├── services/           # pipeline executor, retry + circuit breakers, sandbox,
-│   │                       # cache, chaos (flag-gated), metrics, tracing, security/*
-│   ├── store/              # Zustand slices
-│   └── tests/              # unit, integration, e2e, load, fixtures
-├── kubernetes/  infra/terraform/  monitoring/  scripts/  docs/
-└── Dockerfile  Dockerfile.backend
-```
-
----
-
-## 🧯 Troubleshooting
-
-| Symptom | Cause & Action |
-|---|---|
-| `Docker Sandbox execution failed … daemon is not available` | Sandbox is **fail‑closed** by design. Install/start Docker, or use non‑code node types. |
-| `[Redis] … Degrading to capped memory cache` | Redis unreachable. Single‑instance OK; for multi‑instance restore `REDIS_URL`. |
-| `CircuitBreakerOpenError` | Provider outage detected. Breaker half‑opens after 30 s automatically; check provider keys/status. |
-| Dead‑letter jobs accumulating | Jobs failed 3 attempts. Inspect error, fix cause, retry via `POST /api/v1/admin/dead-letter/:id/retry`. |
-| `Node "…" timeout after 60000ms` | Per‑node timeout. Raise via executor options or split heavy work across nodes. |
-| CSP blocks scripts **in dev** | Dev intentionally uses a relaxed CSP; production uses nonce‑only. Verify `NODE_ENV`. |
-| `Graph validation failed: …` | Payload violates node schemas (unknown type, oversized field, dangling connection). Details in `issues`. |
-
----
-
-## ✅ Production Checklist
-
-- [ ] `NODE_ENV=production`
-- [ ] `JWT_SECRET`, `ENCRYPTION_MASTER_KEY` generated (`openssl rand -base64 48`)
-- [ ] `DB_TYPE=postgres` + pooled `DATABASE_URL`; backups scheduled
-- [ ] `REDIS_URL` configured (shared cache/limiter/revocation)
-- [ ] TLS termination in front of the app (HSTS header already emitted)
-- [ ] `CHAOS_ENGINEERING_ENABLED=false`
-- [ ] Sentry DSN + OTLP/Loki endpoints configured
-- [ ] `npm audit` clean, coverage gates green, E2E green
-- [ ] Horizontal replicas behind loopback‑trusted proxy only
-- [ ] Runbook reviewed: `docs/RUNBOOK.md`
-
----
-
-## 📖 Documentation
-
-- [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — deploy, backup/restore, incident response
-- [`docs/SECURITY.md`](docs/SECURITY.md) — threat model, disclosure policy, secret rotation
-- [`docs/API.md`](docs/API.md) — full endpoint reference
-
----
-
-## 🤝 Contributing
-
-1. Fork & create a feature branch.
-2. Follow the PR template; keep commits conventional (`feat:`, `fix:`, `chore:`).
-3. `npm run lint`, `npm test`, and coverage gates must pass; Husky hooks enforce this locally.
-4. Security changes require explicit review — see `docs/SECURITY.md`.
 
 ---
 
 ## 📄 License
 
-MIT © 2026 KostromAi44 contributors. See [`LICENSE`](LICENSE).
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
----
+<div align="center">
 
-> **Status:** hardened release — strict TypeScript, nonce‑only CSP, versioned API (`/api/v1`), circuit‑broken LLM calls, dead‑lettered queues, transaction‑safe auth, fail‑closed sandboxing.
+Made with ❤️ by the **KostromAi44** Team.
+
+[**Back to Top ⬆️**](#-kostromai44)
+
+</div>

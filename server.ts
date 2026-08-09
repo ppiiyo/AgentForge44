@@ -99,17 +99,17 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api', tieredRateLimiter);
+app.use(['/api', '/api/v1'], tieredRateLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(sanitizeRequestBody);
 
-app.use('/api', unifiedGuardMiddleware);
-app.use('/api', enterpriseTenantContext);
+app.use(['/api', '/api/v1'], unifiedGuardMiddleware);
+app.use(['/api', '/api/v1'], enterpriseTenantContext);
 
 // Endpoint for testing request payload limits
-app.post('/api/test-payload', (req: express.Request, res: express.Response) => {
+app.post(['/api/test-payload', '/api/v1/test-payload'], (req: express.Request, res: express.Response) => {
   res.json({ received: true, size: req.body ? JSON.stringify(req.body).length : 0 });
 });
 
@@ -117,16 +117,6 @@ app.post('/api/test-payload', (req: express.Request, res: express.Response) => {
 setupSwagger(app);
 
 // Mount Modular API Routers
-app.use('/api', authRoutes);
-app.use('/api', projectsRouter);
-app.use('/api', graphsRouter);
-app.use('/api', executeRouter);
-app.use('/api', marketplaceRouter);
-app.use('/api', deploymentRouter);
-app.use('/api', mcpRouter);
-app.use('/api', metricsRouter);
-app.use('/api', githubRouter);
-app.use('/api', diagnosticsRouter);
 app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     res.set('Content-Type', register.contentType);
@@ -135,30 +125,29 @@ app.get('/metrics', authMiddleware, async (req: express.Request, res: express.Re
     res.status(500).end(err.message);
   }
 });
-app.use('/api', ragRouter);
-app.use('/api', patternsRouter);
-app.use('/api', schedulerAndWebhooksRouter);
-app.use('/api', copilotRouter);
 
-/**
- * @swagger
- * /api/health:
- *   get:
- *     summary: Retrieve server health status
- *     description: Health check endpoint for verifying server status and connections.
- *     responses:
- *       200:
- *         description: Server is online and healthy.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: ok
- */
-app.use('/api', createHealthRoutes());
+const apiRoutes = [
+  authRoutes,
+  projectsRouter,
+  graphsRouter,
+  executeRouter,
+  marketplaceRouter,
+  deploymentRouter,
+  mcpRouter,
+  metricsRouter,
+  githubRouter,
+  diagnosticsRouter,
+  ragRouter,
+  patternsRouter,
+  schedulerAndWebhooksRouter,
+  copilotRouter,
+  createHealthRoutes(),
+];
+
+apiRoutes.forEach((router) => {
+  app.use('/api', router);
+  app.use('/api/v1', router);
+});
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);
