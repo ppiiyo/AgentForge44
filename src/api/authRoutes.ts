@@ -79,8 +79,8 @@ export function requireRole(allowedRoles: string[]) {
       return;
     }
 
-    const activePriority = rolesPriority[workspaceRole as any] || 0;
-    const requiredPriority = Math.max(...allowedRoles.map(r => rolesPriority[r as any] || 0));
+    const activePriority = (rolesPriority as Record<string, number>)[workspaceRole] || 0;
+    const requiredPriority = Math.max(...allowedRoles.map(r => (rolesPriority as Record<string, number>)[r] || 0));
 
     const isDirectlyAllowed = allowedRoles.includes(workspaceRole);
     const isPriorityAllowed = activePriority >= requiredPriority;

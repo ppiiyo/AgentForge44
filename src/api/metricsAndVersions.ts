@@ -490,10 +490,10 @@ export class VersionManager {
       const prevVer = graphVersions[0];
       const prevNodes = prevVer.snapshot.nodes || [];
       const currentNodes = snapshot.nodes || [];
-      const added = currentNodes.filter(cn => !prevNodes.some(pn => pn.id === cn.id)).length;
-      const deleted = prevNodes.filter(pn => !currentNodes.some(cn => cn.id === pn.id)).length;
-      const modified = currentNodes.filter(cn => {
-        const matching = prevNodes.find(pn => pn.id === cn.id);
+      const added = currentNodes.filter((cn: any) => !prevNodes.some((pn: any) => pn.id === cn.id)).length;
+      const deleted = prevNodes.filter((pn: any) => !currentNodes.some((cn: any) => cn.id === pn.id)).length;
+      const modified = currentNodes.filter((cn: any) => {
+        const matching = prevNodes.find((pn: any) => pn.id === cn.id);
         return matching && JSON.stringify(matching.fields) !== JSON.stringify(cn.fields);
       }).length;
 

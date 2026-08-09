@@ -38,7 +38,7 @@ router.get('/projects', async (req: Request, res: Response) => {
 
     // 1. Fetch workspace projects
     const userProjects = await db.select().from(tables.projects).where(eq(tables.projects.tenantId, workspaceId));
-    const userProjectIds = new Set(userProjects.map(p => p.id));
+    const userProjectIds = new Set(userProjects.map((p: any) => p.id));
 
     // 2. Fetch workspace active graphs from SQLite / Postgres database
     let dbGraphs: any[] = [];

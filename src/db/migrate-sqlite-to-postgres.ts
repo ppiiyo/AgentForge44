@@ -71,7 +71,7 @@ async function migrate() {
         const batch = rows.slice(i, i + batchSize);
         
         for (const row of batch) {
-          const keys = Object.keys(row);
+          const keys = Object.keys(row as object);
           const columnNames = keys.map(k => {
             // Map camelCase naming to clean snake_case database schema definition keys
             if (k === 'passwordHash') return 'password_hash';

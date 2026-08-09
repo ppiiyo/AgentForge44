@@ -407,7 +407,7 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
 router.get('/runs', async (req: Request, res: Response) => {
   try {
     const runs = await db.select().from(tables.pipelineRuns);
-    res.json(runs.map(run => {
+    res.json(runs.map((run: any) => {
       let logsArr = [];
       try { logsArr = JSON.parse(run.logs || '[]'); } catch (_) {}
       return {
@@ -420,7 +420,7 @@ router.get('/runs', async (req: Request, res: Response) => {
         updatedAt: run.updatedAt,
         logsCount: logsArr.length
       };
-    }).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    }).sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || '')));
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

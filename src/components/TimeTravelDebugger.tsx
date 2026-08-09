@@ -499,9 +499,14 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
         };
         
         // Propagate variables in local state just like server
-        for (let idx = currentStepIndex; idx < updatedSnapshots.length; idx++) {
-          if (updatedSnapshots[idx].variableSnapshots) {
-            updatedSnapshots[idx].variableSnapshots[updatedSnapshots[currentStepIndex].nodeId] = editedOutput;
+        const currentSnap = updatedSnapshots[currentStepIndex];
+        const currentNodeId = currentSnap?.nodeId;
+        if (currentNodeId) {
+          for (let idx = currentStepIndex; idx < updatedSnapshots.length; idx++) {
+            const snap = updatedSnapshots[idx];
+            if (snap && snap.variableSnapshots) {
+              snap.variableSnapshots[currentNodeId] = editedOutput;
+            }
           }
         }
 
@@ -511,7 +516,9 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
         });
 
         // Push new value to dry run output on canvas
-        onSetDryRunOutput({ [updatedSnapshots[currentStepIndex].nodeId]: editedOutput });
+        if (currentNodeId) {
+          onSetDryRunOutput({ [currentNodeId]: editedOutput });
+        }
         
         setIsEditingStep(false);
         playClickSound();
