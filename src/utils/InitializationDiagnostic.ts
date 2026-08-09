@@ -156,7 +156,12 @@ export async function runInitializationDiagnostic(): Promise<DiagnosticResult> {
       // Simple custom comment stripper to handle tsconfig.json with comments
       let cleanContent = content;
       if (file === 'tsconfig.json') {
-        cleanContent = content.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
+        try {
+          JSON.parse(content);
+        } catch (_) {
+          // Strip comments while preserving strings
+          cleanContent = content.replace(/("(?:\\.|[^\\"])*")|\/\*[\s\S]*?\*\/|\/\/.*/g, (m, g1) => g1 || '');
+        }
       }
       JSON.parse(cleanContent);
       jsonDetails.push({
