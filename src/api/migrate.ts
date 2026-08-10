@@ -31,6 +31,7 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
   // Verify connection health first
   const health = await adapter.healthCheck();
   if (!health.ok) {
+    logger.error(`❌ Database connection health check failed. Migration aborted! Error: ${health.error}`);
     throw new Error(`Database connection health check failed. Migration aborted! Error: ${health.error}`);
   }
 
@@ -75,7 +76,10 @@ export async function runSchemaMigrations(adapter: IDatabaseAdapter): Promise<vo
     await seedDefaultWorkspace(adapter);
 
   } catch (error: any) {
-    logger.error(`Failed to execute migrations: ${error.message}`);
+    logger.error(`❌ Migration failed: ${error.message}`);
+    if (error.stack) {
+      logger.error(`Stack trace: ${error.stack}`);
+    }
     throw error;
   }
 }

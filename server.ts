@@ -41,6 +41,10 @@ import { runStartupEnvCheck } from './src/config/envValidator.js';
 
 dotenv.config();
 
+logger.info('🚀 KostromAi44 backend starting...');
+logger.info(`Node.js ${process.version}`);
+logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
 // Run robust environment validation startup check
 runStartupEnvCheck();
 
@@ -155,9 +159,11 @@ app.use(errorHandler);
 async function setupServer() {
   // Execute auto-run database table schema migrations on server start
   try {
+    logger.info('📦 Applying database migrations...');
     await runSchemaMigrations(adapter);
+    logger.info('✅ Migrations applied successfully');
   } catch (migErr: any) {
-    logger.error('CRITICAL ERROR: Database connection / schema auto-migrations failed. Execution halted.', { error: migErr.message });
+    logger.error('CRITICAL ERROR: Database connection / schema auto-migrations failed. Execution halted.', { error: migErr.message, stack: migErr.stack });
     process.exit(1);
   }
 
@@ -179,8 +185,10 @@ async function setupServer() {
     });
   }
 
+  logger.info('✅ All middleware loaded, starting HTTP server...');
   const httpServer = app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`Express custom server running on http://localhost:${PORT}`);
+    logger.info(`🎯 Server running on port ${PORT}`);
+    logger.info(`🏥 Health check: http://localhost:${PORT}/api/health`);
   });
 
   // Start Socket.io Collaboration Server
@@ -199,6 +207,7 @@ async function setupServer() {
 
 if (!process.env.VITEST) {
   setupServer().catch(err => {
-    logger.error("Failed to start server:", { error: err.message || err });
+    logger.error("Failed to start server:", { error: err.message || err, stack: err?.stack });
+    process.exit(1);
   });
 }

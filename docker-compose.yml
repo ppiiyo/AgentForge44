@@ -11,7 +11,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - kostromai44-backend
+      kostromai44-backend:
+        condition: service_healthy
     restart: unless-stopped
 
   # 2. Backend REST & WebSocket API Service
@@ -42,6 +43,12 @@ services:
         condition: service_healthy
       kostromai44-redis:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # 3. Independent Pipeline Execution Worker (Scale out as needed)

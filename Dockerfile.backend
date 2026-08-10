@@ -53,6 +53,9 @@ COPY --from=builder /usr/src/app/vite.config.ts ./vite.config.ts
 COPY --from=builder /usr/src/app/server.ts ./server.ts
 COPY --from=builder /usr/src/app/src ./src
 
+# Install runtime utilities for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Create storage directories
 RUN mkdir -p projects && chown -R node:node /usr/src/app
 
