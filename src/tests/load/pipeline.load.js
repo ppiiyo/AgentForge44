@@ -36,7 +36,8 @@ export default function() {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${AUTH_TOKEN}`
-    }
+    },
+    responseCallback: http.expectedStatuses(200, 201, 202, 401, 429)
   };
 
   let res;
