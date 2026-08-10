@@ -3,12 +3,7 @@ import path from 'path';
 import { db, tables } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
-const DATA_DIR = path.join(process.cwd(), 'projects', '.metadata');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
 
-const _DEPLOYMENTS_FILE = path.join(DATA_DIR, 'deployments.json');
 
 export interface DeploymentConfig {
   region: string;

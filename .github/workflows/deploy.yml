@@ -123,29 +123,17 @@ jobs:
 
       - name: Run Stack Integration and Liveness Smoke Tests
         run: |
-          echo "Waiting for all microservices, PostgreSQL, and Redis to boot up and integrate..."
           SUCCESS=false
           for i in {1..20}; do
-            RESPONSE=$(curl -s http://localhost:3000/api/health || echo "")
-            if [ -n "$RESPONSE" ]; then
-              STATUS=$(echo "$RESPONSE" | jq -r '.status // empty' 2>/dev/null || echo "")
-              if [ "$STATUS" = "ok" ] || echo "$RESPONSE" | grep -q '"status":\s*"ok"' || echo "$RESPONSE" | grep -q "ok"; then
-                echo "✅ Success: Stack integrated successfully and serves requests!"
-                SUCCESS=true
-                break
-              else
-                echo "Health check returned response: '$RESPONSE', retrying..."
-              fi
-            else
-              echo "Waiting for endpoints to respond (attempt $i/20)..."
+            CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" \
+              http://localhost:3000/api/health || echo 000)
+            if [ "$CODE" = "200" ] && \
+               grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"' /tmp/health.json; then
+              echo "✅ Stack healthy"; SUCCESS=true; break
             fi
-            sleep 3
+            echo "attempt $i/20 (HTTP $CODE), waiting..."; sleep 3
           done
-          if [ "$SUCCESS" = "false" ]; then
-            echo "❌ Error: Docker Compose stack failed to integrate or respond in time."
-            docker compose logs
-            exit 1
-          fi
+          [ "$SUCCESS" = "true" ] || { docker compose logs; exit 1; }
 
       - name: Shutdown Compose Services
         if: always()
