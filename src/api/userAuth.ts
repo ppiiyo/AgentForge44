@@ -55,12 +55,18 @@ export function verifyPassword(password: string, storedHash: string): boolean {
       const parts = storedHash.split('$');
       // parts[0] is "", parts[1] is "pbkdf2-sha512", parts[2] is "i=600000", parts[3] is "l=64", parts[4] is salt, parts[5] is hash
       if (parts.length < 6) return false;
-      const iterationsPart = parts[2].split('=')[1];
-      const lengthPart = parts[3].split('=')[1];
-      const iterations = parseInt(iterationsPart, 10);
-      const keylen = parseInt(lengthPart, 10);
+      const p2 = parts[2];
+      const p3 = parts[3];
       const salt = parts[4];
       const hash = parts[5];
+      if (!p2 || !p3 || !salt || !hash) return false;
+
+      const iterationsPart = p2.split('=')[1];
+      const lengthPart = p3.split('=')[1];
+      if (!iterationsPart || !lengthPart) return false;
+
+      const iterations = parseInt(iterationsPart, 10);
+      const keylen = parseInt(lengthPart, 10);
 
       const verifyHash = crypto.pbkdf2Sync(password, salt, iterations, keylen, 'sha512').toString('hex');
       const h1 = Buffer.from(hash, 'hex');

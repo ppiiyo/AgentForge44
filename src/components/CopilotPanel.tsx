@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, Zap, Award, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Layers } from 'lucide-react';
+import { useState } from 'react';
+import { Sparkles, Zap, Award, CheckCircle, AlertTriangle, RefreshCw, Layers } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
 
 interface CopilotPanelProps {

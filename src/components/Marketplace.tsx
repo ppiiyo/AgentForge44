@@ -5,13 +5,10 @@ import {
   Download, 
   Star, 
   Plus, 
-  BookOpen, 
-  Tag, 
   User, 
   Calendar, 
   AlertCircle, 
   CheckCircle,
-  Eye,
   GitBranch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -737,12 +734,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                     {/* Graph Visualizer representation */}
                     <div className="bg-slate-900 p-4 rounded-xl border border-slate-950 relative overflow-hidden min-h-[220px] max-h-[350px] overflow-y-auto space-y-2 text-xs font-mono select-none">
                       {selectedItem.graphSnapshot.nodes?.map((node, idx) => {
-                        const iconColor = 
-                          node.type === 'gemini' ? 'bg-indigo-950 text-indigo-400 border-indigo-900/60' :
-                          node.type === 'tool' ? 'bg-rose-950 text-rose-400 border-rose-900/60' :
-                          node.type === 'rag' ? 'bg-teal-950 text-teal-400 border-teal-900/60' :
-                          'bg-slate-950 text-slate-450 border-slate-850';
-
                         return (
                           <div 
                             key={node.id} 

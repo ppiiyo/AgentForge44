@@ -103,9 +103,11 @@ export class LongTermMemoryManager {
       let normA = 0;
       let normB = 0;
       for (let i = 0; i < queryEmbedding.length; i++) {
-        dotProduct += queryEmbedding[i] * mem.embedding[i];
-        normA += queryEmbedding[i] * queryEmbedding[i];
-        normB += mem.embedding[i] * mem.embedding[i];
+        const qVal = queryEmbedding[i] ?? 0;
+        const mVal = mem.embedding[i] ?? 0;
+        dotProduct += qVal * mVal;
+        normA += qVal * qVal;
+        normB += mVal * mVal;
       }
       const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB) || 1);
       return { mem, similarity };

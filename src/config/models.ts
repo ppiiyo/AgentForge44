@@ -4,7 +4,9 @@ export interface ModelConfig {
   maxTokens: number;
 }
 
-export const PROVIDER_MODELS: Record<string, ModelConfig> = {
+export type ProviderType = 'gemini' | 'openai' | 'anthropic' | 'ollama';
+
+export const PROVIDER_MODELS: Record<ProviderType, ModelConfig> = {
   gemini: {
     default: "gemini-3.5-flash",
     allowed: ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash"],

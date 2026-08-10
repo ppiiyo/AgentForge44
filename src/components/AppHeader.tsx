@@ -2,10 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { 
-  Sparkles, Play, Database, Workflow, Check, Layers, RefreshCw, RefreshCcw, 
-  HelpCircle, Settings, Download, Upload, Globe, LayoutGrid, X, CheckSquare
+  Play, Database, Workflow, Check, RefreshCw, RefreshCcw, 
+  HelpCircle, Upload, Globe, LayoutGrid, X, CheckSquare
 } from 'lucide-react';
-import { FlowNode, FlowConnection } from '../types';
 import { AppHealthMonitor } from './AppHealthMonitor';
 
 interface AppHeaderProps {

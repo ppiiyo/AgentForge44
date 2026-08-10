@@ -275,7 +275,7 @@ router.delete('/projects/:name', requireRole(['editor', 'owner']), async (req: R
       return;
     }
 
-    const { name } = req.params;
+    const name = req.params.name ?? '';
     const safeName = name.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
     const workspaceId = (req as any).workspaceId || 'default-workspace';

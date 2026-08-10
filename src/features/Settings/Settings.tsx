@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
   FileJson, 
-  X, 
   AlertCircle, 
   Download, 
   Copy, 
@@ -18,7 +17,6 @@ import {
   CheckCircle,
   Sparkles
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { safeJsonStringify } from '../../utils/safe-json';
 // @ts-ignore
@@ -65,7 +63,7 @@ export const Settings: React.FC<SettingsProps> = ({
   setJsonStringInput,
   importError,
   handleImportWorkflowJSON,
-  isImportExportModalOpen,
+  isImportExportModalOpen: _isImportExportModalOpen,
   setIsImportExportModalOpen,
   userNameInput = "",
   onUserNameInputChange,

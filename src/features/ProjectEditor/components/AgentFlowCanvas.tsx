@@ -80,7 +80,7 @@ const CustomWorkflowNode: React.FC<NodeProps> = ({ data }) => {
     isHighlighted, 
     nodeStatus, 
     onDeleteNode,
-    currentLang,
+    currentLang: _currentLang,
     validationIssue
   } = data;
 
@@ -514,7 +514,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   }, [onConnectNodes]);
 
   // Handle position changes when nodes are dragged (supporting multi-node dragging!)
-  const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node, draggedNodes: Node[]) => {
+  const onNodeDragStop = useCallback((_event: React.MouseEvent, node: Node, draggedNodes: Node[]) => {
     if (draggedNodes && draggedNodes.length > 1) {
       const updates = draggedNodes.map(n => ({
         id: n.id,
@@ -529,7 +529,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
   }, [onChangeNodePosition]);
 
   // Handle selection event
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     onSelectNode(node.id);
     playClickSound();
   }, [onSelectNode]);
@@ -539,7 +539,7 @@ export const AgentFlowCanvas: React.FC<AgentFlowCanvasProps> = ({
     const selectedIds = params.nodes.map(n => n.id);
     setSelectedNodeIds(selectedIds);
     if (selectedIds.length === 1) {
-      setSelectedNodeId(selectedIds[0]);
+      setSelectedNodeId(selectedIds[0] ?? null);
     } else if (selectedIds.length === 0) {
       setSelectedNodeId(null);
     }

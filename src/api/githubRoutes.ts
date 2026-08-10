@@ -5,7 +5,6 @@ import axios from 'axios';
 import { SecretsShield } from './auth.js';
 import { authMiddleware } from './authRoutes.js';
 import { verifyToken } from './userAuth.js';
-import { SECRETS } from '../config/secrets.js';
 import { logger } from '../utils/logger.js';
 
 const router = express.Router();

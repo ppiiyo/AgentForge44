@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Database, Zap, ShieldAlert, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Database, Zap, ShieldAlert, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface AppHealthMonitorProps {
   currentLang: 'en' | 'ru' | 'zh';

@@ -38,7 +38,6 @@ export class TopologyOptimizer {
     }
 
     // 2. Locate disconnected or orphan nodes
-    const _nodeIds = new Set(nodes.map(n => n.id));
     const connectedIds = new Set<string>();
     connections.forEach(c => {
       connectedIds.add(c.sourceId);
@@ -128,7 +127,6 @@ export class TopologyOptimizer {
    * configures Zero-Trust masking rules, and returns an enhanced, hardened workflow topology.
    */
   static optimize(nodes: FlowNode[], connections: FlowConnection[]): { nodes: FlowNode[]; connections: FlowConnection[]; report: string } {
-    const _analysis = this.analyze(nodes, connections);
     const optimizedNodes = safeClone(nodes) as FlowNode[];
     const optimizedConnections = safeClone(connections) as FlowConnection[];
     

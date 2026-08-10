@@ -86,7 +86,7 @@ router.post('/rag/search', async (req: Request, res: Response, next: NextFunctio
   }
 });
 
-router.get('/rag/stats', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/rag/stats', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const stats = await ragService.getStats();
     res.json(stats);
@@ -95,7 +95,7 @@ router.get('/rag/stats', async (req: Request, res: Response, next: NextFunction)
   }
 });
 
-router.get('/rag/chunks', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/rag/chunks', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const chunks = await ragService.getAllChunks();
     res.json({ chunks });
@@ -106,7 +106,7 @@ router.get('/rag/chunks', async (req: Request, res: Response, next: NextFunction
 
 router.delete('/rag/document/:source', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const source = req.params.source;
+    const source = req.params.source ?? '';
     await ragService.deleteDocumentBySource(source);
     res.json({ success: true, message: `Document "${source}" deleted.` });
   } catch (err: any) {
@@ -114,7 +114,7 @@ router.delete('/rag/document/:source', async (req: Request, res: Response, next:
   }
 });
 
-router.post('/rag/upload-binary', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/rag/upload-binary', async (req: Request, res: Response, _next: NextFunction) => {
   try {
     const { fileName, fileType, base64 } = req.body;
     if (!base64 || !fileName) {

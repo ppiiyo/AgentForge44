@@ -6,7 +6,7 @@ export function createHealthRoutes(): Router {
   const router = Router();
 
   // Complete, production-ready health check endpoint
-  router.get('/health', async (req: Request, res: Response) => {
+  router.get('/health', async (_req: Request, res: Response) => {
     let dbStatus = 'ok';
     let dbLatency: number | undefined;
 
@@ -155,7 +155,7 @@ export function createHealthRoutes(): Router {
   });
 
   // Readiness probe - is the service ready to accept traffic?
-  router.get('/ready', async (req: Request, res: Response) => {
+  router.get('/ready', async (_req: Request, res: Response) => {
     let dbStatus = 'ok';
     let dbLatency: number | undefined;
 

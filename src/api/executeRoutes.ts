@@ -404,7 +404,7 @@ router.post('/runs', validateBody(PipelineExecuteSchema), async (req: Request, r
   }
 });
 
-router.get('/runs', async (req: Request, res: Response) => {
+router.get('/runs', async (_req: Request, res: Response) => {
   try {
     const runs = await db.select().from(tables.pipelineRuns);
     res.json(runs.map((run: any) => {
@@ -426,7 +426,7 @@ router.get('/runs', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/runs', async (req: Request, res: Response) => {
+router.delete('/runs', async (_req: Request, res: Response) => {
   try {
     await db.delete(tables.pipelineRuns);
     res.json({ success: true, message: "All pipeline runs cleared successfully." });
@@ -437,7 +437,8 @@ router.delete('/runs', async (req: Request, res: Response) => {
 
 router.get('/runs/:id', async (req: Request, res: Response) => {
   try {
-    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, req.params.id)).limit(1);
+    const id = req.params.id ?? '';
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id as any, id)).limit(1);
     if (run.length === 0) {
       res.status(404).json({ success: false, error: "Pipeline run not found." });
       return;
@@ -474,8 +475,8 @@ router.get('/runs/:id', async (req: Request, res: Response) => {
 
 router.post('/runs/:id/resume', async (req: Request, res: Response) => {
   try {
-    const runId = req.params.id;
-    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    const runId = req.params.id ?? '';
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id as any, runId)).limit(1);
     if (run.length === 0) {
       res.status(404).json({ success: false, error: "Pipeline run not found." });
       return;
@@ -497,7 +498,7 @@ router.post('/runs/:id/resume', async (req: Request, res: Response) => {
       status: 'pending',
       error: null,
       updatedAt: new Date().toISOString()
-    }).where(eq(tables.pipelineRuns.id, runId));
+    }).where(eq(tables.pipelineRuns.id as any, runId));
 
     const tenantId = data.tenantId || 'default-workspace';
     const graphId = data.graphId || 'canvas-workspace';
@@ -515,7 +516,7 @@ router.post('/runs/:id/resume', async (req: Request, res: Response) => {
 
 router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
   try {
-    const runId = req.params.id;
+    const runId = req.params.id ?? '';
     const { nodes, connections, nodeId, approved, feedback, editValue } = req.body;
 
     if (!nodes || !connections || !nodeId) {
@@ -523,7 +524,7 @@ router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
       return;
     }
 
-    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id as any, runId)).limit(1);
     if (run.length === 0) {
       res.status(404).json({ success: false, error: "Pipeline run not found." });
       return;
@@ -553,7 +554,7 @@ router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
         nodeOutputs: JSON.stringify(nodeOutputs),
         error: null,
         updatedAt: new Date().toISOString()
-      }).where(eq(tables.pipelineRuns.id, runId));
+      }).where(eq(tables.pipelineRuns.id as any, runId));
 
       const tenantId = data.tenantId || 'default-workspace';
       const graphId = data.graphId || 'canvas-workspace';
@@ -569,7 +570,7 @@ router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
         status: 'failed',
         error: feedback || "Rejected by operator",
         updatedAt: new Date().toISOString()
-      }).where(eq(tables.pipelineRuns.id, runId));
+      }).where(eq(tables.pipelineRuns.id as any, runId));
 
       res.json({
         success: true,
@@ -584,10 +585,10 @@ router.post('/runs/:id/confirm', async (req: Request, res: Response) => {
 
 router.post('/runs/:id/chat', async (req: Request, res: Response) => {
   try {
-    const runId = req.params.id;
+    const runId = req.params.id ?? '';
     const { message, nodes } = req.body;
 
-    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, runId)).limit(1);
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id as any, runId)).limit(1);
     if (run.length === 0) {
       res.status(404).json({ success: false, error: "Pipeline run not found." });
       return;
@@ -652,7 +653,7 @@ Provide a concise, extremely helpful, professional reply explaining what's happe
  *       200:
  *         description: A JSON array of active provider objects.
  */
-router.get('/llm-providers', (req: Request, res: Response) => {
+router.get('/llm-providers', (_req: Request, res: Response) => {
   res.json([
     {
       id: "google",
@@ -695,7 +696,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
 import { getSandbox, releaseSandbox } from '../utils/sandbox.js';
 
 router.post('/execute-node/:runId', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
-  const { runId } = req.params;
+  const runId = req.params.runId ?? '';
   const { code, inputData } = req.body;
   
   const sandbox = getSandbox(runId);
@@ -717,11 +718,11 @@ router.post('/execute-node/:runId', requireRole(['editor', 'owner']), async (req
 });
 
 router.post('/complete-run/:runId', requireRole(['editor', 'owner']), (req: Request, res: Response) => {
-  releaseSandbox(req.params.runId);
+  releaseSandbox(req.params.runId ?? '');
   res.json({ success: true });
 });
 
-router.get('/config/status', (req: Request, res: Response) => {
+router.get('/config/status', (_req: Request, res: Response) => {
   res.json({
     geminiConfigured: !!process.env.GEMINI_API_KEY,
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -777,7 +778,7 @@ function updateConfigJson(keys: Record<string, string>) {
 }
 
 // Check security/presence of mandatory environment variables
-router.get('/config/env-status', (req: Request, res: Response) => {
+router.get('/config/env-status', (_req: Request, res: Response) => {
   const jwt = process.env.JWT_SECRET || '';
   const encryption = process.env.ENCRYPTION_MASTER_KEY || '';
 

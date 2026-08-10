@@ -72,7 +72,7 @@ export function maskSecrets(obj: any, seen = new WeakSet()): any {
 function safeStringifyLog(obj: any): string {
   const seen = new WeakSet();
   try {
-    return JSON.stringify(obj, (key, value) => {
+    return JSON.stringify(obj, (_key, value) => {
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) return '[Circular]';
         seen.add(value);

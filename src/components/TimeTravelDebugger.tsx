@@ -44,7 +44,7 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
   const [sessionDetails, setSessionDetails] = useState<DebugSession | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   // Phase 2 Async Checkpoint Queue State
   const [activeTabSub, setActiveTabSub] = useState<'sync' | 'async' | 'diagnostics'>('sync');
@@ -252,9 +252,10 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
         setCurrentStepIndex(0);
         setIsPlaying(false);
 
-        if (snapshots.length > 0) {
-          onHighlightNode(snapshots[0].nodeId);
-          updateDryRunPreview(snapshots[0]);
+        const firstSnap = snapshots[0];
+        if (firstSnap) {
+          onHighlightNode(firstSnap.nodeId);
+          updateDryRunPreview(firstSnap);
         }
       }
     } catch (e) {
@@ -419,12 +420,14 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
 
   useEffect(() => {
     if (activeTabSub === 'sync') {
-      if (sessions.length > 0 && !activeSessionId) {
-        loadSessionDetails(sessions[0].id);
+      const firstSess = sessions[0];
+      if (firstSess && !activeSessionId) {
+        loadSessionDetails(firstSess.id);
       }
     } else {
-      if (asyncRuns.length > 0 && !activeRunId) {
-        loadAsyncRunDetails(asyncRuns[0].id);
+      const firstRun = asyncRuns[0];
+      if (firstRun && !activeRunId) {
+        loadAsyncRunDetails(firstRun.id);
       }
     }
   }, [activeTabSub]);
@@ -473,8 +476,10 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
     const clampedIndex = Math.max(0, Math.min(index, sessionDetails.snapshots.length - 1));
     setCurrentStepIndex(clampedIndex);
     const snap = sessionDetails.snapshots[clampedIndex];
-    onHighlightNode(snap.nodeId);
-    updateDryRunPreview(snap);
+    if (snap) {
+      onHighlightNode(snap.nodeId);
+      updateDryRunPreview(snap);
+    }
     playClickSound();
   };
 
@@ -493,11 +498,14 @@ export function TimeTravelDebugger({ currentLang, onHighlightNode, onSetDryRunOu
       if (response.ok) {
         // Update local session details immediately
         const updatedSnapshots = [...sessionDetails.snapshots];
-        updatedSnapshots[currentStepIndex] = {
-          ...updatedSnapshots[currentStepIndex],
-          input: editedInput,
-          output: editedOutput
-        };
+        const existingSnap = updatedSnapshots[currentStepIndex];
+        if (existingSnap) {
+          updatedSnapshots[currentStepIndex] = {
+            ...existingSnap,
+            input: editedInput,
+            output: editedOutput
+          };
+        }
         
         // Propagate variables in local state just like server
         const currentSnap = updatedSnapshots[currentStepIndex];

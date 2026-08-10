@@ -9,9 +9,6 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const MARKETPLACE_FILE = path.join(DATA_DIR, 'marketplace_items.json');
-const REVIEWS_FILE = path.join(DATA_DIR, 'marketplace_reviews.json');
-
 export interface MarketplaceItem {
   id: string;
   title: string;
@@ -37,26 +34,6 @@ export interface MarketplaceReview {
   rating: number;
   comment: string;
   createdAt: string;
-}
-
-function readJsonFile<T>(filePath: string, defaultVal: T): T {
-  try {
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(raw) as T;
-    }
-  } catch (err) {
-    console.error(`Failed to read marketplace file: ${filePath}`, err);
-  }
-  return defaultVal;
-}
-
-function writeJsonFile<T>(filePath: string, data: T): void {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.error(`Failed to write marketplace file: ${filePath}`, err);
-  }
 }
 
 // 5-10 High-Quality Seed Templates

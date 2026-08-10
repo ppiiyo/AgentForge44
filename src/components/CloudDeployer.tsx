@@ -5,16 +5,10 @@ import {
   Trash2, 
   ExternalLink, 
   BookOpen, 
-  Sparkles, 
-  ShieldAlert, 
-  CheckCircle, 
-  AlertCircle, 
   Plus, 
   Key, 
   Sliders, 
   Loader2, 
-  RefreshCcw,
-  SlidersHorizontal,
   FileCode,
   Lock,
   Compass
@@ -158,7 +152,7 @@ export const CloudDeployer: React.FC<CloudDeployerProps> = ({
   graphId,
   graphName,
   currentLang = 'en',
-  activeSnapshot
+  activeSnapshot: _activeSnapshot
 }) => {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,7 +165,7 @@ export const CloudDeployer: React.FC<CloudDeployerProps> = ({
   const [customKey, setCustomKey] = useState('');
   const [rateLimit, setRateLimit] = useState(60);
   const [deploying, setDeploying] = useState(false);
-  const [currentDepId, setCurrentDepId] = useState<string | null>(null);
+  const [_currentDepId, _setCurrentDepId] = useState<string | null>(null);
 
   // Detail monitors
   const [logsOpenFor, setLogsOpenFor] = useState<string | null>(null);

@@ -119,7 +119,7 @@ export const EvalsTab: React.FC<EvalsTabProps> = ({
         <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">TestSuite QA Assertions</span>
         
         <div className="space-y-2">
-          {evalTestCases.map((tc, idx) => (
+          {evalTestCases.map((tc) => (
             <div key={tc.id} className="bg-slate-950/40 border border-slate-850 p-3 rounded-xl space-y-1.5">
               <div className="flex items-center justify-between">
                 <input 

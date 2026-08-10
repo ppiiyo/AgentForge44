@@ -10,7 +10,7 @@ const router = Router();
 // ================= SYNC CONFIGS =================
 
 // Debugger Session routes
-router.get('/debug/sessions', (req, res) => {
+router.get('/debug/sessions', (_req, res) => {
   res.json(listDebugSessions());
 });
 
@@ -23,7 +23,7 @@ router.get('/debug/sessions/:id', (req, res) => {
   }
 });
 
-router.delete('/debug/sessions', (req, res) => {
+router.delete('/debug/sessions', (_req, res) => {
   clearDebugSessions();
   res.json({ success: true, message: 'All debugging history cleared successfully' });
 });
@@ -101,7 +101,7 @@ router.post('/schedules', (req, res) => {
   }
 });
 
-router.get('/schedules', (req, res) => {
+router.get('/schedules', (_req, res) => {
   res.json(listSchedules());
 });
 
@@ -143,7 +143,7 @@ router.post('/webhooks', (req, res) => {
   }
 });
 
-router.get('/webhooks', (req, res) => {
+router.get('/webhooks', (_req, res) => {
   res.json(listWebhooks());
 });
 
@@ -165,17 +165,5 @@ router.put('/webhooks/:id/toggle', (req, res) => {
     res.status(404).json({ error: 'Webhook not found' });
   }
 });
-
-// ================= GITHUB REPOSITORY SYNC & AUTOMATED DEPLOYMENT ENDPOINTS =================
-
-interface GitHubConfig {
-  linked: boolean;
-  repoUrl: string;
-  branch: string;
-  autoDeploy: boolean;
-  lastSyncedAt: string | null;
-  syncStatus: 'idle' | 'syncing' | 'synced' | 'failed';
-  syncLogs: string[];
-}
 
 export default router;

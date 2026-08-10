@@ -6,7 +6,7 @@ import { maskSecrets } from '../utils/logger.js';
  * Traverses request body and exposes a completely sanitized clone as req.sanitizedBody 
  * to shield database errors or system metrics logs from storing cleartext secrets.
  */
-export function sanitizeRequestBody(req: Request, res: Response, next: NextFunction): void {
+export function sanitizeRequestBody(req: Request, _res: Response, next: NextFunction): void {
   if (req.body && typeof req.body === 'object') {
     (req as any).sanitizedBody = maskSecrets(req.body);
   }

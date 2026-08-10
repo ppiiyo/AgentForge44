@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, HelpCircle, Keyboard, HelpCircle as HelpIcon } from 'lucide-react';
+import { X, Keyboard } from 'lucide-react';
 
 interface ShortcutsModalProps {
   isOpen: boolean;

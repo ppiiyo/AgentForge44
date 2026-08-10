@@ -11,7 +11,6 @@ export class DebateNodeStrategy implements NodeExecutionStrategy {
     const arbiterInstruction = node.fields.consensusArbiterInstruction || "Provide a multi-disciplinary consensus report summarizing both perspectives and presenting a unified hybrid recommendation.";
 
     let transcript = `=== MULTI-AGENT DEBATE ON: "${topic}" ===\n\n`;
-    let lastTurnText = "";
 
     try {
       // ROUND 1
@@ -26,7 +25,6 @@ export class DebateNodeStrategy implements NodeExecutionStrategy {
       );
       const pro1Text = pro1Response.response.text || "";
       transcript += `[Pro: ${personaPro}]:\n${pro1Text}\n\n`;
-      lastTurnText = pro1Text;
 
       // Contra Counter-Statement
       const contra1Response = await generateWithRetry(
@@ -37,7 +35,6 @@ export class DebateNodeStrategy implements NodeExecutionStrategy {
       );
       const contra1Text = contra1Response.response.text || "";
       transcript += `[Contra: ${personaContra}]:\n${contra1Text}\n\n`;
-      lastTurnText = contra1Text;
 
       // ROUND 2 (if requested)
       if (rounds >= 2) {
@@ -52,7 +49,6 @@ export class DebateNodeStrategy implements NodeExecutionStrategy {
         );
         const pro2Text = pro2Response.response.text || "";
         transcript += `[Pro: ${personaPro} - Rebuttal]:\n${pro2Text}\n\n`;
-        lastTurnText = pro2Text;
 
         // Contra Rebuttal
         const contra2Response = await generateWithRetry(
@@ -63,7 +59,6 @@ export class DebateNodeStrategy implements NodeExecutionStrategy {
         );
         const contra2Text = contra2Response.response.text || "";
         transcript += `[Contra: ${personaContra} - Final Rebuttal]:\n${contra2Text}\n\n`;
-        lastTurnText = contra2Text;
       }
 
       // Arbiter Consensus Synthesis

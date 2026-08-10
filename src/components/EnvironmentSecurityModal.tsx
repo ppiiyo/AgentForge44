@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { 
-  ShieldAlert, Key, RefreshCw, CheckCircle2, AlertTriangle, 
-  Sparkles, Eye, EyeOff, ShieldCheck, ArrowRight, Lock 
+  ShieldAlert, Key, RefreshCw, 
+  Sparkles, Eye, EyeOff, ShieldCheck, Lock 
 } from 'lucide-react';
 import { validateEnvironment, updateEnvironmentKeys, EnvironmentValidationResult } from '../utils/setup_environment';
 import { safeJsonStringify } from '../utils/safe-json';
@@ -17,7 +17,7 @@ export const EnvironmentSecurityModal: React.FC<EnvironmentSecurityModalProps> =
   onInitialized
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [status, setStatus] = useState<EnvironmentValidationResult | null>(null);
 

@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import posthog from 'posthog-js';
-import * as Sentry from '@sentry/react';
 
 import { 
   PREBUILT_TEMPLATES, FlowNode, FlowConnection, 
@@ -187,7 +185,7 @@ export function useAgentApp() {
       ].join(' ');
 
       const matches = [...fieldsText.matchAll(/\{\{([a-zA-Z0-9_.-]+)\}\}/g), ...fieldsText.matchAll(/\{([a-zA-Z0-9_.-]+)\}/g)];
-      const referenced = [...new Set(matches.map(m => m[1]))];
+      const referenced = [...new Set(matches.map(m => m[1]).filter((v): v is string => Boolean(v)))];
       const excluded = ['nodeId', 'lastOutput', 'nodeTitle'];
 
       referenced.forEach(v => {
@@ -410,7 +408,7 @@ export function useAgentApp() {
     broadcastNodeCreated,
     broadcastNodeDeleted,
     broadcastEdgeCreated,
-    broadcastEdgeDeleted,
+    broadcastEdgeDeleted: _broadcastEdgeDeleted,
     broadcastNodeSettingsUpdated,
     broadcastNodeLock,
     broadcastCursorMoved
@@ -519,6 +517,7 @@ export function useAgentApp() {
   const handleUndo = () => {
     if (past.length === 0) return;
     const previousState = past[past.length - 1];
+    if (!previousState) return;
     const remainingPast = past.slice(0, past.length - 1);
 
     setFuture(prev => [{ 
@@ -533,6 +532,7 @@ export function useAgentApp() {
   const handleRedo = () => {
     if (future.length === 0) return;
     const nextState = future[0];
+    if (!nextState) return;
     const remainingFuture = future.slice(1);
 
     setPast(prev => [...prev, { 
@@ -588,7 +588,7 @@ export function useAgentApp() {
     handleDryRunNode,
     handleRunPipeline,
     handleAutoSelfHealAndRun,
-    animateNodeProgress
+    animateNodeProgress: _animateNodeProgress
   } = usePipelineExecution({
     nodes,
     connections,
@@ -783,7 +783,8 @@ export function useAgentApp() {
     setNodes((prev: FlowNode[]) => prev.map(n => {
       if (n.id === nodeId && n.type === 'input') {
         const nextVars = [...(n.fields.variables || [])];
-        nextVars[index] = { ...nextVars[index], [fieldKey]: value };
+        const existing = nextVars[index] || { key: '', value: '', label: '' };
+        nextVars[index] = { ...existing, [fieldKey]: value };
         updatedVars = nextVars;
         return {
           ...n,
@@ -908,11 +909,15 @@ export function useAgentApp() {
     const clonedConnections: FlowConnection[] = [];
     connections.forEach(conn => {
       if (ids.includes(conn.sourceId) && ids.includes(conn.targetId)) {
-        clonedConnections.push({
-          id: `conn-${idMapping[conn.sourceId]}-${idMapping[conn.targetId]}-${Date.now()}`,
-          sourceId: idMapping[conn.sourceId],
-          targetId: idMapping[conn.targetId]
-        });
+        const sourceId = idMapping[conn.sourceId];
+        const targetId = idMapping[conn.targetId];
+        if (sourceId && targetId) {
+          clonedConnections.push({
+            id: `conn-${sourceId}-${targetId}-${Date.now()}`,
+            sourceId,
+            targetId
+          });
+        }
       }
     });
 
@@ -924,7 +929,7 @@ export function useAgentApp() {
     const newClonedIds = clonedNodes.map(n => n.id);
     useUIStore.getState().setSelectedNodeIds(newClonedIds);
     if (newClonedIds.length === 1) {
-      useUIStore.getState().setSelectedNodeId(newClonedIds[0]);
+      useUIStore.getState().setSelectedNodeId(newClonedIds[0] ?? null);
     }
   };
 

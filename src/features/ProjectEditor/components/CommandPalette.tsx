@@ -3,7 +3,6 @@ import {
   Search, 
   Sparkles, 
   Terminal, 
-  Settings, 
   Command, 
   Play, 
   ArrowRight, 

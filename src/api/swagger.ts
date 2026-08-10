@@ -43,7 +43,7 @@ export function setupSwagger(app: Express) {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   
   // Endpoint to serve generated swagger.json directly
-  app.get('/swagger.json', (req, res) => {
+  app.get('/swagger.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });

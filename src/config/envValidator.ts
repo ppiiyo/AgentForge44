@@ -29,7 +29,6 @@ export function validateEnvironment(): EnvValidationResult {
   const warnings: string[] = [];
 
   const isProd = process.env.NODE_ENV === 'production';
-  const isTest = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 
   // 1. Zod Schema parse
   try {

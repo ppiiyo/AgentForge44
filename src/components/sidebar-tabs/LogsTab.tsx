@@ -93,7 +93,6 @@ export const LogsTab: React.FC<LogsTabProps> = ({
   runLogs,
   totalDuration,
   finalResult,
-  copiedText,
   translations,
   handleAutoSelfHealAndRun,
   setCopiedText,

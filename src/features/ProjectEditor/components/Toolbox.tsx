@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Plus, Database, Terminal, Sparkles, CheckSquare, GitBranch, Globe, 
-  BookOpen, Layers, FileCode, History, Trash, FolderPlus, Compass, X,
-  Clock, Cpu, Settings, Code, FileJson, Download
+  BookOpen, Layers, FileCode, History, Trash, FolderPlus, X,
+  Clock, Cpu, FileJson, Download
 } from 'lucide-react';
-import { FlowNode, NodeType } from '../../../types';
+import { NodeType } from '../../../types';
 import { exportSnapshotsToZip } from '../../../utils/zipExporter';
 
 const nodeDocMap: Record<NodeType, {

@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import vm from 'vm';
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import { executeCodeInSandbox } from '../nodes/CodeNode.js';
 
 export interface ToolDefinition {
@@ -177,8 +176,9 @@ export async function executeCodeInterpreter(code: string, language?: 'javascrip
         let match;
         let foundPrints = false;
         while ((match = printRegex.exec(code)) !== null) {
-          outputLogs.push(match[2]);
-          resultValue = match[2];
+          const val = match[2] ?? "";
+          outputLogs.push(val);
+          resultValue = val;
           foundPrints = true;
         }
 

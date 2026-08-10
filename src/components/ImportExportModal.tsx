@@ -26,7 +26,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   copiedText,
   setCopiedText,
   activeWorkflow,
-  currentLang,
+  currentLang: _currentLang,
 }) => {
   return (
     <AnimatePresence>

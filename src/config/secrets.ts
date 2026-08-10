@@ -1,5 +1,4 @@
 import winston from 'winston';
-import crypto from 'crypto';
 
 const logger = winston.createLogger({
   level: 'info',

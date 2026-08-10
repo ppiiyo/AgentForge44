@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Activity, DollarSign, Clock, RefreshCw, AlertTriangle, 
-  CheckCircle2, Search, Filter, ShieldAlert, ChevronRight, BarChart3, Database,
-  Zap, Flame, Sliders, Brain, GitFork, Network, Cpu
+  CheckCircle2, Search, ShieldAlert, ChevronRight, BarChart3, Database,
+  Zap, Flame, Sliders, Brain, Cpu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, Cell 
+  BarChart, Bar, Legend 
 } from 'recharts';
 import { useEditorStore } from '../store/useAgentStore';
 
@@ -248,7 +248,7 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
     overallActivationRate: number;
     funnel: Array<{ step: number; name: string; count: number; percent: number }>;
   } | null>(null);
-  const [funnelLoading, setFunnelLoading] = useState(false);
+  const [_funnelLoading, setFunnelLoading] = useState(false);
 
   const fetchFunnelData = async () => {
     setFunnelLoading(true);
@@ -630,13 +630,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
       otherTokens: Math.round(tokens * 0.1)
     };
   }) : [];
-
-  // Dynamic Provider breakdown values for separate pie chart layout helper
-  const providerDistribution = [
-    { name: text.geminiNode, value: Number((chartData.reduce((acc, d) => acc + d.geminiTokens, 0)).toFixed(0)), color: '#10b981' },
-    { name: text.reviewerNode, value: Number((chartData.reduce((acc, d) => acc + d.reviewerTokens, 0)).toFixed(0)), color: '#8b5cf6' },
-    { name: text.others, value: Number((chartData.reduce((acc, d) => acc + d.otherTokens, 0)).toFixed(0)), color: '#0ea5e9' }
-  ];
 
   return (
     <div className="space-y-6">
@@ -1706,7 +1699,6 @@ export const MetricsDashboard: React.FC<MetricsDashboardProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {breakers.map((cb) => {
-                const isClosed = cb.state === 'CLOSED';
                 const isOpen = cb.state === 'OPEN';
                 const isHalfOpen = cb.state === 'HALF_OPEN';
 

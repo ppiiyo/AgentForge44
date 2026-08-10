@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { GitFork } from 'lucide-react';
 
 interface ViralityTabProps {

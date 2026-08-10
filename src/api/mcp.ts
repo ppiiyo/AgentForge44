@@ -29,9 +29,11 @@ export interface MCPConfig {
 }
 
 export class MCPManager {
-  private activeServers: Map<string, any> = new Map();
+  private _activeServers: Map<string, any> = new Map();
 
-  constructor() {}
+  getActiveServers(): Map<string, any> {
+    return this._activeServers;
+  }
 
   /**
    * Discovers and retrieves list of registered tools from local/remote MCP adapters

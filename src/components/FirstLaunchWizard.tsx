@@ -12,8 +12,7 @@ import {
   Info, 
   Flame, 
   Terminal, 
-  FileJson,
-  X
+  FileJson
 } from 'lucide-react';
 import { PREBUILT_TEMPLATES } from '../types';
 

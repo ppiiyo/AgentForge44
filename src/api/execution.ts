@@ -1,17 +1,16 @@
 import { FlowNode, FlowConnection, StepLog, PipelineExecutionResult } from '../types.js';
 
 export const MAX_EXECUTION_STEPS = 50;
-import { GeminiProvider, OpenAIProvider, LLMProvider } from './providers.js';
-import { executeTool } from './tools.js';
+import { GeminiProvider, LLMProvider } from './providers.js';
 import { searchIndexedLibrary } from './advancedPhase4.js';
 import { routeNode } from '../nodes/RouterNode.js';
-import { validateURLForSSRF, validateUrl } from '../utils/ssrf-validator.js';
+import { validateUrl } from '../utils/ssrf-validator.js';
 import { safeJsonParse } from '../utils/safe-json.js';
 import { generateExecutionId } from '../utils/uuid.js';
 import { logger, executionAsyncStore } from '../utils/logger.js';
 import { MetricsCollector } from './metricsAndVersions.js';
 
-function getValueByDotPath(obj: any, pathStr: string): any {
+export function getValueByDotPath(obj: any, pathStr: string): any {
   if (!obj || !pathStr) return undefined;
   const keys = pathStr.split('.');
   let current = obj;
@@ -67,7 +66,7 @@ export class StatefulExecutionEngine {
   /**
    * Evaluates conditional branching output or sequential steps
    */
-  private getNextNodeId(currentNode: FlowNode, context: WorkflowContext): string | null {
+  _getNextNodeId(currentNode: FlowNode, context: WorkflowContext): string | null {
     const targets = this.getTargetConnections(currentNode.id);
     if (targets.length === 0) return null;
 
@@ -93,20 +92,21 @@ export class StatefulExecutionEngine {
           if (currentCount < maxCycles) {
             context.iterationsCount[currentNode.id] = currentCount + 1;
             // Loop back to the immediate parent input steps
-            return loopbackIds[0];
+            return loopbackIds[0] ?? null;
           }
         }
       }
     }
 
     // Default sequential routing: return first targeted connection
-    return targets[0].targetId;
+    const firstTarget = targets[0];
+    return firstTarget ? firstTarget.targetId : null;
   }
 
   /**
    * Run the stateful graph execution lifecycle with total observability
    */
-  async _runWorkflowInternal(initialVariables: Record<string, string> = {}, graphId: string = 'canvas-workspace', graphName: string = 'Workspace Canvas', executionId?: string): Promise<PipelineExecutionResult> {
+  async _runWorkflowInternal(initialVariables: Record<string, string> = {}, _graphId: string = 'canvas-workspace', _graphName: string = 'Workspace Canvas', _executionId?: string): Promise<PipelineExecutionResult> {
     const startTime = Date.now();
     
     // Locate starting steps (inputs node)
@@ -201,8 +201,9 @@ export class StatefulExecutionEngine {
         }
 
         // Fast path track execution frequency
-        executedCount[node.id] = (executedCount[node.id] || 0) + 1;
-        if (executedCount[node.id] > 15) {
+        const count = (executedCount[node.id] ?? 0) + 1;
+        executedCount[node.id] = count;
+        if (count > 15) {
           throw new Error(`Execution limit exceeded: Node "${node.title}" executed more than 15 times. Circular loop circuit breaker triggered.`);
         }
 
@@ -212,7 +213,8 @@ export class StatefulExecutionEngine {
         const incoming = this.connections.filter(c => c.targetId === node.id);
         let localValue: any = currentActiveValue;
         if (incoming.length === 1) {
-          const rawVal = nodeOutputs[incoming[0].sourceId];
+          const firstIn = incoming[0];
+          const rawVal = firstIn ? nodeOutputs[firstIn.sourceId] : undefined;
           localValue = (rawVal && typeof rawVal === 'object') ? structuredClone(rawVal) : rawVal;
         } else if (incoming.length > 1) {
           let mergedVars: Record<string, any> = {};
@@ -332,7 +334,7 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             });
 
             const critiqueText = reviewResult.text || "";
-            const isPassed = critiqueText.trim().startsWith("PASS");
+            const _isPassed = critiqueText.trim().startsWith("PASS");
 
             nodeOutputs[node.id] = previousOutput; // reviewer passes input as output
             activeValue = previousOutput;
@@ -560,7 +562,9 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
       // Update activeValue to be the output of the last completed node in this level
       if (eligibleNodes.length > 0) {
         const lastEligibleNode = eligibleNodes[eligibleNodes.length - 1];
-        activeValue = nodeOutputs[lastEligibleNode.id];
+        if (lastEligibleNode) {
+          activeValue = nodeOutputs[lastEligibleNode.id];
+        }
       }
 
       // 3. Complete currently processed nodes & calculate successor activations
@@ -605,8 +609,9 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
           const latestLog = logsForThisNode[logsForThisNode.length - 1];
           const isPassed = latestLog && latestLog.output && latestLog.output.includes("PASS");
 
-          if (!isPassed && incomingPredecessors.length > 0) {
-            const loopHeadId = incomingPredecessors[0];
+          const firstPred = incomingPredecessors[0];
+          if (!isPassed && firstPred) {
+            const loopHeadId = firstPred;
             const currentCount = iterationsCount[completedNode.id] || 0;
             const maxCycles = Number(completedNode.fields.maxIterations) || 2;
 
@@ -639,10 +644,11 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
     const outputNodes = this.nodes.filter(n => n.type === 'output');
     let finalResultText = "";
     const completedOutputNode = outputNodes.find(n => completedNodes.has(n.id) && nodeOutputs[n.id]);
+    const firstOutputNode = outputNodes[0];
     if (completedOutputNode) {
       finalResultText = String(nodeOutputs[completedOutputNode.id]);
-    } else if (outputNodes.length > 0 && nodeOutputs[outputNodes[0].id]) {
-      finalResultText = String(nodeOutputs[outputNodes[0].id]);
+    } else if (firstOutputNode && nodeOutputs[firstOutputNode.id]) {
+      finalResultText = String(nodeOutputs[firstOutputNode.id]);
     } else {
       finalResultText = typeof activeValue === 'string' ? activeValue : JSON.stringify(activeValue, null, 2);
     }

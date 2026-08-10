@@ -21,7 +21,6 @@ kostromai44.db-wal
 # Local storage and caches
 .models/
 .rag-store/
-drizzle/
 projects/.metadata/
 projects/*.json
 !projects/.gitkeep

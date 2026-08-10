@@ -277,16 +277,19 @@ export class MetricsCollector {
     const dailyMap: Record<string, { date: string; runs: number; cost: number; tokens: number }> = {};
     for (let i = periodDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-      const key = d.toISOString().split('T')[0];
-      dailyMap[key] = { date: key, runs: 0, cost: 0, tokens: 0 };
+      const key = d.toISOString().split('T')[0] ?? '';
+      if (key) {
+        dailyMap[key] = { date: key, runs: 0, cost: 0, tokens: 0 };
+      }
     }
 
     filtered.forEach(r => {
-      const dateKey = r.startedAt.split('T')[0];
-      if (dailyMap[dateKey]) {
-        dailyMap[dateKey].runs++;
-        dailyMap[dateKey].cost += r.totalCostUsd;
-        dailyMap[dateKey].tokens += r.totalTokens;
+      const dateKey = r.startedAt.split('T')[0] ?? '';
+      const dayData = dateKey ? dailyMap[dateKey] : undefined;
+      if (dayData) {
+        dayData.runs++;
+        dayData.cost += r.totalCostUsd;
+        dayData.tokens += r.totalTokens;
       }
     });
 
@@ -492,8 +495,8 @@ export class VersionManager {
     const nextVerNum = graphVersions.length > 0 ? Math.max(...graphVersions.map(v => v.versionNumber)) + 1 : 1;
 
     let diffSummary = "Initial workspace version";
-    if (graphVersions.length > 0) {
-      const prevVer = graphVersions[0];
+    const prevVer = graphVersions[0];
+    if (prevVer) {
       const prevNodes = prevVer.snapshot.nodes || [];
       const currentNodes = snapshot.nodes || [];
       const added = currentNodes.filter((cn: any) => !prevNodes.some((pn: any) => pn.id === cn.id)).length;

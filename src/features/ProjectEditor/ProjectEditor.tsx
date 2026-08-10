@@ -13,7 +13,6 @@ import {
   Undo2,
   Redo2,
   Map as MapIcon,
-  Palette,
   CheckCircle,
   AlertTriangle,
   Boxes,
@@ -102,11 +101,11 @@ interface ProjectEditorProps {
 
 export const ProjectEditor: React.FC<ProjectEditorProps> = ({
   currentLang,
-  translations,
+  translations: _translations,
   nodes,
   setNodes,
   connections,
-  setConnections,
+  setConnections: _setConnections,
   selectedNodeId,
   setSelectedNodeId,
   highlightedNodeId,

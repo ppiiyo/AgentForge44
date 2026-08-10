@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Settings, Info, Trash, CopyPlus, Lock, Compass, FlaskConical, RefreshCw, Upload, X, Sparkles
 } from 'lucide-react';
-import { FlowNode, NodeType } from '../../../types';
+import { FlowNode } from '../../../types';
 
 interface Model {
   id: string;

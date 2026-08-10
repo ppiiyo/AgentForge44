@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FlowNode } from '../../../types';
-import { Globe, Settings, Terminal, Play, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import { Globe, AlertCircle } from 'lucide-react';
 import { safeJsonStringify } from '../../../utils/safe-json';
 
 interface ToolNodeSettingsProps {

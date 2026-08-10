@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, AlertCircle, Sparkles, Sliders } from 'lucide-react';
+import { AlertCircle, Sliders } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ChunkItem {
@@ -65,7 +65,8 @@ export const RAGVisualizer: React.FC<RAGVisualizerProps> = ({
       });
       score = intersections / Math.max(1, queryWords.length);
       // Give a little bonus based on substring frequency
-      const freqBonus = Math.min(0.15, (chunk.text.match(new RegExp(queryWords[0], 'gi')) || []).length * 0.02);
+      const firstWord = queryWords[0];
+      const freqBonus = firstWord ? Math.min(0.15, (chunk.text.match(new RegExp(firstWord, 'gi')) || []).length * 0.02) : 0;
       score = Math.min(1.0, score + freqBonus);
     } else {
       // Base realistic distribution if search is empty

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  GitCommit, GitBranch, History, ChevronRight, User, Clock, 
-  RotateCcw, Sparkles, MessageSquare, AlertCircle, Plus, Edit, Trash2 
+  GitCommit, GitBranch, History, User, Clock, 
+  RotateCcw, MessageSquare, Plus, Edit, Trash2 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -133,7 +133,8 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
         const idxCurrent = sorted.findIndex(v => v.id === selectedVersionId);
         
         // Find previous version in sorted sequence to diff against
-        const prevId = idxCurrent > 0 ? sorted[idxCurrent - 1].id : selectedVersionId;
+        const prevVersion = sorted[idxCurrent - 1];
+        const prevId = (idxCurrent > 0 && prevVersion) ? prevVersion.id : selectedVersionId;
         
         const res = await fetch(`/api/graphs/${graphId}/diff?v1=${prevId}&v2=${selectedVersionId}`);
         if (res.ok) {

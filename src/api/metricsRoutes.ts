@@ -12,7 +12,7 @@ const router = Router();
 let isHighMemorySimulated = false;
 
 // Retrieve all circuit breakers and their real-time states
-router.get('/resilience/circuit-breakers', (req: Request, res: Response) => {
+router.get('/resilience/circuit-breakers', (_req: Request, res: Response) => {
   try {
     const breakers = circuitBreakerRegistry.getAllBreakers();
     res.json(breakers.map(b => b.getStats()));
@@ -22,7 +22,7 @@ router.get('/resilience/circuit-breakers', (req: Request, res: Response) => {
 });
 
 // Retrieve active Chaos Engineering configurations
-router.get('/resilience/chaos-config', (req: Request, res: Response) => {
+router.get('/resilience/chaos-config', (_req: Request, res: Response) => {
   try {
     res.json(chaosEngine.getConfig());
   } catch (err: any) {
@@ -41,7 +41,7 @@ router.post('/resilience/chaos-config', (req: Request, res: Response) => {
 });
 
 // Reset Chaos Engineering to pristine state
-router.post('/resilience/chaos-reset', (req: Request, res: Response) => {
+router.post('/resilience/chaos-reset', (_req: Request, res: Response) => {
   try {
     chaosEngine.reset();
     res.json({ success: true, config: chaosEngine.getConfig() });
@@ -50,7 +50,7 @@ router.post('/resilience/chaos-reset', (req: Request, res: Response) => {
   }
 });
 
-router.get('/metrics', async (req: Request, res: Response) => {
+router.get('/metrics', async (_req: Request, res: Response) => {
   try {
     // Dynamically update circuit breaker states before returning metrics
     const breakers = circuitBreakerRegistry.getAllBreakers();
@@ -97,7 +97,7 @@ router.get('/metrics/executions', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/metrics/cost-breakdown', async (req: Request, res: Response) => {
+router.get('/metrics/cost-breakdown', async (_req: Request, res: Response) => {
   try {
     const result = MetricsCollector.getCostBreakdown();
     const breakdown = result instanceof Promise ? await result : result;
@@ -107,7 +107,7 @@ router.get('/metrics/cost-breakdown', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/metrics/readiness', async (req: Request, res: Response) => {
+router.get('/metrics/readiness', async (_req: Request, res: Response) => {
   try {
     let metadata = { name: '', description: '', majorCapabilities: [] };
     try {
@@ -198,7 +198,7 @@ router.get('/metrics/readiness', async (req: Request, res: Response) => {
 });
 
 // Endpoint to retrieve Sandbox memory allocation details
-router.get('/metrics/sandbox-memory', async (req: Request, res: Response) => {
+router.get('/metrics/sandbox-memory', async (_req: Request, res: Response) => {
   try {
     const totalBytes = 64 * 1024 * 1024; // 64 MB Limit
     let usedBytes = 0;
@@ -227,19 +227,19 @@ router.get('/metrics/sandbox-memory', async (req: Request, res: Response) => {
 });
 
 // Endpoint to simulate sandbox stress test (exceeding 85% memory usage)
-router.post('/metrics/simulate-high-load', (req: Request, res: Response) => {
+router.post('/metrics/simulate-high-load', (_req: Request, res: Response) => {
   isHighMemorySimulated = true;
   res.json({ success: true, simulated: true });
 });
 
 // Endpoint to optimize memory and clear sandbox cache
-router.post('/metrics/clear-cache', (req: Request, res: Response) => {
+router.post('/metrics/clear-cache', (_req: Request, res: Response) => {
   isHighMemorySimulated = false;
   res.json({ success: true, simulated: false });
 });
 
 // Endpoint to halt and terminate heavy workflows/pipelines
-router.post('/metrics/stop-pipelines', (req: Request, res: Response) => {
+router.post('/metrics/stop-pipelines', (_req: Request, res: Response) => {
   isHighMemorySimulated = false;
   res.json({ success: true, simulated: false, stopped: true });
 });
@@ -254,7 +254,7 @@ const funnelStats = {
 };
 
 // Retrieve onboarding activation funnel telemetry
-router.get('/telemetry/funnel', (req: Request, res: Response) => {
+router.get('/telemetry/funnel', (_req: Request, res: Response) => {
   try {
     const total = funnelStats.step1_welcome || 1;
     const rates = [
@@ -292,7 +292,7 @@ router.post('/telemetry/funnel', (req: Request, res: Response) => {
 });
 
 // Endpoint to proxy or fall back query real-time Prometheus data
-router.get('/metrics/prometheus', async (req: Request, res: Response) => {
+router.get('/metrics/prometheus', async (_req: Request, res: Response) => {
   try {
     const promUrl = 'http://localhost:9090/api/v1/query';
     let dataFromPrometheus = false;

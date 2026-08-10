@@ -160,7 +160,7 @@ export async function runInitializationDiagnostic(): Promise<DiagnosticResult> {
           JSON.parse(content);
         } catch (_) {
           // Strip comments while preserving strings
-          cleanContent = content.replace(/("(?:\\.|[^\\"])*")|\/\*[\s\S]*?\*\/|\/\/.*/g, (m, g1) => g1 || '');
+          cleanContent = content.replace(/("(?:\\.|[^\\"])*")|\/\*[\s\S]*?\*\/|\/\/.*/g, (_m, g1) => g1 || '');
         }
       }
       JSON.parse(cleanContent);

@@ -96,7 +96,7 @@ export function safeJsonStringify(obj: any, space?: number | string): string {
   try {
     return JSON.stringify(
       obj,
-      (key, value) => {
+      (_key, value) => {
         if (typeof value === 'bigint') {
           return value.toString();
         }

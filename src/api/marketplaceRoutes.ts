@@ -20,7 +20,7 @@ router.get('/marketplace', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/marketplace/featured', async (req: Request, res: Response) => {
+router.get('/marketplace/featured', async (_req: Request, res: Response) => {
   try {
     const items = await MarketplaceManager.getFeatured();
     res.json(items);
@@ -31,7 +31,7 @@ router.get('/marketplace/featured', async (req: Request, res: Response) => {
 
 router.get('/marketplace/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const item = await MarketplaceManager.getItemById(id);
     if (!item) {
       res.status(404).json({ error: "Marketplace item not found" });
@@ -61,7 +61,7 @@ router.post('/marketplace', requireRole(['editor', 'owner']), async (req: Reques
 
 router.post('/marketplace/:id/download', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const updatedItem = await MarketplaceManager.incrementDownload(id);
     res.json({ success: true, graphSnapshot: updatedItem.graphSnapshot, downloadsCount: updatedItem.downloadsCount });
   } catch (err: any) {
@@ -71,7 +71,7 @@ router.post('/marketplace/:id/download', async (req: Request, res: Response) => 
 
 router.post('/marketplace/:id/reviews', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const { userId, rating, comment } = req.body;
     if (rating === undefined || rating < 1 || rating > 5 || !comment) {
       res.status(400).json({ error: "Rating (1-5) and a written comment are required." });

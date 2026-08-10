@@ -174,7 +174,7 @@ router.get('/graphs/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
     const workspaceId = (req as any).workspaceId || 'default-workspace';
@@ -285,7 +285,7 @@ router.put('/graphs/:id', requireRole(['editor', 'owner']), validateBody(GraphSa
       return;
     }
 
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const { name, nodes, connections } = req.body;
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
@@ -371,7 +371,7 @@ router.delete('/graphs/:id', requireRole(['editor', 'owner']), async (req: Reque
       return;
     }
 
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const safeName = id.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
 
     const workspaceId = (req as any).workspaceId || 'default-workspace';
@@ -446,7 +446,7 @@ router.delete('/graphs/:id', requireRole(['editor', 'owner']), async (req: Reque
  */
 router.post('/graphs/:id/versions', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const { message, author, snapshot } = req.body;
     if (!snapshot) {
       res.status(400).json({ error: "Missing required workflow snapshot state to commit." });
@@ -482,7 +482,7 @@ router.post('/graphs/:id/versions', async (req: Request, res: Response) => {
  */
 router.get('/graphs/:id/versions', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const result = VersionManager.getVersions(id);
     const versions = result instanceof Promise ? await result : result;
     res.json(versions);
@@ -519,7 +519,8 @@ router.get('/graphs/:id/versions', async (req: Request, res: Response) => {
  */
 router.post('/graphs/:id/rollback/:versionId', async (req: Request, res: Response) => {
   try {
-    const { id, versionId } = req.params;
+    const id = req.params.id ?? '';
+    const versionId = req.params.versionId ?? '';
     const result = VersionManager.rollback(id, versionId);
     const restored = result instanceof Promise ? await result : result;
     res.json({ success: true, restored });
@@ -598,9 +599,10 @@ router.get('/graphs/:id/diff', async (req: Request, res: Response) => {
  */
 router.get('/graphs/:id/presence', (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const online = activeRooms[id] ? Object.values(activeRooms[id]) : [];
-    const history = getPresenceHistory(id);
+    const id = req.params.id ?? '';
+    const room = id ? activeRooms[id] : undefined;
+    const online = room ? Object.values(room) : [];
+    const history = id ? getPresenceHistory(id) : [];
     res.json({ online, history });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

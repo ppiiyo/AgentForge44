@@ -10,9 +10,6 @@ import {
   RefreshCw, 
   Github, 
   GitBranch, 
-  Link, 
-  Check, 
-  AlertCircle,
   ExternalLink
 } from 'lucide-react';
 import { FlowNode, FlowConnection } from '../types';
@@ -42,7 +39,7 @@ interface GitHubConnection {
 export function SyncHubPanel({ currentLang, nodes, connections }: SyncHubPanelProps) {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [webhooks, setWebhooks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [cronInput, setCronInput] = useState('*/10 * * * *');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('applet-key-forge-secret');
