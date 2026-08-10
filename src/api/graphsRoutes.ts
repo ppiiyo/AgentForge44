@@ -299,7 +299,6 @@ router.put('/graphs/:id', requireRole(['editor', 'owner']), validateBody(GraphSa
     }
 
     // 1. Update database record
-    let dbUpdated = false;
     try {
       const existing = await db.select().from(tables.graphs).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
       if (existing.length > 0) {
@@ -308,7 +307,6 @@ router.put('/graphs/:id', requireRole(['editor', 'owner']), validateBody(GraphSa
           nodes: JSON.stringify(nodes || []),
           connections: JSON.stringify(connections || [])
         }).where(and(eq(tables.graphs.id, safeName), eq(tables.graphs.tenantId, workspaceId)));
-        dbUpdated = true;
       } else {
         await db.insert(tables.graphs).values({
           id: safeName,
@@ -318,7 +316,6 @@ router.put('/graphs/:id', requireRole(['editor', 'owner']), validateBody(GraphSa
           tenantId: workspaceId,
           createdAt: new Date().toISOString()
         });
-        dbUpdated = true;
       }
     } catch (dbErr: any) {
       console.warn("[Database] PUT /graphs/:id failed, continuing with filesystem backup:", dbErr.message);

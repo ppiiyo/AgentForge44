@@ -5,7 +5,7 @@ import { logger } from '../utils/logger.js';
 export function createDiagnosticsRoutes(): Router {
   const router = Router();
 
-  router.get('/diagnostics', async (req: Request, res: Response) => {
+  router.get('/diagnostics', async (_req: Request, res: Response) => {
     try {
       const results = await runInitializationDiagnostic();
       res.json(results);

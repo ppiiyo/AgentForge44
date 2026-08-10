@@ -334,7 +334,6 @@ Otherwise, outline missing components and specify: FAIL [explanation details]`;
             });
 
             const critiqueText = reviewResult.text || "";
-            const _isPassed = critiqueText.trim().startsWith("PASS");
 
             nodeOutputs[node.id] = previousOutput; // reviewer passes input as output
             activeValue = previousOutput;

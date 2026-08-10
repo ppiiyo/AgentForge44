@@ -177,7 +177,8 @@ router.post('/execute', requireRole(['editor', 'owner']), async (req: Request, r
 
 router.get('/executions/:id', requireRole(['viewer', 'editor', 'owner']), async (req: Request, res: Response) => {
   try {
-    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id, req.params.id)).limit(1);
+    const id = req.params.id ?? '';
+    const run = await db.select().from(tables.pipelineRuns).where(eq(tables.pipelineRuns.id as any, id)).limit(1);
     if (run.length === 0) {
       return res.status(404).json({ error: "Pipeline run not found." });
     }
