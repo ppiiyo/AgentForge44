@@ -56,11 +56,16 @@ export class SecretsShield {
     let tagHex: string;
     let contentHex: string;
 
-    if (parts.length === 4) {
-      [salt, ivHex, tagHex, contentHex] = parts;
-    } else if (parts.length === 3) {
+    if (parts.length === 4 && parts[0] && parts[1] && parts[2] && parts[3]) {
+      salt = parts[0];
+      ivHex = parts[1];
+      tagHex = parts[2];
+      contentHex = parts[3];
+    } else if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
       salt = 'kostromai44-salt'; // Legacy fallback salt
-      [ivHex, tagHex, contentHex] = parts;
+      ivHex = parts[0];
+      tagHex = parts[1];
+      contentHex = parts[2];
     } else {
       throw new Error("Invalid GCM secrets container schema configuration.");
     }

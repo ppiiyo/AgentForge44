@@ -29,12 +29,14 @@ async function main() {
     const inputArgIndex = args.findIndex(a => a === '--input' || a === '-i');
     if (inputArgIndex !== -1 && args[inputArgIndex + 1]) {
       const rawInputs = args[inputArgIndex + 1];
-      rawInputs.split(',').forEach(pair => {
-        const [k, v] = pair.split('=');
-        if (k && v) {
-          inputs[k.trim()] = v.trim();
-        }
-      });
+      if (rawInputs) {
+        rawInputs.split(',').forEach(pair => {
+          const [k, v] = pair.split('=');
+          if (k && v) {
+            inputs[k.trim()] = v.trim();
+          }
+        });
+      }
     }
 
     await runGraphFile(graphPath, inputs);

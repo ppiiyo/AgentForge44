@@ -32,7 +32,7 @@ router.get('/deploy/list', async (req: Request, res: Response) => {
 
 router.get('/deploy/:id/status', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const tenantId = (req as any).workspaceId || 'default-workspace';
     const dep = await DeploymentManager.getDeploymentById(id, tenantId);
     if (!dep) {
@@ -48,7 +48,7 @@ router.get('/deploy/:id/status', async (req: Request, res: Response) => {
 
 router.get('/deploy/:id/logs', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const tenantId = (req as any).workspaceId || 'default-workspace';
     const dep = await DeploymentManager.getDeploymentById(id, tenantId);
     if (!dep) {
@@ -64,7 +64,7 @@ router.get('/deploy/:id/logs', async (req: Request, res: Response) => {
 
 router.delete('/deploy/:id', requireRole(['editor', 'owner']), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id ?? '';
     const tenantId = (req as any).workspaceId || 'default-workspace';
     const dep = await DeploymentManager.getDeploymentById(id, tenantId);
     if (!dep) {

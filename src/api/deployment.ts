@@ -8,7 +8,7 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const DEPLOYMENTS_FILE = path.join(DATA_DIR, 'deployments.json');
+const _DEPLOYMENTS_FILE = path.join(DATA_DIR, 'deployments.json');
 
 export interface DeploymentConfig {
   region: string;
@@ -278,7 +278,7 @@ class BaseProvider implements CloudProvider {
         }
 
         const dep = all[depIdx];
-        if (dep.status !== 'provisioning') {
+        if (!dep || dep.status !== 'provisioning') {
           clearInterval(interval);
           return;
         }
@@ -322,13 +322,13 @@ class BaseProvider implements CloudProvider {
 
   async undeploy(deploymentId: string): Promise<boolean> {
     const all = await readDeployments();
-    const idx = all.findIndex(d => d.id === deploymentId);
-    if (idx !== -1) {
-      all[idx].status = 'undeployed';
-      all[idx].logs.push(`[system] Termination request received at ${new Date().toISOString()}`);
-      all[idx].logs.push(`[cloud-agent] Stopping container machines... offlined.`);
-      all[idx].logs.push(`[cloud-agent] Removing route rules from edge servers.`);
-      all[idx].logs.push(`[system] Undeployed successfully.`);
+    const target = all.find(d => d.id === deploymentId);
+    if (target) {
+      target.status = 'undeployed';
+      target.logs.push(`[system] Termination request received at ${new Date().toISOString()}`);
+      target.logs.push(`[cloud-agent] Stopping container machines... offlined.`);
+      target.logs.push(`[cloud-agent] Removing route rules from edge servers.`);
+      target.logs.push(`[system] Undeployed successfully.`);
       await writeDeployments(all);
       return true;
     }

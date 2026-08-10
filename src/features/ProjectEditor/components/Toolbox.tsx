@@ -622,7 +622,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               id="btn_capture_session_snapshot"
-              onClick={onSaveSnapshot}
+              onClick={() => onSaveSnapshot()}
               className="text-[10px] font-bold text-sky-450 hover:text-sky-300 flex items-center gap-0.5 cursor-pointer bg-sky-950/20 px-2 py-1 border border-sky-850 rounded-lg active:scale-95 transition-all"
               title={t('historyDesc')}
             >
@@ -659,8 +659,12 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                 className="p-2 bg-slate-950 border border-slate-850 hover:border-sky-500/20 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-2 group hover:bg-slate-900/30"
               >
                 <div className="truncate leading-tight">
-                  <span className="text-[10px] font-bold text-slate-300 block truncate leading-tight">{snap.name}</span>
-                  <span className="text-[9px] text-slate-500 font-mono block mt-0.5">⏱️ {snap.timestamp}</span>
+                  <span className="text-[10px] font-bold text-slate-300 block truncate leading-tight">
+                    {typeof snap.name === 'string' ? snap.name : String((snap.name as any)?.name || snap.name || 'Snapshot')}
+                  </span>
+                  <span className="text-[9px] text-slate-500 font-mono block mt-0.5">
+                    ⏱️ {typeof snap.timestamp === 'string' ? snap.timestamp : String(snap.timestamp || '')}
+                  </span>
                 </div>
                 <button
                   id={`delete-snap-${snap.id}`}

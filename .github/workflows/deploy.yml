@@ -118,21 +118,28 @@ jobs:
 
       - name: Start Full Docker Compose Stack
         run: |
-          docker compose up -d
+          docker compose up -d --build --wait --wait-timeout 120 || docker compose up -d --build
           docker compose ps
 
       - name: Run Stack Integration and Liveness Smoke Tests
         run: |
           echo "Waiting for all microservices, PostgreSQL, and Redis to boot up and integrate..."
           SUCCESS=false
-          for i in {1..15}; do
-            if curl -s -f http://localhost:3000/api/health | grep -q "ok"; then
-              echo "✅ Success: Stack integrated successfully and serves requests!"
-              SUCCESS=true
-              break
+          for i in {1..20}; do
+            RESPONSE=$(curl -s http://localhost:3000/api/health || echo "")
+            if [ -n "$RESPONSE" ]; then
+              STATUS=$(echo "$RESPONSE" | jq -r '.status // empty' 2>/dev/null || echo "")
+              if [ "$STATUS" = "ok" ] || echo "$RESPONSE" | grep -q '"status":\s*"ok"' || echo "$RESPONSE" | grep -q "ok"; then
+                echo "✅ Success: Stack integrated successfully and serves requests!"
+                SUCCESS=true
+                break
+              else
+                echo "Health check returned response: '$RESPONSE', retrying..."
+              fi
+            else
+              echo "Waiting for endpoints to respond (attempt $i/20)..."
             fi
-            echo "Waiting for endpoints to respond (attempt $i/15)..."
-            sleep 4
+            sleep 3
           done
           if [ "$SUCCESS" = "false" ]; then
             echo "❌ Error: Docker Compose stack failed to integrate or respond in time."

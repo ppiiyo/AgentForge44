@@ -152,7 +152,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Saved Snapshots history checkpoint marker */}
         <motion.button
-          onClick={onSaveSnapshot}
+          onClick={() => onSaveSnapshot()}
           title={t('saveSnapshot')}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}

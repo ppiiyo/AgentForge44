@@ -102,9 +102,11 @@ export async function userRateLimiter(req: express.Request, res: express.Respons
   let clientIp = req.ip;
   if (!clientIp && req.headers['x-forwarded-for']) {
     const forwardedFor = req.headers['x-forwarded-for'];
-    clientIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim();
+    const firstIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(',')[0];
+    clientIp = firstIp?.trim();
   }
-  const key = `ratelimit:user:${user ? user.id : (clientIp || 'unknown')}`;
+  const userId = user?.id ?? clientIp ?? 'unknown';
+  const key = `ratelimit:user:${userId}`;
   
   try {
     const currentCount = await cache.incr(key, USER_LIMIT_WINDOW / 1000);

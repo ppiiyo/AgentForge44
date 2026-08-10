@@ -151,11 +151,16 @@ export class CollaborationServer {
       // 2. Custom rate limiter per socket connection (max 50 events per 10 seconds to prevent DDoS)
       const messageHistory: { timestamp: number }[] = [];
       if (typeof socket.use === 'function') {
-        socket.use((packet, next) => {
+        socket.use((_packet, next) => {
           const now = Date.now();
           // Remove logs older than 10 seconds
-          while (messageHistory.length > 0 && now - messageHistory[0].timestamp > 10000) {
-            messageHistory.shift();
+          while (messageHistory.length > 0) {
+            const first = messageHistory[0];
+            if (first && now - first.timestamp > 10000) {
+              messageHistory.shift();
+            } else {
+              break;
+            }
           }
 
           if (messageHistory.length >= 50) {
@@ -185,18 +190,22 @@ export class CollaborationServer {
                 });
               }
 
-              delete activeRooms[currentRoom][currentUser.id];
-              
-              // Clean empty rooms
-              if (Object.keys(activeRooms[currentRoom]).length === 0) {
-                delete activeRooms[currentRoom];
+              const roomUsers = activeRooms[currentRoom];
+              if (roomUsers) {
+                delete roomUsers[currentUser.id];
+                
+                // Clean empty rooms
+                if (Object.keys(roomUsers).length === 0) {
+                  delete activeRooms[currentRoom];
+                }
               }
             }
 
             logPresenceHistory(currentRoom, currentUser, 'left');
             
-            if (activeRooms[currentRoom]) {
-              this.io.to(currentRoom).emit('presence:update', Object.values(activeRooms[currentRoom]));
+            const remainingRoomUsers = activeRooms[currentRoom];
+            if (remainingRoomUsers) {
+              this.io.to(currentRoom).emit('presence:update', Object.values(remainingRoomUsers));
             }
 
             console.log(`👤 User '${currentUser.name}' disconnected from '${currentRoom}'`);

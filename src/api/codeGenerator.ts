@@ -434,9 +434,11 @@ def execute_workflow(initial_inputs=None):
     });
 
     connections.forEach(conn => {
-      if (adj[conn.sourceId] && inDegree[conn.targetId] !== undefined) {
-        adj[conn.sourceId].push(conn.targetId);
-        inDegree[conn.targetId]++;
+      const sourceAdj = adj[conn.sourceId];
+      const targetDeg = inDegree[conn.targetId];
+      if (sourceAdj && targetDeg !== undefined) {
+        sourceAdj.push(conn.targetId);
+        inDegree[conn.targetId] = targetDeg + 1;
       }
     });
 
@@ -453,9 +455,13 @@ def execute_workflow(initial_inputs=None):
       sortedIds.push(current);
 
       (adj[current] || []).forEach(neighbor => {
-        inDegree[neighbor]--;
-        if (inDegree[neighbor] === 0) {
-          queue.push(neighbor);
+        const deg = inDegree[neighbor];
+        if (deg !== undefined) {
+          const newDeg = deg - 1;
+          inDegree[neighbor] = newDeg;
+          if (newDeg === 0) {
+            queue.push(neighbor);
+          }
         }
       });
     }

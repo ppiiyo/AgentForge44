@@ -278,15 +278,29 @@ export function useAgentApp() {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          setSavedSnapshots(parsed);
-        } catch (_) {}
+          if (Array.isArray(parsed)) {
+            const sanitized = parsed.map((s, idx) => ({
+              ...s,
+              id: s.id || `snap-${idx}`,
+              name: typeof s.name === 'string' ? s.name : 'Saved Snapshot',
+              timestamp: typeof s.timestamp === 'string' ? s.timestamp : ''
+            }));
+            setSavedSnapshots(sanitized);
+          }
+        } catch (_) {
+          localStorage.removeItem("kostromai44_snapshots");
+        }
       }
     }
   }, []);
 
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem("kostromai44_snapshots", JSON.stringify(savedSnapshots));
+      try {
+        localStorage.setItem("kostromai44_snapshots", safeJsonStringify(savedSnapshots));
+      } catch (e) {
+        console.error("Failed to persist snapshots:", e);
+      }
     }
   }, [savedSnapshots]);
 
@@ -544,13 +558,14 @@ export function useAgentApp() {
     setFuture(remainingFuture);
   };
 
-  const handleSaveSnapshot = (customName?: string) => {
+  const handleSaveSnapshot = (customName?: any) => {
     const dict = translationsLocal[currentLang] || translationsLocal.en;
-    const name = customName || `${dict.title} Snapshot #${savedSnapshots.length + 1} (${nodes.length} nodes)`;
+    const validCustomName = (typeof customName === 'string' && customName.trim()) ? customName : null;
+    const name = validCustomName || `${dict.title || 'Workspace'} Snapshot #${savedSnapshots.length + 1} (${nodes.length} nodes)`;
     const time = new Date().toLocaleTimeString(currentLang === 'ru' ? 'ru-RU' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const newSnapshot = {
       id: `snap-${Date.now()}`,
-      name,
+      name: String(name),
       timestamp: time,
       nodes: safeClone(nodes),
       connections: safeClone(connections)
@@ -558,7 +573,9 @@ export function useAgentApp() {
 
     const updated = [newSnapshot, ...savedSnapshots];
     setSavedSnapshots(updated);
-    localStorage.setItem("kostromai44_snapshots", safeJsonStringify(updated));
+    try {
+      localStorage.setItem("kostromai44_snapshots", safeJsonStringify(updated));
+    } catch (_) {}
 
     setCopiedText(dict.saveSuccess);
     setTimeout(() => setCopiedText(null), 2500);
@@ -577,11 +594,15 @@ export function useAgentApp() {
     setTimeout(() => setCopiedText(null), 2500);
   };
 
-  const handleDeleteSnapshot = (snapId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteSnapshot = (snapId: string, e?: React.MouseEvent) => {
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
     const filtered = savedSnapshots.filter(s => s.id !== snapId);
     setSavedSnapshots(filtered);
-    localStorage.setItem("kostromai44_snapshots", JSON.stringify(filtered));
+    try {
+      localStorage.setItem("kostromai44_snapshots", safeJsonStringify(filtered));
+    } catch (_) {}
   };
 
   const {

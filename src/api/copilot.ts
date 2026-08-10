@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { GoogleGenAI, Type } from "@google/genai";
-import { FlowNode, FlowConnection } from '../types.js';
+import { GoogleGenAI } from "@google/genai";
 import { logger } from '../utils/logger.js';
 
 const router = Router();
