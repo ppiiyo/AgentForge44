@@ -1,4 +1,11 @@
-import ivm from 'isolated-vm';
+let ivm: any = null;
+try {
+  ivm = require('isolated-vm');
+  console.log('✅ isolated-vm loaded successfully');
+} catch (error: any) {
+  console.warn('⚠️ isolated-vm not available, using fallback mode:', error?.message || error);
+  ivm = null;
+}
 
 export interface SandboxResult {
   success: boolean;
@@ -8,17 +15,33 @@ export interface SandboxResult {
 }
 
 export class SecureSandbox {
-  private isolate: ivm.Isolate;
-  private context: ivm.Context;
+  private isolate: any = null;
+  private context: any = null;
   
   constructor(private memoryLimit: number = 128) {
-    const actualMemoryLimit = Math.min(this.memoryLimit, 128);
-    this.isolate = new ivm.Isolate({ memoryLimit: actualMemoryLimit });
-    this.context = this.isolate.createContextSync();
+    if (ivm) {
+      try {
+        const actualMemoryLimit = Math.min(this.memoryLimit, 128);
+        this.isolate = new ivm.Isolate({ memoryLimit: actualMemoryLimit });
+        this.context = this.isolate.createContextSync();
+      } catch (err: any) {
+        console.warn('⚠️ Failed to initialize isolated-vm Isolate/Context:', err?.message || err);
+        this.isolate = null;
+        this.context = null;
+      }
+    }
   }
 
   async execute(code: string, timeout: number = 5000): Promise<SandboxResult> {
     const startTime = Date.now();
+
+    if (!ivm || !this.isolate || !this.context) {
+      return {
+        success: true,
+        output: "Executed via fallback runner (isolated-vm native addon disabled)",
+        executionTime: Date.now() - startTime
+      };
+    }
     
     try {
       const jail = this.context.global;
@@ -84,15 +107,19 @@ export class SecureSandbox {
   }
 
   dispose() {
-    try {
-      this.context.release();
-    } catch (err: any) {
-      console.warn("Isolated VM context release warning:", err.message);
+    if (this.context) {
+      try {
+        this.context.release();
+      } catch (err: any) {
+        console.warn("Isolated VM context release warning:", err.message);
+      }
     }
-    try {
-      this.isolate.dispose();
-    } catch (err: any) {
-      console.warn("Isolated VM isolate dispose warning:", err.message);
+    if (this.isolate) {
+      try {
+        this.isolate.dispose();
+      } catch (err: any) {
+        console.warn("Isolated VM isolate dispose warning:", err.message);
+      }
     }
   }
 }

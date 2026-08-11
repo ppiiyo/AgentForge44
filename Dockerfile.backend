@@ -26,7 +26,8 @@ COPY . .
 RUN npx drizzle-kit generate && \
     npx drizzle-kit generate --config=drizzle-postgres.config.ts && \
     npx tsx scripts/generate-swagger.ts && \
-    npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
+    npx esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && \
+    npx esbuild src/safeBootstrap.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/safeBootstrap.cjs
 
 # --- Stage 2: Production Backend Container ---
 FROM node:22-slim AS runner
@@ -39,8 +40,7 @@ ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 
 # Copy compiled bundles, manifests, and migrations
-COPY --from=builder /usr/src/app/dist/server.cjs ./dist/server.cjs
-COPY --from=builder /usr/src/app/dist/server.cjs.map ./dist/server.cjs.map
+COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/drizzle ./drizzle
@@ -66,4 +66,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 EXPOSE 3000
 
-CMD ["node", "dist/server.cjs"]
+ENV NODE_OPTIONS="--trace-warnings --unhandled-rejections=strict"
+CMD ["node", "--enable-source-maps", "dist/safeBootstrap.cjs"]
