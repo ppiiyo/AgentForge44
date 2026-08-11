@@ -84,7 +84,13 @@ jobs:
 
       - name: Start Full Docker Compose Stack
         run: |
-          docker compose up -d --wait --wait-timeout 120 || docker compose up -d
+          if ! docker compose up -d --wait --wait-timeout 120; then
+            echo "=========== BACKEND LOGS ==========="
+            docker compose logs --tail=200 kostromai44-backend
+            echo "=========== EXECUTOR LOGS ==========="
+            docker compose logs --tail=100 kostromai44-executor
+            exit 1
+          fi
           docker compose ps
 
       - name: Run Stack Integration and Liveness Smoke Tests
