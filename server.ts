@@ -96,6 +96,11 @@ const PORT = parseInt(process.env.PORT ?? '3000', 10);
 app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
+// Fast early healthcheck handler for container health probes
+app.get(['/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 setupSecurity(app);
 
 app.use((req, _res, next) => {
@@ -156,7 +161,7 @@ apiRoutes.forEach((router) => {
 // Centralized Error Handling Middleware
 app.use(errorHandler);
 
-async function setupServer() {
+export async function startServer() {
   // Execute auto-run database table schema migrations on server start
   try {
     logger.info('📦 Applying database migrations...');
@@ -205,8 +210,10 @@ async function setupServer() {
   });
 }
 
-if (!process.env.VITEST) {
-  setupServer().catch(err => {
+export const setupServer = startServer;
+
+if (!process.env.VITEST && !process.argv[1]?.includes('safeBootstrap')) {
+  startServer().catch(err => {
     logger.error("Failed to start server:", { error: err.message || err, stack: err?.stack });
     process.exit(1);
   });
