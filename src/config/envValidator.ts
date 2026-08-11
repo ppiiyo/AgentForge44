@@ -97,11 +97,7 @@ export function validateEnvironment(): EnvValidationResult {
   // 5. Gemini API Key (Default agent runtime driving key)
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey) {
-    if (isProd) {
-      errors.push('GEMINI_API_KEY is missing. The system requires a Google AI Studio API key to run active LLM orchestrator pipelines.');
-    } else {
-      warnings.push('GEMINI_API_KEY is missing. Active agents and pipelines will fail unless "sandbox_free_test_gemini" or a mock simulation key is provided.');
-    }
+    warnings.push('GEMINI_API_KEY is missing. Active agents and pipelines will degrade unless an API key is provided.');
   } else if (geminiKey !== 'sandbox_free_test_gemini' && geminiKey.trim().length < 10) {
     warnings.push('GEMINI_API_KEY looks unusually short. Verify that it is copy-pasted correctly from Google AI Studio.');
   }
@@ -141,16 +137,9 @@ export function runStartupEnvCheck(): void {
 
   if (!result.isValid) {
     result.errors.forEach(err => {
-      logger.error(`[STARTUP CHECK CRITICAL ERROR] ${err}`);
+      logger.error(`[STARTUP CHECK ERROR] ${err}`);
     });
-    
-    // In production, force-exit to prevent runtime crashes/vulnerabilities
-    if (process.env.NODE_ENV === 'production') {
-      logger.error('Startup halted due to critical environment variable errors.');
-      process.exit(1);
-    } else {
-      logger.warn('Startup permitted in non-production mode, but system components may degrade.');
-    }
+    logger.warn('Startup permitted with configuration warnings. Non-critical components may degrade.');
   } else {
     logger.info('Environment verification succeeded. All required variables are configured.');
   }

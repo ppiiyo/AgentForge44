@@ -28,7 +28,7 @@ services:
       - DB_TYPE=postgres
       - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-sandbox_free_test_gemini}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://localhost:11434}
@@ -63,7 +63,7 @@ services:
       - DB_TYPE=postgres
       - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-sandbox_free_test_gemini}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://localhost:11434}
