@@ -26,16 +26,16 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
+      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-sandbox_free_test_gemini}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:?ENCRYPTION_MASTER_KEY is required}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://localhost:11434}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
-      - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY}
-      - JWT_SECRET=${JWT_SECRET:-super_secure_random_jwt_token_key_development_32_bytes}
-      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-bc911854ea01d2c94bb507f308a0dfce9a6b8c7d8e9f0a1b2c3d4e5f6a7b8c9d}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY:-}
     volumes:
       - kostromai44-projects:/usr/src/app/projects
     depends_on:
@@ -44,7 +44,7 @@ services:
       kostromai44-redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/readyz"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -61,15 +61,16 @@ services:
     environment:
       - NODE_ENV=production
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://kostromai44:forge_secure_pass@kostromai44-db:5432/kostromai44_db
+      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-sandbox_free_test_gemini}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:?ENCRYPTION_MASTER_KEY is required}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://localhost:11434}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
-      - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY}
-      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:-bc911854ea01d2c94bb507f308a0dfce9a6b8c7d8e9f0a1b2c3d4e5f6a7b8c9d}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - AGENTFORGE_API_KEY=${AGENTFORGE_API_KEY:-}
     volumes:
       - kostromai44-projects:/usr/src/app/projects
     depends_on:
@@ -94,7 +95,7 @@ services:
     container_name: kostromai44-db
     environment:
       - POSTGRES_USER=kostromai44
-      - POSTGRES_PASSWORD=forge_secure_pass
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - POSTGRES_DB=kostromai44_db
     volumes:
       - postgres-data:/var/lib/postgresql/data

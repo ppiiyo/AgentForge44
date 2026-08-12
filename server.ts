@@ -16,7 +16,7 @@ import { GracefulShutdown } from './src/services/gracefulShutdown.js';
 import { adapter } from './src/db/index.js';
 import { validateDatabaseConfig } from './src/api/db.js';
 import { validateSecrets } from './src/config/secrets.js';
-import { runSchemaMigrations } from './src/api/migrate.js';
+import { runMigrationsWithLock } from './src/db/migrations.js';
 import * as Sentry from '@sentry/node';
 import { CollaborationServer } from './src/api/collaboration.js';
 import { logger } from './src/utils/logger.js';
@@ -24,6 +24,7 @@ import { setupSwagger } from './src/api/swagger.js';
 import { register } from './src/services/metrics.js';
 import { initTracing } from './src/services/tracing.js';
 import authRoutes, { authMiddleware } from './src/api/authRoutes.js';
+import { oidcRouter } from './src/auth/oidc.js';
 import projectsRouter from './src/api/projectsRoutes.js';
 import graphsRouter from './src/api/graphsRoutes.js';
 import executeRouter from './src/api/executeRoutes.js';
@@ -81,12 +82,34 @@ app.use(compression());
 app.set('trust proxy', process.env.TRUST_PROXY || 1);
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
+let isReady = false;
+
 app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
-// Fast early healthcheck handler for container health probes
+// Liveness probe — always OK if process is alive
+app.get('/healthz', (_req: express.Request, res: express.Response) => {
+  res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
+});
+
+// Readiness probe — OK only after database migrations complete
+app.get('/readyz', (_req: express.Request, res: express.Response) => {
+  if (!isReady) {
+    return res.status(503).json({
+      status: 'starting',
+      message: 'Migrations not yet complete'
+    });
+  }
+  res.status(200).json({
+    status: 'ready',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Legacy healthcheck handler for container health probes
 app.get(['/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
-  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+  res.json({ status: isReady ? 'ok' : 'starting', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 setupSecurity(app);
@@ -125,6 +148,7 @@ app.get('/metrics', authMiddleware, async (_req: express.Request, res: express.R
 
 const apiRoutes = [
   authRoutes,
+  oidcRouter,
   projectsRouter,
   graphsRouter,
   executeRouter,
@@ -150,13 +174,16 @@ apiRoutes.forEach((router) => {
 app.use(errorHandler);
 
 export async function startServer() {
-  // Execute auto-run database table schema migrations on server start
+  // Execute auto-run database table schema migrations with advisory lock on server start
   try {
-    logger.info('📦 Applying database migrations...');
-    await runSchemaMigrations(adapter);
+    logger.info('📦 Applying database migrations with advisory lock...');
+    await runMigrationsWithLock(adapter);
     logger.info('✅ Migrations applied successfully');
+    isReady = true;
+    logger.info('✅ Server is ready to accept traffic');
   } catch (migErr: any) {
-    logger.warn('DATABASE MIGRATION WARNING: Schema auto-migrations encountered an error, continuing server startup:', { error: migErr.message || migErr });
+    logger.error('CRITICAL ERROR: Migrations failed', { error: migErr.message || migErr });
+    process.exit(1);
   }
 
   if (process.env.NODE_ENV !== "production") {

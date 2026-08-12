@@ -168,3 +168,22 @@ export const pipelineRuns = pgTable('pipeline_runs', {
     tenantIdIdx: index('pipeline_runs_tenant_id_idx').on(table.tenantId),
   };
 });
+
+export const llmUsage = pgTable('llm_usage', {
+  id: text('id').primaryKey(),
+  graphId: text('graph_id'),
+  runId: text('run_id'),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  promptTokens: integer('prompt_tokens').notNull().default(0),
+  completionTokens: integer('completion_tokens').notNull().default(0),
+  costUsd: doublePrecision('cost_usd').notNull().default(0),
+  tenantId: text('tenant_id').notNull().default('default-workspace'),
+  createdAt: text('created_at').notNull(),
+}, (table) => {
+  return {
+    graphIdIdx: index('llm_usage_graph_id_idx').on(table.graphId),
+    runIdIdx: index('llm_usage_run_id_idx').on(table.runId),
+    createdAtIdx: index('llm_usage_created_at_idx').on(table.createdAt),
+  };
+});

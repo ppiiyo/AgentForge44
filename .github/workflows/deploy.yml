@@ -46,6 +46,11 @@ jobs:
         with:
           timeout-minutes: 5
 
+      - name: Generate Production Secrets for Compose Verification
+        run: |
+          chmod +x scripts/generate-secrets.sh
+          ./scripts/generate-secrets.sh
+
       - name: Verify Docker Compose Configuration
         run: docker compose config
 
@@ -85,27 +90,41 @@ jobs:
       - name: Start Full Docker Compose Stack
         run: |
           if ! docker compose up -d --wait --wait-timeout 120; then
-            echo "=========== BACKEND LOGS ==========="
-            docker compose logs --tail=200 kostromai44-backend
-            echo "=========== EXECUTOR LOGS ==========="
-            docker compose logs --tail=100 kostromai44-executor
+            echo "=========== DEPLOYMENT FAILED ==========="
+            echo "Container status:"
+            docker compose ps
+            echo ""
+            echo "=========== BACKEND LOGS (last 100 lines) ==========="
+            docker compose logs --tail=100 kostromai44-backend
+            echo ""
+            echo "=========== EXECUTOR LOGS (last 50 lines) ==========="
+            docker compose logs --tail=50 kostromai44-executor
+            echo ""
+            echo "=========== DB LOGS (last 50 lines) ==========="
+            docker compose logs --tail=50 kostromai44-db
             exit 1
           fi
+
+          echo "✅ All services healthy"
           docker compose ps
 
-      - name: Run Stack Integration and Liveness Smoke Tests
+      - name: Smoke Test
         run: |
-          SUCCESS=false
-          for i in {1..20}; do
-            CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" \
-              http://localhost:3000/api/health || echo 000)
-            if [ "$CODE" = "200" ] && \
-               grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"' /tmp/health.json; then
-              echo "✅ Stack healthy"; SUCCESS=true; break
-            fi
-            echo "attempt $i/20 (HTTP $CODE), waiting..."; sleep 3
-          done
-          [ "$SUCCESS" = "true" ] || { docker compose logs; exit 1; }
+          # Verify readiness
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/readyz)
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Readiness check failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+          # Verify API Health
+          RESPONSE=$(curl -s http://localhost:3000/api/health)
+          if ! echo "$RESPONSE" | grep -q "ok"; then
+            echo "❌ Health check failed: $RESPONSE"
+            exit 1
+          fi
+
+          echo "✅ Smoke test passed"
 
       - name: Shutdown Compose Services
         if: always()

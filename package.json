@@ -11,11 +11,11 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky || true",
     "dev": "tsx server.ts",
     "prebuild": "node scripts/ensure-oxide.cjs",
-    "sharp-install": "npm install sharp --os=linux --cpu=x64 --no-save --no-prune --ignore-scripts",
-    "postinstall": "npm run sharp-install",
+    "sharp-install": "npm install sharp --os=linux --cpu=x64 --no-save --no-prune --ignore-scripts || true",
+    "postinstall": "npm run sharp-install || true",
     "build": "drizzle-kit generate --config=drizzle.config.ts && drizzle-kit generate --config=drizzle-postgres.config.ts && npx tsx scripts/generate-swagger.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
@@ -145,6 +145,8 @@
     "vitest": "^3.0.5"
   },
   "overrides": {
+    "axios": "^1.7.9",
+    "postcss": "^8.4.31",
     "dompurify": "^3.1.5",
     "protobufjs": "^7.3.0",
     "ws": "^8.18.0",

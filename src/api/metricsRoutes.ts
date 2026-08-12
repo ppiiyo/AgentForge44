@@ -5,6 +5,7 @@ import { MetricsCollector } from './metricsAndVersions.js';
 import { register, circuitBreakerStateGauge } from '../services/metrics.js';
 import { circuitBreakerRegistry } from '../services/circuitBreaker.js';
 import { chaosEngine } from '../services/chaosEngine.js';
+import { trackLLMCost, getLLMUsageSummary } from '../services/costTracker.js';
 
 const router = Router();
 
@@ -102,6 +103,38 @@ router.get('/metrics/cost-breakdown', async (_req: Request, res: Response) => {
     const result = MetricsCollector.getCostBreakdown();
     const breakdown = result instanceof Promise ? await result : result;
     res.json(breakdown);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Detailed LLM cost tracking summary
+router.get(['/metrics/llm-usage', '/analytics/costs'], async (req: Request, res: Response) => {
+  try {
+    const graphId = req.query.graph_id as string | undefined;
+    const summary = await getLLMUsageSummary(graphId);
+    res.json(summary);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint to manually record or test LLM usage cost
+router.post(['/metrics/llm-usage', '/analytics/costs'], async (req: Request, res: Response) => {
+  try {
+    const { graphId, runId, provider, model, promptTokens, completionTokens } = req.body;
+    if (!provider || !model) {
+      return res.status(400).json({ error: 'Missing provider or model' });
+    }
+    const costUsd = await trackLLMCost(
+      graphId || null,
+      runId || null,
+      provider,
+      model,
+      Number(promptTokens || 0),
+      Number(completionTokens || 0)
+    );
+    res.json({ success: true, costUsd });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
