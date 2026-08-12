@@ -52,7 +52,7 @@ jobs:
           cd dist-release && zip -r ../kostromai44-release-${{ github.ref_name }}.zip . && cd ..
 
       - name: Draft Github Release and Upload Build Artifacts
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             kostromai44-release-${{ github.ref_name }}.tar.gz
