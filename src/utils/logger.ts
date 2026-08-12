@@ -1,4 +1,6 @@
 import winston from 'winston';
+import fs from 'fs';
+import path from 'path';
 import { AsyncLocalStorage } from 'async_hooks';
 import { getCorrelationId } from '../middleware/correlationId.js';
 import { z } from 'zod';
@@ -154,9 +156,18 @@ export class LokiTransport extends Transport {
   }
 }
 
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  try {
+    fs.mkdirSync(logsDir, { recursive: true });
+  } catch (_e) {
+    // Ignore error if cannot create directory
+  }
+}
+
 const transports: winston.transport[] = [
-  new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-  new winston.transports.File({ filename: 'logs/combined.log' }),
+  new winston.transports.File({ filename: path.join(logsDir, 'error.log'), level: 'error' }),
+  new winston.transports.File({ filename: path.join(logsDir, 'combined.log') }),
   new winston.transports.Console({
     format: winston.format.combine(
       winston.format.simple()
