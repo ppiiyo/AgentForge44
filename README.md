@@ -1,148 +1,191 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/ppiiyo/AgentForge44/main/public/logo.svg" alt="KostromAi44" width="140" />
+<img src="https://raw.githubusercontent.com/ppiiyo/AgentForge44/main/public/logo.svg" alt="KostromAi44 Logo" width="160" />
 
-# KostromAi44
+# 🌌 KostromAi44
 
-### 🚀 Ship Autonomous AI Agents in Hours, Not Months
+### **Production-Grade Visual Orchestrator & Execution Engine for Autonomous Multi-Agent AI Systems**
 
-**The first open-source visual orchestrator that deploys production-grade multi-agent systems as APIs — with built-in sandboxing, self-healing, and real-time collaboration.**
+**Deploy self-healing, multi-agent AI networks as scalable REST & WebSocket APIs in minutes — backed by hardened Docker sandboxing, topological execution, and real-time multiplayer collaboration.**
 
-[![Deploy to Production](https://img.shields.io/badge/deploy-docker%20ready-2496ED?style=for-the-badge&logo=docker)](#quick-start)
-[![Enterprise Ready](https://img.shields.io/badge/enterprise-SOC2%20ready-10B981?style=for-the-badge&logo=shield)](#security)
-[![Open Source](https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge)](LICENSE)
+[![Deploy with Docker](https://img.shields.io/badge/Deploy-Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#-quick-start)
+[![Enterprise Ready](https://img.shields.io/badge/Enterprise-SOC2%20Ready-10B981?style=for-the-badge&logo=shield&logoColor=white)](#-enterprise-security)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
 ---
 
-**[🎯 Live Demo](https://kostromai44.app)** · **[📚 Docs](https://docs.kostromai44.app)** · **[💬 Discord](https://discord.gg/kostromai44)** · **[🎥 Watch Demo (2 min)](https://youtu.be/demo)**
+🌐 **Languages:** &nbsp; [**English**](README.md) &nbsp;|&nbsp; [**Русский**](README.ru.md) &nbsp;|&nbsp; [**简体中文**](README.zh.md)
+
+---
+
+[**🎯 Live Demo**](https://kostromai44.app) &nbsp;•&nbsp; [**📚 Documentation**](https://docs.kostromai44.app) &nbsp;•&nbsp; [**💬 Discord Community**](https://discord.gg/kostromai44) &nbsp;•&nbsp; [**🎥 2-Min Demo Video**](https://youtu.be/demo)
 
 </div>
 
 ---
 
-## 🎯 Why KostromAi44 Exists
+## 📋 Table of Contents
 
-**The Problem:** Building multi-agent AI systems today means choosing between:
+- [🌌 Overview](#-overview)
+- [🎯 Why KostromAi44?](#-why-kostromai44)
+- [💡 What You Can Build](#-what-you-can-build)
+- [⚡ Key Architecture & Features](#-key-architecture--features)
+- [🏗️ System Architecture](#️-system-architecture)
+- [📊 KostromAi44 vs Alternatives](#-kostromai44-vs-alternatives)
+- [🚀 Quick Start](#-quick-start)
+  - [Option 1: Docker Compose (Recommended)](#option-1-docker-compose-recommended)
+  - [Option 2: Local Development](#option-2-local-development)
+- [⚙️ Environment Configuration](#️-environment-configuration)
+- [🔌 API Reference Guide](#-api-reference-guide)
+- [🔒 Enterprise Security & Compliance](#-enterprise-security--compliance)
+- [🧪 Quality, Testing & CI/CD](#-quality-testing--cicd)
+- [🗺️ Product Roadmap](#️-product-roadmap)
+- [🤝 Contributing & Community](#-contributing--community)
+- [💼 Commercial Support & Contact](#-commercial-support--contact)
+- [📄 License](#-license)
 
-❌ **Visual no-code tools** (Zapier, Make) — can't handle complex LLM orchestration  
-❌ **Code-heavy frameworks** (LangChain, CrewAI) — require weeks of backend engineering  
-❌ **Enterprise platforms** (Relevance AI, Flowise) — $500+/month, vendor lock-in
+---
 
-**The Solution:** KostromAi44 gives you **visual design + production runtime** in one open-source package:
+## 🌌 Overview
 
-✅ Drag-and-drop canvas → deploy as REST API in one click  
-✅ Hardened Docker sandboxes → safely execute untrusted code  
-✅ Self-healing pipelines → auto-retry failed LLM calls  
-✅ Real-time collaboration → multiple engineers on one workflow  
-✅ Enterprise security → SOC2-ready out of the box
+**KostromAi44** is an open-source visual orchestrator and production runtime designed for building, testing, debugging, and operating autonomous multi-agent systems. Built with Kahn's topological scheduler, promise-pooled parallel execution, isolated Docker code sandboxing, and real-time multiplayer presence, KostromAi44 bridges the gap between visual low-code workflow design and enterprise-grade backend reliability.
+
+Whether you are deploying customer support agents, automated code reviewers, complex RAG knowledge engines, or data processing pipelines, KostromAi44 enables you to turn visual DAG diagrams into secure, self-healing REST/WebSocket microservices in a single click.
+
+---
+
+## 🎯 Why KostromAi44?
+
+| Challenge in AI Engineering | Traditional Solutions | The KostromAi44 Solution |
+| :--- | :--- | :--- |
+| **LLM Orchestration Complexity** | **No-Code Tools** (Zapier, Make): Rigid, lack complex LLM branching, state management, or custom code execution. | **Visual DAG Canvas + Full Code Flexibility**: Custom JavaScript/Python nodes executing inside isolated containers. |
+| **Backend Engineering Overhead** | **Code Frameworks** (LangChain, CrewAI): Weeks of custom backend code, manual queueing, retry logic, and monitoring. | **One-Click API Deployment**: Instant conversion of visual workflows into versioned `/api/v1` REST & WebSocket endpoints. |
+| **Vendor Lock-in & High Cost** | **SaaS Platforms** (Relevance AI, Flowise SaaS): $500+/month, proprietary hosting, potential privacy risks. | **100% Open-Source & Self-Hosted**: MIT License, total data sovereignty, run on your own cloud or on-premise infrastructure. |
+| **Untrusted Code Execution** | **Native Execution**: Vulnerable to infinite loops, remote code execution, and filesystem leaks. | **Hardened Docker Sandboxes**: Unprivileged containers with strict memory limits, read-only filesystems, and dropped capabilities. |
 
 ---
 
 ## 💡 What You Can Build
 
-| Use Case | Example | Time to Deploy |
-|----------|---------|:--------------:|
-| 🤖 **Customer Support Agent** | Triage → classify → route to human/LLM → follow-up | 2 hours |
-| 📊 **Data Analysis Pipeline** | Ingest CSV → clean → analyze → generate report | 4 hours |
-| 🔍 **Research Assistant** | Search web → summarize → cross-reference → cite sources | 3 hours |
-| 💻 **Code Review Bot** | Diff PR → analyze → suggest fixes → auto-comment | 6 hours |
-| 🎨 **Content Generation** | Research → outline → draft → edit → publish | 5 hours |
-| 🛒 **E-commerce Agent** | Product Q&A → inventory check → recommendation → checkout | 8 hours |
+| Use Case | Architectural Flow | Time to Production |
+| :--- | :--- | :---: |
+| 🤖 **Autonomous Customer Support** | Email Ingest → Intent Classification → Knowledge Search (RAG) → Human-in-the-Loop Approval → Response | ~2 hours |
+| 📊 **Multi-Agent Research & Analysis** | Query Planner → Parallel Web Search → Cross-Verification → Markdown Synthesis → Executive Briefing | ~3 hours |
+| 💻 **Automated PR & Code Reviewer** | GitHub Webhook → Git Diff Analysis → Security Audit → Code Style Check → Auto PR Comments | ~4 hours |
+| 📚 **Enterprise Hybrid RAG System** | Document Chunking → Multimodal Embedding → Vector Store (Pinecone/Qdrant) → Hybrid Re-Ranking | ~3 hours |
+| 🛒 **E-Commerce Concierge Agent** | Natural Language Query → Inventory Check → Personalized Recommendation → Stripe Checkout API | ~5 hours |
 
 ---
 
-## ⚡ Key Features
+## ⚡ Key Architecture & Features
 
-### 🧠 **Topological DAG Scheduler**
-Kahn's algorithm with promise-pooling executes independent branches in parallel. Zero deadlocks. Deterministic ordering.
+### 🧠 **Topological Parallel DAG Scheduler**
+Powered by Kahn's algorithm and asynchronous promise pooling, KostromAi44 executes non-dependent workflow nodes in parallel while strictly respecting execution ordering. Zero deadlocks, deterministic execution, and low latency.
 
 ```mermaid
 graph LR
-    A[Ingest] --> B[Classify]
-    A --> C[Validate]
-    B --> D[Route]
+    A[Data Ingestion] --> B[Classification Agent]
+    A --> C[Validation Agent]
+    B --> D[Routing Node]
     C --> D
-    D --> E[Execute]
-    D --> F[Log]
+    D --> E[Execution Agent]
+    D --> F[Audit Logger]
 ```
 
-### 🛡️ **Hardened Docker Sandboxes**
-Every code node runs in an isolated container:
-- `--cap-drop ALL` — no Linux capabilities
-- `--network none` — no internet access
-- `--read-only` — immutable filesystem
-- `64 MB RAM` — strict memory limits
-- `5s timeout` — kill runaway processes
+### 🛡️ **Hardened Docker Sandboxing**
+Code execution nodes run within ephemeral Docker containers configured with defense-in-depth security:
+- `--cap-drop ALL` — Drops all Linux kernel capabilities.
+- `--network none` — Completely blocks external network access (unless explicitly routed).
+- `--read-only` — Immutable root filesystem.
+- `64 MB RAM` — Strict memory quotas.
+- `5s Timeout` — Automatically kills runaway scripts.
 
-**Result:** Execute untrusted Python/JavaScript safely. No host compromise.
+### 🔄 **Self-Healing Resilient Execution**
+LLM provider rate limits and transient errors are automatically mitigated:
+1. **Exponential Backoff**: Automatic retry loops with jitter.
+2. **Provider Hotswap**: Seamless fallback (e.g., OpenAI → Anthropic Claude → Google Gemini → Local Ollama).
+3. **Transparent Auditing**: State marked as `completed_with_warning` instead of silent failures.
 
-### 🔄 **Self-Healing Execution**
-When an LLM call fails:
-1. Retry with exponential backoff
-2. Try alternative provider (OpenAI → Claude → Gemini)
-3. Mark state as `completed_with_warning` — never silent failures
-4. Human-in-the-loop escalation if needed
+### 👥 **Real-Time Multiplayer Collaboration**
+Built on Socket.io with room-scoped presence:
+- Live multi-user cursor tracking with color-coded user avatars.
+- Optimistic node locking to prevent concurrent editing collisions.
+- Conflict resolution UI for seamless team workflow design.
 
-### 👥 **Real-Time Collaboration**
-- Live cursors with user avatars
-- Room-scoped presence (no cross-project leaks)
-- Optimistic state locking (prevent conflicts)
-- Conflict resolution UI
-
-### 📚 **Hybrid RAG Pipeline**
-- **Ingest:** PDF, DOCX, MD, HTML chunking
-- **Embed:** OpenAI, Cohere, or local sentence-transformers
-- **Store:** Pinecone, Weaviate, Qdrant, or local FAISS (via Vectra)
-- **Retrieve:** Hybrid semantic + keyword search with reranking
-
-### ⏪ **Time-Travel Replay**
-Every node execution creates an immutable state snapshot:
-- Step forward/backward through pipeline history
-- Diff state at any point
-- Replay from any snapshot for debugging
+### 🕑 **Time-Travel Execution Replay**
+Every state mutation across the DAG graph produces an immutable snapshot. Step forward, backward, diff node inputs/outputs, and replay executions from any historical point for instant debugging.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Client["🖥️ Client · React 19 + Vite"]
-        C1[ReactFlow Canvas]
-        C2[Presence Hub]
-        C3[Analytics Dashboard]
+    subgraph Client["🖥️ Client Layer (React 19 + Vite + Tailwind v4)"]
+        Canvas[ReactFlow Canvas]
+        Presence[Multiplayer Presence Engine]
+        Analytics[Recharts Analytics Dashboard]
+        Monitor[Real-time App Monitor]
     end
-    
-    subgraph Gateway["🛡️ API Gateway"]
-        G1[Helmet · Nonce CSP]
-        G2[Rate Limiter · Redis]
-        G3[JWT · JTI Revocation]
-        G4[SSRF IP-Pinning]
+
+    subgraph Gateway["🛡️ Security & API Gateway (/api/v1)"]
+        CSP[Nonce CSP + Helmet + HSTS]
+        RL[Redis-backed Rate Limiter]
+        Auth[JWT Auth Guard + JTI Revocation List]
+        SSRF[SSRF Validator + IP-Pinning Guard]
     end
-    
-    subgraph Engine["🧠 Execution Engine"]
-        E1[Kahn Scheduler]
-        E2[Docker Sandbox]
-        E3[Circuit Breakers]
-        E4[Self-Healing Loops]
+
+    subgraph Engine["🧠 Core Execution Engine"]
+        Scheduler[Kahn Topological DAG Scheduler]
+        Executor[Pipeline Node Runner]
+        Breaker[LLM Circuit Breakers & Backoff]
+        Healing[Self-Healing Evaluation Loop]
+        Sandbox[Isolated Docker Code Sandbox]
     end
-    
-    subgraph Queue["📮 BullMQ"]
-        Q1[Workers]
-        Q2[Dead Letter Queue]
+
+    subgraph Queue["📮 Task Queue System (BullMQ)"]
+        Workers[Async Background Workers]
+        DLQ[Dead Letter Queue & Retry Manager]
     end
-    
-    subgraph Storage["💾 Storage"]
-        S1[(PostgreSQL)]
-        S2[(Redis)]
-        S3[(Vector Store)]
+
+    subgraph Storage["💾 Persistence Layer"]
+        DB[(Drizzle ORM · SQLite / PostgreSQL)]
+        Cache[(Redis Cache & Session Store)]
+        Vector[(Vector Engine · Pinecone / Qdrant / Local FAISS)]
     end
-    
-    Client <-->|HTTP · WebSocket| Gateway
+
+    subgraph LLMs["🤖 Multi-LLM Provider Matrix"]
+        Gemini[Google Gemini]
+        OpenAI[OpenAI GPT-4o]
+        Claude[Anthropic Claude]
+        Ollama[Local Ollama]
+    end
+
+    Client <-->|HTTP / Socket.io| Gateway
     Gateway --> Engine
     Engine <--> Queue
+    Queue --> DLQ
     Engine <--> Storage
+    Engine --> LLMs
 ```
+
+---
+
+## 📊 KostromAi44 vs Alternatives
+
+| Capability / Feature | KostromAi44 | LangChain | CrewAI | Relevance AI | Flowise |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Visual Interactive Canvas** | ✅ | ❌ | ❌ | ✅ | ✅ |
+| **One-Click REST/WS API** | ✅ | ⚠️ Manual | ⚠️ Manual | ✅ | ⚠️ Limited |
+| **Docker Code Sandboxing** | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **Self-Healing & Fallbacks** | ✅ | ❌ | ❌ | ⚠️ Basic | ❌ |
+| **Real-Time Multiplayer** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Time-Travel Replay** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Multi-LLM Hotswapping** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Open Source (MIT)** | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **100% Self-Hosted** | ✅ | ✅ | ✅ | ❌ | ✅ |
 
 ---
 
@@ -150,193 +193,181 @@ flowchart TD
 
 ### Option 1: Docker Compose (Recommended)
 
+Get the complete production stack up and running in under 60 seconds:
+
 ```bash
-git clone https://github.com/ppiiyo/AgentForge44.git
-cd AgentForge44
+# 1. Clone the repository
+git clone https://github.com/ppiiyo/AgentForge44.git kostromai44
+cd kostromai44
+
+# 2. Start the container stack
 docker compose up -d --build
-# Open http://localhost:3000
+
+# 3. Access the application at http://localhost:3000
 ```
 
-**Stack:** Nginx (frontend) → Express (backend) → PostgreSQL → Redis
+*Stack Components:* Nginx Reverse Proxy → Express API Gateway → Node.js Backend → PostgreSQL → Redis → Docker Sandbox Runner.
+
+---
 
 ### Option 2: Local Development
 
-```bash
-# Prerequisites: Node.js ≥ 22, npm ≥ 10, Docker (for sandboxes)
+Prerequisites: **Node.js ≥ 22.0.0**, **npm ≥ 10.0.0**, and **Docker** (optional, for code execution nodes).
 
-git clone https://github.com/ppiiyo/AgentForge44.git
-cd AgentForge44
+```bash
+# 1. Clone and install dependencies
+git clone https://github.com/ppiiyo/AgentForge44.git kostromai44
+cd kostromai44
 npm install
 
-# Generate secrets (min 32 chars):
+# 2. Configure environment variables
+cp .env.example .env
+
+# Generate secure 32+ character secrets
 export JWT_SECRET=$(openssl rand -base64 48)
 export ENCRYPTION_MASTER_KEY=$(openssl rand -base64 48)
 
-cp .env.example .env
-# Edit .env with your secrets
+# 3. Initialize Database & Seed Templates
+npm run db:push     # Pushes schema (SQLite by default)
+npm run db:seed     # Seeds pre-built marketplace workflows
 
-npm run db:push      # Push schema (SQLite default)
-npm run db:seed      # Seed marketplace templates
-npm run dev          # http://localhost:3000
+# 4. Launch Development Server
+npm run dev
 ```
 
-**First registered account = admin automatically.**
+Navigate to **`http://localhost:3000`**. The first registered user account is automatically granted **System Administrator (Admin)** privileges.
 
 ---
 
-## 📊 KostromAi44 vs Alternatives
+## ⚙️ Environment Configuration
 
-| Feature | KostromAi44 | LangChain | CrewAI | Relevance AI | Flowise |
-|---------|:-----------:|:---------:|:------:|:------------:|:-------:|
-| **Visual Canvas** | ✅ | ❌ | ❌ | ✅ | ✅ |
-| **Production API** | ✅ | ⚠️ Manual | ⚠️ Manual | ✅ | ⚠️ Limited |
-| **Code Sandboxing** | ✅ Docker | ❌ | ❌ | ✅ | ❌ |
-| **Self-Healing** | ✅ | ❌ | ❌ | ⚠️ Basic | ❌ |
-| **Real-Time Collab** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Time-Travel Debug** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Multi-LLM Hotswap** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Open Source** | ✅ MIT | ✅ | ✅ | ❌ | ✅ |
-| **Self-Hosted** | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **Price** | Free | Free | Free | $500+/mo | Free |
-
-**TL;DR:** KostromAi44 = Visual design (like Relevance) + Production runtime (like LangChain) + Enterprise security — all open source.
-
----
-
-## 🎯 Who Uses KostromAi44
-
-### **Startups**
-- Build MVP agent workflows in days, not months
-- Iterate visually without rewriting backend code
-- Scale from 1 to 10,000 users without re-architecture
-
-### **Enterprise Teams**
-- SOC2-compliant deployment out of the box
-- Self-hosted — no data leaves your infrastructure
-- Audit trails for every agent decision
-
-### **AI Engineers**
-- Stop writing boilerplate retry/error-handling code
-- Focus on agent logic, not infrastructure
-- Collaborate with PMs on the same canvas
-
-### **Researchers**
-- Reproducible experiments with state snapshots
-- Compare LLM providers side-by-side
-- Publish workflows as open-source templates
+| Variable | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `PORT` | `number` | `3000` | Application HTTP service port |
+| `NODE_ENV` | `string` | `development` | Environment mode (`development`, `production`, `test`) |
+| `JWT_SECRET` | `string` | *Required* | Secret key for JWT signing (min 32 characters) |
+| `ENCRYPTION_MASTER_KEY` | `string` | *Required* | Master key for AES-256-GCM database credential encryption |
+| `DB_TYPE` | `string` | `sqlite` | Database engine adapter (`sqlite` or `postgres`) |
+| `DATABASE_URL` | `string` | — | Connection string for PostgreSQL database |
+| `REDIS_URL` | `string` | — | Redis connection URL for BullMQ queues and caching |
+| `GEMINI_API_KEY` | `string` | — | Google AI Studio Gemini API key |
+| `OPENAI_API_KEY` | `string` | — | OpenAI API key |
+| `ANTHROPIC_API_KEY` | `string` | — | Anthropic Claude API key |
+| `OLLAMA_HOST` | `string` | `http://localhost:11434` | Local Ollama instance URL |
 
 ---
 
-## 🔒 Enterprise Security
+## 🔌 API Reference Guide
 
-| Layer | Implementation |
-|-------|----------------|
-| **Network** | SSRF IP-pinning validator · Nonce CSP · HSTS |
-| **Auth** | JWT with Redis JTI revocation · Rate limiting |
-| **Data** | AES-256-GCM at rest · TLS 1.3 in transit |
-| **Execution** | Docker sandbox with `--cap-drop ALL`, `--network none` |
-| **Audit** | Immutable state ledger · OpenTelemetry traces |
-| **Compliance** | SOC2-ready · GDPR-ready · Self-hosted option |
+All API endpoints are prefixed with versioned routing **`/api/v1`** (with backward compatibility for **`/api`**).
 
----
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/v1/auth/register` | Register new user account (1st user = Admin) | No |
+| `POST` | `/api/v1/auth/login` | Authenticate user & return JWT token | No |
+| `POST` | `/api/v1/auth/logout` | Revoke JWT token via Redis JTI blacklist | Yes |
+| `POST` | `/api/v1/execute/graph` | Synchronously execute raw DAG graph structure | Yes |
+| `POST` | `/api/v1/execute/blueprint` | Execute a saved pipeline workflow by Blueprint ID | Yes |
+| `POST` | `/api/v1/runs` | Dispatch asynchronous background execution task | Yes |
+| `GET` | `/api/v1/runs/:id` | Fetch task status, execution logs, and output state | Yes |
+| `GET` | `/api/v1/health` | Comprehensive system & component health probe | No |
+| `GET` | `/metrics` | Prometheus metrics scrape endpoint | Yes |
 
-## 📈 Traction & Roadmap
-
-### Current Status (Q4 2026)
-- ✅ Core orchestration engine (Kahn scheduler)
-- ✅ Docker sandbox execution
-- ✅ Real-time collaboration (Socket.io)
-- ✅ Multi-LLM support (OpenAI, Claude, Gemini, Ollama)
-- ✅ Production Docker Compose deployment
-- ✅ CI/CD pipeline (GitHub Actions)
-
-### Roadmap
-
-**Q1 2027**
-- [ ] Marketplace for community templates
-- [ ] Kubernetes Helm chart
-- [ ] SOC2 Type II certification
-- [ ] Enterprise SSO (SAML/OIDC)
-
-**Q2 2027**
-- [ ] Visual debugger with breakpoints
-- [ ] Cost tracking per agent execution
-- [ ] Multi-tenant workspace isolation
-- [ ] Mobile-responsive canvas
-
-**Q3 2027**
-- [ ] AI-assisted workflow generation (describe → build)
-- [ ] Custom node SDK for third-party integrations
-- [ ] Workflow versioning and rollback
-- [ ] GraphQL API alongside REST
+Interactive Swagger OpenAPI documentation is served live at **`/api-docs`**.
 
 ---
 
-## 🧪 Quality & Testing
+## 🔒 Enterprise Security & Compliance
 
-KostromAi44 maintains **production-grade quality gates**:
+KostromAi44 is engineered with a security-first architecture ready for enterprise deployment:
+
+- **Network Defense**: Nonce-based Content Security Policy (CSP), SSRF protection with strict IP pinning, HSTS enabled.
+- **Authentication & AuthZ**: JWT tokens validated against a Redis `jti` revocation blacklist; role-based access control (RBAC).
+- **Data Protection**: AES-256-GCM encryption at rest for external API keys; TLS 1.3 in transit.
+- **Execution Security**: Isolated root-less Docker containers for untrusted user code execution.
+- **Auditability**: Immutable audit logs for every workflow execution and node output snapshot.
+
+---
+
+## 🧪 Quality, Testing & CI/CD
+
+KostromAi44 enforces strict quality gates across the entire codebase:
 
 ```bash
-npm test                 # Vitest (coverage ≥ 70% lines, ≥ 60% branches)
-npm run test:e2e         # Playwright browser tests
-npm run test:load        # k6 baseline load (1000 req/min)
-npm run test:load:stress # k6 stress test (circuit breaker validation)
-npm run test:load:soak   # k6 30-min soak test
-npm run lint             # ESLint + TypeScript strict
-```
+# Run unit and integration tests (Vitest)
+npm test
 
-**Current metrics:**
-- Unit/integration tests: 342 passing
-- E2E tests: 47 scenarios
-- Load test: 1,200 req/min @ 99th percentile < 200ms
-- Coverage: 78% lines, 71% branches, 82% functions
+# Verify coverage thresholds (Lines ≥ 70%, Functions ≥ 70%, Branches ≥ 60%)
+npm run test:coverage
 
----
+# Execute Playwright end-to-end (E2E) browser tests
+npm run test:e2e
 
-## 🤝 Contributing
+# Run k6 performance & stress tests
+npm run test:load
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-**Before submitting:**
-```bash
-npm run lint            # Must pass
-npm run test:coverage   # Must maintain ≥ 70% lines
-npm run test:e2e        # Must pass
+# Perform strict TypeScript compilation & ESLint checks
+npm run lint
 ```
 
 ---
 
-## 💼 For Investors & Partners
+## 🗺️ Product Roadmap
 
-**Market Opportunity:**
-- AI agent market: $7.38B (2024) → $47.1B (2030) at 36% CAGR
-- Enterprise adoption: 67% of companies plan to deploy AI agents by 2026
-- Gap: No open-source solution bridges visual design + production runtime
+### 🟢 Q4 2026 (Completed)
+- [x] Topological Kahn DAG Scheduler with promise-pooling.
+- [x] Hardened Docker code execution sandbox.
+- [x] Socket.io real-time multiplayer collaboration.
+- [x] Multi-LLM support (Gemini, OpenAI, Claude, Ollama).
+- [x] Production Docker Compose containerization.
 
-**Why KostromAi44 Wins:**
-1. **First-mover** in open-source visual orchestration
-2. **Production-ready** from day one (not a toy)
-3. **Enterprise security** baked in (SOC2-ready)
-4. **Community-driven** — faster iteration than closed-source competitors
-5. **Monetization path** — cloud hosting, enterprise support, marketplace fees
+### 🟡 Q1 2027 (In Progress)
+- [ ] Community Template Marketplace for one-click workflow sharing.
+- [ ] Kubernetes Helm Chart & Operator deployment package.
+- [ ] Enterprise Single Sign-On (SAML 2.0 / OIDC).
 
-**Contact:** [prodazzha44@gmail.com]
+### 🔵 Q2 2027 (Planned)
+- [ ] Visual Step-by-Step Breakpoint Debugger.
+- [ ] Real-time Token & Cost Tracking per agent run.
+- [ ] Multi-tenant workspace data isolation boundaries.
 
 ---
 
+## 🤝 Contributing & Community
+
+We welcome contributions from developers, researchers, and AI enthusiasts!
+
+1. Fork the repository on GitHub.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Ensure all tests and linter checks pass (`npm run lint && npm test`).
+4. Commit your changes (`git commit -m 'feat: Add amazing feature'`).
+5. Push to the branch (`git push origin feature/amazing-feature`).
+6. Open a Pull Request.
+
+Please refer to [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidelines.
+
+---
+
+## 💼 Commercial Support & Contact
+
+Need help deploying KostromAi44 in an enterprise environment or requiring custom integrations?
+
+- **Website**: [https://kostromai44.app](https://kostromai44.app)
+- **Email Contact**: [prodazzha44@gmail.com](mailto:prodazzha44@gmail.com)
+- **Discord**: [Join the KostromAi44 Discord Server](https://discord.gg/kostromai44)
+
+---
 
 ## 📄 License
 
-**MIT License** — free for personal and commercial use.
-
-Enterprise licenses available for priority support, SLA, and custom features.
+This project is open-source software licensed under the **[MIT License](LICENSE)**.
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by the KostromAi44 team**
+**Built with ❤️ by the KostromAi44 Engineering Team**
 
-[⭐ Star us on GitHub](https://github.com/ppiiyo/AgentForge44) · 
+[**Back to Top ⬆️**](#-kostromai44)
 
 </div>
