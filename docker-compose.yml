@@ -26,10 +26,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@kostromai44-db:5432/kostromai44_db
+      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD}@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
-      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:?ENCRYPTION_MASTER_KEY is required}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -44,7 +44,7 @@ services:
       kostromai44-redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/readyz"]
+      test: ["CMD", "node", "-e", "const http = require('http'); const req = http.request({hostname: 'localhost', port: 3000, path: '/readyz', method: 'GET'}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -61,10 +61,10 @@ services:
     environment:
       - NODE_ENV=production
       - DB_TYPE=postgres
-      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@kostromai44-db:5432/kostromai44_db
+      - DATABASE_URL=postgres://kostromai44:${POSTGRES_PASSWORD}@kostromai44-db:5432/kostromai44_db
       - REDIS_URL=redis://kostromai44-redis:6379
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
-      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY:?ENCRYPTION_MASTER_KEY is required}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_MASTER_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
@@ -95,7 +95,7 @@ services:
     container_name: kostromai44-db
     environment:
       - POSTGRES_USER=kostromai44
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=kostromai44_db
     volumes:
       - postgres-data:/var/lib/postgresql/data

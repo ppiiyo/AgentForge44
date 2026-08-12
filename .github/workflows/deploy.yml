@@ -51,6 +51,18 @@ jobs:
           chmod +x scripts/generate-secrets.sh
           ./scripts/generate-secrets.sh
 
+      - name: Validate Required Secrets
+        run: |
+          REQUIRED_VARS=("JWT_SECRET" "ENCRYPTION_MASTER_KEY" "POSTGRES_PASSWORD")
+          for var in "${REQUIRED_VARS[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Required environment variable $var is not set"
+              echo "Run: bash scripts/generate-secrets.sh"
+              exit 1
+            fi
+          done
+          echo "✅ All required secrets validated"
+
       - name: Verify Docker Compose Configuration
         run: docker compose config
 

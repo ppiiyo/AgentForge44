@@ -3,27 +3,7 @@ import * as sqliteSchema from '../db/schema.js';
 import * as pgSchema from '../db/postgres-schema.js';
 import crypto from 'crypto';
 import { logger } from '../utils/logger.js';
-
-const COST_PER_1K_TOKENS: Record<string, Record<string, number>> = {
-  openai: {
-    'gpt-4o': 0.005,
-    'gpt-4o-mini': 0.00015,
-    'gpt-4': 0.03,
-    'gpt-3.5-turbo': 0.0005,
-  },
-  anthropic: {
-    'claude-3-5-sonnet': 0.003,
-    'claude-3-opus': 0.015,
-    'claude-3-sonnet': 0.003,
-    'claude-3-haiku': 0.00025,
-  },
-  gemini: {
-    'gemini-1.5-pro': 0.00125,
-    'gemini-1.5-flash': 0.000075,
-    'gemini-pro': 0.0005,
-    'gemini-flash': 0.0001,
-  },
-};
+import { LLM_PRICING } from '../config/pricing.js';
 
 export async function trackLLMCost(
   graphId: string | null,
@@ -37,7 +17,7 @@ export async function trackLLMCost(
   const normProvider = provider.toLowerCase();
   const normModel = model.toLowerCase();
 
-  const costPer1K = COST_PER_1K_TOKENS[normProvider]?.[normModel] ?? 0.001;
+  const costPer1K = LLM_PRICING[normProvider]?.[normModel] ?? 0.001;
   const totalTokens = promptTokens + completionTokens;
   const costUsd = (totalTokens / 1000) * costPer1K;
 
