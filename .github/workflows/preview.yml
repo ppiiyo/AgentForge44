@@ -37,7 +37,7 @@ jobs:
           timeout-minutes: 5
 
       - name: Configure AWS Credentials (Simulated/Mocked or Real via OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::123456789012:role/github-actions-preview-role
@@ -95,7 +95,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Configure AWS Credentials (Simulated/Mocked)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::123456789012:role/github-actions-preview-role
