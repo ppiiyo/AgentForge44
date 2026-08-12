@@ -46,10 +46,13 @@ jobs:
         with:
           timeout-minutes: 5
 
-      - name: Generate Production Secrets for Compose Verification
+      - name: Prepare ephemeral secrets (CI only)
         run: |
           chmod +x scripts/generate-secrets.sh
           ./scripts/generate-secrets.sh
+          if [ -f .env ];  then
+            cat .env >> $GITHUB_ENV
+          fi
 
       - name: Validate Required Secrets
         run: |

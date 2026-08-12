@@ -87,13 +87,13 @@ let isReady = false;
 app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
-// Liveness probe — always OK if process is alive
-app.get('/healthz', (_req: express.Request, res: express.Response) => {
-  res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
+// Liveness probe — process is alive
+app.get(['/healthz', '/api/healthz'], (_req: express.Request, res: express.Response) => {
+  res.status(200).json({ status: 'alive' });
 });
 
 // Readiness probe — OK only after database migrations complete
-app.get('/readyz', (_req: express.Request, res: express.Response) => {
+app.get(['/readyz', '/api/readyz', '/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
   if (!isReady) {
     return res.status(503).json({
       status: 'starting',
@@ -101,15 +101,10 @@ app.get('/readyz', (_req: express.Request, res: express.Response) => {
     });
   }
   res.status(200).json({
-    status: 'ready',
+    status: 'ok',
     uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
-});
-
-// Legacy healthcheck handler for container health probes
-app.get(['/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
-  res.json({ status: isReady ? 'ok' : 'starting', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 setupSecurity(app);
@@ -174,7 +169,11 @@ apiRoutes.forEach((router) => {
 app.use(errorHandler);
 
 export async function startServer() {
-  // Execute auto-run database table schema migrations with advisory lock on server start
+  const httpServer = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🎯 Server listening on :${PORT}`);
+  });
+
+  // Execute auto-run database table schema migrations with advisory lock
   try {
     logger.info('📦 Applying database migrations with advisory lock...');
     await runMigrationsWithLock(adapter);
@@ -203,12 +202,6 @@ export async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-  logger.info('✅ All middleware loaded, starting HTTP server...');
-  const httpServer = app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`🎯 Server running on port ${PORT}`);
-    logger.info(`🏥 Health check: http://localhost:${PORT}/api/health`);
-  });
 
   // Start Socket.io Collaboration Server
   const collaborationServer = new CollaborationServer(httpServer);
