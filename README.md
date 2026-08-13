@@ -12,7 +12,7 @@
 [![Enterprise Ready](https://img.shields.io/badge/Enterprise-SOC2%20Ready-10B981?style=for-the-badge&logo=shield&logoColor=white)](#-enterprise-security)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](COPYRIGHT.md)
 
 ---
 

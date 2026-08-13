@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Visual, low-code orchestrator and development environment for multi-agent LLM systems",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "packageManager": "npm@10.9.0",
   "engines": {
     "node": ">=22.0.0",
