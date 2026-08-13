@@ -104,24 +104,25 @@ jobs:
 
       - name: Start Full Docker Compose Stack
         run: |
-          if ! docker compose up -d --wait --wait-timeout 120; then
-            echo "=========== DEPLOYMENT FAILED ==========="
-            echo "Container status:"
-            docker compose ps
-            echo ""
-            echo "=========== BACKEND LOGS (last 100 lines) ==========="
-            docker compose logs --tail=100 kostromai44-backend
-            echo ""
-            echo "=========== EXECUTOR LOGS (last 50 lines) ==========="
-            docker compose logs --tail=50 kostromai44-executor
-            echo ""
-            echo "=========== DB LOGS (last 50 lines) ==========="
-            docker compose logs --tail=50 kostromai44-db
-            exit 1
-          fi
-
+          docker compose up -d --wait --wait-timeout 120
           echo "✅ All services healthy"
           docker compose ps
+
+      - name: Dump Service Logs on Deployment Failure
+        if: failure()
+        run: |
+          echo "=========== DEPLOYMENT FAILED ==========="
+          echo "Container status:"
+          docker compose ps || true
+          echo ""
+          echo "=========== BACKEND LOGS (last 200 lines) ==========="
+          docker compose logs --tail=200 kostromai44-backend || true
+          echo ""
+          echo "=========== EXECUTOR LOGS (last 200 lines) ==========="
+          docker compose logs --tail=200 kostromai44-executor || true
+          echo ""
+          echo "=========== DB LOGS (last 200 lines) ==========="
+          docker compose logs --tail=200 kostromai44-db || true
 
       - name: Smoke Test
         run: |
