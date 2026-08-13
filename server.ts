@@ -87,24 +87,17 @@ let isReady = false;
 app.use(corsMiddleware);
 app.use(correlationIdMiddleware);
 
-// Liveness probe — process is alive
-app.get(['/healthz', '/api/healthz'], (_req: express.Request, res: express.Response) => {
-  res.status(200).json({ status: 'alive' });
+// Liveness — ALWAYS 200 while process is alive (tests + legacy /api/health)
+app.get(['/healthz', '/api/healthz', '/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
+  res.status(200).json({ status: 'ok', ready: isReady, uptime: process.uptime() });
 });
 
-// Readiness probe — OK only after database migrations complete
-app.get(['/readyz', '/api/readyz', '/api/health', '/api/v1/health'], (_req: express.Request, res: express.Response) => {
+// Readiness — 503 until migrations complete (compose healthcheck + smoke test)
+app.get(['/readyz', '/api/readyz'], (_req: express.Request, res: express.Response) => {
   if (!isReady) {
-    return res.status(503).json({
-      status: 'starting',
-      message: 'Migrations not yet complete'
-    });
+    return res.status(503).json({ status: 'starting' });
   }
-  res.status(200).json({
-    status: 'ok',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ready', uptime: process.uptime() });
 });
 
 setupSecurity(app);
