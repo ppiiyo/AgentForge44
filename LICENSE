@@ -1,0 +1,57 @@
+# Proprietary Software License Agreement
+
+**AgentForge44** (the "Software")
+
+Copyright (c) 2024-2026 ppiiyo. All Rights Reserved.
+
+---
+
+## 1. Grant of License
+
+This Software is the proprietary and confidential property of the copyright holder
+("Licensor"). Access is provided to you ("Licensee") under the terms of a separate
+written license agreement signed by the Licensor.
+
+## 2. Restrictions
+
+Without prior written permission from the Licensor, you may NOT:
+
+- Copy, modify, merge, publish, translate, or create derivative works of the Software
+- Distribute, sublicense, sell, rent, lease, or otherwise transfer the Software
+- Reverse engineer, decompile, disassemble, or otherwise attempt to derive source code
+- Remove or alter any proprietary markings, labels, or notices in the Software
+- Use the Software to develop, train, or improve any product or service that competes with the Licensor's commercial offerings
+- Use the Software in any production environment without an active commercial license
+
+## 3. Open Source Components
+
+The Software may include or depend on third-party open source components. Such
+components are governed by their respective open source licenses (see NOTICE.md or
+package.json dependency list). Nothing in this License restricts rights granted to you under those third-party licenses.
+
+## 4. No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.
+
+## 5. Limitation of Liability
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 6. Termination
+
+This License is effective until terminated. It will terminate automatically without
+notice if you fail to comply with any provision. Upon termination you must destroy all copies of the Software in your possession.
+
+## 7. Contact
+
+To obtain a commercial license, redistribution rights, or any other use not explicitly permitted above, contact:
+
+**Email:** prodazzha44@gmail.com
+**Repository:** https://github.com/ppiiyo/AgentForge44
+
+---
+
+*This License is a proprietary license agreement. It is NOT an Open Source license.
+For Open Source definitions see https://opensource.org/licenses.*
